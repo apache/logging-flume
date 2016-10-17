@@ -28,7 +28,6 @@ import com.google.common.base.Preconditions;
 
 final class EventQueueBackingStoreFileV2 extends EventQueueBackingStoreFile {
 
-
   private static final int INDEX_SIZE = 2;
   private static final int INDEX_HEAD = 3;
   private static final int INDEX_ACTIVE_LOG = 5;
@@ -55,6 +54,7 @@ final class EventQueueBackingStoreFileV2 extends EventQueueBackingStoreFile {
       }
     }
   }
+
   @Override
   protected int getVersion() {
     return Serialization.VERSION_2;

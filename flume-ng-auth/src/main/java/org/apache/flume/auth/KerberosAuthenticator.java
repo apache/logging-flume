@@ -18,6 +18,7 @@
 package org.apache.flume.auth;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +37,6 @@ import org.apache.hadoop.security.SecurityUtil;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.UserGroupInformation.AuthenticationMethod;
 
-import com.google.common.base.Preconditions;
 import static org.apache.hadoop.fs.CommonConfigurationKeys.HADOOP_SECURITY_AUTHENTICATION;
 
 /**
@@ -66,10 +66,10 @@ class KerberosAuthenticator implements FlumeAuthenticator {
 
   @Override
   public synchronized PrivilegedExecutor proxyAs(String proxyUserName) {
-    if(proxyUserName == null || proxyUserName.isEmpty()) {
+    if (proxyUserName == null || proxyUserName.isEmpty()) {
       return this;
     }
-    if(proxyCache.get(proxyUserName) == null) {
+    if (proxyCache.get(proxyUserName) == null) {
       UserGroupInformation proxyUgi;
       proxyUgi = UserGroupInformation.createProxyUser(proxyUserName, ugi);
       printUGI(proxyUgi);
@@ -131,13 +131,13 @@ class KerberosAuthenticator implements FlumeAuthenticator {
 
     KerberosUser newUser = new KerberosUser(resolvedPrincipal, keytab);
     Preconditions.checkState(prevUser == null || prevUser.equals(newUser),
-      "Cannot use multiple kerberos principals in the same agent. " +
-      " Must restart agent to use new principal or keytab. " +
-      "Previous = %s, New = %s", prevUser, newUser);
+        "Cannot use multiple kerberos principals in the same agent. " +
+        " Must restart agent to use new principal or keytab. " +
+        "Previous = %s, New = %s", prevUser, newUser);
 
 
     // enable the kerberos mode of UGI, before doing anything else
-    if(!UserGroupInformation.isSecurityEnabled()) {
+    if (!UserGroupInformation.isSecurityEnabled()) {
       Configuration conf = new Configuration(false);
       conf.set(HADOOP_SECURITY_AUTHENTICATION, "kerberos");
       UserGroupInformation.setConfiguration(conf);
@@ -147,7 +147,7 @@ class KerberosAuthenticator implements FlumeAuthenticator {
     UserGroupInformation curUser = null;
     try {
       curUser = UserGroupInformation.getLoginUser();
-      if(curUser != null && !curUser.hasKerberosCredentials()) {
+      if (curUser != null && !curUser.hasKerberosCredentials()) {
         curUser = null;
       }
     } catch (IOException e) {
@@ -166,8 +166,8 @@ class KerberosAuthenticator implements FlumeAuthenticator {
         if (curUser != null && curUser.getUserName().equals(ugi.getUserName())) {
           LOG.debug("Using existing principal login: {}", ugi);
         } else {
-          LOG.info("Attempting kerberos Re-login as principal ({}) "
-                  , new Object[] { ugi.getUserName() } );
+          LOG.info("Attempting kerberos Re-login as principal ({}) ",
+                   new Object[] { ugi.getUserName() } );
           ugi.reloginFromKeytab();
         }
       } else {
@@ -192,9 +192,10 @@ class KerberosAuthenticator implements FlumeAuthenticator {
       // dump login information
       AuthenticationMethod authMethod = ugi.getAuthenticationMethod();
       LOG.info("\n{} \nUser: {} \nAuth method: {} \nKeytab: {} \n",
-        new Object[]{ authMethod.equals(AuthenticationMethod.PROXY) ?
-        "Proxy as: " : "Logged as: ", ugi.getUserName(), authMethod,
-        ugi.isFromKeytab() }
+          new Object[] {
+            authMethod.equals(AuthenticationMethod.PROXY) ? "Proxy as: " : "Logged as: ",
+            ugi.getUserName(), authMethod, ugi.isFromKeytab()
+          }
       );
     }
   }
@@ -224,7 +225,7 @@ class KerberosAuthenticator implements FlumeAuthenticator {
 
   @VisibleForTesting
   String getUserName() {
-    if(ugi != null) {
+    if (ugi != null) {
       return ugi.getUserName();
     } else {
       return null;

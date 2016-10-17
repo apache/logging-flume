@@ -56,7 +56,7 @@ public class ChannelSelectorFactory {
   public static ChannelSelector create(List<Channel> channels,
       ChannelSelectorConfiguration conf) {
     String type = ChannelSelectorType.REPLICATING.toString();
-    if (conf != null){
+    if (conf != null) {
       type = conf.getType();
     }
     ChannelSelector selector = getSelectorForType(type);

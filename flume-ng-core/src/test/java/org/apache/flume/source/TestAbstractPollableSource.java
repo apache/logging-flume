@@ -90,10 +90,12 @@ public class TestAbstractPollableSource {
     Context context = new Context(inputConfigs);
 
     source.configure(context);
-    Assert.assertEquals("BackOffSleepIncrement should equal 42 but it equals " + source.getBackOffSleepIncrement(),
-            42l, source.getBackOffSleepIncrement());
-    Assert.assertEquals("BackOffSleepIncrement should equal 42 but it equals " + source.getMaxBackOffSleepInterval(),
-            4242l, source.getMaxBackOffSleepInterval());
+    Assert.assertEquals("BackOffSleepIncrement should equal 42 but it equals " +
+                        source.getBackOffSleepIncrement(),
+                        42L, source.getBackOffSleepIncrement());
+    Assert.assertEquals("BackOffSleepIncrement should equal 42 but it equals " +
+                        source.getMaxBackOffSleepInterval(),
+                        4242L, source.getMaxBackOffSleepInterval());
   }
 
   @Test
@@ -119,14 +121,16 @@ public class TestAbstractPollableSource {
     HashMap<String, String> inputConfigs = new HashMap<String,String>();
 
     Assert.assertEquals("BackOffSleepIncrement should equal " +
-                    PollableSourceConstants.DEFAULT_BACKOFF_SLEEP_INCREMENT +
-                    " but it equals " + source.getBackOffSleepIncrement(),
-            PollableSourceConstants.DEFAULT_BACKOFF_SLEEP_INCREMENT, source.getBackOffSleepIncrement());
+                        PollableSourceConstants.DEFAULT_BACKOFF_SLEEP_INCREMENT +
+                        " but it equals " + source.getBackOffSleepIncrement(),
+                        PollableSourceConstants.DEFAULT_BACKOFF_SLEEP_INCREMENT,
+                        source.getBackOffSleepIncrement());
 
     Assert.assertEquals("BackOffSleepIncrement should equal " +
-                    PollableSourceConstants.DEFAULT_MAX_BACKOFF_SLEEP +
-                    " but it equals " + source.getMaxBackOffSleepInterval(),
-            PollableSourceConstants.DEFAULT_MAX_BACKOFF_SLEEP, source.getMaxBackOffSleepInterval());
+                        PollableSourceConstants.DEFAULT_MAX_BACKOFF_SLEEP +
+                        " but it equals " + source.getMaxBackOffSleepInterval(),
+                        PollableSourceConstants.DEFAULT_MAX_BACKOFF_SLEEP,
+                        source.getMaxBackOffSleepInterval());
   }
 
 }

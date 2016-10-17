@@ -37,8 +37,7 @@ import org.slf4j.LoggerFactory;
 
 public class HDFSDataStream extends AbstractHDFSWriter {
 
-  private static final Logger logger =
-      LoggerFactory.getLogger(HDFSDataStream.class);
+  private static final Logger logger = LoggerFactory.getLogger(HDFSDataStream.class);
 
   private FSDataOutputStream outStream;
   private String serializerType;
@@ -60,16 +59,13 @@ public class HDFSDataStream extends AbstractHDFSWriter {
   }
 
   @VisibleForTesting
-  protected FileSystem getDfs(Configuration conf,
-    Path dstPath) throws IOException{
-    return  dstPath.getFileSystem(conf);
+  protected FileSystem getDfs(Configuration conf, Path dstPath) throws IOException {
+    return dstPath.getFileSystem(conf);
   }
 
-  protected void doOpen(Configuration conf,
-    Path dstPath, FileSystem hdfs) throws
-    IOException {
-    if(useRawLocalFileSystem) {
-      if(hdfs instanceof LocalFileSystem) {
+  protected void doOpen(Configuration conf, Path dstPath, FileSystem hdfs) throws IOException {
+    if (useRawLocalFileSystem) {
+      if (hdfs instanceof LocalFileSystem) {
         hdfs = ((LocalFileSystem)hdfs).getRaw();
       } else {
         logger.warn("useRawLocalFileSystem is set to true but file system " +
@@ -78,8 +74,7 @@ public class HDFSDataStream extends AbstractHDFSWriter {
     }
 
     boolean appending = false;
-    if (conf.getBoolean("hdfs.append.support", false) == true && hdfs.isFile
-            (dstPath)) {
+    if (conf.getBoolean("hdfs.append.support", false) == true && hdfs.isFile(dstPath)) {
       outStream = hdfs.append(dstPath);
       appending = true;
     } else {

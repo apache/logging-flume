@@ -18,14 +18,7 @@
  */
 package org.apache.flume.channel.file;
 
-import static org.apache.flume.channel.file.TestUtils.*;
-
-import java.io.File;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
+import com.google.common.collect.Maps;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -33,8 +26,14 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Maps;
+import java.io.File;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
+import static org.apache.flume.channel.file.TestUtils.compareInputAndOut;
+import static org.apache.flume.channel.file.TestUtils.takeEvents;
 
 public class TestFileChannelFormatRegression extends TestFileChannelBase {
   protected static final Logger LOG = LoggerFactory
@@ -60,8 +59,8 @@ public class TestFileChannelFormatRegression extends TestFileChannelBase {
             new File(checkpointDir, "checkpoint"));
     for (int i = 0; i < dataDirs.length; i++) {
       int fileIndex = i + 1;
-      TestUtils.copyDecompressed("fileformat-v2-log-"+fileIndex+".gz",
-              new File(dataDirs[i], "log-" + fileIndex));
+      TestUtils.copyDecompressed("fileformat-v2-log-" + fileIndex + ".gz",
+                                 new File(dataDirs[i], "log-" + fileIndex));
     }
     Map<String, String> overrides = Maps.newHashMap();
     overrides.put(FileChannelConfiguration.CAPACITY, String.valueOf(10));

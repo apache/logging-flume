@@ -75,11 +75,10 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.security.PrivilegedAction;
 
-public class ThriftSource extends AbstractSource implements Configurable,
-  EventDrivenSource {
+public class ThriftSource extends AbstractSource implements Configurable, EventDrivenSource {
 
-  public static final Logger logger = LoggerFactory.getLogger(ThriftSource
-    .class);
+  public static final Logger logger = LoggerFactory.getLogger(ThriftSource.class);
+
   /**
    * Config param for the maximum number of threads this source should use to
    * handle incoming data.
@@ -131,17 +130,17 @@ public class ThriftSource extends AbstractSource implements Configurable,
     logger.info("Configuring thrift source.");
     port = context.getInteger(CONFIG_PORT);
     Preconditions.checkNotNull(port, "Port must be specified for Thrift " +
-      "Source.");
+        "Source.");
     bindAddress = context.getString(CONFIG_BIND);
     Preconditions.checkNotNull(bindAddress, "Bind address must be specified " +
-      "for Thrift Source.");
+        "for Thrift Source.");
 
     try {
       maxThreads = context.getInteger(CONFIG_THREADS, 0);
       maxThreads = (maxThreads <= 0) ? Integer.MAX_VALUE : maxThreads;
     } catch (NumberFormatException e) {
       logger.warn("Thrift source\'s \"threads\" property must specify an " +
-        "integer value: " + context.getString(CONFIG_THREADS));
+                  "integer value: " + context.getString(CONFIG_THREADS));
     }
 
     if (sourceCounter == null) {
@@ -190,8 +189,8 @@ public class ThriftSource extends AbstractSource implements Configurable,
     String keytab = context.getString(AGENT_KEYTAB);
     enableKerberos = context.getBoolean(KERBEROS_KEY, false);
     this.flumeAuth = FlumeAuthenticationUtil.getAuthenticator(principal, keytab);
-    if(enableKerberos) {
-      if(!flumeAuth.isAuthenticated()) {
+    if (enableKerberos) {
+      if (!flumeAuth.isAuthenticated()) {
         throw new FlumeException("Authentication failed in Kerberos mode for " +
                 "principal " + principal + " keytab " + keytab);
       }
@@ -221,29 +220,27 @@ public class ThriftSource extends AbstractSource implements Configurable,
     servingExecutor.submit(new Runnable() {
       @Override
       public void run() {
-        flumeAuth.execute(
-          new PrivilegedAction<Object>() {
-            @Override
-            public Object run() {
-              server.serve();
-              return null;
-            }
+        flumeAuth.execute(new PrivilegedAction<Object>() {
+          @Override
+          public Object run() {
+            server.serve();
+            return null;
           }
-        );
+        });
       }
     });
 
     long timeAfterStart = System.currentTimeMillis();
-    while(!server.isServing()) {
+    while (!server.isServing()) {
       try {
-        if(System.currentTimeMillis() - timeAfterStart >=10000) {
+        if (System.currentTimeMillis() - timeAfterStart >= 10000) {
           throw new FlumeException("Thrift server failed to start!");
         }
         TimeUnit.MILLISECONDS.sleep(1000);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
         throw new FlumeException("Interrupted while waiting for Thrift server" +
-          " to start.", e);
+            " to start.", e);
       }
     }
     sourceCounter.start();
@@ -287,8 +284,7 @@ public class ThriftSource extends AbstractSource implements Configurable,
 
   private TServerTransport getTServerTransport() {
     try {
-      return new TServerSocket(new InetSocketAddress
-              (bindAddress, port));
+      return new TServerSocket(new InetSocketAddress(bindAddress, port));
     } catch (Throwable throwable) {
       throw new FlumeException("Cannot start Thrift source.", throwable);
     }
@@ -305,7 +301,7 @@ public class ThriftSource extends AbstractSource implements Configurable,
   }
 
   private TServer getTThreadedSelectorServer() {
-    if(enableSsl || enableKerberos) {
+    if (enableSsl || enableKerberos) {
       return null;
     }
     Class<?> serverClass;
@@ -345,7 +341,7 @@ public class ThriftSource extends AbstractSource implements Configurable,
        *
        */
       server = (TServer) serverClass.getConstructor(argsClass).newInstance(args);
-    } catch(ClassNotFoundException e) {
+    } catch (ClassNotFoundException e) {
       return null;
     } catch (Throwable ex) {
       throw new FlumeException("Cannot start Thrift Source.", ex);
@@ -371,7 +367,7 @@ public class ThriftSource extends AbstractSource implements Configurable,
     args.protocolFactory(getProtocolFactory());
 
     //populate the transportFactory
-    if(enableKerberos) {
+    if (enableKerberos) {
       args.transportFactory(getSASLTransportFactory());
     } else {
       args.transportFactory(new TFastFramedTransport.Factory());
@@ -402,7 +398,7 @@ public class ThriftSource extends AbstractSource implements Configurable,
 
   @Override
   public void stop() {
-    if(server != null && server.isServing()) {
+    if (server != null && server.isServing()) {
       server.stop();
     }
     if (servingExecutor != null) {
@@ -424,8 +420,7 @@ public class ThriftSource extends AbstractSource implements Configurable,
 
     @Override
     public Status append(ThriftFlumeEvent event) throws TException {
-      Event flumeEvent = EventBuilder.withBody(event.getBody(),
-        event.getHeaders());
+      Event flumeEvent = EventBuilder.withBody(event.getBody(), event.getHeaders());
 
       sourceCounter.incrementAppendReceivedCount();
       sourceCounter.incrementEventReceivedCount();
@@ -434,7 +429,7 @@ public class ThriftSource extends AbstractSource implements Configurable,
         getChannelProcessor().processEvent(flumeEvent);
       } catch (ChannelException ex) {
         logger.warn("Thrift source " + getName() + " could not append events " +
-          "to the channel.", ex);
+                    "to the channel.", ex);
         return Status.FAILED;
       }
       sourceCounter.incrementAppendAcceptedCount();
@@ -448,16 +443,14 @@ public class ThriftSource extends AbstractSource implements Configurable,
       sourceCounter.addToEventReceivedCount(events.size());
 
       List<Event> flumeEvents = Lists.newArrayList();
-      for(ThriftFlumeEvent event : events) {
-        flumeEvents.add(EventBuilder.withBody(event.getBody(),
-          event.getHeaders()));
+      for (ThriftFlumeEvent event : events) {
+        flumeEvents.add(EventBuilder.withBody(event.getBody(), event.getHeaders()));
       }
 
       try {
         getChannelProcessor().processEventBatch(flumeEvents);
       } catch (ChannelException ex) {
-        logger.warn("Thrift source %s could not append events to the " +
-          "channel.", getName());
+        logger.warn("Thrift source %s could not append events to the channel.", getName());
         return Status.FAILED;
       }
 

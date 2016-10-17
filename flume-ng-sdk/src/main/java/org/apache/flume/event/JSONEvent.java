@@ -26,7 +26,7 @@ import org.apache.flume.FlumeException;
 /**
  *
  */
-public class JSONEvent implements Event{
+public class JSONEvent implements Event {
   private Map<String, String> headers;
   private String body;
   private transient String charset = "UTF-8";
@@ -43,7 +43,7 @@ public class JSONEvent implements Event{
 
   @Override
   public byte[] getBody() {
-    if(body != null) {
+    if (body != null) {
       try {
         return body.getBytes(charset);
       } catch (UnsupportedEncodingException ex) {
@@ -57,7 +57,7 @@ public class JSONEvent implements Event{
 
   @Override
   public void setBody(byte[] body) {
-    if(body != null) {
+    if (body != null) {
       this.body = new String(body);
     } else {
       this.body = "";

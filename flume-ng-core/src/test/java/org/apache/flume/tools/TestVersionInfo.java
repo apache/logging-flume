@@ -51,8 +51,8 @@ public class TestVersionInfo {
         !VersionInfo.getSrcChecksum().equals("Unknown"));
 
     // check getBuildVersion() return format
-    assertTrue("getBuildVersion returned unexpected format",VersionInfo.
-        getBuildVersion().matches(".+from.+by.+on.+source checksum.+"));
+    assertTrue("getBuildVersion returned unexpected format",
+               VersionInfo.getBuildVersion().matches(".+from.+by.+on.+source checksum.+"));
 
     //"Unknown" when build without svn or git
     assertNotNull("getRevision returned null", VersionInfo.getRevision());

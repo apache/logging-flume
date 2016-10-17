@@ -29,6 +29,7 @@ import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.conf.ConfigurationException;
+import org.apache.flume.conf.LogPrivacyUtil;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.source.http.HTTPSourceHandler;
 import org.apache.tika.metadata.Metadata;
@@ -69,11 +70,11 @@ public class BlobHandler implements HTTPSourceHandler {
           + " must be greater than zero: " + maxBlobLength);
     }
   }
-  
+
   @SuppressWarnings("resource")
   @Override
   public List<Event> getEvents(HttpServletRequest request) throws Exception {
-    Map<String, String> headers = getHeaders(request);    
+    Map<String, String> headers = getHeaders(request);
     InputStream in = request.getInputStream();
     try {
       ByteArrayOutputStream blob = null;
@@ -87,14 +88,17 @@ public class BlobHandler implements HTTPSourceHandler {
         blob.write(buf, 0, n);
         blobLength += n;
         if (blobLength >= maxBlobLength) {
-          LOGGER.warn("Request length exceeds maxBlobLength ({}), truncating BLOB event!", maxBlobLength);
+          LOGGER.warn("Request length exceeds maxBlobLength ({}), truncating BLOB event!",
+              maxBlobLength);
           break;
         }
       }
 
       byte[] array = blob != null ? blob.toByteArray() : new byte[0];
       Event event = EventBuilder.withBody(array, headers);
-      LOGGER.debug("blobEvent: {}", event);
+      if (LOGGER.isDebugEnabled() && LogPrivacyUtil.allowLogRawData()) {
+        LOGGER.debug("blobEvent: {}", event);
+      }
       return Collections.singletonList(event);
     } finally {
       in.close();
@@ -102,15 +106,15 @@ public class BlobHandler implements HTTPSourceHandler {
   }
 
   private Map<String, String> getHeaders(HttpServletRequest request) {
-    if (LOGGER.isDebugEnabled()) {
+    if (LOGGER.isDebugEnabled() && LogPrivacyUtil.allowLogRawData()) {
       Map requestHeaders = new HashMap();
       Enumeration iter = request.getHeaderNames();
       while (iter.hasMoreElements()) {
         String name = (String) iter.nextElement();
-        requestHeaders.put(name, request.getHeader(name));        
+        requestHeaders.put(name, request.getHeader(name));
       }
       LOGGER.debug("requestHeaders: {}", requestHeaders);
-    }    
+    }
     Map<String, String> headers = new HashMap();
     if (request.getContentType() != null) {
       headers.put(Metadata.CONTENT_TYPE, request.getContentType());
@@ -118,9 +122,8 @@ public class BlobHandler implements HTTPSourceHandler {
     Enumeration iter = request.getParameterNames();
     while (iter.hasMoreElements()) {
       String name = (String) iter.nextElement();
-      headers.put(name, request.getParameter(name));        
+      headers.put(name, request.getParameter(name));
     }
     return headers;
   }
-
 }

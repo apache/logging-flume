@@ -27,19 +27,17 @@ import org.apache.flume.channel.jdbc.JdbcChannelException;
  */
 public final class SchemaHandlerFactory {
 
-  public static SchemaHandler getHandler(DatabaseType dbType,
-      DataSource dataSource) {
+  public static SchemaHandler getHandler(DatabaseType dbType, DataSource dataSource) {
     SchemaHandler handler = null;
-    switch(dbType) {
-    case DERBY:
-      handler = new DerbySchemaHandler(dataSource);
-      break;
-    case MYSQL:
-      handler = new MySQLSchemaHandler(dataSource);
-      break;
-    default:
-      throw new JdbcChannelException("Database " + dbType
-          + " not supported yet");
+    switch (dbType) {
+      case DERBY:
+        handler = new DerbySchemaHandler(dataSource);
+        break;
+      case MYSQL:
+        handler = new MySQLSchemaHandler(dataSource);
+        break;
+      default:
+        throw new JdbcChannelException("Database " + dbType + " not supported yet");
     }
 
     return handler;

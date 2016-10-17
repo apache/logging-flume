@@ -57,10 +57,10 @@ class SimpleAuthenticator implements FlumeAuthenticator {
 
   @Override
   public synchronized PrivilegedExecutor proxyAs(String proxyUserName) {
-    if(proxyUserName == null || proxyUserName.isEmpty()) {
+    if (proxyUserName == null || proxyUserName.isEmpty()) {
       return this;
     }
-    if(proxyCache.get(proxyUserName) == null) {
+    if (proxyCache.get(proxyUserName) == null) {
       UserGroupInformation proxyUgi;
       try {
         proxyUgi = UserGroupInformation.createProxyUser(proxyUserName,

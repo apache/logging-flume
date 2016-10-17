@@ -44,44 +44,42 @@ import org.apache.flume.annotations.InterfaceStability;
  * <p>
  * Example usage
  * </p>
- * <code>
- *  public class MyService implements LifecycleAware {
+ * <pre>
+ * {@code
+ * public class MyService implements LifecycleAware {
  *
- *    private LifecycleState lifecycleState;
+ *   private LifecycleState lifecycleState;
  *
- *    public MyService() {
- *      lifecycleState = LifecycleState.IDLE;
- *    }
+ *   public MyService() {
+ *     lifecycleState = LifecycleState.IDLE;
+ *   }
  *
- *    @Override
- *    public void start(Context context) throws LifecycleException,
- *      InterruptedException {
+ *   @Override
+ *   public void start(Context context) throws LifecycleException, InterruptedException {
+ *     // ...your code does something.
+ *     lifecycleState = LifecycleState.START;
+ *   }
  *
- *      ...your code does something.
+ *   @Override
+ *   public void stop(Context context) throws LifecycleException, InterruptedException {
  *
- *      lifecycleState = LifecycleState.START;
- *    }
+ *     try {
+ *       // ...you stop services here.
+ *     } catch (SomethingException) {
+ *       lifecycleState = LifecycleState.ERROR;
+ *     }
  *
- *    @Override
- *    public void stop(Context context) throws LifecycleException,
- *      InterruptedException {
+ *     lifecycleState = LifecycleState.STOP;
+ *   }
  *
- *      try {
- *        ...you stop services here.
- *      } catch (SomethingException) {
- *        lifecycleState = LifecycleState.ERROR;
- *      }
+ *   @Override
+ *   public LifecycleState getLifecycleState() {
+ *     return lifecycleState;
+ *   }
  *
- *      lifecycleState = LifecycleState.STOP;
- *    }
- *
- *    @Override
- *    public LifecycleState getLifecycleState() {
- *      return lifecycleState;
- *    }
- *
- *  }
- * </code>
+ * }
+ * }
+ * </pre>
  */
 @InterfaceAudience.Public
 @InterfaceStability.Stable

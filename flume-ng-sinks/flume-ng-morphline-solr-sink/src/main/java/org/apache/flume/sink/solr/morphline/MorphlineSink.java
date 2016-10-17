@@ -24,6 +24,7 @@ import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.ConfigurationException;
+import org.apache.flume.conf.LogPrivacyUtil;
 import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.sink.AbstractSink;
 import org.slf4j.Logger;
@@ -136,7 +137,10 @@ public class MorphlineSink extends AbstractSink implements Configurable {
         }
         sinkCounter.incrementEventDrainAttemptCount();
         numEventsTaken++;
-        LOGGER.debug("Flume event: {}", event);
+        if (LOGGER.isTraceEnabled() && LogPrivacyUtil.allowLogRawData()) {
+          LOGGER.trace("Flume event arrived {}", event);
+        }
+
         //StreamEvent streamEvent = createStreamEvent(event);
         handler.process(event);
         if (System.currentTimeMillis() >= batchEndTime) {
@@ -160,15 +164,15 @@ public class MorphlineSink extends AbstractSink implements Configurable {
       return numEventsTaken == 0 ? Status.BACKOFF : Status.READY;
     } catch (Throwable t) {
       // Ooops - need to rollback and back off
-      LOGGER.error("Morphline Sink " + getName() + ": Unable to process event from channel " + myChannel.getName()
-            + ". Exception follows.", t);
+      LOGGER.error("Morphline Sink " + getName() + ": Unable to process event from channel " +
+          myChannel.getName() + ". Exception follows.", t);
       try {
         if (!isMorphlineTransactionCommitted) {
           handler.rollbackTransaction();
         }
       } catch (Throwable t2) {
-        LOGGER.error("Morphline Sink " + getName() + ": Unable to rollback morphline transaction. " +
-        		"Exception follows.", t2);
+        LOGGER.error("Morphline Sink " + getName() +
+            ": Unable to rollback morphline transaction. Exception follows.", t2);
       } finally {
         try {
           txn.rollback();

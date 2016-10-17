@@ -66,6 +66,13 @@ public class TestDefaultJMSMessageConverter {
     when(message.getText()).thenReturn(TEXT);
     this.message = message;
   }
+
+  void createNullTextMessage() throws Exception {
+    TextMessage message = mock(TextMessage.class);
+    when(message.getText()).thenReturn(null);
+    this.message = message;
+  }
+
   void createBytesMessage() throws Exception {
     BytesMessage message = mock(BytesMessage.class);
     when(message.getBodyLength()).thenReturn((long)BYTES.length);
@@ -73,7 +80,7 @@ public class TestDefaultJMSMessageConverter {
       @Override
       public Integer answer(InvocationOnMock invocation) throws Throwable {
         byte[] buffer = (byte[])invocation.getArguments()[0];
-        if(buffer != null) {
+        if (buffer != null) {
           assertEquals(buffer.length, BYTES.length);
           System.arraycopy(BYTES, 0, buffer, 0, BYTES.length);
         }
@@ -117,6 +124,20 @@ public class TestDefaultJMSMessageConverter {
     assertEquals(headers, event.getHeaders());
     assertEquals(TEXT, new String(event.getBody(), Charsets.UTF_8));
   }
+
+  @Test
+  public void testNullTextMessage() throws Exception {
+    createNullTextMessage();
+    headers.put("key1", "value1");
+    headers.put("key2", "value2");
+    createHeaders();
+    Event event = converter.convert(message).iterator().next();
+    assertEquals(headers, event.getHeaders());
+    // In case of a null text message, the event's body will be empty due to
+    // SimpleEvent's body not updated with a valid text message.
+    assertEquals(event.getBody().length, 0);
+  }
+
   @Test
   public void testBytesMessage() throws Exception {
     createBytesMessage();

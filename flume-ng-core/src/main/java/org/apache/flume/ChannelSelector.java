@@ -21,7 +21,6 @@ package org.apache.flume;
 import java.util.List;
 
 import org.apache.flume.conf.Configurable;
-import org.apache.flume.conf.ConfigurableComponent;
 
 /**
  * <p>

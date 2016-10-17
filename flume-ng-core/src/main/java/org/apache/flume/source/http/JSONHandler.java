@@ -35,12 +35,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
  * JSONHandler for HTTPSource that accepts an array of events.
  *
  * This handler throws exception if the deserialization fails because of bad
  * format or any other reason.
- *
  *
  * Each event must be encoded as a map with two key-value pairs. <p> 1. headers
  * - the key for this key-value pair is "headers". The value for this key is
@@ -69,17 +67,15 @@ import org.slf4j.LoggerFactory;
  * {@linkplain Gson#toJson(java.lang.Object, java.lang.reflect.Type) }
  * method. The type token to pass as the 2nd argument of this method
  * for list of events can be created by: <p>
- *
- * Type type = new TypeToken<List<JSONEvent>>() {}.getType(); <p>
- *
+ * {@code
+ * Type type = new TypeToken<List<JSONEvent>>() {}.getType();
+ * }
  */
 
 public class JSONHandler implements HTTPSourceHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(JSONHandler.class);
-  private final Type listType =
-          new TypeToken<List<JSONEvent>>() {
-          }.getType();
+  private final Type listType = new TypeToken<List<JSONEvent>>() {}.getType();
   private final Gson gson;
 
   public JSONHandler() {
@@ -131,7 +127,7 @@ public class JSONHandler implements HTTPSourceHandler {
 
   private List<Event> getSimpleEvents(List<Event> events) {
     List<Event> newEvents = new ArrayList<Event>(events.size());
-    for(Event e:events) {
+    for (Event e:events) {
       newEvents.add(EventBuilder.withBody(e.getBody(), e.getHeaders()));
     }
     return newEvents;

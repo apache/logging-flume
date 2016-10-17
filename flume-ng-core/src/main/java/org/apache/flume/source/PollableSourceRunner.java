@@ -48,8 +48,7 @@ import org.slf4j.LoggerFactory;
  */
 public class PollableSourceRunner extends SourceRunner {
 
-  private static final Logger logger = LoggerFactory
-      .getLogger(PollableSourceRunner.class);
+  private static final Logger logger = LoggerFactory.getLogger(PollableSourceRunner.class);
 
   private AtomicBoolean shouldStop;
 
@@ -94,10 +93,7 @@ public class PollableSourceRunner extends SourceRunner {
       runnerThread.interrupt();
       runnerThread.join();
     } catch (InterruptedException e) {
-      logger
-      .warn(
-          "Interrupted while waiting for polling runner to stop. Please report this.",
-          e);
+      logger.warn("Interrupted while waiting for polling runner to stop. Please report this.", e);
       Thread.currentThread().interrupt();
     }
 

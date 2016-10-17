@@ -53,11 +53,9 @@ import org.slf4j.LoggerFactory;
  *
  * See {@link StressSource#configure(Context)} for configuration options.
  */
-public class StressSource extends AbstractPollableSource implements
-  Configurable {
+public class StressSource extends AbstractPollableSource implements Configurable {
 
-  private static final Logger logger = LoggerFactory
-      .getLogger(StressSource.class);
+  private static final Logger logger = LoggerFactory.getLogger(StressSource.class);
 
   private CounterGroup counterGroup;
   private byte[] buffer;
@@ -102,8 +100,7 @@ public class StressSource extends AbstractPollableSource implements
       //Create event objects in case of batch test
       eventBatchList = new ArrayList<Event>();
 
-      for (int i = 0; i < batchSize; i++)
-      {
+      for (int i = 0; i < batchSize; i++) {
         eventBatchList.add(EventBuilder.withBody(buffer));
       }
     } else {

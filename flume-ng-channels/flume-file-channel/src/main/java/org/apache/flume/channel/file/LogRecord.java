@@ -20,15 +20,17 @@ package org.apache.flume.channel.file;
 
 import java.util.Arrays;
 
-
 public class LogRecord implements Comparable<LogRecord> {
-  private int fileID, offset;
+  private int fileID;
+  private int offset;
   private TransactionEventRecord event;
+
   public LogRecord(int fileID, int offset, TransactionEventRecord event) {
     this.fileID = fileID;
     this.offset = offset;
     this.event = event;
   }
+
   public int getFileID() {
     return fileID;
   }
@@ -41,20 +43,16 @@ public class LogRecord implements Comparable<LogRecord> {
 
   @Override
   public int compareTo(LogRecord o) {
-    int result = new Long(event.getLogWriteOrderID())
-      .compareTo(o.getEvent().getLogWriteOrderID());
-    if(result == 0) {
+    int result = new Long(event.getLogWriteOrderID()).compareTo(o.getEvent().getLogWriteOrderID());
+    if (result == 0) {
       // oops we have hit a flume-1.2 bug. let's try and use the txid
       // to replay the events
-      result = new Long(event.getTransactionID())
-        .compareTo(o.getEvent().getTransactionID());
-      if(result == 0) {
+      result = new Long(event.getTransactionID()).compareTo(o.getEvent().getTransactionID());
+      if (result == 0) {
         // events are within the same transaction. Basically we want commit
         // and rollback to come after take and put
-        Integer thisIndex = Arrays.binarySearch(replaySortOrder,
-            event.getRecordType());
-        Integer thatIndex = Arrays.binarySearch(replaySortOrder,
-            o.getEvent().getRecordType());
+        Integer thisIndex = Arrays.binarySearch(replaySortOrder, event.getRecordType());
+        Integer thatIndex = Arrays.binarySearch(replaySortOrder, o.getEvent().getRecordType());
         return thisIndex.compareTo(thatIndex);
       }
     }

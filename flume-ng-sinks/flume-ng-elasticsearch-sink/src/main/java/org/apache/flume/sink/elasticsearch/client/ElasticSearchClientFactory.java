@@ -34,7 +34,7 @@ public class ElasticSearchClientFactory {
    * @param clientType
    *    String representation of client type
    * @param hostNames
-   *    Array of strings that represents hosntames with ports (hostname:port)
+   *    Array of strings that represents hostnames with ports (hostname:port)
    * @param clusterName
    *    Elasticsearch cluster name used only by Transport Client
    * @param serializer
@@ -63,8 +63,10 @@ public class ElasticSearchClientFactory {
    *
    * @return Local elastic search instance client
    */
-  public ElasticSearchClient getLocalClient(String clientType, ElasticSearchEventSerializer serializer,
-          ElasticSearchIndexRequestBuilderFactory indexBuilder) throws NoSuchClientTypeException {
+  public ElasticSearchClient getLocalClient(String clientType,
+                                            ElasticSearchEventSerializer serializer,
+                                            ElasticSearchIndexRequestBuilderFactory indexBuilder)
+      throws NoSuchClientTypeException {
     if (clientType.equalsIgnoreCase(TransportClient) && serializer != null) {
       return new ElasticSearchTransportClient(serializer);
     } else if (clientType.equalsIgnoreCase(TransportClient) && indexBuilder != null)  {

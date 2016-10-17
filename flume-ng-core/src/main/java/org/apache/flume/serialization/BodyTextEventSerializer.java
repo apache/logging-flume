@@ -31,8 +31,7 @@ import org.slf4j.LoggerFactory;
  */
 public class BodyTextEventSerializer implements EventSerializer {
 
-  private final static Logger logger =
-      LoggerFactory.getLogger(BodyTextEventSerializer.class);
+  private static final Logger logger = LoggerFactory.getLogger(BodyTextEventSerializer.class);
 
   // for legacy reasons, by default, append a newline to each event written out
   private final String APPEND_NEWLINE = "appendNewline";

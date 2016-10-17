@@ -51,8 +51,7 @@ public class DefaultChannelFactory implements ChannelFactory {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Class<? extends Channel> getClass(String type)
-  throws FlumeException {
+  public Class<? extends Channel> getClass(String type) throws FlumeException {
     String channelClassName = type;
     ChannelType channelType = ChannelType.OTHER;
     try {

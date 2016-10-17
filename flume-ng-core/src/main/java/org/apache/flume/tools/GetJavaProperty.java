@@ -21,7 +21,7 @@ package org.apache.flume.tools;
  * A generic way for querying Java properties.
  */
 public class GetJavaProperty {
-  public static void main(String args[]) {
+  public static void main(String[] args) {
     if (args.length == 0) {
       for (Object prop : System.getProperties().keySet()) {
         System.out.println(prop + "=" + System.getProperty((String)prop, ""));

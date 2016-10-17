@@ -33,19 +33,23 @@ public class CountingSourceRunner extends Thread {
   private final PollableSource source;
   private volatile boolean run;
   private final List<Exception> errors = Lists.newArrayList();
+
   public CountingSourceRunner(PollableSource source) {
     this(source, Integer.MAX_VALUE);
   }
+
   public CountingSourceRunner(PollableSource source, int until) {
     this(source, until, null);
   }
+
   public CountingSourceRunner(PollableSource source, Channel channel) {
     this(source, Integer.MAX_VALUE, channel);
   }
+
   public CountingSourceRunner(PollableSource source, int until, Channel channel) {
     this.source = source;
     this.until = until;
-    if(channel != null) {
+    if (channel != null) {
       ReplicatingChannelSelector selector = new ReplicatingChannelSelector();
       List<Channel> channels = Lists.newArrayList();
       channels.add(channel);
@@ -53,32 +57,37 @@ public class CountingSourceRunner extends Thread {
       this.source.setChannelProcessor(new ChannelProcessor(selector));
     }
   }
+
   @Override
   public void run() {
     run = true;
-    while(run && count < until) {
+    while (run && count < until) {
       boolean error = true;
       try {
-        if(PollableSource.Status.READY.equals(source.process())) {
+        if (PollableSource.Status.READY.equals(source.process())) {
           count++;
           error = false;
         }
-      } catch(Exception ex) {
+      } catch (Exception ex) {
         errors.add(ex);
       }
-      if(error) {
+      if (error) {
         try {
           Thread.sleep(1000L);
-        } catch (InterruptedException e) {}
+        } catch (InterruptedException e) {
+        }
       }
     }
   }
+
   public void shutdown() {
     run = false;
   }
+
   public int getCount() {
     return count;
   }
+
   public List<Exception> getErrors() {
     return errors;
   }

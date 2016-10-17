@@ -20,7 +20,7 @@ package org.apache.flume.sink.hdfs;
 
 import org.apache.flume.FlumeException;
 
-public class BucketClosedException extends FlumeException{
+public class BucketClosedException extends FlumeException {
 
   private static final long serialVersionUID = -4216667125119540357L;
 

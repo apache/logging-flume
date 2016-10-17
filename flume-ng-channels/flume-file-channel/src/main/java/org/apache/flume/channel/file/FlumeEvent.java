@@ -37,15 +37,15 @@ import org.apache.flume.Event;
  */
 class FlumeEvent implements Event, Writable {
 
-  private static final byte EVENT_MAP_TEXT_WRITABLE_ID = Byte.valueOf(Integer.valueOf(-116).byteValue());
+  private static final byte EVENT_MAP_TEXT_WRITABLE_ID =
+      Byte.valueOf(Integer.valueOf(-116).byteValue());
 
-  private static ThreadLocal<CharsetEncoder> ENCODER_FACTORY =
-      new ThreadLocal<CharsetEncoder>() {
+  private static ThreadLocal<CharsetEncoder> ENCODER_FACTORY = new ThreadLocal<CharsetEncoder>() {
     @Override
     protected CharsetEncoder initialValue() {
-      return Charset.forName("UTF-8").newEncoder().
-          onMalformedInput(CodingErrorAction.REPLACE).
-          onUnmappableCharacter(CodingErrorAction.REPLACE);
+      return Charset.forName("UTF-8").newEncoder()
+                                     .onMalformedInput(CodingErrorAction.REPLACE)
+                                     .onUnmappableCharacter(CodingErrorAction.REPLACE);
     }
   };
 
@@ -53,9 +53,9 @@ class FlumeEvent implements Event, Writable {
       new ThreadLocal<CharsetDecoder>() {
     @Override
     protected CharsetDecoder initialValue() {
-      return Charset.forName("UTF-8").newDecoder().
-          onMalformedInput(CodingErrorAction.REPLACE).
-          onUnmappableCharacter(CodingErrorAction.REPLACE);
+      return Charset.forName("UTF-8").newDecoder()
+                                     .onMalformedInput(CodingErrorAction.REPLACE)
+                                     .onUnmappableCharacter(CodingErrorAction.REPLACE);
     }
   };
 
@@ -65,6 +65,7 @@ class FlumeEvent implements Event, Writable {
   private FlumeEvent() {
     this(null, null);
   }
+
   FlumeEvent(Map<String, String> headers, byte[] body) {
     this.headers = headers;
     this.body = body;
@@ -116,13 +117,12 @@ class FlumeEvent implements Event, Writable {
         WritableUtils.writeVInt(out, valueLength );
         out.write(valueBytes.array(), 0, valueLength);
       }
-    }
-    else {
+    } else {
       out.writeInt( 0 );
     }
 
     byte[] body = getBody();
-    if(body == null) {
+    if (body == null) {
       out.writeInt(-1);
     } else {
       out.writeInt(body.length);
@@ -174,7 +174,7 @@ class FlumeEvent implements Event, Writable {
 
     byte[] body = null;
     int bodyLength = in.readInt();
-    if(bodyLength != -1) {
+    if (bodyLength != -1) {
       body = new byte[bodyLength];
       in.readFully(body);
     }

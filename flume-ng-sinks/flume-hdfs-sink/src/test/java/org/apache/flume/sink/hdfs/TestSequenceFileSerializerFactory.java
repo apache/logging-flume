@@ -47,8 +47,7 @@ public class TestSequenceFileSerializerFactory {
 
   @Test
   public void getCustomFormatter() {
-    SequenceFileSerializer formatter = SequenceFileSerializerFactory
-      .getSerializer(
+    SequenceFileSerializer formatter = SequenceFileSerializerFactory.getSerializer(
         "org.apache.flume.sink.hdfs.MyCustomSerializer$Builder", new Context());
 
     assertTrue(formatter != null);

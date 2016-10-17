@@ -67,8 +67,7 @@ public class ThriftTestingSource {
 
     @Override
     public Status append(ThriftFlumeEvent event) throws TException {
-      flumeEvents.add(EventBuilder.withBody(event.getBody(),
-        event.getHeaders()));
+      flumeEvents.add(EventBuilder.withBody(event.getBody(), event.getHeaders()));
       individualCount++;
       return Status.OK;
     }
@@ -80,8 +79,7 @@ public class ThriftTestingSource {
         incompleteBatches++;
       }
       for (ThriftFlumeEvent event : events) {
-        flumeEvents.add(EventBuilder.withBody(event.getBody(),
-          event.getHeaders()));
+        flumeEvents.add(EventBuilder.withBody(event.getBody(), event.getHeaders()));
       }
       return Status.OK;
     }
@@ -175,8 +173,7 @@ public class ThriftTestingSource {
     }
 
     @Override
-    public Status appendBatch(List<ThriftFlumeEvent> events) throws
-      TException {
+    public Status appendBatch(List<ThriftFlumeEvent> events) throws TException {
       try {
         if (delay != null) {
           TimeUnit.MILLISECONDS.sleep(delay.get());
@@ -207,8 +204,8 @@ public class ThriftTestingSource {
   }
 
   public ThriftTestingSource(String handlerName, int port, String protocol) throws Exception {
-    TNonblockingServerTransport serverTransport = new TNonblockingServerSocket(new
-      InetSocketAddress("0.0.0.0", port));
+    TNonblockingServerTransport serverTransport =
+        new TNonblockingServerSocket(new InetSocketAddress("0.0.0.0", port));
     ThriftSourceProtocol.Iface handler = getHandler(handlerName);
 
     TProtocolFactory transportProtocolFactory = null;
@@ -217,10 +214,9 @@ public class ThriftTestingSource {
     } else {
       transportProtocolFactory = new TCompactProtocol.Factory();
     }
-    server = new THsHaServer(new THsHaServer.Args
-      (serverTransport).processor(
-      new ThriftSourceProtocol.Processor(handler)).protocolFactory(
-          transportProtocolFactory));
+    server = new THsHaServer(new THsHaServer.Args(serverTransport).processor(
+        new ThriftSourceProtocol.Processor(handler)).protocolFactory(
+            transportProtocolFactory));
     Executors.newSingleThreadExecutor().submit(new Runnable() {
       @Override
       public void run() {
@@ -260,10 +256,8 @@ public class ThriftTestingSource {
     args.protocolFactory(transportProtocolFactory);
     args.inputTransportFactory(new TFastFramedTransport.Factory());
     args.outputTransportFactory(new TFastFramedTransport.Factory());
-    args.processor(new ThriftSourceProtocol
-            .Processor<ThriftSourceProtocol.Iface>(handler));
-    server = (TServer) serverClass.getConstructor(argsClass).newInstance
-            (args);
+    args.processor(new ThriftSourceProtocol.Processor<ThriftSourceProtocol.Iface>(handler));
+    server = (TServer) serverClass.getConstructor(argsClass).newInstance(args);
     Executors.newSingleThreadExecutor().submit(new Runnable() {
       @Override
       public void run() {
@@ -284,6 +278,5 @@ public class ThriftTestingSource {
   public void stop() {
     server.stop();
   }
-
 
 }

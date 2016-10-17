@@ -46,7 +46,8 @@ public class AESCTRNoPaddingProvider extends CipherProvider {
   }
 
   public static class EncryptorBuilder
-    extends CipherProvider.Encryptor.Builder<AESCTRNoPaddingEncryptor> {
+      extends CipherProvider.Encryptor.Builder<AESCTRNoPaddingEncryptor> {
+
     @Override
     public AESCTRNoPaddingEncryptor build() {
       ByteBuffer buffer = ByteBuffer.allocate(16);
@@ -58,9 +59,8 @@ public class AESCTRNoPaddingProvider extends CipherProvider {
     }
   }
 
-
   public static class DecryptorBuilder
-    extends CipherProvider.Decryptor.Builder<AESCTRNoPaddingDecryptor> {
+      extends CipherProvider.Decryptor.Builder<AESCTRNoPaddingDecryptor> {
     @Override
     public AESCTRNoPaddingDecryptor build() {
       return new AESCTRNoPaddingDecryptor(key, parameters);
@@ -70,18 +70,22 @@ public class AESCTRNoPaddingProvider extends CipherProvider {
   private static class AESCTRNoPaddingEncryptor extends Encryptor {
     private byte[] parameters;
     private Cipher cipher;
+
     private AESCTRNoPaddingEncryptor(Key key, byte[] parameters) {
       this.parameters = parameters;
       cipher = getCipher(key, Cipher.ENCRYPT_MODE, parameters);
     }
+
     @Override
     public byte[] getParameters() {
       return parameters;
     }
+
     @Override
     public String getCodec() {
       return TYPE;
     }
+
     @Override
     public byte[] encrypt(byte[] clearText) {
       return doFinal(cipher, clearText);
@@ -90,21 +94,23 @@ public class AESCTRNoPaddingProvider extends CipherProvider {
 
   private static class AESCTRNoPaddingDecryptor extends Decryptor {
     private Cipher cipher;
+
     private AESCTRNoPaddingDecryptor(Key key, byte[] parameters) {
       cipher = getCipher(key, Cipher.DECRYPT_MODE, parameters);
     }
+
     @Override
     public byte[] decrypt(byte[] cipherText) {
       return doFinal(cipher, cipherText);
     }
+
     @Override
     public String getCodec() {
       return TYPE;
     }
   }
 
-  private static byte[] doFinal(Cipher cipher, byte[] input)
-    throws DecryptionFailureException{
+  private static byte[] doFinal(Cipher cipher, byte[] input) throws DecryptionFailureException {
     try {
       return cipher.doFinal(input);
     } catch (Exception e) {

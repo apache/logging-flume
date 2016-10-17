@@ -40,8 +40,7 @@ public class MultiplexingChannelSelector extends AbstractChannelSelector {
   public static final String CONFIG_PREFIX_OPTIONAL = "optional";
 
   @SuppressWarnings("unused")
-  private static final Logger LOG = LoggerFactory
-    .getLogger(MultiplexingChannelSelector.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MultiplexingChannelSelector.class);
 
   private static final List<Channel> EMPTY_LIST =
       Collections.emptyList();
@@ -51,6 +50,7 @@ public class MultiplexingChannelSelector extends AbstractChannelSelector {
   private Map<String, List<Channel>> channelMapping;
   private Map<String, List<Channel>> optionalChannels;
   private List<Channel> defaultChannels;
+
   @Override
   public List<Channel> getRequiredChannels(Event event) {
     String headerValue = event.getHeaders().get(headerName);
@@ -74,7 +74,7 @@ public class MultiplexingChannelSelector extends AbstractChannelSelector {
     String hdr = event.getHeaders().get(headerName);
     List<Channel> channels = optionalChannels.get(hdr);
 
-    if(channels == null) {
+    if (channels == null) {
       channels = EMPTY_LIST;
     }
     return channels;
@@ -128,7 +128,7 @@ public class MultiplexingChannelSelector extends AbstractChannelSelector {
 
       List<Channel> reqdChannels = channelMapping.get(hdr);
       //Check if there are required channels, else defaults to default channels
-      if(reqdChannels == null || reqdChannels.isEmpty()) {
+      if (reqdChannels == null || reqdChannels.isEmpty()) {
         reqdChannels = defaultChannels;
       }
       for (Channel c : reqdChannels) {

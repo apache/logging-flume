@@ -99,8 +99,8 @@ class ReplayHandler {
   }
 
   ReplayHandler(FlumeEventQueue queue,
-    @Nullable KeyProvider encryptionKeyProvider,
-    boolean fsyncPerTransaction) {
+                @Nullable KeyProvider encryptionKeyProvider,
+                boolean fsyncPerTransaction) {
     this.queue = queue;
     this.lastCheckpoint = queue.getLogWriteOrderID();
     pendingTakes = Lists.newArrayList();
@@ -109,6 +109,7 @@ class ReplayHandler {
     this.encryptionKeyProvider = encryptionKeyProvider;
     this.fsyncPerTransaction = fsyncPerTransaction;
   }
+
   /**
    * Replay logic from Flume1.2 which can be activated if the v2 logic
    * is failing on ol logs for some reason.
@@ -165,9 +166,8 @@ class ReplayHandler {
               commitCount++;
               @SuppressWarnings("unchecked")
               Collection<FlumeEventPointer> pointers =
-                (Collection<FlumeEventPointer>) transactionMap.remove(trans);
-              if (((Commit) record).getType()
-                      == TransactionEventRecord.Type.TAKE.get()) {
+                  (Collection<FlumeEventPointer>) transactionMap.remove(trans);
+              if (((Commit) record).getType() == TransactionEventRecord.Type.TAKE.get()) {
                 if (inflightTakes.containsKey(trans)) {
                   if (pointers == null) {
                     pointers = Sets.newHashSet();
@@ -185,8 +185,8 @@ class ReplayHandler {
                 count += pointers.size();
               }
             } else {
-              Preconditions.checkArgument(false, "Unknown record type: "
-                + Integer.toHexString(type));
+              Preconditions.checkArgument(false,
+                                          "Unknown record type: " + Integer.toHexString(type));
             }
 
           } else {
@@ -196,8 +196,8 @@ class ReplayHandler {
         LOG.info("Replayed " + count + " from " + log);
         if (LOG.isDebugEnabled()) {
           LOG.debug("read: " + readCount + ", put: " + putCount + ", take: "
-            + takeCount + ", rollback: " + rollbackCount + ", commit: "
-            + commitCount + ", skipp: " + skipCount);
+              + takeCount + ", rollback: " + rollbackCount + ", commit: "
+              + commitCount + ", skipp: " + skipCount);
         }
       } catch (EOFException e) {
         LOG.warn("Hit EOF on " + log);
@@ -262,21 +262,20 @@ class ReplayHandler {
         LOG.info("Replaying " + log);
         try {
           LogFile.SequentialReader reader =
-            LogFileFactory.getSequentialReader(log, encryptionKeyProvider,
-              fsyncPerTransaction);
+              LogFileFactory.getSequentialReader(log, encryptionKeyProvider, fsyncPerTransaction);
           reader.skipToLastCheckpointPosition(queue.getLogWriteOrderID());
           Preconditions.checkState(!readers.containsKey(reader.getLogFileID()),
               "Readers " + readers + " already contains "
                   + reader.getLogFileID());
           readers.put(reader.getLogFileID(), reader);
           LogRecord logRecord = reader.next();
-          if(logRecord == null) {
+          if (logRecord == null) {
             readers.remove(reader.getLogFileID());
             reader.close();
           } else {
             logRecordBuffer.add(logRecord);
           }
-        } catch(EOFException e) {
+        } catch (EOFException e) {
           LOG.warn("Ignoring " + log + " due to EOF", e);
         }
       }
@@ -294,7 +293,7 @@ class ReplayHandler {
         writeOrderIDSeed = Math.max(writeOrderIDSeed,
             record.getLogWriteOrderID());
         readCount++;
-        if(readCount % 10000 == 0 && readCount > 0) {
+        if (readCount % 10000 == 0 && readCount > 0) {
           LOG.info("read: " + readCount + ", put: " + putCount + ", take: "
               + takeCount + ", rollback: " + rollbackCount + ", commit: "
               + commitCount + ", skip: " + skipCount + ", eventCount:" + count);
@@ -316,11 +315,11 @@ class ReplayHandler {
             commitCount++;
             @SuppressWarnings("unchecked")
             Collection<FlumeEventPointer> pointers =
-              (Collection<FlumeEventPointer>) transactionMap.remove(trans);
+                (Collection<FlumeEventPointer>) transactionMap.remove(trans);
             if (((Commit) record).getType()
                     == TransactionEventRecord.Type.TAKE.get()) {
               if (inflightTakes.containsKey(trans)) {
-                if(pointers == null){
+                if (pointers == null) {
                   pointers = Sets.newHashSet();
                 }
                 Set<Long> takes = inflightTakes.removeAll(trans);
@@ -350,8 +349,8 @@ class ReplayHandler {
     } finally {
       TransactionIDOracle.setSeed(transactionIDSeed);
       WriteOrderOracle.setSeed(writeOrderIDSeed);
-      for(LogFile.SequentialReader reader : readers.values()) {
-        if(reader != null) {
+      for (LogFile.SequentialReader reader : readers.values()) {
+        if (reader != null) {
           reader.close();
         }
       }
@@ -378,11 +377,11 @@ class ReplayHandler {
   }
   private LogRecord next() throws IOException, CorruptEventException {
     LogRecord resultLogRecord = logRecordBuffer.poll();
-    if(resultLogRecord != null) {
+    if (resultLogRecord != null) {
       // there is more log records to read
       LogFile.SequentialReader reader = readers.get(resultLogRecord.getFileID());
       LogRecord nextLogRecord;
-      if((nextLogRecord = reader.next()) != null) {
+      if ((nextLogRecord = reader.next()) != null) {
         logRecordBuffer.add(nextLogRecord);
       }
     }
@@ -391,7 +390,7 @@ class ReplayHandler {
   private void processCommit(short type, Collection<FlumeEventPointer> pointers) {
     if (type == TransactionEventRecord.Type.PUT.get()) {
       for (FlumeEventPointer pointer : pointers) {
-        if(!queue.addTail(pointer)) {
+        if (!queue.addTail(pointer)) {
           throw new IllegalStateException("Unable to add "
               + pointer + ". Queue depth = " + queue.getSize()
               + ", Capacity = " + queue.getCapacity());

@@ -18,7 +18,6 @@
  */
 package org.apache.flume.channel.file.encryption;
 
-
 public enum CipherProviderType {
   AESCTRNOPADDING(AESCTRNoPaddingProvider.class),
   OTHER(null);

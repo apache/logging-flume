@@ -51,7 +51,7 @@ public class DefaultPathManager implements PathManager {
     sb.append(filePrefix).append(seriesTimestamp).append("-");
     sb.append(fileIndex.incrementAndGet());
     if (extension.length() > 0) {
-        sb.append(".").append(extension);
+      sb.append(".").append(extension);
     }
     currentFile = new File(baseDirectory, sb.toString());
 

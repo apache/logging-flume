@@ -18,6 +18,11 @@
 # Give Flume more memory and pre-allocate, enable remote monitoring via JMX
 $JAVA_OPTS="-Xms100m -Xmx200m -Dcom.sun.management.jmxremote"
 
+# Let Flume write raw event data and configuration information to its log files for debugging
+# purposes. Enabling these flags is not recommended in production,
+# as it may result in logging sensitive user information or encryption secrets.
+# $JAVA_OPTS="$JAVA_OPTS -Dorg.apache.flume.log.rawdata=true -Dorg.apache.flume.log.printconfig=true "
+
 # Foll. classpath will be included in Flume's classpath.
 # Note that the Flume conf directory is always included in the classpath.
 $FLUME_CLASSPATH=""   # Example:  "path1;path2;path3"

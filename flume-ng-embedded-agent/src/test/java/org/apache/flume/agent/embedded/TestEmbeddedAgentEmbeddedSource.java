@@ -51,7 +51,6 @@ public class TestEmbeddedAgentEmbeddedSource {
   private Channel channel;
   private SinkRunner sinkRunner;
 
-
   @Before
   public void setUp() throws Exception {
 
@@ -81,26 +80,31 @@ public class TestEmbeddedAgentEmbeddedSource {
         result.put("source", sourceRunner);
         return ImmutableMap.copyOf(result);
       }
+
       @Override
       public ImmutableMap<String, SinkRunner> getSinkRunners() {
         Map<String, SinkRunner> result = Maps.newHashMap();
         result.put("sink", sinkRunner);
         return ImmutableMap.copyOf(result);
       }
+
       @Override
       public ImmutableMap<String, Channel> getChannels() {
         Map<String, Channel> result = Maps.newHashMap();
         result.put("channel", channel);
         return ImmutableMap.copyOf(result);
       }
+
       @Override
       public void addSourceRunner(String name, SourceRunner sourceRunner) {
         throw new UnsupportedOperationException();
       }
+
       @Override
       public void addSinkRunner(String name, SinkRunner sinkRunner) {
         throw new UnsupportedOperationException();
       }
+
       @Override
       public void addChannel(String name, Channel channel) {
         throw new UnsupportedOperationException();
@@ -122,7 +126,6 @@ public class TestEmbeddedAgentEmbeddedSource {
     verify(sinkRunner, times(1)).start();
   }
 
-
   @Test
   public void testStop() {
     agent.configure(properties);
@@ -138,16 +141,19 @@ public class TestEmbeddedAgentEmbeddedSource {
     doThrow(new LocalRuntimeException()).when(sourceRunner).start();
     startExpectingLocalRuntimeException();
   }
+
   @Test
   public void testStartChannelThrowsException() {
     doThrow(new LocalRuntimeException()).when(channel).start();
     startExpectingLocalRuntimeException();
   }
+
   @Test
   public void testStartSinkThrowsException() {
     doThrow(new LocalRuntimeException()).when(sinkRunner).start();
     startExpectingLocalRuntimeException();
   }
+
   private void startExpectingLocalRuntimeException() {
     agent.configure(properties);
     try {
@@ -160,9 +166,11 @@ public class TestEmbeddedAgentEmbeddedSource {
     verify(channel, times(1)).stop();
     verify(sinkRunner, times(1)).stop();
   }
+
   private static class LocalRuntimeException extends RuntimeException {
     private static final long serialVersionUID = 116546244849853151L;
   }
+
   @Test
   public void testPut() throws EventDeliveryException {
     Event event = new SimpleEvent();
@@ -171,6 +179,7 @@ public class TestEmbeddedAgentEmbeddedSource {
     agent.put(event);
     verify(source, times(1)).put(event);
   }
+
   @Test
   public void testPutAll() throws EventDeliveryException {
     Event event = new SimpleEvent();
@@ -181,12 +190,14 @@ public class TestEmbeddedAgentEmbeddedSource {
     agent.putAll(events);
     verify(source, times(1)).putAll(events);
   }
+
   @Test(expected = IllegalStateException.class)
   public void testPutNotStarted() throws EventDeliveryException {
     Event event = new SimpleEvent();
     agent.configure(properties);
     agent.put(event);
   }
+
   @Test(expected = IllegalStateException.class)
   public void testPutAllNotStarted() throws EventDeliveryException {
     Event event = new SimpleEvent();

@@ -30,9 +30,9 @@ class MockDataStream extends HDFSDataStream {
   MockDataStream(FileSystem fs) {
     this.fs = fs;
   }
+
   @Override
-  protected FileSystem getDfs(Configuration conf,
-    Path dstPath) throws IOException{
+  protected FileSystem getDfs(Configuration conf, Path dstPath) throws IOException {
     return fs;
   }
 

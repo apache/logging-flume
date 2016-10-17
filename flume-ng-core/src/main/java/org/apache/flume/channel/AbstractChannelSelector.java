@@ -73,7 +73,7 @@ public abstract class AbstractChannelSelector implements ChannelSelector {
   protected List<Channel> getChannelListFromNames(String channels,
           Map<String, Channel> channelNameMap) {
     List<Channel> configuredChannels = new ArrayList<Channel>();
-    if(channels == null || channels.isEmpty()) {
+    if (channels == null || channels.isEmpty()) {
       return configuredChannels;
     }
     String[] chNames = channels.split(" ");

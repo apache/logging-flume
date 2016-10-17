@@ -26,12 +26,17 @@ public class KafkaChannelConfiguration {
   public static final String KAFKA_CONSUMER_PREFIX = KAFKA_PREFIX + "consumer.";
   public static final String KAFKA_PRODUCER_PREFIX = KAFKA_PREFIX + "producer.";
   public static final String DEFAULT_ACKS = "all";
-  public static final String DEFAULT_KEY_SERIALIZER = "org.apache.kafka.common.serialization.StringSerializer";
-  public static final String DEFAULT_VALUE_SERIAIZER = "org.apache.kafka.common.serialization.ByteArraySerializer";
-  public static final String DEFAULT_KEY_DESERIALIZER = "org.apache.kafka.common.serialization.StringDeserializer";
-  public static final String DEFAULT_VALUE_DESERIAIZER = "org.apache.kafka.common.serialization.ByteArrayDeserializer";
+  public static final String DEFAULT_KEY_SERIALIZER =
+      "org.apache.kafka.common.serialization.StringSerializer";
+  public static final String DEFAULT_VALUE_SERIAIZER =
+      "org.apache.kafka.common.serialization.ByteArraySerializer";
+  public static final String DEFAULT_KEY_DESERIALIZER =
+      "org.apache.kafka.common.serialization.StringDeserializer";
+  public static final String DEFAULT_VALUE_DESERIAIZER =
+      "org.apache.kafka.common.serialization.ByteArrayDeserializer";
   public static final String TOPIC_CONFIG = KAFKA_PREFIX + "topic";
-  public static final String BOOTSTRAP_SERVERS_CONFIG = KAFKA_PREFIX + CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG;
+  public static final String BOOTSTRAP_SERVERS_CONFIG =
+      KAFKA_PREFIX + CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG;
   public static final String DEFAULT_TOPIC = "flume-channel";
   public static final String DEFAULT_GROUP_ID = "flume";
   public static final String POLL_TIMEOUT = KAFKA_PREFIX + "pollTimeout";
@@ -43,6 +48,12 @@ public class KafkaChannelConfiguration {
 
   public static final String PARSE_AS_FLUME_EVENT = "parseAsFlumeEvent";
   public static final boolean DEFAULT_PARSE_AS_FLUME_EVENT = true;
+
+  public static final String PARTITION_HEADER_NAME = "partitionIdHeader";
+  public static final String STATIC_PARTITION_CONF = "defaultPartitionId";
+
+  public static final String MIGRATE_ZOOKEEPER_OFFSETS = "migrateZookeeperOffsets";
+  public static final boolean DEFAULT_MIGRATE_ZOOKEEPER_OFFSETS = true;
 
   /*** Old Configuration Parameters ****/
   public static final String BROKER_LIST_KEY = "metadata.broker.list";

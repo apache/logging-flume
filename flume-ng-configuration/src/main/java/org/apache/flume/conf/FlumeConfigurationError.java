@@ -32,7 +32,7 @@ public class FlumeConfigurationError {
   public FlumeConfigurationError(String component, String key,
       FlumeConfigurationErrorType error, ErrorOrWarning err) {
     this.error = err;
-    if (component != null){
+    if (component != null) {
       this.componentName = component;
     } else {
       this.componentName = "";

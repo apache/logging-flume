@@ -18,11 +18,10 @@
  */
 package org.apache.flume.channel.file;
 
-import java.util.List;
-
+import com.google.common.collect.Lists;
 import org.apache.flume.Sink;
 
-import com.google.common.collect.Lists;
+import java.util.List;
 
 public class CountingSinkRunner extends Thread {
   private int count;
@@ -30,39 +29,46 @@ public class CountingSinkRunner extends Thread {
   private final Sink sink;
   private volatile boolean run;
   private final List<Exception> errors = Lists.newArrayList();
+
   public CountingSinkRunner(Sink sink) {
     this(sink, Integer.MAX_VALUE);
   }
+
   public CountingSinkRunner(Sink sink, int until) {
     this.sink = sink;
     this.until = until;
   }
+
   @Override
   public void run() {
     run = true;
-    while(run && count < until) {
+    while (run && count < until) {
       boolean error = true;
       try {
-        if(Sink.Status.READY.equals(sink.process())) {
+        if (Sink.Status.READY.equals(sink.process())) {
           count++;
           error = false;
         }
-      } catch(Exception ex) {
+      } catch (Exception ex) {
         errors.add(ex);
       }
-      if(error) {
+      if (error) {
         try {
           Thread.sleep(1000L);
-        } catch (InterruptedException e) {}
+        } catch (InterruptedException e) {
+        }
       }
     }
   }
+
   public void shutdown() {
     run = false;
   }
+
   public int getCount() {
     return count;
   }
+
   public List<Exception> getErrors() {
     return errors;
   }

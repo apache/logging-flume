@@ -34,8 +34,7 @@ public class TestEmbeddedAgentConfiguration {
   @Before
   public void setUp() throws Exception {
     properties = Maps.newHashMap();
-    properties.put("source.type", EmbeddedAgentConfiguration.
-        SOURCE_TYPE_EMBEDDED);
+    properties.put("source.type", EmbeddedAgentConfiguration.SOURCE_TYPE_EMBEDDED);
     properties.put("channel.type", "memory");
     properties.put("channel.capacity", "200");
     properties.put("sinks", "sink1 sink2");
@@ -50,27 +49,22 @@ public class TestEmbeddedAgentConfiguration {
     properties.put("source.interceptors.i1.type", "timestamp");
   }
 
-
   @Test
   public void testFullSourceType() throws Exception {
-    doTestExcepted(EmbeddedAgentConfiguration.
-        configure("test1", properties));
+    doTestExcepted(EmbeddedAgentConfiguration.configure("test1", properties));
   }
 
   @Test
   public void testMissingSourceType() throws Exception {
     Assert.assertNotNull(properties.remove("source.type"));
-    doTestExcepted(EmbeddedAgentConfiguration.
-        configure("test1", properties));
+    doTestExcepted(EmbeddedAgentConfiguration.configure("test1", properties));
   }
 
   @Test
   public void testShortSourceType() throws Exception {
     properties.put("source.type", "EMBEDDED");
-    doTestExcepted(EmbeddedAgentConfiguration.
-        configure("test1", properties));
+    doTestExcepted(EmbeddedAgentConfiguration.configure("test1", properties));
   }
-
 
   public void doTestExcepted(Map<String, String> actual) throws Exception {
     Map<String, String> expected = Maps.newHashMap();
@@ -91,8 +85,8 @@ public class TestEmbeddedAgentConfiguration {
     expected.put("test1.sinks.sink2.type", "avro");
     expected.put("test1.sources", "source-test1");
     expected.put("test1.sources.source-test1.channels", "channel-test1");
-    expected.put("test1.sources.source-test1.type", EmbeddedAgentConfiguration.
-        SOURCE_TYPE_EMBEDDED);
+    expected.put("test1.sources.source-test1.type",
+                 EmbeddedAgentConfiguration.SOURCE_TYPE_EMBEDDED);
     expected.put("test1.sources.source-test1.interceptors", "i1");
     expected.put("test1.sources.source-test1.interceptors.i1.type", "timestamp");
     Assert.assertEquals(expected, actual);

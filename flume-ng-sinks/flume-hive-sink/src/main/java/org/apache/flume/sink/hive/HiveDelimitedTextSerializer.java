@@ -18,7 +18,6 @@
 
 package org.apache.flume.sink.hive;
 
-
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.hive.hcatalog.streaming.DelimitedInputWriter;
@@ -60,12 +59,11 @@ public class HiveDelimitedTextSerializer implements HiveEventSerializer  {
 
   @Override
   public RecordWriter createRecordWriter(HiveEndPoint endPoint)
-          throws StreamingException, IOException, ClassNotFoundException {
+      throws StreamingException, IOException, ClassNotFoundException {
     if (serdeSeparator == null) {
       return new DelimitedInputWriter(fieldToColMapping, delimiter, endPoint);
     }
-    return new DelimitedInputWriter(fieldToColMapping, delimiter, endPoint, null
-            , serdeSeparator);
+    return new DelimitedInputWriter(fieldToColMapping, delimiter, endPoint, null, serdeSeparator);
   }
 
   @Override
@@ -90,8 +88,8 @@ public class HiveDelimitedTextSerializer implements HiveEventSerializer  {
       return null;
     }
     if (delimiter.charAt(0) == '"'  &&
-         delimiter.charAt(delimiter.length()-1) == '"') {
-      return delimiter.substring(1,delimiter.length()-1);
+        delimiter.charAt(delimiter.length() - 1) == '"') {
+      return delimiter.substring(1,delimiter.length() - 1);
     }
     return delimiter;
   }
@@ -105,9 +103,9 @@ public class HiveDelimitedTextSerializer implements HiveEventSerializer  {
       return separatorStr.charAt(0);
     }
     if (separatorStr.length() == 3    &&
-          separatorStr.charAt(2) == '\''  &&
-          separatorStr.charAt(separatorStr.length()-1) == '\'') {
-      return  separatorStr.charAt(1);
+        separatorStr.charAt(2) == '\''  &&
+        separatorStr.charAt(separatorStr.length() - 1) == '\'') {
+      return separatorStr.charAt(1);
     }
 
     throw new IllegalArgumentException("serializer.serdeSeparator spec is invalid " +

@@ -29,6 +29,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
+import org.apache.flume.conf.LogPrivacyUtil;
 import org.apache.flume.event.EventBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,7 +68,9 @@ public class BLOBHandler implements HTTPSourceHandler {
     Map<String, String[]> parameters = request.getParameterMap();
     for (String parameter : parameters.keySet()) {
       String value = parameters.get(parameter)[0];
-      LOG.debug("Setting Header [Key, Value] as [{},{}] ",parameter, value);
+      if (LOG.isDebugEnabled() && LogPrivacyUtil.allowLogRawData()) {
+        LOG.debug("Setting Header [Key, Value] as [{},{}] ", parameter, value);
+      }
       headers.put(parameter, value);
     }
 
@@ -77,7 +80,7 @@ public class BLOBHandler implements HTTPSourceHandler {
     }
 
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    try{
+    try {
       IOUtils.copy(inputStream, outputStream);
       LOG.debug("Building an Event with stream of size -- {}", outputStream.size());
       Event event = EventBuilder.withBody(outputStream.toByteArray(), headers);
@@ -85,8 +88,7 @@ public class BLOBHandler implements HTTPSourceHandler {
       List<Event> eventList = new ArrayList<Event>();
       eventList.add(event);
       return eventList;
-    }
-    finally {
+    } finally {
       outputStream.close();
       inputStream.close();
     }
@@ -94,7 +96,8 @@ public class BLOBHandler implements HTTPSourceHandler {
 
   @Override
   public void configure(Context context) {
-    this.commaSeparatedHeaders = context.getString(MANDATORY_PARAMETERS, DEFAULT_MANDATORY_PARAMETERS);
+    this.commaSeparatedHeaders = context.getString(MANDATORY_PARAMETERS,
+                                                   DEFAULT_MANDATORY_PARAMETERS);
     this.mandatoryHeaders = commaSeparatedHeaders.split(PARAMETER_SEPARATOR);
   }
 

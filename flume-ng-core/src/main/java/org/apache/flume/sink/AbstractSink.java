@@ -30,7 +30,7 @@ import com.google.common.base.Preconditions;
 
 @InterfaceAudience.Public
 @InterfaceStability.Stable
-abstract public class AbstractSink implements Sink, LifecycleAware {
+public abstract class AbstractSink implements Sink, LifecycleAware {
 
   private Channel channel;
   private String name;
@@ -78,7 +78,8 @@ abstract public class AbstractSink implements Sink, LifecycleAware {
     return name;
   }
 
+  @Override
   public String toString() {
-	  return this.getClass().getName() + "{name:" + name + ", channel:" + channel.getName() + "}";
+    return this.getClass().getName() + "{name:" + name + ", channel:" + channel.getName() + "}";
   }
 }

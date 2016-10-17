@@ -99,11 +99,11 @@ public class LoadBalancingLog4jAppender extends Log4jAppender {
 
   @Override
   public synchronized void append(LoggingEvent event) {
-    if(!configured) {
+    if (!configured) {
       String errorMsg = "Flume Log4jAppender not configured correctly! Cannot" +
-        " send events to Flume.";
+          " send events to Flume.";
       LogLog.error(errorMsg);
-      if(getUnsafeMode()) {
+      if (getUnsafeMode()) {
         return;
       }
       throw new FlumeException(errorMsg);
@@ -121,10 +121,9 @@ public class LoadBalancingLog4jAppender extends Log4jAppender {
   @Override
   public void activateOptions() throws FlumeException {
     try {
-      final Properties properties = getProperties(hosts, selector,
-        maxBackoff, getTimeout());
+      final Properties properties = getProperties(hosts, selector, maxBackoff, getTimeout());
       rpcClient = RpcClientFactory.getInstance(properties);
-      if(layout != null) {
+      if (layout != null) {
         layout.activateOptions();
       }
       configured = true;
@@ -169,14 +168,13 @@ public class LoadBalancingLog4jAppender extends Log4jAppender {
         throw new FlumeException(
             "Misconfigured max backoff, value must be greater than 0");
       }
-      props.put(RpcClientConfigurationConstants.CONFIG_BACKOFF,
-          String.valueOf(true));
+      props.put(RpcClientConfigurationConstants.CONFIG_BACKOFF, String.valueOf(true));
       props.put(RpcClientConfigurationConstants.CONFIG_MAX_BACKOFF, maxBackoff);
     }
     props.setProperty(RpcClientConfigurationConstants.CONFIG_CONNECT_TIMEOUT,
-      String.valueOf(timeout));
+                      String.valueOf(timeout));
     props.setProperty(RpcClientConfigurationConstants.CONFIG_REQUEST_TIMEOUT,
-      String.valueOf(timeout));
+                      String.valueOf(timeout));
     return props;
   }
 }

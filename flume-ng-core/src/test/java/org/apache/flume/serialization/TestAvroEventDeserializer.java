@@ -49,6 +49,7 @@ public class TestAvroEventDeserializer {
       LoggerFactory.getLogger(TestAvroEventDeserializer.class);
 
   private static final Schema schema;
+
   static {
     schema = Schema.createRecord("MyRecord", "", "org.apache.flume",  false);
     Schema.Field field = new Schema.Field("foo",

@@ -133,7 +133,8 @@ import java.nio.charset.Charset;
  * </tr>
  * <tr>
  * <td><tt>batchTimeout</tt></td>
- * <td>Amount of time (in milliseconds) to wait, if the buffer size was not reached, before data is pushed downstream.</td>
+ * <td>Amount of time (in milliseconds) to wait, if the buffer size was not reached,
+ *     before data is pushed downstream.</td>
  * <td>long</td>
  * <td>3000</td>
  * </tr>
@@ -145,11 +146,9 @@ import java.nio.charset.Charset;
  * TODO
  * </p>
  */
-public class ExecSource extends AbstractSource implements EventDrivenSource,
-Configurable {
+public class ExecSource extends AbstractSource implements EventDrivenSource, Configurable {
 
-  private static final Logger logger = LoggerFactory
-      .getLogger(ExecSource.class);
+  private static final Logger logger = LoggerFactory.getLogger(ExecSource.class);
 
   private String shell;
   private String command;
@@ -190,7 +189,7 @@ Configurable {
   @Override
   public void stop() {
     logger.info("Stopping exec source with command:{}", command);
-    if(runner != null) {
+    if (runner != null) {
       runner.setRestart(false);
       runner.kill();
     }
@@ -298,7 +297,7 @@ Configurable {
                 "timedFlushExecService" +
                 Thread.currentThread().getId() + "-%d").build());
         try {
-          if(shell != null) {
+          if (shell != null) {
             String[] commandArgs = formulateShellCommand(shell, command);
             process = Runtime.getRuntime().exec(commandArgs);
           }  else {
@@ -320,14 +319,14 @@ Configurable {
               public void run() {
                 try {
                   synchronized (eventList) {
-                    if(!eventList.isEmpty() && timeout()) {
+                    if (!eventList.isEmpty() && timeout()) {
                       flushEventBatch(eventList);
                     }
                   }
                 } catch (Exception e) {
                   logger.error("Exception occured when processing event batch", e);
-                  if(e instanceof InterruptedException) {
-                      Thread.currentThread().interrupt();
+                  if (e instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
                   }
                 }
               }
@@ -338,20 +337,20 @@ Configurable {
             synchronized (eventList) {
               sourceCounter.incrementEventReceivedCount();
               eventList.add(EventBuilder.withBody(line.getBytes(charset)));
-              if(eventList.size() >= bufferCount || timeout()) {
+              if (eventList.size() >= bufferCount || timeout()) {
                 flushEventBatch(eventList);
               }
             }
           }
 
           synchronized (eventList) {
-              if(!eventList.isEmpty()) {
-                flushEventBatch(eventList);
-              }
+            if (!eventList.isEmpty()) {
+              flushEventBatch(eventList);
+            }
           }
         } catch (Exception e) {
           logger.error("Failed while running command: " + command, e);
-          if(e instanceof InterruptedException) {
+          if (e instanceof InterruptedException) {
             Thread.currentThread().interrupt();
           }
         } finally {
@@ -364,7 +363,7 @@ Configurable {
           }
           exitCode = String.valueOf(kill());
         }
-        if(restart) {
+        if (restart) {
           logger.info("Restarting in {}ms, exit code {}", restartThrottle,
               exitCode);
           try {
@@ -375,17 +374,17 @@ Configurable {
         } else {
           logger.info("Command [" + command + "] exited with " + exitCode);
         }
-      } while(restart);
+      } while (restart);
     }
 
-    private void flushEventBatch(List<Event> eventList){
+    private void flushEventBatch(List<Event> eventList) {
       channelProcessor.processEventBatch(eventList);
       sourceCounter.addToEventAcceptedCount(eventList.size());
       eventList.clear();
       lastPushToChannel = systemClock.currentTimeMillis();
     }
 
-    private boolean timeout(){
+    private boolean timeout() {
       return (systemClock.currentTimeMillis() - lastPushToChannel) >= batchTimeout;
     }
 
@@ -398,7 +397,7 @@ Configurable {
     }
 
     public int kill() {
-      if(process != null) {
+      if (process != null) {
         synchronized (process) {
           process.destroy();
 
@@ -407,7 +406,7 @@ Configurable {
 
             // Stop the Thread that flushes periodically
             if (future != null) {
-                future.cancel(true);
+              future.cancel(true);
             }
 
             if (timedFlushService != null) {
@@ -417,7 +416,7 @@ Configurable {
                   timedFlushService.awaitTermination(500, TimeUnit.MILLISECONDS);
                 } catch (InterruptedException e) {
                   logger.debug("Interrupted while waiting for exec executor service "
-                    + "to stop. Just exiting.");
+                      + "to stop. Just exiting.");
                   Thread.currentThread().interrupt();
                 }
               }
@@ -435,6 +434,7 @@ Configurable {
       this.restart = restart;
     }
   }
+
   private static class StderrReader extends Thread {
     private BufferedReader input;
     private boolean logStderr;
@@ -449,8 +449,8 @@ Configurable {
       try {
         int i = 0;
         String line = null;
-        while((line = input.readLine()) != null) {
-          if(logStderr) {
+        while ((line = input.readLine()) != null) {
+          if (logStderr) {
             // There is no need to read 'line' with a charset
             // as we do not to propagate it.
             // It is in UTF-16 and would be printed in UTF-8 format.
@@ -461,7 +461,7 @@ Configurable {
         logger.info("StderrLogger exiting", e);
       } finally {
         try {
-          if(input != null) {
+          if (input != null) {
             input.close();
           }
         } catch (IOException ex) {

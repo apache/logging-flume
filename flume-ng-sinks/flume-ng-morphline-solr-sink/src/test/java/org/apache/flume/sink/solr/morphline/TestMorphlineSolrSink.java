@@ -87,8 +87,7 @@ public class TestMorphlineSolrSink extends SolrTestCaseJ4 {
     initCore(
         RESOURCES_DIR + "/solr/collection1/conf/solrconfig.xml", 
         RESOURCES_DIR + "/solr/collection1/conf/schema.xml",
-        RESOURCES_DIR + "/solr"
-        );
+        RESOURCES_DIR + "/solr");
   }
 
   @Before
@@ -139,9 +138,9 @@ public class TestMorphlineSolrSink extends SolrTestCaseJ4 {
     int batchSize = SEQ_NUM2.incrementAndGet() % 2 == 0 ? 100 : 1;
     DocumentLoader testServer = new SolrServerDocumentLoader(solrServer, batchSize);
     MorphlineContext solrMorphlineContext = new SolrMorphlineContext.Builder()
-      .setDocumentLoader(testServer)
-      .setExceptionHandler(new FaultTolerance(false, false, SolrServerException.class.getName()))
-      .setMetricRegistry(new MetricRegistry()).build();
+        .setDocumentLoader(testServer)
+        .setExceptionHandler(new FaultTolerance(false, false, SolrServerException.class.getName()))
+        .setMetricRegistry(new MetricRegistry()).build();
     
     MorphlineHandlerImpl impl = new MorphlineHandlerImpl();
     impl.setMorphlineContext(solrMorphlineContext);
@@ -302,9 +301,11 @@ public class TestMorphlineSolrSink extends SolrTestCaseJ4 {
     QueryResponse rsp = query("*:*");
     Iterator<SolrDocument> iter = rsp.getResults().iterator();
     ListMultimap<String, String> expectedFieldValues;
-    expectedFieldValues = ImmutableListMultimap.of("id", "1234567890", "text", "sample tweet one", "user_screen_name", "fake_user1");
+    expectedFieldValues = ImmutableListMultimap.of("id", "1234567890", "text", "sample tweet one",
+                                                   "user_screen_name", "fake_user1");
     assertEquals(expectedFieldValues, next(iter));
-    expectedFieldValues = ImmutableListMultimap.of("id", "2345678901", "text", "sample tweet two", "user_screen_name", "fake_user2");  
+    expectedFieldValues = ImmutableListMultimap.of("id", "2345678901", "text", "sample tweet two",
+                                                   "user_screen_name", "fake_user2");
     assertEquals(expectedFieldValues, next(iter));
     assertFalse(iter.hasNext());
   }
@@ -398,8 +399,8 @@ public class TestMorphlineSolrSink extends SolrTestCaseJ4 {
     
     float secs = (System.currentTimeMillis() - startTime) / 1000.0f;
     long numDocs = queryResultSetSize("*:*");
-    LOGGER.info("Took secs: " + secs + ", iters/sec: " + (iters/secs));
-    LOGGER.info("Took secs: " + secs + ", docs/sec: " + (numDocs/secs));
+    LOGGER.info("Took secs: " + secs + ", iters/sec: " + (iters / secs));
+    LOGGER.info("Took secs: " + secs + ", docs/sec: " + (numDocs / secs));
     LOGGER.info("Iterations: " + iters + ", numDocs: " + numDocs);
     LOGGER.info("sink: ", sink);
   }

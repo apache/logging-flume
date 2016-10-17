@@ -75,7 +75,7 @@ public class TestSyslogAvroEventSerializer {
   public void test() throws FileNotFoundException, IOException {
     // Snappy currently broken on Mac in OpenJDK 7 per FLUME-2012
     Assume.assumeTrue(!"Mac OS X".equals(System.getProperty("os.name")) ||
-      !System.getProperty("java.version").startsWith("1.7."));
+                      !System.getProperty("java.version").startsWith("1.7."));
 
     //Schema schema = new Schema.Parser().parse(schemaFile);
 

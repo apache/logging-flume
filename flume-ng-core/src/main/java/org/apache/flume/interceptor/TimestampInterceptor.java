@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
+
 import static org.apache.flume.interceptor.TimestampInterceptor.Constants.*;
 
 /**

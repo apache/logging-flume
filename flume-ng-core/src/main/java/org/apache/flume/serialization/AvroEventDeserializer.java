@@ -52,8 +52,7 @@ import java.util.Locale;
  */
 public class AvroEventDeserializer implements EventDeserializer {
 
-  private static final Logger logger = LoggerFactory.getLogger
-      (AvroEventDeserializer.class);
+  private static final Logger logger = LoggerFactory.getLogger(AvroEventDeserializer.class);
 
   private final AvroSchemaType schemaType;
   private final ResettableInputStream ris;
@@ -180,8 +179,8 @@ public class AvroEventDeserializer implements EventDeserializer {
   }
 
   private static class SeekableResettableInputBridge implements SeekableInput {
-
     ResettableInputStream ris;
+
     public SeekableResettableInputBridge(ResettableInputStream ris) {
       this.ris = ris;
     }

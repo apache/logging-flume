@@ -127,7 +127,6 @@ public class DerbySchemaHandler implements SchemaHandler {
   private static final Logger LOGGER =
       LoggerFactory.getLogger(DerbySchemaHandler.class);
 
-
   private static final String QUREY_SYSCHEMA_FLUME
       = "SELECT SCHEMAID FROM SYS.SYSSCHEMAS WHERE SCHEMANAME = 'FLUME'";
 
@@ -613,15 +612,15 @@ public class DerbySchemaHandler implements SchemaHandler {
 
       // Persist the payload spill
       if (hasSpillPayload) {
-         spillEventStmt = connection.prepareStatement(STMT_INSERT_EVENT_SPILL);
-         spillEventStmt.setLong(1, eventId);
-         spillEventStmt.setBinaryStream(2,
-             new ByteArrayInputStream(spillPayload), spillPayload.length);
-         int spillEventCount = spillEventStmt.executeUpdate();
-         if (spillEventCount != 1) {
-           throw new JdbcChannelException("Invalid update count on spill "
-               + "event insert: " + spillEventCount);
-         }
+        spillEventStmt = connection.prepareStatement(STMT_INSERT_EVENT_SPILL);
+        spillEventStmt.setLong(1, eventId);
+        spillEventStmt.setBinaryStream(2,
+            new ByteArrayInputStream(spillPayload), spillPayload.length);
+        int spillEventCount = spillEventStmt.executeUpdate();
+        if (spillEventCount != 1) {
+          throw new JdbcChannelException("Invalid update count on spill "
+              + "event insert: " + spillEventCount);
+        }
       }
 
       // Persist the headers
@@ -645,8 +644,7 @@ public class DerbySchemaHandler implements SchemaHandler {
 
           int updateCount = baseHeaderStmt.executeUpdate();
           if (updateCount != 1) {
-             throw new JdbcChannelException("Unexpected update header count: "
-                 + updateCount);
+            throw new JdbcChannelException("Unexpected update header count: " + updateCount);
           }
           ResultSet headerIdResultSet = baseHeaderStmt.getGeneratedKeys();
           if (!headerIdResultSet.next()) {
@@ -705,7 +703,7 @@ public class DerbySchemaHandler implements SchemaHandler {
           headerValueSpillStmt =
               connection.prepareStatement(STMT_INSERT_HEADER_VALUE_SPILL);
 
-          for(HeaderEntry entry : headerWithValueSpill) {
+          for (HeaderEntry entry : headerWithValueSpill) {
             String valueSpill = entry.getValue().getSpill();
 
             headerValueSpillStmt.setLong(1, entry.getId());

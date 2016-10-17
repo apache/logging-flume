@@ -34,8 +34,7 @@ import org.hbase.async.PutRequest;
  * of this interface is expected by the {@linkplain AsyncHBaseSink} to serialize
  * the events.
  */
-public interface AsyncHbaseEventSerializer extends Configurable,
-ConfigurableComponent {
+public interface AsyncHbaseEventSerializer extends Configurable, ConfigurableComponent {
 
   /**
    * Initialize the event serializer.
@@ -47,7 +46,7 @@ ConfigurableComponent {
   public void initialize(byte[] table, byte[] cf);
 
   /**
-   * @param Event to be written to HBase.
+   * @param event Event to be written to HBase
    */
   public void setEvent(Event event);
 

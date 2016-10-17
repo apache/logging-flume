@@ -25,7 +25,6 @@ import org.apache.flume.Context;
 
 import static org.apache.flume.sink.kite.DatasetSinkConstants.*;
 
-
 public class EntityParserFactory {
 
   public EntityParser<GenericRecord> newParser(Schema datasetSchema, Context config) {

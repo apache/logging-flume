@@ -23,8 +23,8 @@ package org.apache.flume;
  */
 public class SystemClock implements Clock {
 
-    public long currentTimeMillis() {
-        return System.currentTimeMillis();
-    }
+  public long currentTimeMillis() {
+    return System.currentTimeMillis();
+  }
 
 }

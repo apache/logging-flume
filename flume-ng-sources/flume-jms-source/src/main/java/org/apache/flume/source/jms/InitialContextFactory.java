@@ -22,7 +22,6 @@ import java.util.Properties;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
-
 public class InitialContextFactory {
 
   public InitialContext create(Properties properties) throws NamingException {

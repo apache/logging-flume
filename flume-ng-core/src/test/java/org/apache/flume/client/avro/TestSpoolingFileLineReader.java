@@ -420,7 +420,10 @@ public class TestSpoolingFileLineReader {
                 "file1line5\nfile1line6\nfile1line7\nfile1line8\n",
                 f2, Charsets.UTF_8);
 
-    // Expect to skip over first file
+    // Skip over first file, which is empty, and will return an empty event.
+    Event event = parser.readEvent();
+    assertEquals(0, event.getBody().length);
+
     List<String> out = bodiesAsStrings(parser.readEvents(8));
 
     parser.commit();

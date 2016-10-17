@@ -92,13 +92,10 @@ public abstract class JMSMessageConsumerTestBase {
       }
     });
     when(message.getText()).thenReturn(TEXT);
-    when(connectionFactory.createConnection(USERNAME, PASSWORD)).
-      thenReturn(connection);
-    when(connection.createSession(true, Session.SESSION_TRANSACTED)).
-      thenReturn(session);
+    when(connectionFactory.createConnection(USERNAME, PASSWORD)).thenReturn(connection);
+    when(connection.createSession(true, Session.SESSION_TRANSACTED)).thenReturn(session);
     when(session.createQueue(destinationName)).thenReturn(queue);
-    when(session.createConsumer(any(Destination.class), anyString()))
-      .thenReturn(messageConsumer);
+    when(session.createConsumer(any(Destination.class), anyString())).thenReturn(messageConsumer);
     when(messageConsumer.receiveNoWait()).thenReturn(message);
     when(messageConsumer.receive(anyLong())).thenReturn(message);
     destinationName = DESTINATION_NAME;
@@ -127,7 +124,7 @@ public abstract class JMSMessageConsumerTestBase {
 
   }
   void assertBodyIsExpected(List<Event> events) {
-    for(Event event : events) {
+    for (Event event : events) {
       assertEquals(TEXT, new String(event.getBody(), Charsets.UTF_8));
     }
   }
@@ -140,7 +137,7 @@ public abstract class JMSMessageConsumerTestBase {
   @After
   public void tearDown() throws Exception {
     beforeTearDown();
-    if(consumer != null) {
+    if (consumer != null) {
       consumer.close();
     }
     afterTearDown();

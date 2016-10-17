@@ -23,7 +23,6 @@ import org.apache.flume.instrumentation.ChannelCounter;
 public class KafkaChannelCounter extends ChannelCounter
     implements KafkaChannelCounterMBean {
 
-
   private static final String TIMER_KAFKA_EVENT_GET =
       "channel.kafka.event.get.time";
 
@@ -36,12 +35,9 @@ public class KafkaChannelCounter extends ChannelCounter
   private static final String COUNT_ROLLBACK =
       "channel.rollback.count";
 
-
   private static String[] ATTRIBUTES = {
-      TIMER_KAFKA_COMMIT,TIMER_KAFKA_EVENT_SEND,TIMER_KAFKA_EVENT_GET,
-      COUNT_ROLLBACK
+    TIMER_KAFKA_COMMIT,TIMER_KAFKA_EVENT_SEND,TIMER_KAFKA_EVENT_GET, COUNT_ROLLBACK
   };
-
 
   public KafkaChannelCounter(String name) {
     super(name,ATTRIBUTES);

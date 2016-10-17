@@ -18,7 +18,6 @@
 package org.apache.flume.interceptor;
 
 import junit.framework.Assert;
-
 import org.apache.flume.Context;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -29,7 +28,8 @@ public class TestRegexExtractorInterceptorMillisSerializer {
   @Test
   public void shouldRequirePatternInConfiguration() {
     try {
-      RegexExtractorInterceptorMillisSerializer fixture = new RegexExtractorInterceptorMillisSerializer();
+      RegexExtractorInterceptorMillisSerializer fixture =
+          new RegexExtractorInterceptorMillisSerializer();
       fixture.configure(new Context());
       Assert.fail();
     } catch (IllegalArgumentException ex) {
@@ -40,7 +40,8 @@ public class TestRegexExtractorInterceptorMillisSerializer {
   @Test
   public void shouldRequireValidPatternInConfiguration() {
     try {
-      RegexExtractorInterceptorMillisSerializer fixture = new RegexExtractorInterceptorMillisSerializer();
+      RegexExtractorInterceptorMillisSerializer fixture =
+          new RegexExtractorInterceptorMillisSerializer();
       Context context = new Context();
       context.put("pattern", "ABCDEFG");
       fixture.configure(context);
@@ -52,7 +53,8 @@ public class TestRegexExtractorInterceptorMillisSerializer {
 
   @Test
   public void shouldReturnMillisFromPattern() {
-    RegexExtractorInterceptorMillisSerializer fixture = new RegexExtractorInterceptorMillisSerializer();
+    RegexExtractorInterceptorMillisSerializer fixture =
+        new RegexExtractorInterceptorMillisSerializer();
     Context context = new Context();
     String pattern = "yyyy-MM-dd HH:mm:ss";
     context.put("pattern", pattern);

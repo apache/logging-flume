@@ -71,8 +71,9 @@ public class LoggerSink extends AbstractSink implements Configurable {
       try {
         maxBytesToLog = Integer.parseInt(strMaxBytes);
       } catch (NumberFormatException e) {
-        logger.warn(String.format("Unable to convert %s to integer, using default value(%d) for maxByteToDump",
-                strMaxBytes, DEFAULT_MAX_BYTE_DUMP));
+        logger.warn(String.format(
+            "Unable to convert %s to integer, using default value(%d) for maxByteToDump",
+            strMaxBytes, DEFAULT_MAX_BYTE_DUMP));
         maxBytesToLog = DEFAULT_MAX_BYTE_DUMP;
       }
     }

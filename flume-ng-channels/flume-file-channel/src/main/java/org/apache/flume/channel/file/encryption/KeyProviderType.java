@@ -18,7 +18,6 @@
  */
 package org.apache.flume.channel.file.encryption;
 
-
 public enum KeyProviderType {
   JCEKSFILE(JCEFileKeyProvider.Builder.class),
   OTHER(null);

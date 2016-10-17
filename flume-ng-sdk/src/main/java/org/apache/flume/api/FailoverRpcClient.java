@@ -70,7 +70,7 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
   //since shared data structures are created here.
   private synchronized void configureHosts(Properties properties)
       throws FlumeException {
-    if(isActive){
+    if (isActive) {
       logger.error("This client was already configured, " +
           "cannot reconfigure.");
       throw new FlumeException("This client was already configured, " +
@@ -79,7 +79,7 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
     hosts = HostInfo.getHostInfoList(properties);
     String tries = properties.getProperty(
         RpcClientConfigurationConstants.CONFIG_MAX_ATTEMPTS);
-    if (tries == null || tries.isEmpty()){
+    if (tries == null || tries.isEmpty()) {
       maxTries = hosts.size();
     } else {
       try {
@@ -269,7 +269,7 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
         continue;
       }
     }
-    for(int count = 0; count <= lastCheckedhost; count++) {
+    for (int count = 0; count <= lastCheckedhost; count++) {
       HostInfo hostInfo = hosts.get(count);
       try {
         setDefaultProperties(hostInfo, props);

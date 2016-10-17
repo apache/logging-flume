@@ -97,8 +97,10 @@ public class MorphlineHandlerImpl implements MorphlineHandler {
         .build();
     }
     
-    Config override = ConfigFactory.parseMap(context.getSubProperties(MORPHLINE_VARIABLE_PARAM + "."));
-    morphline = new Compiler().compile(new File(morphlineFile), morphlineId, morphlineContext, finalChild, override);      
+    Config override = ConfigFactory.parseMap(
+        context.getSubProperties(MORPHLINE_VARIABLE_PARAM + "."));
+    morphline = new Compiler().compile(
+        new File(morphlineFile), morphlineId, morphlineContext, finalChild, override);
     
     this.mappingTimer = morphlineContext.getMetricRegistry().timer(
         MetricRegistry.name("morphline.app", Metrics.ELAPSED_TIME));

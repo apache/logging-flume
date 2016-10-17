@@ -18,6 +18,12 @@
  */
 package org.apache.flume.channel.file;
 
+import com.google.common.base.Preconditions;
+import com.google.protobuf.InvalidProtocolBufferException;
+import org.apache.flume.channel.file.proto.ProtosFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -26,50 +32,42 @@ import java.io.RandomAccessFile;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.flume.channel.file.proto.ProtosFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Preconditions;
-import com.google.protobuf.InvalidProtocolBufferException;
-
 final class EventQueueBackingStoreFileV3 extends EventQueueBackingStoreFile {
-  private static final Logger LOG = LoggerFactory
-      .getLogger(EventQueueBackingStoreFileV3.class);
+  private static final Logger LOG = LoggerFactory.getLogger(EventQueueBackingStoreFileV3.class);
   private final File metaDataFile;
 
   EventQueueBackingStoreFileV3(File checkpointFile, int capacity,
-      String name) throws IOException, BadCheckpointException {
+                               String name) throws IOException, BadCheckpointException {
     this(checkpointFile, capacity, name, null, false, false);
   }
 
   EventQueueBackingStoreFileV3(File checkpointFile, int capacity,
-      String name, File checkpointBackupDir,
-      boolean backupCheckpoint, boolean compressBackup)
+                               String name, File checkpointBackupDir,
+                               boolean backupCheckpoint, boolean compressBackup)
       throws IOException, BadCheckpointException {
     super(capacity, name, checkpointFile, checkpointBackupDir, backupCheckpoint,
-      compressBackup);
+        compressBackup);
     Preconditions.checkArgument(capacity > 0,
         "capacity must be greater than 0 " + capacity);
     metaDataFile = Serialization.getMetaDataFile(checkpointFile);
     LOG.info("Starting up with " + checkpointFile + " and " + metaDataFile);
-    if(metaDataFile.exists()) {
+    if (metaDataFile.exists()) {
       FileInputStream inputStream = new FileInputStream(metaDataFile);
       try {
         LOG.info("Reading checkpoint metadata from " + metaDataFile);
         ProtosFactory.Checkpoint checkpoint =
             ProtosFactory.Checkpoint.parseDelimitedFrom(inputStream);
-        if(checkpoint == null) {
+        if (checkpoint == null) {
           throw new BadCheckpointException("The checkpoint metadata file does "
-                  + "not exist or has zero length");
+              + "not exist or has zero length");
         }
         int version = checkpoint.getVersion();
-        if(version != getVersion()) {
+        if (version != getVersion()) {
           throw new BadCheckpointException("Invalid version: " + version +
-                  " " + name + ", expected " + getVersion());
+              " " + name + ", expected " + getVersion());
         }
         long logWriteOrderID = checkpoint.getWriteOrderID();
-        if(logWriteOrderID != getCheckpointLogWriteOrderID()) {
+        if (logWriteOrderID != getCheckpointLogWriteOrderID()) {
           String msg = "Checkpoint and Meta files have differing " +
               "logWriteOrderIDs " + getCheckpointLogWriteOrderID() + ", and "
               + logWriteOrderID;
@@ -80,15 +78,15 @@ final class EventQueueBackingStoreFileV3 extends EventQueueBackingStoreFile {
         setLogWriteOrderID(logWriteOrderID);
         setSize(checkpoint.getQueueSize());
         setHead(checkpoint.getQueueHead());
-        for(ProtosFactory.ActiveLog activeLog : checkpoint.getActiveLogsList()) {
+        for (ProtosFactory.ActiveLog activeLog : checkpoint.getActiveLogsList()) {
           Integer logFileID = activeLog.getLogFileID();
           Integer count = activeLog.getCount();
           logFileIDReferenceCounts.put(logFileID, new AtomicInteger(count));
         }
       } catch (InvalidProtocolBufferException ex) {
         throw new BadCheckpointException("Checkpoint metadata file is invalid. "
-                + "The agent might have been stopped while it was being "
-                + "written", ex);
+            + "The agent might have been stopped while it was being "
+            + "written", ex);
       } finally {
         try {
           inputStream.close();
@@ -97,7 +95,7 @@ final class EventQueueBackingStoreFileV3 extends EventQueueBackingStoreFile {
         }
       }
     } else {
-      if(backupExists(checkpointBackupDir) && shouldBackup) {
+      if (backupExists(checkpointBackupDir) && shouldBackup) {
         // If a backup exists, then throw an exception to recover checkpoint
         throw new BadCheckpointException("The checkpoint metadata file does " +
             "not exist, but a backup exists");
@@ -121,6 +119,7 @@ final class EventQueueBackingStoreFileV3 extends EventQueueBackingStoreFile {
       }
     }
   }
+
   File getMetaDataFile() {
     return metaDataFile;
   }
@@ -129,6 +128,7 @@ final class EventQueueBackingStoreFileV3 extends EventQueueBackingStoreFile {
   protected int getVersion() {
     return Serialization.VERSION_3;
   }
+
   @Override
   protected void writeCheckpointMetaData() throws IOException {
     ProtosFactory.Checkpoint.Builder checkpointBuilder =
@@ -137,14 +137,14 @@ final class EventQueueBackingStoreFileV3 extends EventQueueBackingStoreFile {
     checkpointBuilder.setQueueHead(getHead());
     checkpointBuilder.setQueueSize(getSize());
     checkpointBuilder.setWriteOrderID(getLogWriteOrderID());
-    for(Integer logFileID : logFileIDReferenceCounts.keySet()) {
+    for (Integer logFileID : logFileIDReferenceCounts.keySet()) {
       int count = logFileIDReferenceCounts.get(logFileID).get();
-      if(count != 0) {
-         ProtosFactory.ActiveLog.Builder activeLogBuilder =
-             ProtosFactory.ActiveLog.newBuilder();
-         activeLogBuilder.setLogFileID(logFileID);
-         activeLogBuilder.setCount(count);
-         checkpointBuilder.addActiveLogs(activeLogBuilder.build());
+      if (count != 0) {
+        ProtosFactory.ActiveLog.Builder activeLogBuilder =
+            ProtosFactory.ActiveLog.newBuilder();
+        activeLogBuilder.setLogFileID(logFileID);
+        activeLogBuilder.setCount(count);
+        checkpointBuilder.addActiveLogs(activeLogBuilder.build());
       }
     }
     FileOutputStream outputStream = new FileOutputStream(metaDataFile);
@@ -161,8 +161,8 @@ final class EventQueueBackingStoreFileV3 extends EventQueueBackingStoreFile {
   }
 
   static void upgrade(EventQueueBackingStoreFileV2 backingStoreV2,
-      File checkpointFile, File metaDataFile)
-          throws IOException {
+                      File checkpointFile, File metaDataFile)
+      throws IOException {
 
     int head = backingStoreV2.getHead();
     int size = backingStoreV2.getSize();
@@ -176,14 +176,14 @@ final class EventQueueBackingStoreFileV3 extends EventQueueBackingStoreFile {
     checkpointBuilder.setQueueHead(head);
     checkpointBuilder.setQueueSize(size);
     checkpointBuilder.setWriteOrderID(writeOrderID);
-    for(Integer logFileID : referenceCounts.keySet()) {
+    for (Integer logFileID : referenceCounts.keySet()) {
       int count = referenceCounts.get(logFileID).get();
-      if(count > 0) {
-         ProtosFactory.ActiveLog.Builder activeLogBuilder =
-             ProtosFactory.ActiveLog.newBuilder();
-         activeLogBuilder.setLogFileID(logFileID);
-         activeLogBuilder.setCount(count);
-         checkpointBuilder.addActiveLogs(activeLogBuilder.build());
+      if (count > 0) {
+        ProtosFactory.ActiveLog.Builder activeLogBuilder =
+            ProtosFactory.ActiveLog.newBuilder();
+        activeLogBuilder.setLogFileID(logFileID);
+        activeLogBuilder.setCount(count);
+        checkpointBuilder.addActiveLogs(activeLogBuilder.build());
       }
     }
     FileOutputStream outputStream = new FileOutputStream(metaDataFile);

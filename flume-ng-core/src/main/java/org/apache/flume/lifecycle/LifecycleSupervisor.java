@@ -36,8 +36,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 public class LifecycleSupervisor implements LifecycleAware {
 
-  private static final Logger logger = LoggerFactory
-      .getLogger(LifecycleSupervisor.class);
+  private static final Logger logger = LoggerFactory.getLogger(LifecycleSupervisor.class);
 
   private Map<LifecycleAware, Supervisoree> supervisedProcesses;
   private Map<LifecycleAware, ScheduledFuture<?>> monitorFutures;
@@ -81,15 +80,15 @@ public class LifecycleSupervisor implements LifecycleAware {
 
     if (monitorService != null) {
       monitorService.shutdown();
-      try{
+      try {
         monitorService.awaitTermination(10, TimeUnit.SECONDS);
       } catch (InterruptedException e) {
         logger.error("Interrupted while waiting for monitor service to stop");
       }
-      if(!monitorService.isTerminated()) {
+      if (!monitorService.isTerminated()) {
         monitorService.shutdownNow();
         try {
-          while(!monitorService.isTerminated()) {
+          while (!monitorService.isTerminated()) {
             monitorService.awaitTermination(10, TimeUnit.SECONDS);
           }
         } catch (InterruptedException e) {
@@ -98,8 +97,7 @@ public class LifecycleSupervisor implements LifecycleAware {
       }
     }
 
-    for (final Entry<LifecycleAware, Supervisoree> entry : supervisedProcesses
-        .entrySet()) {
+    for (final Entry<LifecycleAware, Supervisoree> entry : supervisedProcesses.entrySet()) {
 
       if (entry.getKey().getLifecycleState().equals(LifecycleState.START)) {
         entry.getValue().status.desiredState = LifecycleState.STOP;
@@ -122,9 +120,9 @@ public class LifecycleSupervisor implements LifecycleAware {
 
   public synchronized void supervise(LifecycleAware lifecycleAware,
       SupervisorPolicy policy, LifecycleState desiredState) {
-    if(this.monitorService.isShutdown()
+    if (this.monitorService.isShutdown()
         || this.monitorService.isTerminated()
-        || this.monitorService.isTerminating()){
+        || this.monitorService.isTerminating()) {
       throw new FlumeException("Supervise called on " + lifecycleAware + " " +
           "after shutdown has been initiated. " + lifecycleAware + " will not" +
           " be started");
@@ -165,8 +163,8 @@ public class LifecycleSupervisor implements LifecycleAware {
     logger.debug("Unsupervising service:{}", lifecycleAware);
 
     synchronized (lifecycleAware) {
-    Supervisoree supervisoree = supervisedProcesses.get(lifecycleAware);
-    supervisoree.status.discard = true;
+      Supervisoree supervisoree = supervisedProcesses.get(lifecycleAware);
+      supervisoree.status.discard = true;
       this.setDesiredState(lifecycleAware, LifecycleState.STOP);
       logger.info("Stopping component: {}", lifecycleAware);
       lifecycleAware.stop();
@@ -199,7 +197,7 @@ public class LifecycleSupervisor implements LifecycleAware {
     return lifecycleState;
   }
 
-  public synchronized boolean isComponentInErrorState(LifecycleAware component){
+  public synchronized boolean isComponentInErrorState(LifecycleAware component) {
     return supervisedProcesses.get(component).status.error;
 
   }
@@ -301,18 +299,18 @@ public class LifecycleSupervisor implements LifecycleAware {
             }
           }
         }
-      } catch(Throwable t) {
+      } catch (Throwable t) {
         logger.error("Unexpected error", t);
       }
       logger.debug("Status check complete");
     }
   }
 
-  private class Purger implements Runnable{
+  private class Purger implements Runnable {
 
     @Override
     public void run() {
-      if(needToPurge){
+      if (needToPurge) {
         monitorService.purge();
         needToPurge = false;
       }
@@ -338,7 +336,7 @@ public class LifecycleSupervisor implements LifecycleAware {
 
   }
 
-  public static abstract class SupervisorPolicy {
+  public abstract static class SupervisorPolicy {
 
     abstract boolean isValid(LifecycleAware object, Status status);
 
@@ -371,6 +369,5 @@ public class LifecycleSupervisor implements LifecycleAware {
     }
 
   }
-
 
 }

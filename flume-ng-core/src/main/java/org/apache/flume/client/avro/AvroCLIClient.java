@@ -98,8 +98,7 @@ public class AvroCLIClient {
         for (Map.Entry<Object, Object> propertiesEntry : properties.entrySet()) {
           String key = (String) propertiesEntry.getKey();
           String value = (String) propertiesEntry.getValue();
-          logger.debug("Inserting Header Key [" + key + "] header value [" +
-          value + "]");
+          logger.debug("Inserting Header Key [" + key + "] header value [" + value + "]");
           headers.put(key, value);
         }
       }
@@ -108,12 +107,12 @@ public class AvroCLIClient {
       return;
     } finally {
       if (fs != null) {
-       try {
-        fs.close();
-       }catch (Exception e) {
-         logger.error("Unable to close headerFile", e);
-         return;
-       }
+        try {
+          fs.close();
+        } catch (Exception e) {
+          logger.error("Unable to close headerFile", e);
+          return;
+        }
       }
     }
   }
@@ -179,7 +178,7 @@ public class AvroCLIClient {
     fileName = commandLine.getOptionValue("filename");
     dirName = commandLine.getOptionValue("dirname");
 
-    if (commandLine.hasOption("headerFile")){
+    if (commandLine.hasOption("headerFile")) {
       parseHeaders(commandLine);
     }
 

@@ -18,7 +18,6 @@
 
 package org.apache.flume.sink.hive;
 
-
 import org.apache.flume.Event;
 import org.apache.flume.conf.Configurable;
 import org.apache.hive.hcatalog.streaming.HiveEndPoint;

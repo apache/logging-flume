@@ -101,7 +101,7 @@ public class TestStressSource {
       }
       if (i < 3) {
         verify(mockProcessor,
-            times(i+1)).processEventBatch(getLastProcessedEventList(source));
+            times(i + 1)).processEventBatch(getLastProcessedEventList(source));
       } else {
         verify(mockProcessor,
             times(1)).processEventBatch(getLastProcessedEventList(source));
@@ -164,7 +164,7 @@ public class TestStressSource {
       source.process();
     }
 
-    // 1 failed call, 50 succesful
+    // 1 failed call, 50 successful
     doThrow(new ChannelException("stub")).when(
         mockProcessor).processEvent(getEvent(source));
     source.process();

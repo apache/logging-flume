@@ -89,7 +89,6 @@ public final class ConfigurationConstants {
   public static final String OLD_CONFIG_CREATE_SCHEMA =
       PREFIX + CONFIG_CREATE_SCHEMA;
 
-
   public static final String CONFIG_CREATE_INDEX = "create.index";
 
   /**

@@ -30,24 +30,23 @@ public enum Log4jAvroHeaders {
   AVRO_SCHEMA_URL("flume.avro.schema.url");
 
   private String headerName;
-  private Log4jAvroHeaders(String headerName){
+  private Log4jAvroHeaders(String headerName) {
     this.headerName = headerName;
   }
 
-  public String getName(){
+  public String getName() {
     return headerName;
   }
 
-  public String toString(){
+  public String toString() {
     return getName();
   }
 
-  public static Log4jAvroHeaders getByName(String headerName){
+  public static Log4jAvroHeaders getByName(String headerName) {
     Log4jAvroHeaders hdrs = null;
-    try{
+    try {
       hdrs = Log4jAvroHeaders.valueOf(headerName.toLowerCase(Locale.ENGLISH).trim());
-    }
-    catch(IllegalArgumentException e){
+    } catch (IllegalArgumentException e) {
       hdrs = Log4jAvroHeaders.OTHER;
     }
     return hdrs;

@@ -50,5 +50,4 @@ public class NonRecoverableEventException extends Exception {
     super(t);
   }
 
-
 }

@@ -37,6 +37,7 @@ public class IncrementAsyncHBaseSerializer implements AsyncHbaseEventSerializer 
   private byte[] cf;
   private byte[] column;
   private Event currentEvent;
+
   @Override
   public void initialize(byte[] table, byte[] cf) {
     this.table = table;
@@ -55,10 +56,9 @@ public class IncrementAsyncHBaseSerializer implements AsyncHbaseEventSerializer 
 
   @Override
   public List<AtomicIncrementRequest> getIncrements() {
-    List<AtomicIncrementRequest> incrs
-      = new ArrayList<AtomicIncrementRequest>();
+    List<AtomicIncrementRequest> incrs = new ArrayList<AtomicIncrementRequest>();
     AtomicIncrementRequest incr = new AtomicIncrementRequest(table,
-      currentEvent.getBody(), cf, column, 1);
+        currentEvent.getBody(), cf, column, 1);
     incrs.add(incr);
     return incrs;
   }

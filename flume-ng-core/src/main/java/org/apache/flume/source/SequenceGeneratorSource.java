@@ -71,7 +71,7 @@ public class SequenceGeneratorSource extends AbstractPollableSource implements
     int i = 0;
     try {
       if (batchSize <= 1) {
-        if(eventsSent < totalEvents) {
+        if (eventsSent < totalEvents) {
           getChannelProcessor().processEvent(
                   EventBuilder.withBody(String.valueOf(sequence++).getBytes()));
           sourceCounter.incrementEventAcceptedCount();
@@ -82,7 +82,7 @@ public class SequenceGeneratorSource extends AbstractPollableSource implements
       } else {
         batchArrayList.clear();
         for (i = 0; i < batchSize; i++) {
-          if(eventsSent < totalEvents){
+          if (eventsSent < totalEvents) {
             batchArrayList.add(i, EventBuilder.withBody(String
                     .valueOf(sequence++).getBytes()));
             eventsSent++;
@@ -90,7 +90,7 @@ public class SequenceGeneratorSource extends AbstractPollableSource implements
             status = Status.BACKOFF;
           }
         }
-        if(!batchArrayList.isEmpty()) {
+        if (!batchArrayList.isEmpty()) {
           getChannelProcessor().processEventBatch(batchArrayList);
           sourceCounter.incrementAppendBatchAcceptedCount();
           sourceCounter.addToEventAcceptedCount(batchArrayList.size());

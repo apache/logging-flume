@@ -51,7 +51,7 @@ public class SimpleEvent implements Event {
 
   @Override
   public void setBody(byte[] body) {
-    if(body == null){
+    if (body == null) {
       body = new byte[0];
     }
     this.body = body;

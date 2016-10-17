@@ -32,13 +32,12 @@ import org.apache.hadoop.hbase.client.Row;
  * params required should be taken through this. Only the column family is
  * passed in. The columns should exist in the table and column family
  * specified in the configuration for the HbaseSink.
- *
  */
-public interface HbaseEventSerializer extends Configurable,
-    ConfigurableComponent {
+public interface HbaseEventSerializer extends Configurable, ConfigurableComponent {
   /**
    * Initialize the event serializer.
-   * @param Event to be written to HBase.
+   * @param event Event to be written to HBase
+   * @param columnFamily Column family to write to
    */
   public void initialize(Event event, byte[] columnFamily);
 
@@ -54,10 +53,9 @@ public interface HbaseEventSerializer extends Configurable,
   public List<Row> getActions();
 
   public List<Increment> getIncrements();
+
   /*
    * Clean up any state. This will be called when the sink is being stopped.
    */
   public void close();
-
-
 }

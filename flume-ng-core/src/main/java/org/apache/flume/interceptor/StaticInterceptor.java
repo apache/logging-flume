@@ -26,8 +26,6 @@ import org.apache.flume.Event;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.apache.flume.interceptor.StaticInterceptor.Constants.*;
-
 /**
  * Interceptor class that appends a static, pre-configured header to all events.
  *
@@ -57,8 +55,7 @@ import static org.apache.flume.interceptor.StaticInterceptor.Constants.*;
  */
 public class StaticInterceptor implements Interceptor {
 
-  private static final Logger logger = LoggerFactory
-      .getLogger(StaticInterceptor.class);
+  private static final Logger logger = LoggerFactory.getLogger(StaticInterceptor.class);
 
   private final boolean preserveExisting;
   private final String key;
@@ -123,9 +120,9 @@ public class StaticInterceptor implements Interceptor {
 
     @Override
     public void configure(Context context) {
-      preserveExisting = context.getBoolean(PRESERVE, PRESERVE_DEFAULT);
-      key = context.getString(KEY, KEY_DEFAULT);
-      value = context.getString(VALUE, VALUE_DEFAULT);
+      preserveExisting = context.getBoolean(Constants.PRESERVE, Constants.PRESERVE_DEFAULT);
+      key = context.getString(Constants.KEY, Constants.KEY_DEFAULT);
+      value = context.getString(Constants.VALUE, Constants.VALUE_DEFAULT);
     }
 
     @Override
@@ -136,11 +133,9 @@ public class StaticInterceptor implements Interceptor {
       return new StaticInterceptor(preserveExisting, key, value);
     }
 
-
   }
 
   public static class Constants {
-
     public static final String KEY = "key";
     public static final String KEY_DEFAULT = "key";
 

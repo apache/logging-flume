@@ -64,7 +64,7 @@ public class LogUtils {
   static List<File> getLogs(File logDir) {
     List<File> result = Lists.newArrayList();
     File[] files = logDir.listFiles();
-    if(files == null) {
+    if (files == null) {
       String msg = logDir + ".listFiles() returned null: ";
       msg += "File = " + logDir.isFile() + ", ";
       msg += "Exists = " + logDir.exists() + ", ";

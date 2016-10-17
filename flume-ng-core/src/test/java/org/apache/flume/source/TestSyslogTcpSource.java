@@ -35,13 +35,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
 public class TestSyslogTcpSource {
   private static final org.slf4j.Logger logger =
-    LoggerFactory.getLogger(TestSyslogTcpSource.class);
+      LoggerFactory.getLogger(TestSyslogTcpSource.class);
   private SyslogTcpSource source;
   private Channel channel;
   private static final int TEST_SYSLOG_PORT = 0;
@@ -56,13 +57,13 @@ public class TestSyslogTcpSource {
   private final String bodyWithTandH = "<10>" + stamp1 + " " + host1 + " " +
       data1 + "\n";
 
-  private void init(String keepFields){
+  private void init(String keepFields) {
     source = new SyslogTcpSource();
     channel = new MemoryChannel();
 
     Configurables.configure(channel, new Context());
 
-    List<Channel> channels = new ArrayList<Channel>();
+    List<Channel> channels = new ArrayList<>();
     channels.add(channel);
 
     ChannelSelector rcs = new ReplicatingChannelSelector();
@@ -82,15 +83,14 @@ public class TestSyslogTcpSource {
     init(keepFields);
     source.start();
     // Write some message to the syslog port
-    Socket syslogSocket;
+    InetSocketAddress addr = source.getBoundAddress();
     for (int i = 0; i < 10 ; i++) {
-      syslogSocket = new Socket(
-        InetAddress.getLocalHost(), source.getSourcePort());
-      syslogSocket.getOutputStream().write(bodyWithTandH.getBytes());
-      syslogSocket.close();
+      try (Socket syslogSocket = new Socket(addr.getAddress(), addr.getPort())) {
+        syslogSocket.getOutputStream().write(bodyWithTandH.getBytes());
+      }
     }
 
-    List<Event> channelEvents = new ArrayList<Event>();
+    List<Event> channelEvents = new ArrayList<>();
     Transaction txn = channel.getTransaction();
     txn.begin();
     for (int i = 0; i < 10; i++) {
@@ -116,7 +116,7 @@ public class TestSyslogTcpSource {
       logger.info(str);
       if (keepFields.equals("true") || keepFields.equals("all")) {
         Assert.assertArrayEquals(bodyWithTandH.trim().getBytes(),
-          e.getBody());
+            e.getBody());
       } else if (keepFields.equals("false") || keepFields.equals("none")) {
         Assert.assertArrayEquals(data1.getBytes(), e.getBody());
       } else if (keepFields.equals("hostname")) {
@@ -136,7 +136,7 @@ public class TestSyslogTcpSource {
   }
 
   @Test
-  public void testRemoveFields() throws IOException{
+  public void testRemoveFields() throws IOException {
     runKeepFieldsTest("none");
 
     // Backwards compatibility
@@ -144,13 +144,20 @@ public class TestSyslogTcpSource {
   }
 
   @Test
-  public void testKeepHostname() throws IOException{
+  public void testKeepHostname() throws IOException {
     runKeepFieldsTest("hostname");
   }
 
   @Test
-  public void testKeepTimestamp() throws IOException{
+  public void testKeepTimestamp() throws IOException {
     runKeepFieldsTest("timestamp");
+  }
+
+  @Test
+  public void testSourceCounter() throws IOException {
+    runKeepFieldsTest("all");
+    Assert.assertEquals(10, source.getSourceCounter().getEventAcceptedCount());
+    Assert.assertEquals(10, source.getSourceCounter().getEventReceivedCount());
   }
 }
 

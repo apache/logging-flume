@@ -29,7 +29,7 @@ public class RoundRobinList<T> {
     iterator = this.elements.iterator();
   }
 
-  synchronized public T get() {
+  public synchronized T get() {
     if (iterator.hasNext()) {
       return iterator.next();
     } else {

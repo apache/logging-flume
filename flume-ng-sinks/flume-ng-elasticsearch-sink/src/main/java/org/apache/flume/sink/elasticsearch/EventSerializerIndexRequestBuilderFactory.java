@@ -33,7 +33,7 @@ import org.elasticsearch.common.io.BytesStream;
  * {@link ElasticSearchEventSerializer} instance configured on the sink.
  */
 public class EventSerializerIndexRequestBuilderFactory
-  extends AbstractElasticSearchIndexRequestBuilderFactory {
+    extends AbstractElasticSearchIndexRequestBuilderFactory {
 
   protected final ElasticSearchEventSerializer serializer;
 

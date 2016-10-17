@@ -43,7 +43,8 @@ public class TestMemoryChannelTransaction {
   @Test
   public void testCommit() throws InterruptedException, EventDeliveryException {
 
-    Event event, event2;
+    Event event;
+    Event event2;
     Context context = new Context();
     int putCounter = 0;
 
@@ -85,7 +86,8 @@ public class TestMemoryChannelTransaction {
   public void testRollBack() throws InterruptedException,
       EventDeliveryException {
 
-    Event event, event2;
+    Event event;
+    Event event2;
     Context context = new Context();
     int putCounter = 0;
 
@@ -158,7 +160,8 @@ public class TestMemoryChannelTransaction {
   public void testReEntTxn() throws InterruptedException,
       EventDeliveryException {
 
-    Event event, event2;
+    Event event;
+    Event event2;
     Context context = new Context();
     int putCounter = 0;
 
@@ -199,7 +202,8 @@ public class TestMemoryChannelTransaction {
   @Test
   public void testReEntTxnRollBack() throws InterruptedException,
       EventDeliveryException {
-    Event event, event2;
+    Event event;
+    Event event2;
     Context context = new Context();
     int putCounter = 0;
 

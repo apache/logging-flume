@@ -79,8 +79,7 @@ import org.slf4j.LoggerFactory;
  * The connections are intended to be opened before clients are given access so
  * that the object cannot ever be in an inconsistent when exposed to users.
  */
-public class NettyAvroRpcClient extends AbstractRpcClient
-implements RpcClient {
+public class NettyAvroRpcClient extends AbstractRpcClient implements RpcClient {
 
   private ExecutorService callTimeoutPool;
   private final ReentrantLock stateLock = new ReentrantLock();
@@ -135,11 +134,11 @@ implements RpcClient {
     try {
 
       ExecutorService bossExecutor =
-        Executors.newCachedThreadPool(new TransceiverThreadFactory(
-          "Avro " + NettyTransceiver.class.getSimpleName() + " Boss"));
+          Executors.newCachedThreadPool(new TransceiverThreadFactory(
+              "Avro " + NettyTransceiver.class.getSimpleName() + " Boss"));
       ExecutorService workerExecutor =
-        Executors.newCachedThreadPool(new TransceiverThreadFactory(
-          "Avro " + NettyTransceiver.class.getSimpleName() + " I/O Worker"));
+          Executors.newCachedThreadPool(new TransceiverThreadFactory(
+              "Avro " + NettyTransceiver.class.getSimpleName() + " I/O Worker"));
 
       if (enableDeflateCompression || enableSsl) {
         if (maxIoWorkers >= 1) {
@@ -468,7 +467,7 @@ implements RpcClient {
   }
 
 
-    /**
+  /**
    * <p>
    * Configure the actual client using the properties.
    * <tt>properties</tt> should have at least 2 params:
@@ -479,13 +478,13 @@ implements RpcClient {
    * <tt>batch-size</tt> = <i>batchSize</i>
    * @param properties The properties to instantiate the client with.
    * @return
-     */
+   */
   @Override
   public synchronized void configure(Properties properties)
       throws FlumeException {
     stateLock.lock();
-    try{
-      if(connState == ConnState.READY || connState == ConnState.DEAD){
+    try {
+      if (connState == ConnState.READY || connState == ConnState.DEAD) {
         throw new FlumeException("This client was already configured, " +
             "cannot reconfigure.");
       }
@@ -529,12 +528,12 @@ implements RpcClient {
     }
 
     String host = properties.getProperty(
-        RpcClientConfigurationConstants.CONFIG_HOSTS_PREFIX+hosts[0]);
+        RpcClientConfigurationConstants.CONFIG_HOSTS_PREFIX + hosts[0]);
     if (host == null || host.isEmpty()) {
       throw new FlumeException("Host not found: " + hosts[0]);
     }
     String[] hostAndPort = host.split(":");
-    if (hostAndPort.length != 2){
+    if (hostAndPort.length != 2) {
       throw new FlumeException("Invalid hostname: " + hosts[0]);
     }
     Integer port = null;
@@ -583,10 +582,12 @@ implements RpcClient {
       }
     }
 
-    String enableCompressionStr = properties.getProperty(RpcClientConfigurationConstants.CONFIG_COMPRESSION_TYPE);
+    String enableCompressionStr =
+        properties.getProperty(RpcClientConfigurationConstants.CONFIG_COMPRESSION_TYPE);
     if (enableCompressionStr != null && enableCompressionStr.equalsIgnoreCase("deflate")) {
       this.enableDeflateCompression = true;
-      String compressionLvlStr = properties.getProperty(RpcClientConfigurationConstants.CONFIG_COMPRESSION_LEVEL);
+      String compressionLvlStr =
+          properties.getProperty(RpcClientConfigurationConstants.CONFIG_COMPRESSION_LEVEL);
       compressionLevel = RpcClientConfigurationConstants.DEFAULT_COMPRESSION_LEVEL;
       if (compressionLvlStr != null) {
         try {
@@ -608,7 +609,7 @@ implements RpcClient {
     truststoreType = properties.getProperty(
         RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_TYPE, "JKS");
     String excludeProtocolsStr = properties.getProperty(
-      RpcClientConfigurationConstants.CONFIG_EXCLUDE_PROTOCOLS);
+        RpcClientConfigurationConstants.CONFIG_EXCLUDE_PROTOCOLS);
     if (excludeProtocolsStr == null) {
       excludeProtocols.add("SSLv3");
     } else {
@@ -618,14 +619,13 @@ implements RpcClient {
       }
     }
 
-    String maxIoWorkersStr = properties.getProperty(
-      RpcClientConfigurationConstants.MAX_IO_WORKERS);
+    String maxIoWorkersStr = properties.getProperty(RpcClientConfigurationConstants.MAX_IO_WORKERS);
     if (!StringUtils.isEmpty(maxIoWorkersStr)) {
       try {
         maxIoWorkers = Integer.parseInt(maxIoWorkersStr);
       } catch (NumberFormatException ex) {
-        logger.warn ("Invalid maxIOWorkers:" + maxIoWorkersStr + " Using " +
-          "default maxIOWorkers.");
+        logger.warn("Invalid maxIOWorkers:" + maxIoWorkersStr + " Using " +
+            "default maxIOWorkers.");
         maxIoWorkers = -1;
       }
     }

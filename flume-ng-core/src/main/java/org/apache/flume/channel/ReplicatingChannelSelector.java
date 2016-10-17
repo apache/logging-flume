@@ -47,7 +47,7 @@ public class ReplicatingChannelSelector extends AbstractChannelSelector {
      * configure method. It is conceiveable that custom component tests too
      * do that. So in that case, revert to old behavior.
      */
-    if(requiredChannels == null) {
+    if (requiredChannels == null) {
       return getAllChannels();
     }
     return requiredChannels;
@@ -63,8 +63,8 @@ public class ReplicatingChannelSelector extends AbstractChannelSelector {
     String optionalList = context.getString(CONFIG_OPTIONAL);
     requiredChannels = new ArrayList<Channel>(getAllChannels());
     Map<String, Channel> channelNameMap = getChannelNameMap();
-    if(optionalList != null && !optionalList.isEmpty()) {
-      for(String optional : optionalList.split("\\s+")) {
+    if (optionalList != null && !optionalList.isEmpty()) {
+      for (String optional : optionalList.split("\\s+")) {
         Channel optionalChannel = channelNameMap.get(optional);
         requiredChannels.remove(optionalChannel);
         if (!optionalChannels.contains(optionalChannel)) {

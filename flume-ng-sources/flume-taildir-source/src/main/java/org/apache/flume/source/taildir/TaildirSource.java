@@ -22,6 +22,9 @@ import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstant
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -75,11 +78,14 @@ public class TaildirSource extends AbstractSource implements
   private int checkIdleInterval = 5000;
   private int writePosInitDelay = 5000;
   private int writePosInterval;
+  private boolean cachePatternMatching;
 
   private List<Long> existingInodes = new CopyOnWriteArrayList<Long>();
   private List<Long> idleInodes = new CopyOnWriteArrayList<Long>();
   private Long backoffSleepIncrement;
   private Long maxBackOffSleepInterval;
+  private boolean fileHeader;
+  private String fileHeaderKey;
 
   @Override
   public synchronized void start() {
@@ -91,6 +97,9 @@ public class TaildirSource extends AbstractSource implements
           .positionFilePath(positionFilePath)
           .skipToEnd(skipToEnd)
           .addByteOffset(byteOffsetHeader)
+          .cachePatternMatching(cachePatternMatching)
+          .annotateFileName(fileHeader)
+          .fileNameHeader(fileHeaderKey)
           .build();
     } catch (IOException e) {
       throw new FlumeException("Error instantiating ReliableTaildirEventReader", e);
@@ -145,23 +154,36 @@ public class TaildirSource extends AbstractSource implements
     String fileGroups = context.getString(FILE_GROUPS);
     Preconditions.checkState(fileGroups != null, "Missing param: " + FILE_GROUPS);
 
-    filePaths = selectByKeys(context.getSubProperties(FILE_GROUPS_PREFIX), fileGroups.split("\\s+"));
+    filePaths = selectByKeys(context.getSubProperties(FILE_GROUPS_PREFIX),
+                             fileGroups.split("\\s+"));
     Preconditions.checkState(!filePaths.isEmpty(),
         "Mapping for tailing files is empty or invalid: '" + FILE_GROUPS_PREFIX + "'");
 
     String homePath = System.getProperty("user.home").replace('\\', '/');
     positionFilePath = context.getString(POSITION_FILE, homePath + DEFAULT_POSITION_FILE);
+    Path positionFile = Paths.get(positionFilePath);
+    try {
+      Files.createDirectories(positionFile.getParent());
+    } catch (IOException e) {
+      throw new FlumeException("Error creating positionFile parent directories", e);
+    }
     headerTable = getTable(context, HEADERS_PREFIX);
     batchSize = context.getInteger(BATCH_SIZE, DEFAULT_BATCH_SIZE);
     skipToEnd = context.getBoolean(SKIP_TO_END, DEFAULT_SKIP_TO_END);
     byteOffsetHeader = context.getBoolean(BYTE_OFFSET_HEADER, DEFAULT_BYTE_OFFSET_HEADER);
     idleTimeout = context.getInteger(IDLE_TIMEOUT, DEFAULT_IDLE_TIMEOUT);
     writePosInterval = context.getInteger(WRITE_POS_INTERVAL, DEFAULT_WRITE_POS_INTERVAL);
+    cachePatternMatching = context.getBoolean(CACHE_PATTERN_MATCHING,
+        DEFAULT_CACHE_PATTERN_MATCHING);
 
-    backoffSleepIncrement = context.getLong(PollableSourceConstants.BACKOFF_SLEEP_INCREMENT
-            , PollableSourceConstants.DEFAULT_BACKOFF_SLEEP_INCREMENT);
-    maxBackOffSleepInterval = context.getLong(PollableSourceConstants.MAX_BACKOFF_SLEEP
-            , PollableSourceConstants.DEFAULT_MAX_BACKOFF_SLEEP);
+    backoffSleepIncrement = context.getLong(PollableSourceConstants.BACKOFF_SLEEP_INCREMENT,
+        PollableSourceConstants.DEFAULT_BACKOFF_SLEEP_INCREMENT);
+    maxBackOffSleepInterval = context.getLong(PollableSourceConstants.MAX_BACKOFF_SLEEP,
+        PollableSourceConstants.DEFAULT_MAX_BACKOFF_SLEEP);
+    fileHeader = context.getBoolean(FILENAME_HEADER,
+            DEFAULT_FILE_HEADER);
+    fileHeaderKey = context.getString(FILENAME_HEADER_KEY,
+            DEFAULT_FILENAME_HEADER_KEY);
 
     if (sourceCounter == null) {
       sourceCounter = new SourceCounter(getName());
@@ -242,7 +264,7 @@ public class TaildirSource extends AbstractSource implements
         reader.commit();
       } catch (ChannelException ex) {
         logger.warn("The channel is full or unexpected failure. " +
-          "The source will try again after " + retryInterval + " ms");
+            "The source will try again after " + retryInterval + " ms");
         TimeUnit.MILLISECONDS.sleep(retryInterval);
         retryInterval = retryInterval << 1;
         retryInterval = Math.min(retryInterval, maxRetryInterval);
@@ -308,7 +330,7 @@ public class TaildirSource extends AbstractSource implements
         String json = toPosInfoJson();
         writer.write(json);
       }
-    } catch (Throwable t){
+    } catch (Throwable t) {
       logger.error("Failed writing positionFile", t);
     } finally {
       try {

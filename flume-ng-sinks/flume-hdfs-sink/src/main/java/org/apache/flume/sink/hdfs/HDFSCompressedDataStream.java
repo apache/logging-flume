@@ -78,8 +78,8 @@ public class HDFSCompressedDataStream extends AbstractHDFSWriter {
     Configuration conf = new Configuration();
     Path dstPath = new Path(filePath);
     FileSystem hdfs = dstPath.getFileSystem(conf);
-    if(useRawLocalFileSystem) {
-      if(hdfs instanceof LocalFileSystem) {
+    if (useRawLocalFileSystem) {
+      if (hdfs instanceof LocalFileSystem) {
         hdfs = ((LocalFileSystem)hdfs).getRaw();
       } else {
         logger.warn("useRawLocalFileSystem is set to true but file system " +
@@ -87,14 +87,13 @@ public class HDFSCompressedDataStream extends AbstractHDFSWriter {
       }
     }
     boolean appending = false;
-    if (conf.getBoolean("hdfs.append.support", false) == true && hdfs.isFile
-    (dstPath)) {
+    if (conf.getBoolean("hdfs.append.support", false) == true && hdfs.isFile(dstPath)) {
       fsOut = hdfs.append(dstPath);
       appending = true;
     } else {
       fsOut = hdfs.create(dstPath);
     }
-    if(compressor == null) {
+    if (compressor == null) {
       compressor = CodecPool.getCompressor(codec, conf);
     }
     cmpOut = codec.createOutputStream(fsOut, compressor);

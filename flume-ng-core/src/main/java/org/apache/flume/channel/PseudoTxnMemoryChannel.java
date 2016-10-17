@@ -100,13 +100,13 @@ public class PseudoTxnMemoryChannel extends AbstractChannel {
     }
 
     queue = new ArrayBlockingQueue<Event>(capacity);
-    if(channelCounter == null) {
+    if (channelCounter == null) {
       channelCounter = new ChannelCounter(getName());
     }
   }
 
   @Override
-  public void start(){
+  public void start() {
     channelCounter.start();
     channelCounter.setChannelSize(queue.size());
     channelCounter.setChannelSize(
@@ -115,7 +115,7 @@ public class PseudoTxnMemoryChannel extends AbstractChannel {
   }
 
   @Override
-  public void stop(){
+  public void stop() {
     channelCounter.setChannelSize(queue.size());
     channelCounter.stop();
     super.stop();

@@ -18,27 +18,12 @@
 
 package org.apache.flume.sink.kite;
 
-import org.apache.flume.sink.kite.parser.EntityParser;
-import org.apache.flume.sink.kite.policy.FailurePolicy;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.net.URI;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import javax.annotation.Nullable;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericData;
@@ -57,6 +42,8 @@ import org.apache.flume.Transaction;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.SimpleEvent;
+import org.apache.flume.sink.kite.parser.EntityParser;
+import org.apache.flume.sink.kite.policy.FailurePolicy;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -74,7 +61,28 @@ import org.kitesdk.data.DatasetWriter;
 import org.kitesdk.data.Datasets;
 import org.kitesdk.data.PartitionStrategy;
 import org.kitesdk.data.View;
-import static org.mockito.Mockito.*;
+
+import javax.annotation.Nullable;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class TestDatasetSink {
 
@@ -206,7 +214,8 @@ public class TestDatasetSink {
   }
 
   @Test
-  public void testFileStore() throws EventDeliveryException, NonRecoverableEventException, NonRecoverableEventException {
+  public void testFileStore()
+      throws EventDeliveryException, NonRecoverableEventException, NonRecoverableEventException {
     DatasetSink sink = sink(in, config);
 
     // run the sink
@@ -307,31 +316,28 @@ public class TestDatasetSink {
     sink.process();
     sink.stop();
 
-    Assert.assertEquals(
-      Sets.newHashSet(expected),
-      read(Datasets.load(FILE_DATASET_URI)));
+    Assert.assertEquals(Sets.newHashSet(expected), read(Datasets.load(FILE_DATASET_URI)));
     Assert.assertEquals("Should have committed", 0, remaining(in));
   }
 
   @Test
   public void testDatasetUpdate() throws EventDeliveryException {
     // add an updated record that is missing the msg field
-    GenericRecordBuilder updatedBuilder = new GenericRecordBuilder(
-      UPDATED_SCHEMA);
+    GenericRecordBuilder updatedBuilder = new GenericRecordBuilder(UPDATED_SCHEMA);
     GenericData.Record updatedRecord = updatedBuilder
-      .set("id", "0")
-      .set("priority", 1)
-      .set("msg", "Priority 1 message!")
-      .build();
+        .set("id", "0")
+        .set("priority", 1)
+        .set("msg", "Priority 1 message!")
+        .build();
 
     // make a set of the expected records with the new schema
     Set<GenericRecord> expectedAsUpdated = Sets.newHashSet();
     for (GenericRecord record : expected) {
       expectedAsUpdated.add(updatedBuilder
-        .clear("priority")
-        .set("id", record.get("id"))
-        .set("msg", record.get("msg"))
-        .build());
+          .clear("priority")
+          .set("id", record.get("id"))
+          .set("msg", record.get("msg"))
+          .build());
     }
     expectedAsUpdated.add(updatedRecord);
 
@@ -343,9 +349,9 @@ public class TestDatasetSink {
 
     // update the dataset's schema
     DatasetDescriptor updated = new DatasetDescriptor
-      .Builder(Datasets.load(FILE_DATASET_URI).getDataset().getDescriptor())
-      .schema(UPDATED_SCHEMA)
-      .build();
+        .Builder(Datasets.load(FILE_DATASET_URI).getDataset().getDescriptor())
+        .schema(UPDATED_SCHEMA)
+        .build();
     Datasets.update(FILE_DATASET_URI, updated);
 
     // trigger a roll on the next process call to refresh the writer
@@ -358,15 +364,12 @@ public class TestDatasetSink {
     sink.process();
     sink.stop();
 
-    Assert.assertEquals(
-      expectedAsUpdated,
-      read(Datasets.load(FILE_DATASET_URI)));
+    Assert.assertEquals(expectedAsUpdated, read(Datasets.load(FILE_DATASET_URI)));
     Assert.assertEquals("Should have committed", 0, remaining(in));
   }
 
   @Test
-  public void testMiniClusterStore()
-      throws EventDeliveryException, IOException {
+  public void testMiniClusterStore() throws EventDeliveryException, IOException {
     // setup a minicluster
     MiniDFSCluster cluster = new MiniDFSCluster
         .Builder(new Configuration())

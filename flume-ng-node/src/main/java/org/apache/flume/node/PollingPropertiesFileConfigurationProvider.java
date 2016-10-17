@@ -32,11 +32,12 @@ import com.google.common.base.Preconditions;
 import com.google.common.eventbus.EventBus;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-public class PollingPropertiesFileConfigurationProvider extends
- PropertiesFileConfigurationProvider implements LifecycleAware {
+public class PollingPropertiesFileConfigurationProvider
+    extends PropertiesFileConfigurationProvider
+    implements LifecycleAware {
 
-  private static final Logger LOGGER = LoggerFactory
-      .getLogger(PollingPropertiesFileConfigurationProvider.class);
+  private static final Logger LOGGER =
+      LoggerFactory.getLogger(PollingPropertiesFileConfigurationProvider.class);
 
   private final EventBus eventBus;
   private final File file;
@@ -83,8 +84,8 @@ public class PollingPropertiesFileConfigurationProvider extends
     LOGGER.info("Configuration provider stopping");
 
     executorService.shutdown();
-    try{
-      while(!executorService.awaitTermination(500, TimeUnit.MILLISECONDS)) {
+    try {
+      while (!executorService.awaitTermination(500, TimeUnit.MILLISECONDS)) {
         LOGGER.debug("Waiting for file watcher to terminate");
       }
     } catch (InterruptedException e) {

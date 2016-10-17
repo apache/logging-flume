@@ -135,42 +135,47 @@ public class TestAvroSource {
   }
 
   @Test
-  public void testRequestWithCompressionOnClientAndServerOnLevel0() throws InterruptedException, IOException {
+  public void testRequestWithCompressionOnClientAndServerOnLevel0()
+      throws InterruptedException, IOException {
 
     doRequest(true, true, 0);
   }
 
   @Test
-  public void testRequestWithCompressionOnClientAndServerOnLevel1() throws InterruptedException, IOException {
+  public void testRequestWithCompressionOnClientAndServerOnLevel1()
+      throws InterruptedException, IOException {
 
     doRequest(true, true, 1);
   }
 
   @Test
-  public void testRequestWithCompressionOnClientAndServerOnLevel6() throws InterruptedException, IOException {
+  public void testRequestWithCompressionOnClientAndServerOnLevel6()
+      throws InterruptedException, IOException {
 
     doRequest(true, true, 6);
   }
 
   @Test
-  public void testRequestWithCompressionOnClientAndServerOnLevel9() throws InterruptedException, IOException {
+  public void testRequestWithCompressionOnClientAndServerOnLevel9()
+      throws InterruptedException, IOException {
 
     doRequest(true, true, 9);
   }
 
-  @Test(expected=org.apache.avro.AvroRemoteException.class)
+  @Test(expected = org.apache.avro.AvroRemoteException.class)
   public void testRequestWithCompressionOnServerOnly() throws InterruptedException, IOException {
     //This will fail because both client and server need compression on
     doRequest(true, false, 6);
   }
 
-  @Test(expected=org.apache.avro.AvroRemoteException.class)
+  @Test(expected = org.apache.avro.AvroRemoteException.class)
   public void testRequestWithCompressionOnClientOnly() throws InterruptedException, IOException {
     //This will fail because both client and server need compression on
     doRequest(false, true, 6);
   }
 
-  private void doRequest(boolean serverEnableCompression, boolean clientEnableCompression, int compressionLevel) throws InterruptedException, IOException {
+  private void doRequest(boolean serverEnableCompression, boolean clientEnableCompression,
+                         int compressionLevel) throws InterruptedException, IOException {
     boolean bound = false;
 
     for (int i = 0; i < 100 && !bound; i++) {
@@ -428,8 +433,7 @@ public class TestAvroSource {
         false, false);
     try {
       doIpFilterTest(localhost, null, false, false);
-      Assert.fail(
-        "The null ipFilterRules config should have thrown an exception.");
+      Assert.fail("The null ipFilterRules config should have thrown an exception.");
     } catch (FlumeException e) {
       //Do nothing
     }
@@ -502,15 +506,15 @@ public class TestAvroSource {
     try {
       if (testWithSSL) {
         nettyTransceiver = new NettyTransceiver(
-          new InetSocketAddress (dest, selectedPort),
-          new SSLChannelFactory());
+            new InetSocketAddress(dest, selectedPort),
+            new SSLChannelFactory());
         client = SpecificRequestor.getClient(
-          AvroSourceProtocol.class, nettyTransceiver);
+            AvroSourceProtocol.class, nettyTransceiver);
       } else {
         nettyTransceiver = new NettyTransceiver(
-          new InetSocketAddress (dest, selectedPort));
+            new InetSocketAddress(dest, selectedPort));
         client = SpecificRequestor.getClient(
-          AvroSourceProtocol.class, nettyTransceiver);
+            AvroSourceProtocol.class, nettyTransceiver);
       }
 
       AvroFlumeEvent avroEvent = new AvroFlumeEvent();
@@ -523,7 +527,7 @@ public class TestAvroSource {
       Assert.assertEquals(Status.OK, status);
     } catch (IOException e) {
       Assert.assertTrue("Should have been allowed: " + ruleDefinition,
-        !eventShouldBeAllowed);
+          !eventShouldBeAllowed);
       return;
     } finally {
       if (nettyTransceiver != null) {

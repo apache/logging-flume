@@ -18,8 +18,22 @@
  */
 package org.apache.flume.channel.file;
 
-import static org.apache.flume.channel.file.TestUtils.*;
-import static org.fest.reflect.core.Reflection.*;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import org.apache.flume.ChannelException;
+import org.apache.flume.Event;
+import org.apache.flume.Transaction;
+import org.apache.flume.channel.file.FileChannel.FileBackedTransaction;
+import org.apache.flume.channel.file.FlumeEventQueue.InflightEventWrapper;
+import org.apache.flume.conf.Configurables;
+import org.apache.flume.event.EventBuilder;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -32,7 +46,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -41,23 +54,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.flume.ChannelException;
-import org.apache.flume.Event;
-import org.apache.flume.Transaction;
-import org.apache.flume.conf.Configurables;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Throwables;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import org.apache.flume.channel.file.FileChannel.FileBackedTransaction;
-import org.apache.flume.channel.file.FlumeEventQueue.InflightEventWrapper;
-import org.apache.flume.event.EventBuilder;
+import static org.apache.flume.channel.file.TestUtils.compareInputAndOut;
+import static org.apache.flume.channel.file.TestUtils.consumeChannel;
+import static org.apache.flume.channel.file.TestUtils.fillChannel;
+import static org.apache.flume.channel.file.TestUtils.forceCheckpoint;
+import static org.apache.flume.channel.file.TestUtils.putEvents;
+import static org.apache.flume.channel.file.TestUtils.putWithoutCommit;
+import static org.apache.flume.channel.file.TestUtils.takeEvents;
+import static org.apache.flume.channel.file.TestUtils.takeWithoutCommit;
+import static org.fest.reflect.core.Reflection.field;
 
 public class TestFileChannel extends TestFileChannelBase {
 
@@ -68,6 +73,7 @@ public class TestFileChannel extends TestFileChannelBase {
   public void setup() throws Exception {
     super.setup();
   }
+
   @After
   public void teardown() {
     super.teardown();
@@ -146,23 +152,22 @@ public class TestFileChannel extends TestFileChannelBase {
     //Simulate multiple sources, so separate thread - txns are thread local,
     //so a new txn wont be created here unless it is in a different thread.
     final CountDownLatch latch = new CountDownLatch(1);
-    Executors.newSingleThreadExecutor().submit(
-            new Runnable() {
-              @Override
-              public void run() {
-                Transaction tx = channel.getTransaction();
-                input.addAll(putWithoutCommit(channel, tx, "failAfterPut", 3));
-                try {
-                  latch.await();
-                  tx.commit();
-                } catch (InterruptedException e) {
-                  tx.rollback();
-                  Throwables.propagate(e);
-                } finally {
-                  tx.close();
-                }
-              }
-            });
+    Executors.newSingleThreadExecutor().submit(new Runnable() {
+      @Override
+      public void run() {
+        Transaction tx = channel.getTransaction();
+        input.addAll(putWithoutCommit(channel, tx, "failAfterPut", 3));
+        try {
+          latch.await();
+          tx.commit();
+        } catch (InterruptedException e) {
+          tx.rollback();
+          Throwables.propagate(e);
+        } finally {
+          tx.close();
+        }
+      }
+    });
     forceCheckpoint(channel);
     tx.commit();
     tx.close();
@@ -198,7 +203,7 @@ public class TestFileChannel extends TestFileChannelBase {
     Assert.assertTrue(channel.isOpen());
     Set<String> in = Sets.newHashSet();
     try {
-      while(true) {
+      while (true) {
         in.addAll(putEvents(channel, "reconfig", 1, 1));
       }
     } catch (ChannelException e) {
@@ -206,12 +211,13 @@ public class TestFileChannel extends TestFileChannelBase {
           + "This might be the result of a sink on the channel having too "
           + "low of batch size, a downstream system running slower than "
           + "normal, or that the channel capacity is just too low. [channel="
-          + channel.getName()+"]", e.getMessage());
+          + channel.getName() + "]", e.getMessage());
     }
     Configurables.configure(channel, createContext());
     Set<String> out = takeEvents(channel, 1, Integer.MAX_VALUE);
     compareInputAndOut(in, out);
   }
+
   @Test
   public void testPut() throws Exception {
     channel.start();
@@ -225,6 +231,7 @@ public class TestFileChannel extends TestFileChannelBase {
     Set<String> actual = takeEvents(channel, 1);
     compareInputAndOut(expected, actual);
   }
+
   @Test
   public void testCommitAfterNoPutTake() throws Exception {
     channel.start();
@@ -246,6 +253,7 @@ public class TestFileChannel extends TestFileChannelBase {
     transaction.commit();
     transaction.close();
   }
+
   @Test
   public void testCapacity() throws Exception {
     Map<String, String> overrides = Maps.newHashMap();
@@ -270,6 +278,7 @@ public class TestFileChannel extends TestFileChannelBase {
     // ensure we the events back
     Assert.assertEquals(5, takeEvents(channel, 1, 5).size());
   }
+
   /**
    * This test is here to make sure we can replay a full queue
    * when we have a PUT with a lower txid than the take which
@@ -287,16 +296,14 @@ public class TestFileChannel extends TestFileChannelBase {
     // the idea here is we will fill up the channel
     Map<String, String> overrides = Maps.newHashMap();
     overrides.put(FileChannelConfiguration.KEEP_ALIVE, String.valueOf(10L));
-    overrides.put(FileChannelConfiguration.CAPACITY, String.valueOf(10));
-    overrides.put(FileChannelConfiguration.TRANSACTION_CAPACITY,
-        String.valueOf(10));
+    overrides.put(FileChannelConfiguration.CAPACITY, String.valueOf(10L));
+    overrides.put(FileChannelConfiguration.TRANSACTION_CAPACITY, String.valueOf(10L));
     channel = createFileChannel(overrides);
     channel.start();
     Assert.assertTrue(channel.isOpen());
     fillChannel(channel, "fillup");
     // then do a put which will block but it will be assigned a tx id
-    Future<String> put = Executors.newSingleThreadExecutor()
-            .submit(new Callable<String>() {
+    Future<String> put = Executors.newSingleThreadExecutor().submit(new Callable<String>() {
       @Override
       public String call() throws Exception {
         Set<String> result = putEvents(channel, "blocked-put", 1, 1);
@@ -321,6 +328,7 @@ public class TestFileChannel extends TestFileChannelBase {
     channel.start();
     Assert.assertTrue(channel.isOpen());
   }
+
   @Test
   public void testThreaded() throws IOException, InterruptedException {
     channel.start();
@@ -328,12 +336,9 @@ public class TestFileChannel extends TestFileChannelBase {
     int numThreads = 10;
     final CountDownLatch producerStopLatch = new CountDownLatch(numThreads);
     final CountDownLatch consumerStopLatch = new CountDownLatch(numThreads);
-    final List<Exception> errors = Collections
-            .synchronizedList(new ArrayList<Exception>());
-    final Set<String> expected = Collections.synchronizedSet(
-            new HashSet<String>());
-    final Set<String> actual = Collections.synchronizedSet(
-            new HashSet<String>());
+    final List<Exception> errors = Collections.synchronizedList(new ArrayList<Exception>());
+    final Set<String> expected = Collections.synchronizedSet(new HashSet<String>());
+    final Set<String> actual = Collections.synchronizedSet(new HashSet<String>());
     for (int i = 0; i < numThreads; i++) {
       final int id = i;
       Thread t = new Thread() {
@@ -363,15 +368,15 @@ public class TestFileChannel extends TestFileChannelBase {
         @Override
         public void run() {
           try {
-            while(!producerStopLatch.await(1, TimeUnit.SECONDS) ||
-                expected.size() > actual.size()) {
+            while (!producerStopLatch.await(1, TimeUnit.SECONDS) ||
+                   expected.size() > actual.size()) {
               if (id % 2 == 0) {
                 actual.addAll(takeEvents(channel, 1, Integer.MAX_VALUE));
               } else {
                 actual.addAll(takeEvents(channel, 5, Integer.MAX_VALUE));
               }
             }
-            if(actual.isEmpty()) {
+            if (actual.isEmpty()) {
               LOG.error("Found nothing!");
             } else {
               LOG.info("Completed some takes " + actual.size());
@@ -388,12 +393,13 @@ public class TestFileChannel extends TestFileChannelBase {
       t.start();
     }
     Assert.assertTrue("Timed out waiting for producers",
-            producerStopLatch.await(30, TimeUnit.SECONDS));
+                      producerStopLatch.await(30, TimeUnit.SECONDS));
     Assert.assertTrue("Timed out waiting for consumer",
-            consumerStopLatch.await(30, TimeUnit.SECONDS));
+                      consumerStopLatch.await(30, TimeUnit.SECONDS));
     Assert.assertEquals(Collections.EMPTY_LIST, errors);
     compareInputAndOut(expected, actual);
   }
+
   @Test
   public void testLocking() throws IOException {
     channel.start();
@@ -402,7 +408,6 @@ public class TestFileChannel extends TestFileChannelBase {
     fileChannel.start();
     Assert.assertTrue(!fileChannel.isOpen());
   }
-
 
   /**
    * Test contributed by Brock Noland during code review.
@@ -437,11 +442,11 @@ public class TestFileChannel extends TestFileChannelBase {
   }
 
   @Test
-  public void testPutForceCheckpointCommitReplay() throws Exception{
+  public void testPutForceCheckpointCommitReplay() throws Exception {
     Map<String, String> overrides = Maps.newHashMap();
     overrides.put(FileChannelConfiguration.CAPACITY, String.valueOf(2));
     overrides.put(FileChannelConfiguration.TRANSACTION_CAPACITY,
-        String.valueOf(2));
+                  String.valueOf(2));
     overrides.put(FileChannelConfiguration.CHECKPOINT_INTERVAL, "10000");
     FileChannel channel = createFileChannel(overrides);
     channel.start();
@@ -578,28 +583,22 @@ public class TestFileChannel extends TestFileChannelBase {
     testChannelDiesOnCorruptEvent(true);
   }
 
-
   @Test
-  public void testChannelDiesOnCorruptEventNoFsync() throws
-    Exception {
+  public void testChannelDiesOnCorruptEventNoFsync() throws Exception {
     testChannelDiesOnCorruptEvent(false);
   }
 
-
-
-  private void testChannelDiesOnCorruptEvent(boolean fsyncPerTxn)
-    throws Exception {
+  private void testChannelDiesOnCorruptEvent(boolean fsyncPerTxn) throws Exception {
     Map<String, String> overrides = new HashMap<String, String>();
-    overrides.put(FileChannelConfiguration.FSYNC_PER_TXN,
-      String.valueOf(fsyncPerTxn));
+    overrides.put(FileChannelConfiguration.FSYNC_PER_TXN, String.valueOf(fsyncPerTxn));
     final FileChannel channel = createFileChannel(overrides);
     channel.start();
     putEvents(channel,"test-corrupt-event",100,100);
-    for(File dataDir : dataDirs) {
+    for (File dataDir : dataDirs) {
       File[] files = dataDir.listFiles(new FilenameFilter() {
         @Override
         public boolean accept(File dir, String name) {
-          if(!name.endsWith("meta") && !name.contains("lock")){
+          if (!name.endsWith("meta") && !name.contains("lock")) {
             return true;
           }
           return false;
@@ -624,7 +623,7 @@ public class TestFileChannel extends TestFileChannelBase {
       Assert.assertTrue(ex.getMessage().contains("Log is closed"));
       throw ex;
     }
-    if(fsyncPerTxn) {
+    if (fsyncPerTxn) {
       Assert.fail();
     } else {
       // The corrupt event must be missing, the rest should be

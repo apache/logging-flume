@@ -56,9 +56,10 @@ import com.google.common.io.Files;
 
 public class TestIntegrationActiveMQ {
 
-  private final static String INITIAL_CONTEXT_FACTORY = "org.apache.activemq.jndi.ActiveMQInitialContextFactory";
+  private static final String INITIAL_CONTEXT_FACTORY =
+      "org.apache.activemq.jndi.ActiveMQInitialContextFactory";
   public static final String BROKER_BIND_URL = "tcp://localhost:61516";
-  private final static  String DESTINATION_NAME = "test";
+  private static final String DESTINATION_NAME = "test";
   private static final String USERNAME = "user";
   private static final String PASSWORD = "pass";
   // specific for dynamic queues on ActiveMq
@@ -115,15 +116,14 @@ public class TestIntegrationActiveMQ {
       }
     }).when(channelProcessor).processEventBatch(any(List.class));
     source.setChannelProcessor(channelProcessor);
-
-
   }
+
   @After
   public void tearDown() throws Exception {
-    if(source != null) {
+    if (source != null) {
       source.stop();
     }
-    if(broker != null) {
+    if (broker != null) {
       broker.stop();
     }
     FileUtils.deleteDirectory(baseDir);
@@ -140,8 +140,7 @@ public class TestIntegrationActiveMQ {
     Destination destination = session.createQueue(DESTINATION_NAME);
     MessageProducer producer = session.createProducer(destination);
 
-
-    for(String event : events) {
+    for (String event : events) {
       TextMessage message = session.createTextMessage();
       message.setText(event);
       producer.send(message);
@@ -162,8 +161,7 @@ public class TestIntegrationActiveMQ {
     Destination destination = session.createTopic(DESTINATION_NAME);
     MessageProducer producer = session.createProducer(destination);
 
-
-    for(String event : events) {
+    for (String event : events) {
       TextMessage message = session.createTextMessage();
       message.setText(event);
       producer.send(message);
@@ -202,13 +200,14 @@ public class TestIntegrationActiveMQ {
     Assert.assertEquals(Status.BACKOFF, source.process());
     Assert.assertEquals(expected.size(), events.size());
     List<String> actual = Lists.newArrayList();
-    for(Event event : events) {
+    for (Event event : events) {
       actual.add(new String(event.getBody(), Charsets.UTF_8));
     }
     Collections.sort(expected);
     Collections.sort(actual);
     Assert.assertEquals(expected, actual);
   }
+
   @Test
   public void testTopic() throws Exception {
     context.put(JMSSourceConfiguration.DESTINATION_TYPE,
@@ -229,7 +228,7 @@ public class TestIntegrationActiveMQ {
     Assert.assertEquals(Status.BACKOFF, source.process());
     Assert.assertEquals(expected.size(), events.size());
     List<String> actual = Lists.newArrayList();
-    for(Event event : events) {
+    for (Event event : events) {
       actual.add(new String(event.getBody(), Charsets.UTF_8));
     }
     Collections.sort(expected);

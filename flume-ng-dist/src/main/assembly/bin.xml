@@ -38,6 +38,12 @@
       <useProjectArtifact>false</useProjectArtifact>
       <excludes>
         <exclude>org.apache.flume.flume-ng-clients:flume-ng-log4jappender:jar:jar-with-dependencies</exclude>
+        <!-- The below test classes get pulled in by flume-shared-kafka-test,
+             but we don't want them in the final release classpath. Maybe there
+             is a better way to exclude all of the dependencies of that module;
+             for now, specifically exclude these test deps. -->
+        <exclude>junit:junit</exclude>
+        <exclude>org.hamcrest:hamcrest-core</exclude>
       </excludes>
     </dependencySet>
     <dependencySet>
@@ -50,8 +56,7 @@
     </dependencySet>
   </dependencySets>
 
-
-   <fileSets>
+  <fileSets>
     <fileSet>
       <directory>../</directory>
 
@@ -69,22 +74,25 @@
         <exclude>flume-ng-embedded-agent/**</exclude>
         <exclude>flume-tools/**</exclude>
         <exclude>flume-ng-auth/**</exclude>
+        <exclude>flume-shared/**</exclude>
         <exclude>**/target/**</exclude>
         <exclude>**/.classpath</exclude>
         <exclude>**/.project</exclude>
         <exclude>**/.settings/**</exclude>
         <exclude>lib/**</exclude>
+        <exclude>**/*.iml</exclude>
       </excludes>
 
       <includes>
         <include>DEVNOTES</include>
-        <include>README</include>
+        <include>README.md</include>
         <include>LICENSE</include>
         <include>NOTICE</include>
         <include>CHANGELOG</include>
         <include>RELEASE-NOTES</include>
         <include>bin/**</include>
         <include>conf/**</include>
+        <include>doap_Flume.rdf</include>
       </includes>
     </fileSet>
 

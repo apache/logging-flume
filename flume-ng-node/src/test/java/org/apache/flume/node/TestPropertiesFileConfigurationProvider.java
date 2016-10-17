@@ -17,13 +17,9 @@
  */
 package org.apache.flume.node;
 
-import java.io.File;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import junit.framework.Assert;
-
 import org.apache.flume.conf.FlumeConfiguration;
 import org.apache.flume.conf.FlumeConfiguration.AgentConfiguration;
 import org.apache.flume.conf.FlumeConfigurationError;
@@ -33,14 +29,15 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import java.io.File;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public class TestPropertiesFileConfigurationProvider  {
 
-
-  private static final Logger LOGGER = LoggerFactory
-      .getLogger(TestPropertiesFileConfigurationProvider.class);
+  private static final Logger LOGGER =
+      LoggerFactory.getLogger(TestPropertiesFileConfigurationProvider.class);
 
   private static final File TESTFILE = new File(
       TestPropertiesFileConfigurationProvider.class.getClassLoader()
@@ -83,22 +80,19 @@ public class TestPropertiesFileConfigurationProvider  {
     expected.add("host2 PROPERTY_VALUE_NULL");
     expected.add("host2 AGENT_CONFIGURATION_INVALID");
     List<String> actual = Lists.newArrayList();
-    for(FlumeConfigurationError error : configuration.getConfigurationErrors()) {
+    for (FlumeConfigurationError error : configuration.getConfigurationErrors()) {
       actual.add(error.getComponentName() + " " + error.getErrorType().toString());
     }
     Collections.sort(expected);
     Collections.sort(actual);
     Assert.assertEquals(expected, actual);
 
-
     AgentConfiguration agentConfiguration =
         configuration.getConfigurationFor("host1");
     Assert.assertNotNull(agentConfiguration);
 
-
     LOGGER.info(agentConfiguration.getPrevalidationConfig());
     LOGGER.info(agentConfiguration.getPostvalidationConfig());
-
 
     Set<String> sources = Sets.newHashSet("source1");
     Set<String> sinks = Sets.newHashSet("sink1");

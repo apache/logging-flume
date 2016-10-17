@@ -47,12 +47,13 @@ import com.google.common.io.ByteStreams;
 public class MorphlineInterceptor implements Interceptor {
 
   private final Context context;
-  private final Queue<LocalMorphlineInterceptor> pool = new ConcurrentLinkedQueue<LocalMorphlineInterceptor>();
+  private final Queue<LocalMorphlineInterceptor> pool = new ConcurrentLinkedQueue<>();
   
   protected MorphlineInterceptor(Context context) {
     Preconditions.checkNotNull(context);
     this.context = context;
-    returnToPool(new LocalMorphlineInterceptor(context)); // fail fast on morphline compilation exception
+    // fail fast on morphline compilation exception
+    returnToPool(new LocalMorphlineInterceptor(context));
   }
 
   @Override

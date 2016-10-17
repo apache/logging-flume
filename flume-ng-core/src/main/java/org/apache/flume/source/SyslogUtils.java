@@ -36,7 +36,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -47,38 +46,38 @@ import java.util.regex.Pattern;
 @InterfaceAudience.Private
 @InterfaceStability.Evolving
 public class SyslogUtils {
-  final public static String SYSLOG_TIMESTAMP_FORMAT_RFC5424_2 = "yyyy-MM-dd'T'HH:mm:ss.SZ";
-  final public static String SYSLOG_TIMESTAMP_FORMAT_RFC5424_1 = "yyyy-MM-dd'T'HH:mm:ss.S";
-  final public static String SYSLOG_TIMESTAMP_FORMAT_RFC5424_3 = "yyyy-MM-dd'T'HH:mm:ssZ";
-  final public static String SYSLOG_TIMESTAMP_FORMAT_RFC5424_4 = "yyyy-MM-dd'T'HH:mm:ss";
-  final public static String SYSLOG_TIMESTAMP_FORMAT_RFC3164_1 = "yyyyMMM d HH:mm:ss";
+  public static final String SYSLOG_TIMESTAMP_FORMAT_RFC5424_2 = "yyyy-MM-dd'T'HH:mm:ss.SZ";
+  public static final String SYSLOG_TIMESTAMP_FORMAT_RFC5424_1 = "yyyy-MM-dd'T'HH:mm:ss.S";
+  public static final String SYSLOG_TIMESTAMP_FORMAT_RFC5424_3 = "yyyy-MM-dd'T'HH:mm:ssZ";
+  public static final String SYSLOG_TIMESTAMP_FORMAT_RFC5424_4 = "yyyy-MM-dd'T'HH:mm:ss";
+  public static final String SYSLOG_TIMESTAMP_FORMAT_RFC3164_1 = "yyyyMMM d HH:mm:ss";
 
-  final public static String SYSLOG_MSG_RFC5424_0 =
+  public static final String SYSLOG_MSG_RFC5424_0 =
       "(?:\\<(\\d{1,3})\\>)" + // priority
-      "(?:(\\d?)\\s?)" + // version
-      /* yyyy-MM-dd'T'HH:mm:ss.SZ or yyyy-MM-dd'T'HH:mm:ss.S+hh:mm or - (null stamp) */
-      "(?:" +
-        "(\\d{4}[-]\\d{2}[-]\\d{2}[T]\\d{2}[:]\\d{2}[:]\\d{2}" +
-        "(?:\\.\\d{1,6})?(?:[+-]\\d{2}[:]\\d{2}|Z)?)|-)" + // stamp
-      "\\s" + // separator
-      "(?:([\\w][\\w\\d\\.@\\-]*)|-)" + // host name or - (null)
-      "\\s" + // separator
-      "(.*)$"; // body
+          "(?:(\\d?)\\s?)" + // version
+          /* yyyy-MM-dd'T'HH:mm:ss.SZ or yyyy-MM-dd'T'HH:mm:ss.S+hh:mm or - (null stamp) */
+          "(?:" +
+          "(\\d{4}[-]\\d{2}[-]\\d{2}[T]\\d{2}[:]\\d{2}[:]\\d{2}" +
+          "(?:\\.\\d{1,6})?(?:[+-]\\d{2}[:]\\d{2}|Z)?)|-)" + // stamp
+          "\\s" + // separator
+          "(?:([\\w][\\w\\d\\.@\\-]*)|-)" + // host name or - (null)
+          "\\s" + // separator
+          "(.*)$"; // body
 
-  final public static String SYSLOG_MSG_RFC3164_0 =
+  public static final String SYSLOG_MSG_RFC3164_0 =
       "(?:\\<(\\d{1,3})\\>)" +
-      "(?:(\\d)?\\s?)" + // version
-      // stamp MMM d HH:mm:ss, single digit date has two spaces
-      "([A-Z][a-z][a-z]\\s{1,2}\\d{1,2}\\s\\d{2}[:]\\d{2}[:]\\d{2})" +
-      "\\s" + // separator
-      "([\\w][\\w\\d\\.@-]*)" + // host
-      "\\s(.*)$";  // body
+          "(?:(\\d)?\\s?)" + // version
+          // stamp MMM d HH:mm:ss, single digit date has two spaces
+          "([A-Z][a-z][a-z]\\s{1,2}\\d{1,2}\\s\\d{2}[:]\\d{2}[:]\\d{2})" +
+          "\\s" + // separator
+          "([\\w][\\w\\d\\.@-]*)" + // host
+          "\\s(.*)$";  // body
 
-  final public static int SYSLOG_PRIORITY_POS = 1;
-  final public static int SYSLOG_VERSION_POS = 2;
-  final public static int SYSLOG_TIMESTAMP_POS = 3;
-  final public static int SYSLOG_HOSTNAME_POS = 4;
-  final public static int SYSLOG_BODY_POS = 5;
+  public static final int SYSLOG_PRIORITY_POS = 1;
+  public static final int SYSLOG_VERSION_POS = 2;
+  public static final int SYSLOG_TIMESTAMP_POS = 3;
+  public static final int SYSLOG_HOSTNAME_POS = 4;
+  public static final int SYSLOG_BODY_POS = 5;
 
   private Mode m = Mode.START;
   private StringBuilder prio = new StringBuilder();
@@ -86,13 +85,13 @@ public class SyslogUtils {
   private static final Logger logger = LoggerFactory
       .getLogger(SyslogUtils.class);
 
-  final public static String SYSLOG_FACILITY = "Facility";
-  final public static String SYSLOG_SEVERITY = "Severity";
-  final public static String SYSLOG_PRIORITY = "Priority";
-  final public static String SYSLOG_VERSION = "Version";
-  final public static String EVENT_STATUS = "flume.syslog.status";
-  final public static Integer MIN_SIZE = 10;
-  final public static Integer DEFAULT_SIZE = 2500;
+  public static final String SYSLOG_FACILITY = "Facility";
+  public static final String SYSLOG_SEVERITY = "Severity";
+  public static final String SYSLOG_PRIORITY = "Priority";
+  public static final String SYSLOG_VERSION = "Version";
+  public static final String EVENT_STATUS = "flume.syslog.status";
+  public static final Integer MIN_SIZE = 10;
+  public static final Integer DEFAULT_SIZE = 2500;
   private final boolean isUdp;
   private boolean isBadEvent;
   private boolean isIncompleteEvent;
@@ -106,6 +105,7 @@ public class SyslogUtils {
     public ArrayList<SimpleDateFormat> dateFormat = new ArrayList<SimpleDateFormat>();
     public boolean addYear;
   }
+
   private ArrayList<SyslogFormatter> formats = new ArrayList<SyslogFormatter>();
 
   private String priority = null;
@@ -115,10 +115,10 @@ public class SyslogUtils {
   private String msgBody = null;
 
   private static final String[] DEFAULT_FIELDS_TO_KEEP = {
-    SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS_PRIORITY,
-    SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS_VERSION,
-    SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS_TIMESTAMP,
-    SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS_HOSTNAME
+      SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS_PRIORITY,
+      SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS_VERSION,
+      SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS_TIMESTAMP,
+      SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS_HOSTNAME
   };
   public static final String KEEP_FIELDS_ALL = "--all--";
 
@@ -211,22 +211,19 @@ public class SyslogUtils {
       return;
     }
     SyslogFormatter fmt1 = new SyslogFormatter();
-    fmt1.regexPattern = Pattern.compile( formatProp.get(
-        SyslogSourceConfigurationConstants.CONFIG_REGEX) );
-    if (formatProp.containsKey(
-        SyslogSourceConfigurationConstants.CONFIG_SEARCH)) {
-      fmt1.searchPattern.add(formatProp.get(
-          SyslogSourceConfigurationConstants.CONFIG_SEARCH));
+    fmt1.regexPattern = Pattern.compile(
+        formatProp.get(SyslogSourceConfigurationConstants.CONFIG_REGEX));
+    if (formatProp.containsKey(SyslogSourceConfigurationConstants.CONFIG_SEARCH)) {
+      fmt1.searchPattern.add(
+          formatProp.get(SyslogSourceConfigurationConstants.CONFIG_SEARCH));
     }
-    if (formatProp.containsKey(
-        SyslogSourceConfigurationConstants.CONFIG_REPLACE)) {
-      fmt1.replacePattern.add(formatProp.get(
-          SyslogSourceConfigurationConstants.CONFIG_REPLACE));
+    if (formatProp.containsKey(SyslogSourceConfigurationConstants.CONFIG_REPLACE)) {
+      fmt1.replacePattern.add(
+          formatProp.get(SyslogSourceConfigurationConstants.CONFIG_REPLACE));
     }
-    if (formatProp.containsKey(
-        SyslogSourceConfigurationConstants.CONFIG_DATEFORMAT)) {
-        fmt1.dateFormat.add(new SimpleDateFormat(formatProp.get(
-            SyslogSourceConfigurationConstants.CONFIG_DATEFORMAT)));
+    if (formatProp.containsKey(SyslogSourceConfigurationConstants.CONFIG_DATEFORMAT)) {
+      fmt1.dateFormat.add(new SimpleDateFormat(
+          formatProp.get(SyslogSourceConfigurationConstants.CONFIG_DATEFORMAT)));
     }
     formats.add(0, fmt1);
   }
@@ -266,20 +263,22 @@ public class SyslogUtils {
 
   enum Mode {
     START, PRIO, DATA
-  };
+  }
 
-  public enum SyslogStatus{
+  ;
+
+  public enum SyslogStatus {
     OTHER("Unknown"),
     INVALID("Invalid"),
     INCOMPLETE("Incomplete");
 
     private final String syslogStatus;
 
-    private SyslogStatus(String status){
+    private SyslogStatus(String status) {
       syslogStatus = status;
     }
 
-    public String getSyslogStatus(){
+    public String getSyslogStatus() {
       return this.syslogStatus;
     }
   }
@@ -292,14 +291,14 @@ public class SyslogUtils {
       int sev = 0;
       int facility = 0;
 
-      if(!isBadEvent){
+      if (!isBadEvent) {
         pri = Integer.parseInt(prio.toString());
         sev = pri % 8;
         facility = pri / 8;
         formatHeaders();
       }
 
-      Map <String, String> headers = new HashMap<String, String>();
+      Map<String, String> headers = new HashMap<String, String>();
       headers.put(SYSLOG_FACILITY, String.valueOf(facility));
       headers.put(SYSLOG_SEVERITY, String.valueOf(sev));
       if ((priority != null) && (priority.length() > 0)) {
@@ -314,10 +313,10 @@ public class SyslogUtils {
       if ((hostName != null) && (hostName.length() > 0)) {
         headers.put("host", hostName);
       }
-      if(isBadEvent){
+      if (isBadEvent) {
         logger.warn("Event created from Invalid Syslog data.");
         headers.put(EVENT_STATUS, SyslogStatus.INVALID.getSyslogStatus());
-      } else if(isIncompleteEvent){
+      } else if (isIncompleteEvent) {
         logger.warn("Event size larger than specified event size: {}. You should " +
             "consider increasing your event size.", maxSize);
         headers.put(EVENT_STATUS, SyslogStatus.INCOMPLETE.getSyslogStatus());
@@ -345,22 +344,22 @@ public class SyslogUtils {
     String eventStr = baos.toString();
     String timeStampString = null;
 
-    for(int p=0; p < formats.size(); p++) {
+    for (int p = 0; p < formats.size(); p++) {
       SyslogFormatter fmt = formats.get(p);
       Pattern pattern = fmt.regexPattern;
       Matcher matcher = pattern.matcher(eventStr);
-      if (! matcher.matches()) {
+      if (!matcher.matches()) {
         continue;
       }
       MatchResult res = matcher.toMatchResult();
-      for (int grp=1; grp <= res.groupCount(); grp++) {
+      for (int grp = 1; grp <= res.groupCount(); grp++) {
         String value = res.group(grp);
         if (grp == SYSLOG_TIMESTAMP_POS) {
           timeStampString = value;
 
           // apply available format replacements to timestamp
           if (value != null) {
-            for (int sp=0; sp < fmt.searchPattern.size(); sp++) {
+            for (int sp = 0; sp < fmt.searchPattern.size(); sp++) {
               value = value.replaceAll(fmt.searchPattern.get(sp), fmt.replacePattern.get(sp));
             }
             // Add year to timestamp if needed
@@ -373,14 +372,16 @@ public class SyslogUtils {
                 Date parsedDate = fmt.dateFormat.get(dt).parse(value);
                 /*
                  * Some code to try and add some smarts to the year insertion.
-                 * Original code just added the current year which was okay-ish, but around January 1st becomes
-                 * pretty naïve.
-                 * The current year is added above. This code, if the year has been added does the following:
+                 * Original code just added the current year which was okay-ish, but around
+                 * January 1st becomes pretty naïve.
+                 * The current year is added above. This code, if the year has been added does
+                 * the following:
                  * 1. Compute what the computed time, but one month in the past would be.
                  * 2. Compute what the computed time, but eleven months in the future would be.
-                 * If the computed time is more than one month in the future then roll it back a year.
-                 * If the computed time is more than eleven months in the past then roll it forward a year.
-                 * This gives us a 12 month rolling window (11 months in the past, 1 month in the future) of timestamps.
+                 * If the computed time is more than one month in the future then roll it back a
+                 * year. If the computed time is more than eleven months in the past then roll it
+                 * forward a year. This gives us a 12 month rolling window (11 months in the past,
+                 * 1 month in the future) of timestamps.
                  */
                 if (fmt.addYear) {
                   Calendar cal = Calendar.getInstance();
@@ -393,13 +394,15 @@ public class SyslogUtils {
                   calPlusElevenMonths.setTime(parsedDate);
                   calPlusElevenMonths.add(Calendar.MONTH, +11);
 
-                  if (cal.getTimeInMillis() > System.currentTimeMillis() && calMinusOneMonth.getTimeInMillis() > System.currentTimeMillis()) {
+                  if (cal.getTimeInMillis() > System.currentTimeMillis() &&
+                      calMinusOneMonth.getTimeInMillis() > System.currentTimeMillis()) {
                     //Need to roll back a year
                     Calendar c1 = Calendar.getInstance();
                     c1.setTime(parsedDate);
                     c1.add(Calendar.YEAR, -1);
                     parsedDate = c1.getTime();
-                  } else if (cal.getTimeInMillis() < System.currentTimeMillis() && calPlusElevenMonths.getTimeInMillis() < System.currentTimeMillis() ) {
+                  } else if (cal.getTimeInMillis() < System.currentTimeMillis() &&
+                             calPlusElevenMonths.getTimeInMillis() < System.currentTimeMillis()) {
                     //Need to roll forward a year
                     Calendar c1 = Calendar.getInstance();
                     c1.setTime(parsedDate);
@@ -422,14 +425,15 @@ public class SyslogUtils {
         } else if (grp == SYSLOG_VERSION_POS) {
           version = value;
         } else if (grp == SYSLOG_BODY_POS) {
-          msgBody = addFieldsToBody(keepFields, value, priority, version, timeStampString, hostName);
+          msgBody = addFieldsToBody(keepFields, value, priority, version,
+                                    timeStampString, hostName);
         }
       }
       break; // we successfully parsed the message using this pattern
     }
   }
 
-  private void reset(){
+  private void reset() {
     baos.reset();
     m = Mode.START;
     prio.delete(0, prio.length());
@@ -441,7 +445,7 @@ public class SyslogUtils {
   }
 
   // extract relevant syslog data needed for building Flume event
-  public Event extractEvent(ChannelBuffer in){
+  public Event extractEvent(ChannelBuffer in) {
 
     /* for protocol debugging
     ByteBuffer bb = in.toByteBuffer();
@@ -459,61 +463,61 @@ public class SyslogUtils {
       while (!doneReading && in.readable()) {
         b = in.readByte();
         switch (m) {
-        case START:
-          if (b == '<') {
-            baos.write(b);
-            m = Mode.PRIO;
-          } else if(b == '\n'){
-            //If the character is \n, it was because the last event was exactly
-            //as long  as the maximum size allowed and
-            //the only remaining character was the delimiter - '\n', or
-            //multiple delimiters were sent in a row.
-            //Just ignore it, and move forward, don't change the mode.
-            //This is a no-op, just ignore it.
-            logger.debug("Delimiter found while in START mode, ignoring..");
+          case START:
+            if (b == '<') {
+              baos.write(b);
+              m = Mode.PRIO;
+            } else if (b == '\n') {
+              //If the character is \n, it was because the last event was exactly
+              //as long  as the maximum size allowed and
+              //the only remaining character was the delimiter - '\n', or
+              //multiple delimiters were sent in a row.
+              //Just ignore it, and move forward, don't change the mode.
+              //This is a no-op, just ignore it.
+              logger.debug("Delimiter found while in START mode, ignoring..");
 
-          } else {
-            isBadEvent = true;
-            baos.write(b);
-            //Bad event, just dump everything as if it is data.
-            m = Mode.DATA;
-          }
-          break;
-        case PRIO:
-          baos.write(b);
-          if (b == '>') {
-            if (prio.length() == 0) {
+            } else {
               isBadEvent = true;
-            }
-            m = Mode.DATA;
-          } else {
-            char ch = (char) b;
-            prio.append(ch);
-            // Priority is max 3 digits per both RFC 3164 and 5424
-            // With this check there is basically no danger of
-            // boas.size() exceeding this.maxSize before getting to the
-            // DATA state where this is actually checked
-            if (!Character.isDigit(ch) || prio.length() > 3) {
-              isBadEvent = true;
-              //If we hit a bad priority, just write as if everything is data.
+              baos.write(b);
+              //Bad event, just dump everything as if it is data.
               m = Mode.DATA;
             }
-          }
-          break;
-        case DATA:
-          // TCP syslog entries are separated by '\n'
-          if (b == '\n') {
-            e = buildEvent();
-            doneReading = true;
-          } else {
+            break;
+          case PRIO:
             baos.write(b);
-          }
-          if(baos.size() == this.maxSize && !doneReading) {
-            isIncompleteEvent = true;
-            e = buildEvent();
-            doneReading = true;
-          }
-          break;
+            if (b == '>') {
+              if (prio.length() == 0) {
+                isBadEvent = true;
+              }
+              m = Mode.DATA;
+            } else {
+              char ch = (char) b;
+              prio.append(ch);
+              // Priority is max 3 digits per both RFC 3164 and 5424
+              // With this check there is basically no danger of
+              // boas.size() exceeding this.maxSize before getting to the
+              // DATA state where this is actually checked
+              if (!Character.isDigit(ch) || prio.length() > 3) {
+                isBadEvent = true;
+                //If we hit a bad priority, just write as if everything is data.
+                m = Mode.DATA;
+              }
+            }
+            break;
+          case DATA:
+            // TCP syslog entries are separated by '\n'
+            if (b == '\n') {
+              e = buildEvent();
+              doneReading = true;
+            } else {
+              baos.write(b);
+            }
+            if (baos.size() == this.maxSize && !doneReading) {
+              isIncompleteEvent = true;
+              e = buildEvent();
+              doneReading = true;
+            }
+            break;
         }
 
       }

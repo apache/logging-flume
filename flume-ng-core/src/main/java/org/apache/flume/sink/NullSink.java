@@ -92,7 +92,7 @@ public class NullSink extends AbstractSink implements Configurable {
         if (++eventCounter % logEveryNEvents == 0) {
           logger.info("Null sink {} successful processed {} events.", getName(), eventCounter);
         }
-        if(event == null) {
+        if (event == null) {
           status = Status.BACKOFF;
           break;
         }
