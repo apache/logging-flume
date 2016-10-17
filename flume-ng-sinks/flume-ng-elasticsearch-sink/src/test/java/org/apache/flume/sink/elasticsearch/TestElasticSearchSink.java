@@ -19,6 +19,7 @@
 package org.apache.flume.sink.elasticsearch;
 
 import org.apache.commons.lang.time.FastDateFormat;
+
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;

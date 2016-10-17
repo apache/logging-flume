@@ -49,6 +49,7 @@ import java.util.Properties;
 import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
+import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -64,6 +65,13 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class ThriftRpcClient extends AbstractRpcClient {
   private static final Logger LOGGER = LoggerFactory.getLogger(ThriftRpcClient.class);
+
+  /**
+   * Config param for the thrift protocol to use.
+   */
+  public static final String CONFIG_PROTOCOL = "protocol";
+  public static final String BINARY_PROTOCOL = "binary";
+  public static final String COMPACT_PROTOCOL = "compact";
 
   /**
    * Config param for the thrift protocol to use.

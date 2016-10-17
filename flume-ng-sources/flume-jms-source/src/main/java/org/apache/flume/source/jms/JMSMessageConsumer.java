@@ -100,8 +100,13 @@ class JMSMessageConsumer {
     } catch (NamingException e) {
       throw new FlumeException("Could not find destination " + destinationName, e);
     }
+  } catch (JMSException e) {
+    throw new FlumeException("Could not create destination " + destinationName, e);
+  } catch (NamingException e) {
+    throw new FlumeException("Could not find destination " + destinationName, e);
+  }
 
-    try {
+  try {
       messageConsumer = session.createConsumer(destination,
           messageSelector.isEmpty() ? null : messageSelector);
     } catch (JMSException e) {

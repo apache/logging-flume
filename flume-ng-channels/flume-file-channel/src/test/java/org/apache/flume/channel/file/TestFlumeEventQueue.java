@@ -348,6 +348,29 @@ public class TestFlumeEventQueue {
   }
 
   @Test
+  public void testUnknownPointerDoesNotCauseSearch() throws Exception {
+    queue = new FlumeEventQueue(backingStore,
+        backingStoreSupplier.getInflightTakes(),
+        backingStoreSupplier.getInflightPuts(),
+        backingStoreSupplier.getQueueSetDir());
+    Assert.assertTrue(queue.addHead(pointer1));
+    Assert.assertTrue(queue.addHead(pointer2));
+    Assert.assertFalse(queue.remove(pointer3)); // does search
+    Assert.assertTrue(queue.remove(pointer1));
+    Assert.assertTrue(queue.remove(pointer2));
+    queue.replayComplete();
+    Assert.assertEquals(2, queue.getSearchCount());
+  }
+  @Test(expected=IllegalStateException.class)
+  public void testRemoveAfterReplayComplete() throws Exception {
+    queue = new FlumeEventQueue(backingStore,
+        backingStoreSupplier.getInflightTakes(),
+        backingStoreSupplier.getInflightPuts(),
+        backingStoreSupplier.getQueueSetDir());
+    queue.replayComplete();
+    queue.remove(pointer1);
+  }
+  @Test
   public void testWrappingCorrectly() throws Exception {
     queue = new FlumeEventQueue(backingStore,
                                 backingStoreSupplier.getInflightTakes(),

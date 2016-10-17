@@ -171,6 +171,11 @@ public class SpoolDirectorySource extends AbstractSource
     deserializerType = context.getString(DESERIALIZER, DEFAULT_DESERIALIZER);
     deserializerContext = new Context(context.getSubProperties(DESERIALIZER +
         "."));
+    
+    consumeOrder = ConsumeOrder.valueOf(context.getString(CONSUME_ORDER, 
+        DEFAULT_CONSUME_ORDER.toString()).toUpperCase(Locale.ENGLISH));
+
+    pollDelay = context.getInteger(POLL_DELAY, DEFAULT_POLL_DELAY);
 
     consumeOrder = ConsumeOrder.valueOf(context.getString(CONSUME_ORDER,
         DEFAULT_CONSUME_ORDER.toString()).toUpperCase(Locale.ENGLISH));

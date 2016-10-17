@@ -174,6 +174,21 @@ public class TestSyslogUtils {
   }
 
   @Test
+  public void TestHeader11() throws ParseException {
+    // SyslogUtils should truncate microsecond precision to only 3 digits.
+    // This is to maintain consistency between the two syslog implementations.
+    String inputStamp  = "2014-10-03T17:20:01.123456-07:00";
+    String outputStamp = "2014-10-03T17:20:01.123-07:00";
+
+    String format1 = "yyyy-MM-dd'T'HH:mm:ss.S";
+    String host1 = "ubuntu-11.cloudera.com";
+    String data1 = "some msg";
+
+    String msg1 = "<10>" + inputStamp + " " + host1 + " " + data1 + "\n";
+    checkHeader(msg1, outputStamp, format1, host1, data1);
+  }
+
+  @Test
   public void TestRfc3164HeaderApacheLogWithNulls() throws ParseException {
     SimpleDateFormat sdf = new SimpleDateFormat("MMM  d hh:MM:ss");
     Calendar cal = Calendar.getInstance();
@@ -344,6 +359,52 @@ public class TestSyslogUtils {
     Assert.assertEquals(SyslogUtils.SyslogStatus.INVALID.getSyslogStatus(),
                         headers.get(SyslogUtils.EVENT_STATUS));
     Assert.assertEquals(badData1.trim(), new String(e.getBody()).trim());
+  }
+
+  /**
+   * Test bad event format 3: Empty priority - <>
+   */
+
+  @Test
+  public void testExtractBadEvent3() {
+    String badData1 = "<> bad bad data\n";
+    SyslogUtils util = new SyslogUtils(false);
+    ChannelBuffer buff = ChannelBuffers.buffer(100);
+    buff.writeBytes(badData1.getBytes());
+    Event e = util.extractEvent(buff);
+    if(e == null){
+      throw new NullPointerException("Event is null");
+    }
+    Map<String, String> headers = e.getHeaders();
+    Assert.assertEquals("0", headers.get(SyslogUtils.SYSLOG_FACILITY));
+    Assert.assertEquals("0", headers.get(SyslogUtils.SYSLOG_SEVERITY));
+    Assert.assertEquals(SyslogUtils.SyslogStatus.INVALID.getSyslogStatus(),
+        headers.get(SyslogUtils.EVENT_STATUS));
+    Assert.assertEquals(badData1.trim(), new String(e.getBody()).trim());
+
+  }
+
+  /**
+   * Test bad event format 4: Priority too long
+   */
+
+  @Test
+  public void testExtractBadEvent4() {
+    String badData1 = "<123123123123123123123123123123> bad bad data\n";
+    SyslogUtils util = new SyslogUtils(false);
+    ChannelBuffer buff = ChannelBuffers.buffer(100);
+    buff.writeBytes(badData1.getBytes());
+    Event e = util.extractEvent(buff);
+    if(e == null){
+      throw new NullPointerException("Event is null");
+    }
+    Map<String, String> headers = e.getHeaders();
+    Assert.assertEquals("0", headers.get(SyslogUtils.SYSLOG_FACILITY));
+    Assert.assertEquals("0", headers.get(SyslogUtils.SYSLOG_SEVERITY));
+    Assert.assertEquals(SyslogUtils.SyslogStatus.INVALID.getSyslogStatus(),
+        headers.get(SyslogUtils.EVENT_STATUS));
+    Assert.assertEquals(badData1.trim(), new String(e.getBody()).trim());
+
   }
 
   /**

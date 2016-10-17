@@ -320,4 +320,141 @@ public class Serialization {
         compressed.toString() + " to: " + decompressed.toString() +
         " may have failed.");
   }
+
+  /**
+   * Compress file using Snappy
+   * @param uncompressed File to compress - this file should exist
+   * @param compressed Compressed file - this file should not exist
+   * @return true if compression was successful
+   */
+  public static boolean compressFile(File uncompressed, File compressed)
+    throws IOException {
+    Preconditions.checkNotNull(uncompressed,
+      "Source file is null, compression failed.");
+    Preconditions.checkNotNull(compressed,
+      "Destination file is null, compression failed.");
+    Preconditions.checkState(uncompressed.exists(), "Source file: " +
+      uncompressed.toString() + " does not exist.");
+    Preconditions.checkState(!compressed.exists(),
+      "Compressed file: " + compressed.toString() + " unexpectedly " +
+        "exists.");
+
+    BufferedInputStream in = null;
+    FileOutputStream out = null;
+    SnappyOutputStream snappyOut = null;
+    try {
+      in = new BufferedInputStream(new FileInputStream(uncompressed));
+      out = new FileOutputStream(compressed);
+      snappyOut = new SnappyOutputStream(out);
+
+      byte[] buf = new byte[FILE_BUFFER_SIZE];
+      while(true) {
+        int read = in.read(buf);
+        if (read == -1) {
+          break;
+        }
+        snappyOut.write(buf, 0, read);
+      }
+      out.getFD().sync();
+      return true;
+    } catch (Exception ex) {
+      LOG.error("Error while attempting to compress " +
+        uncompressed.toString() + " to " + compressed.toString()
+        + ".", ex);
+      Throwables.propagate(ex);
+    } finally {
+      Throwable th = null;
+      try {
+        if (in != null) {
+          in.close();
+        }
+      } catch (Throwable ex) {
+        LOG.error("Error while closing input file.", ex);
+        th = ex;
+      }
+      try {
+        if (snappyOut != null) {
+          snappyOut.close();
+        }
+      } catch (IOException ex) {
+        LOG.error("Error while closing output file.", ex);
+        Throwables.propagate(ex);
+      }
+      if (th != null) {
+        Throwables.propagate(th);
+      }
+    }
+    // Should never reach here.
+    throw new IOException("Copying file: " + uncompressed.toString()
+      + " to: " + compressed.toString() + " may have failed.");
+  }
+
+  /**
+   * Decompress file using Snappy
+   * @param compressed File to compress - this file should exist
+   * @param decompressed Compressed file - this file should not exist
+   * @return true if decompression was successful
+   */
+  public static boolean decompressFile(File compressed, File decompressed)
+    throws IOException {
+    Preconditions.checkNotNull(compressed,
+      "Source file is null, decompression failed.");
+    Preconditions.checkNotNull(decompressed, "Destination file is " +
+      "null, decompression failed.");
+    Preconditions.checkState(compressed.exists(), "Source file: " +
+      compressed.toString() + " does not exist.");
+    Preconditions.checkState(!decompressed.exists(),
+      "Decompressed file: " + decompressed.toString() +
+        " unexpectedly exists.");
+
+    BufferedInputStream in = null;
+    SnappyInputStream snappyIn = null;
+    FileOutputStream out = null;
+    try {
+      in = new BufferedInputStream(new FileInputStream(compressed));
+      snappyIn = new SnappyInputStream(in);
+      out = new FileOutputStream(decompressed);
+
+      byte[] buf = new byte[FILE_BUFFER_SIZE];
+      while(true) {
+        int read = snappyIn.read(buf);
+        if (read == -1) {
+          break;
+        }
+        out.write(buf, 0, read);
+      }
+      out.getFD().sync();
+      return true;
+    } catch (Exception ex) {
+      LOG.error("Error while attempting to compress " +
+        compressed.toString() + " to " + decompressed.toString() +
+        ".", ex);
+      Throwables.propagate(ex);
+    } finally {
+      Throwable th = null;
+      try {
+        if (in != null) {
+          in.close();
+        }
+      } catch (Throwable ex) {
+        LOG.error("Error while closing input file.", ex);
+        th = ex;
+      }
+      try {
+        if (snappyIn != null) {
+          snappyIn.close();
+        }
+      } catch (IOException ex) {
+        LOG.error("Error while closing output file.", ex);
+        Throwables.propagate(ex);
+      }
+      if (th != null) {
+        Throwables.propagate(th);
+      }
+    }
+    // Should never reach here.
+    throw new IOException("Decompressing file: " +
+      compressed.toString() + " to: " + decompressed.toString() +
+      " may have failed.");
+  }
 }

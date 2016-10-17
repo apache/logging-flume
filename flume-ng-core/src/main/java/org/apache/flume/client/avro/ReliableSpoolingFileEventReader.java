@@ -115,6 +115,10 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
   private Iterator<File> candidateFileIter = null;
   private int listFilesCount = 0;
 
+  /** Instance var to Cache directory listing **/
+  private Iterator<File> candidateFileIter = null;
+  private int listFilesCount = 0;
+
   /**
    * Create a ReliableSpoolingFileEventReader to watch the given directory.
    */

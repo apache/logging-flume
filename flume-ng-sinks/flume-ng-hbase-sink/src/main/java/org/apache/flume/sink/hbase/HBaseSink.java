@@ -294,6 +294,60 @@ public class HBaseSink extends AbstractSink implements Configurable {
     if (hbaseZnode != null && !hbaseZnode.isEmpty()) {
       this.config.set(HConstants.ZOOKEEPER_ZNODE_PARENT, hbaseZnode);
     }
+
+    batchIncrements = context.getBoolean(
+      HBaseSinkConfigurationConstants.CONFIG_COALESCE_INCREMENTS,
+      HBaseSinkConfigurationConstants.DEFAULT_COALESCE_INCREMENTS);
+
+    if (batchIncrements) {
+      logger.info("Increment coalescing is enabled. Increments will be " +
+        "buffered.");
+      refGetFamilyMap = reflectLookupGetFamilyMap();
+    }
+
+    String zkQuorum = context.getString(HBaseSinkConfigurationConstants
+      .ZK_QUORUM);
+    Integer port = null;
+    /**
+     * HBase allows multiple nodes in the quorum, but all need to use the
+     * same client port. So get the nodes in host:port format,
+     * and ignore the ports for all nodes except the first one. If no port is
+     * specified, use default.
+     */
+    if (zkQuorum != null && !zkQuorum.isEmpty()) {
+      StringBuilder zkBuilder = new StringBuilder();
+      logger.info("Using ZK Quorum: " + zkQuorum);
+      String[] zkHosts = zkQuorum.split(",");
+      int length = zkHosts.length;
+      for(int i = 0; i < length; i++) {
+        String[] zkHostAndPort = zkHosts[i].split(":");
+        zkBuilder.append(zkHostAndPort[0].trim());
+        if(i != length-1) {
+          zkBuilder.append(",");
+        } else {
+          zkQuorum = zkBuilder.toString();
+        }
+        if (zkHostAndPort[1] == null) {
+          throw new FlumeException("Expected client port for the ZK node!");
+        }
+        if (port == null) {
+          port = Integer.parseInt(zkHostAndPort[1].trim());
+        } else if (!port.equals(Integer.parseInt(zkHostAndPort[1].trim()))) {
+          throw new FlumeException("All Zookeeper nodes in the quorum must " +
+            "use the same client port.");
+        }
+      }
+      if(port == null) {
+        port = HConstants.DEFAULT_ZOOKEPER_CLIENT_PORT;
+      }
+      this.config.set(HConstants.ZOOKEEPER_QUORUM, zkQuorum);
+      this.config.setInt(HConstants.ZOOKEEPER_CLIENT_PORT, port);
+    }
+    String hbaseZnode = context.getString(
+      HBaseSinkConfigurationConstants.ZK_ZNODE_PARENT);
+    if(hbaseZnode != null && !hbaseZnode.isEmpty()) {
+      this.config.set(HConstants.ZOOKEEPER_ZNODE_PARENT, hbaseZnode);
+    }
     sinkCounter = new SinkCounter(this.getName());
   }
 

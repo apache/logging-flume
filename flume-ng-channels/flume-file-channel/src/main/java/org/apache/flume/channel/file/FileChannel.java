@@ -544,6 +544,13 @@ public class FileChannel extends BasicChannelSemantics {
               LOG.warn("Corrupt record found. Event will be " +
                   "skipped, and next event will be read.", ex);
               takeList.remove(ptr);
+            } catch (CorruptEventException ex) {
+              if (fsyncPerTransaction) {
+                throw new ChannelException(ex);
+              }
+              LOG.warn("Corrupt record found. Event will be " +
+                "skipped, and next event will be read.", ex);
+              takeList.remove(ptr);
             }
           }
         }

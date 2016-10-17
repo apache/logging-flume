@@ -35,6 +35,11 @@ public class HDFSTestSeqWriter extends HDFSSequenceFile {
     this.openCount = openCount;
   }
 
+  private int openCount = 0;
+  HDFSTestSeqWriter(int openCount) {
+    this.openCount = openCount;
+  }
+
   @Override
   public void open(String filePath, CompressionCodec codeC, CompressionType compType)
       throws IOException {
