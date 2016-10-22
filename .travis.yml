@@ -16,4 +16,12 @@
 # under the License.
 
 language: java
-script: mvn clean install -DskipTests
+cache:
+  directories:
+    - $HOME/.m2
+before_install:
+  - echo "MAVEN_OPTS='-Xmx2g -XX:MaxPermSize=512m'" > ~/.mavenrc
+install:
+  -
+script:
+  - mvn clean install -DskipTests
