@@ -16,12 +16,9 @@
 # under the License.
 
 language: java
-cache:
-  directories:
-    - $HOME/.m2
 before_install:
-  - echo "MAVEN_OPTS='-Xms512m -Xmx1024m -XX:PermSize=256m -XX:MaxPermSize=512m'" > ~/.mavenrc
+  - export MAVEN_SKIP_RC="true"
 install:
   -
 script:
-  - mvn clean install -DskipTests
+  - MAVEN_OPTS="-Xms512m -Xmx1024m -XX:PermSize=256m -XX:MaxPermSize=512m" mvn clean install -DskipTests
