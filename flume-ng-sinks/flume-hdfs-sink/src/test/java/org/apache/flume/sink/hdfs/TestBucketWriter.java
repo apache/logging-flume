@@ -249,13 +249,6 @@ public class TestBucketWriter {
     final int ROLL_INTERVAL = 1000; // seconds. Make sure it doesn't change in course of test
     final String suffix = null;
 
-    MockHDFSWriter hdfsWriter = new MockHDFSWriter();
-    BucketWriter bucketWriter = new BucketWriter(
-        ROLL_INTERVAL, 0, 0, 0, ctx, "/tmp", "file", "", ".tmp", suffix, null,
-        SequenceFile.CompressionType.NONE, hdfsWriter, timedRollerPool, proxy,
-        new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()), 0, null, null, 30000,
-        Executors.newSingleThreadExecutor(), 0, 0);
-
     // Need to override system time use for test so we know what to expect
     final long testTime = System.currentTimeMillis();
     Clock testClock = new Clock() {
@@ -263,7 +256,13 @@ public class TestBucketWriter {
         return testTime;
       }
     };
-    bucketWriter.setClock(testClock);
+
+    MockHDFSWriter hdfsWriter = new MockHDFSWriter();
+    BucketWriter bucketWriter = new BucketWriter(
+        ROLL_INTERVAL, 0, 0, 0, ctx, "/tmp", "file", "", ".tmp", suffix, null,
+        SequenceFile.CompressionType.NONE, hdfsWriter, timedRollerPool, proxy,
+        new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()), 0, null, null, 30000,
+        Executors.newSingleThreadExecutor(), 0, 0, testClock);
 
     Event e = EventBuilder.withBody("foo", Charsets.UTF_8);
     bucketWriter.append(e);
@@ -277,13 +276,6 @@ public class TestBucketWriter {
     final int ROLL_INTERVAL = 1000; // seconds. Make sure it doesn't change in course of test
     final String suffix = ".avro";
 
-    MockHDFSWriter hdfsWriter = new MockHDFSWriter();
-    BucketWriter bucketWriter = new BucketWriter(
-        ROLL_INTERVAL, 0, 0, 0, ctx, "/tmp", "file", "", ".tmp", suffix, null,
-        SequenceFile.CompressionType.NONE, hdfsWriter, timedRollerPool, proxy,
-        new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()), 0, null, null, 30000,
-        Executors.newSingleThreadExecutor(), 0, 0);
-
     // Need to override system time use for test so we know what to expect
 
     final long testTime = System.currentTimeMillis();
@@ -293,7 +285,14 @@ public class TestBucketWriter {
         return testTime;
       }
     };
-    bucketWriter.setClock(testClock);
+
+    MockHDFSWriter hdfsWriter = new MockHDFSWriter();
+    BucketWriter bucketWriter = new BucketWriter(
+        ROLL_INTERVAL, 0, 0, 0, ctx, "/tmp", "file", "", ".tmp", suffix, null,
+        SequenceFile.CompressionType.NONE, hdfsWriter, timedRollerPool, proxy,
+        new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()), 0, null, null, 30000,
+        Executors.newSingleThreadExecutor(), 0, 0, testClock);
+
 
     Event e = EventBuilder.withBody("foo", Charsets.UTF_8);
     bucketWriter.append(e);
@@ -309,12 +308,6 @@ public class TestBucketWriter {
     final String suffix = ".foo";
 
     MockHDFSWriter hdfsWriter = new MockHDFSWriter();
-    BucketWriter bucketWriter = new BucketWriter(
-        ROLL_INTERVAL, 0, 0, 0, ctx, "/tmp", "file", "", ".tmp", suffix,
-        HDFSEventSink.getCodec("gzip"), SequenceFile.CompressionType.BLOCK, hdfsWriter,
-        timedRollerPool, proxy, new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()),
-        0, null, null, 30000, Executors.newSingleThreadExecutor(), 0, 0
-    );
 
     // Need to override system time use for test so we know what to expect
     final long testTime = System.currentTimeMillis();
@@ -324,7 +317,15 @@ public class TestBucketWriter {
         return testTime;
       }
     };
-    bucketWriter.setClock(testClock);
+
+    BucketWriter bucketWriter = new BucketWriter(
+        ROLL_INTERVAL, 0, 0, 0, ctx, "/tmp", "file", "", ".tmp", suffix,
+        HDFSEventSink.getCodec("gzip"), SequenceFile.CompressionType.BLOCK, hdfsWriter,
+        timedRollerPool, proxy, new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()),
+        0, null, null, 30000, Executors.newSingleThreadExecutor(), 0, 0, testClock
+    );
+
+
 
     Event e = EventBuilder.withBody("foo", Charsets.UTF_8);
     bucketWriter.append(e);
