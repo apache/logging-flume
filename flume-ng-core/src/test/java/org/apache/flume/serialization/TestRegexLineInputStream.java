@@ -53,12 +53,12 @@ public class TestRegexLineInputStream extends ResettableInputStream {
 
   @Override
   public void seek(long newPos) throws IOException {
-	  curPos = Integer.valueOf(newPos+"");
+      curPos = Integer.valueOf(newPos+"");
   }
 
   @Override
   public long tell() throws IOException {
-	  return curPos;
+      return curPos;
   }
 
   @Override
