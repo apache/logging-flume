@@ -176,7 +176,7 @@ public class RegexLineDeserializer implements EventDeserializer {
     boolean isLastLine = true;
     while ((c = in.readChar()) != -1) {
       // FIXME: support \r\n
-      if (c == 65279){
+      if (c == 65279) {
         continue;
       }
       if (c == '\n') {
@@ -197,7 +197,7 @@ public class RegexLineDeserializer implements EventDeserializer {
         sb = new StringBuilder();
         nextLineStart = in.tell();
       } else {
-    	sb.append((char) c);
+        sb.append((char) c);
       }
     }
 
