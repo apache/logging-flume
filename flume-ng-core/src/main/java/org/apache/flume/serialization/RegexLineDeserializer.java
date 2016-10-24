@@ -78,12 +78,12 @@ public class RegexLineDeserializer implements EventDeserializer {
     ensureOpen();
     
     if(null != pattern) {
-    	String multiLine = readLineRegex();
-		if (null == multiLine || "".equals(multiLine)) {
-			return null;
-		} else {
-			return EventBuilder.withBody(multiLine, outputCharset);
-		}
+        String multiLine = readLineRegex();
+        if (null == multiLine || "".equals(multiLine)) {
+            return null;
+        } else {
+            return EventBuilder.withBody(multiLine, outputCharset);
+        }
     }
     
     String line = readLine();
@@ -167,73 +167,73 @@ public class RegexLineDeserializer implements EventDeserializer {
   }
   
   private String readLineRegex() throws IOException {
-		StringBuilder sb = new StringBuilder();
-		StringBuilder multiSb = new StringBuilder();
-		Matcher matcher;
-		int c;
-		boolean hasRegex = false;
-		long nextLineStart = in.tell();
-		boolean isLastLine = true;
-		while ((c = in.readChar()) != -1) {
-			// FIXME: support \r\n
-			if(c == 65279){
-				continue;
-			}
-			if (c == '\n') {
-				matcher = pattern.matcher(sb.toString());
-				if (matcher.matches()) {
-					if (hasRegex) {
-						in.seek(nextLineStart);
-						sb = new StringBuilder();
-						isLastLine = false;
-						break;
-					}
-					
-					hasRegex = true;
-					multiSb = new StringBuilder();
-				}
-				if (sb.toString() != null && !"".equals(sb.toString())) {
-					multiSb.append(sb).append((char) c);
-				}
-				sb = new StringBuilder();
-				nextLineStart = in.tell();
-			} else {
-				sb.append((char) c);
-			}
-		}
+        StringBuilder sb = new StringBuilder();
+        StringBuilder multiSb = new StringBuilder();
+        Matcher matcher;
+        int c;
+        boolean hasRegex = false;
+        long nextLineStart = in.tell();
+        boolean isLastLine = true;
+        while ((c = in.readChar()) != -1) {
+            // FIXME: support \r\n
+            if(c == 65279){
+                continue;
+            }
+            if (c == '\n') {
+                matcher = pattern.matcher(sb.toString());
+                if (matcher.matches()) {
+                    if (hasRegex) {
+                        in.seek(nextLineStart);
+                        sb = new StringBuilder();
+                        isLastLine = false;
+                        break;
+                    }
+                    
+                    hasRegex = true;
+                    multiSb = new StringBuilder();
+                }
+                if (sb.toString() != null && !"".equals(sb.toString())) {
+                    multiSb.append(sb).append((char) c);
+                }
+                sb = new StringBuilder();
+                nextLineStart = in.tell();
+            } else {
+                sb.append((char) c);
+            }
+        }
 
-		// last line
-		if (isLastLine && hasRegex) {
-			if (sb.toString() != null || !"".equals(sb.toString())) {
-				matcher = pattern.matcher(sb.toString());
-				// matched or not 
-				if (matcher.matches()) {
-					// first line
-					in.seek(nextLineStart);
-					sb = new StringBuilder();
+        // last line
+        if (isLastLine && hasRegex) {
+            if (sb.toString() != null || !"".equals(sb.toString())) {
+                matcher = pattern.matcher(sb.toString());
+                // matched or not 
+                if (matcher.matches()) {
+                    // first line
+                    in.seek(nextLineStart);
+                    sb = new StringBuilder();
 
-				} else {
-					multiSb.append(sb);
-				}
-			}
-		}
-		String multiLine = multiSb.toString();
-		if (multiLine != null && !"".equals(multiLine)) {
-			if (multiSb.lastIndexOf("\n") == multiSb.length() - 1 && multiSb.length() > 1) {
-				multiLine = multiLine.substring(0, multiSb.length() - 1);
-			}
-			return multiLine;
-		} else {
-			// last line
-			if (sb.toString() != null || !"".equals(sb.toString())) {
-				matcher = pattern.matcher(sb.toString());
-				if (matcher.matches()) {
-					return sb.toString();
-				}
-			}
-			return null;
-		}
-	}
+                } else {
+                    multiSb.append(sb);
+                }
+            }
+        }
+        String multiLine = multiSb.toString();
+        if (multiLine != null && !"".equals(multiLine)) {
+            if (multiSb.lastIndexOf("\n") == multiSb.length() - 1 && multiSb.length() > 1) {
+                multiLine = multiLine.substring(0, multiSb.length() - 1);
+            }
+            return multiLine;
+        } else {
+            // last line
+            if (sb.toString() != null || !"".equals(sb.toString())) {
+                matcher = pattern.matcher(sb.toString());
+                if (matcher.matches()) {
+                    return sb.toString();
+                }
+            }
+            return null;
+        }
+    }
 
   public static class Builder implements EventDeserializer.Builder {
 
