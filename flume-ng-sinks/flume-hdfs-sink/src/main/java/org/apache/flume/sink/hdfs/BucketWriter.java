@@ -106,7 +106,6 @@ class BucketWriter {
 
   private boolean mockFsInjected = false;
 
-  private Clock clock = new SystemClock();
   private final long retryInterval;
   private final int maxRenameTries;
 
@@ -124,6 +123,26 @@ class BucketWriter {
       String onCloseCallbackPath, long callTimeout,
       ExecutorService callTimeoutPool, long retryInterval,
       int maxCloseTries) {
+    this(rollInterval, rollSize, rollCount, batchSize,
+            context, filePath, fileName, inUsePrefix,
+            inUseSuffix, fileSuffix, codeC,
+            compType, writer,
+            timedRollerPool, proxyUser,
+            sinkCounter, idleTimeout, onCloseCallback,
+            onCloseCallbackPath, callTimeout,
+            callTimeoutPool, retryInterval,
+            maxCloseTries, new SystemClock());
+  }
+
+  BucketWriter(long rollInterval, long rollSize, long rollCount, long batchSize,
+           Context context, String filePath, String fileName, String inUsePrefix,
+           String inUseSuffix, String fileSuffix, CompressionCodec codeC,
+           CompressionType compType, HDFSWriter writer,
+           ScheduledExecutorService timedRollerPool, PrivilegedExecutor proxyUser,
+           SinkCounter sinkCounter, int idleTimeout, WriterCallback onCloseCallback,
+           String onCloseCallbackPath, long callTimeout,
+           ExecutorService callTimeoutPool, long retryInterval,
+           int maxCloseTries, Clock clock) {
     this.rollInterval = rollInterval;
     this.rollSize = rollSize;
     this.rollCount = rollCount;
@@ -632,10 +651,6 @@ class BucketWriter {
 
   private boolean isBatchComplete() {
     return (batchCounter == 0);
-  }
-
-  void setClock(Clock clock) {
-    this.clock = clock;
   }
 
   /**
