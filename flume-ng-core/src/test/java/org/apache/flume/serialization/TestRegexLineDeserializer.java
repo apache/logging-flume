@@ -49,26 +49,26 @@ public class TestRegexLineDeserializer {
   
   @Test
   public void testMultiLine() throws IOException {
-	  // ^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}
-	  String dd="^\\";
-	  // ^((${srcStartWithString})(\\s|\\S)).*
-	  Context context = new Context();
-	  context.put("filePattern", "^((\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2},\\d{3})(\\s|\\S)).*");
-	  ResettableInputStream in = new TestRegexLineInputStream(fileInfo);
-	  EventDeserializer des = new RegexLineDeserializer(context, in);
-	  Event evt = des.readEvent();
-	  String line1 = new String(evt.getBody(), "UTF-8");
-	  System.out.println("line 1\n" + line1);
-	  des.mark();
-	  evt = des.readEvent();
-	  String line2 = new String(evt.getBody(), "UTF-8");
-	  System.out.println("line 2\n" + line2);
-	  des.mark();
-	  evt = des.readEvent();
-	  String line3 = new String(evt.getBody(), "UTF-8");
-	  System.out.println("line 3\n" + line3);
-	  des.reset();
-	  des.mark();
-	  des.close();
+      // ^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}
+      String dd="^\\";
+      // ^((${srcStartWithString})(\\s|\\S)).*
+      Context context = new Context();
+      context.put("filePattern", "^((\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2},\\d{3})(\\s|\\S)).*");
+      ResettableInputStream in = new TestRegexLineInputStream(fileInfo);
+      EventDeserializer des = new RegexLineDeserializer(context, in);
+      Event evt = des.readEvent();
+      String line1 = new String(evt.getBody(), "UTF-8");
+      System.out.println("line 1\n" + line1);
+      des.mark();
+      evt = des.readEvent();
+      String line2 = new String(evt.getBody(), "UTF-8");
+      System.out.println("line 2\n" + line2);
+      des.mark();
+      evt = des.readEvent();
+      String line3 = new String(evt.getBody(), "UTF-8");
+      System.out.println("line 3\n" + line3);
+      des.reset();
+      des.mark();
+      des.close();
   }
 }
