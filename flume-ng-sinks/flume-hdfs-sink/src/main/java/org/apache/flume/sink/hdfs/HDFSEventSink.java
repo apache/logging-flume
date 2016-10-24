@@ -458,13 +458,31 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   private BucketWriter initializeBucketWriter(String realPath,
       String realName, String lookupPath, HDFSWriter hdfsWriter,
       WriterCallback closeCallback) {
-    BucketWriter bucketWriter = new BucketWriter(rollInterval,
-        rollSize, rollCount,
-        batchSize, context, realPath, realName, inUsePrefix, inUseSuffix,
-        suffix, codeC, compType, hdfsWriter, timedRollerPool,
-        privExecutor, sinkCounter, idleTimeout, closeCallback,
-        lookupPath, callTimeout, callTimeoutPool, retryInterval,
-        tryCount);
+    BucketWriterOptions options = new BucketWriterOptions()
+        .rollInterval(rollInterval)
+        .rollSize(rollSize)
+        .rollCount(rollCount)
+        .batchSize(batchSize)
+        .context(context)
+        .filePath(realPath)
+        .fileName(realName)
+        .inUsePrefix(inUsePrefix)
+        .inUseSuffix(inUseSuffix)
+        .fileSuffix(suffix)
+        .compressionCodec(codeC)
+        .compressionType(compType)
+        .hdfsWriter(hdfsWriter)
+        .timedRollerPool(timedRollerPool)
+        .proxyUser(privExecutor)
+        .sinkCounter(sinkCounter)
+        .idleTimeout(idleTimeout)
+        .onCloseCallback(closeCallback)
+        .onCloseCallbackPath(lookupPath)
+        .callTimeout(callTimeout)
+        .callTimeoutPool(callTimeoutPool)
+        .retryInterval(retryInterval)
+        .maxCloseTries(tryCount);
+    BucketWriter bucketWriter = new BucketWriter(options);
     if (mockFs != null) {
       bucketWriter.setFileSystem(mockFs);
       bucketWriter.setMockStream(mockWriter);
