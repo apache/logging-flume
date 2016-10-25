@@ -56,7 +56,41 @@ work identified as release related that needs to be completed should be
 added as a subtask of the umbrella issue to allow users to see the
 overall release progress in one place.
 
-TODO: Add an email template to send out
+Send out an e-mail like this:
+
+    To: dev@flume.apache.org
+    Subject: [DISCUSS] Flume 1.7 release plan
+
+    We have almost 100 commits since 1.6.0, and a bunch of new features
+    and improvements including a Taildir Source, many upgrades,
+    performance increases, plus a lot of fixes and documentation
+    additions.
+
+    It seems to me that it's time to cut a 1.7 release soon. I would be
+    happy to volunteer to RM.
+
+    Below is the list of tickets that have patches submitted and are
+    scheduled for 1.7.0:
+    https://issues.apache.org/jira/browse/FLUME-2998?jql=project%20%3D%20FLUME%20AND%20status%20%3D%20%22Patch%20Available%22%20AND%20resolution%20%3D%20Unresolved%20AND%20fixVersion%20%3D%20v1.7.0 (18 tickets)
+
+    There are more tickets that have no patch submitted:
+    https://issues.apache.org/jira/browse/FLUME-2998?jql=project%20%3D%20FLUME%20AND%20issuetype%20in%20standardIssueTypes()%20AND%20resolution%20%3D%20Unresolved%20AND%20fixVersion%20%3D%20v1.7.0 (30 tickets)
+
+    I suggest tracking the release process using the JIRA at https://issues.apache.org/jira/browse/FLUME-2924
+
+    If this all sounds OK, I'd like to suggest targeting the week of
+    October 10 for a first RC. (Also, anything that is non-trivial should
+    get in by October 7. Any feature or big change that is not committed
+    by then would be scheduled for the next release.)
+
+    That should leave enough time for people to get moving on patches and
+    reviews for their documentation improvements, critical bug fixes, and
+    low-risk enhancements, etc.
+
+    Also, I would like to propose October 7 (one week from today) for the
+    branch date.
+
+    Please let me know your thoughts.
 
 
 ### JIRA cleanup
@@ -341,6 +375,50 @@ Send an email to dev@flume.apache.org list. For example,
 
 
 You need 3 +1 votes from Flume PMC members for a release.
+
+When the vote gets cancelled or passes, send out an e-mail like:
+
+    This vote is cancelled.
+
+    I'm about to send an e-mail about RC2.
+
+or (if the vote passes):
+
+    This vote is now closed.
+
+    I will send out the results in a separate email.
+
+    Thanks to all who voted!
+
+
+### Send results of a successful vote
+
+After a successful RC vote has passed, send an email to dev@flume.apache.org list. For example,
+
+    To: dev@flume.apache.org
+    Subject: [RESULT] Flume 1.7.0 release vote
+
+    The release vote for Apache Flume 1.7.0 has been completed in this
+    thread: https://lists.apache.org/thread.html/3cf114125dbea6e662b69d1312c34184690af327900e8dcccea5edde@%3Cdev.flume.apache.org%3E
+
+    The vote has received 3 binding +1 votes from the following PMC members:
+    Mike Percy
+    Hari Shreedharan
+    Brock Noland
+
+    Four non-binding +1 votes were received from:
+    Denes Arvay
+    Bessenyei Balázs Donát
+    Lior Zeno
+    Attila Simon
+
+    No +0 or -1 votes were received.
+
+    Since three +1 votes were received from the PMC with no -1 votes, the
+    vote passes and Flume 1.7.0 RC2 will be promoted to the Flume 1.7.0
+    release.
+
+    Thanks to all who voted!
 
 
 Rolling out the Release
