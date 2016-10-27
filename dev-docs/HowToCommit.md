@@ -17,6 +17,11 @@ under the License.
 Apache Flume: How to Commit  
 ===========================
 
+This guide highlights the process and responsibilities of committers on the Flume project.
+
+**Note**: Just like contributors, committers must follow the same guidelines for contributions as highlighted in the How to Contribute guide.
+
+
 Committing patches
 ------------------
 
