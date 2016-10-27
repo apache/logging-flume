@@ -805,7 +805,7 @@ public class TestSpillableMemoryChannel {
 
     Map<String, String> params = new HashMap<String, String>();
     params.put("memoryCapacity", "0");
-    params.put("overflowCapacity", "500020");
+    params.put("overflowCapacity", String.valueOf(eventCount));
     params.put("overflowTimeout", "3");
     startChannel(params);
 
@@ -822,12 +822,11 @@ public class TestSpillableMemoryChannel {
 
     watch.elapsed();
 
-    System.out.println("Total puts " + channel.drainOrder.totalPuts);
-
     System.out.println("Max Queue size " + channel.getMaxMemQueueSize());
-    System.out.println(channel.memQueue.size());
 
-    System.out.println("done");
+    Assert.assertEquals(eventCount, channel.drainOrder.totalPuts);
+    Assert.assertEquals("Channel not fully drained", 0, channel.getTotalStored());
+    System.out.println("testParallelMultipleSourcesAndSinks done");
   }
 
   static class StopWatch {
