@@ -431,6 +431,7 @@ public class KafkaSource extends AbstractPollableSource
   }
 
   private void setConsumerProps(Context ctx) {
+    kafkaProps.clear();
     kafkaProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
                    KafkaSourceConstants.DEFAULT_KEY_DESERIALIZER);
     kafkaProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,

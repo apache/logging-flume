@@ -261,6 +261,7 @@ public class KafkaChannel extends BasicChannelSemantics {
 
 
   private void setProducerProps(Context ctx, String bootStrapServers) {
+    producerProps.clear();
     producerProps.put(ProducerConfig.ACKS_CONFIG, DEFAULT_ACKS);
     producerProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, DEFAULT_KEY_SERIALIZER);
     producerProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, DEFAULT_VALUE_SERIAIZER);
@@ -274,6 +275,7 @@ public class KafkaChannel extends BasicChannelSemantics {
   }
 
   private void setConsumerProps(Context ctx, String bootStrapServers) {
+    consumerProps.clear();
     consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, DEFAULT_KEY_DESERIALIZER);
     consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, DEFAULT_VALUE_DESERIAIZER);
     consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, DEFAULT_AUTO_OFFSET_RESET);

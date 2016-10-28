@@ -46,6 +46,7 @@ import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -342,6 +343,33 @@ public class TestKafkaSink {
   @Test(expected = org.apache.flume.EventDeliveryException.class)
   public void testPartitionHeaderInvalid() throws Exception {
     doPartitionErrors(PartitionOption.NOTANUMBER);
+  }
+
+  /**
+   * Tests that sub-properties (kafka.producer.*) apply correctly across multiple invocations
+   * of configure() (fix for FLUME-2857).
+   * @throws Exception
+   */
+  @Test
+  public void testDefaultSettingsOnReConfigure() throws Exception {
+    String sampleProducerProp = "compression.type";
+    String sampleProducerVal = "snappy";
+
+    Context context = prepareDefaultContext();
+    context.put(KafkaSinkConstants.KAFKA_PRODUCER_PREFIX + sampleProducerProp, sampleProducerVal);
+
+    KafkaSink kafkaSink = new KafkaSink();
+
+    Configurables.configure(kafkaSink, context);
+
+    Assert.assertEquals(sampleProducerVal,
+        kafkaSink.getKafkaProps().getProperty(sampleProducerProp));
+
+    context = prepareDefaultContext();
+    Configurables.configure(kafkaSink, context);
+
+    Assert.assertNull(kafkaSink.getKafkaProps().getProperty(sampleProducerProp));
+
   }
 
   /**
