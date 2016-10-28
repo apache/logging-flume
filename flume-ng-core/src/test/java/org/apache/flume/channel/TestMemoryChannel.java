@@ -19,7 +19,7 @@
 
 package org.apache.flume.channel;
 
-import org.apache.flume.Channel;
+import com.google.common.collect.ImmutableMap;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -27,6 +27,7 @@ import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
+import org.apache.flume.event.SimpleEvent;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,7 +40,7 @@ import static org.fest.reflect.core.Reflection.field;
 
 public class TestMemoryChannel {
 
-  private Channel channel;
+  private MemoryChannel channel;
 
   @Before
   public void setUp() {
@@ -263,6 +264,21 @@ public class TestMemoryChannel {
     transaction.commit();
     Assert.fail();
 
+  }
+
+  @Test
+  public void testByteCapacityAfterRollback() {
+    Context ctx = new Context(ImmutableMap.of("byteCapacity", "1000"));
+    Configurables.configure(channel,  ctx);
+
+    Assert.assertEquals(8, channel.getBytesRemainingValue());
+    Event e = new SimpleEvent();
+    Transaction t = channel.getTransaction();
+    t.begin();
+
+    channel.put(e);
+    t.rollback();
+    Assert.assertEquals(8, channel.getBytesRemainingValue());
   }
 
   public void testByteCapacityBufferEmptyingAfterTakeCommit() {
