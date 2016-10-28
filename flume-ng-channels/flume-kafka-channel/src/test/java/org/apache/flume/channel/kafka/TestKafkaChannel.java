@@ -288,6 +288,40 @@ public class TestKafkaChannel {
     doPartitionErrors(PartitionOption.NOTANUMBER);
   }
 
+  /**
+   * Tests that sub-properties get set correctly if you run the configure() method twice
+   * (fix for FLUME-2857)
+   * @throws Exception
+   */
+  @Test
+  public void testDefaultSettingsOnReConfigure() throws Exception {
+    String sampleProducerProp = "compression.type";
+    String sampleProducerVal = "snappy";
+
+    String sampleConsumerProp = "fetch.min.bytes";
+    String sampleConsumerVal = "99";
+
+    Context context = prepareDefaultContext(false);
+    context.put(KafkaChannelConfiguration.KAFKA_PRODUCER_PREFIX + sampleProducerProp,
+        sampleProducerVal);
+    context.put(KafkaChannelConfiguration.KAFKA_CONSUMER_PREFIX + sampleConsumerProp,
+        sampleConsumerVal);
+
+    final KafkaChannel channel = createChannel(context);
+
+    Assert.assertEquals(sampleProducerVal,
+        channel.getProducerProps().getProperty(sampleProducerProp));
+    Assert.assertEquals(sampleConsumerVal,
+        channel.getConsumerProps().getProperty(sampleConsumerProp));
+
+    context = prepareDefaultContext(false);
+    channel.configure(context);
+
+    Assert.assertNull(channel.getProducerProps().getProperty(sampleProducerProp));
+    Assert.assertNull(channel.getConsumerProps().getProperty(sampleConsumerProp));
+
+  }
+
   public void doTestMigrateZookeeperOffsets(boolean hasZookeeperOffsets, boolean hasKafkaOffsets,
                                             String group) throws Exception {
     // create a topic with 1 partition for simplicity

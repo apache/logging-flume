@@ -393,6 +393,7 @@ public class KafkaSink extends AbstractSink implements Configurable {
   }
 
   private void setProducerProps(Context context, String bootStrapServers) {
+    kafkaProps.clear();
     kafkaProps.put(ProducerConfig.ACKS_CONFIG, DEFAULT_ACKS);
     //Defaults overridden based on config
     kafkaProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, DEFAULT_KEY_SERIALIZER);

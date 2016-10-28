@@ -627,6 +627,34 @@ public class TestKafkaSource {
     doTestMigrateZookeeperOffsets(true, true, "testMigrateOffsets-both");
   }
 
+  /**
+   * Tests that sub-properties (kafka.consumer.*) apply correctly across multiple invocations
+   * of configure() (fix for FLUME-2857).
+   * @throws Exception
+   */
+  @Test
+  public void testDefaultSettingsOnReConfigure() throws Exception {
+    String sampleConsumerProp = "auto.offset.reset";
+    String sampleConsumerVal = "earliest";
+    String group = "group";
+
+    Context context = prepareDefaultContext(group);
+    context.put(KafkaSourceConstants.KAFKA_CONSUMER_PREFIX + sampleConsumerProp,
+        sampleConsumerVal);
+    context.put(TOPIC, "random-topic");
+
+    kafkaSource.configure(context);
+
+    Assert.assertEquals(sampleConsumerVal,
+        kafkaSource.getConsumerProps().getProperty(sampleConsumerProp));
+
+    context = prepareDefaultContext(group);
+    context.put(TOPIC, "random-topic");
+
+    kafkaSource.configure(context);
+    Assert.assertNull(kafkaSource.getConsumerProps().getProperty(sampleConsumerProp));
+  }
+
   public void doTestMigrateZookeeperOffsets(boolean hasZookeeperOffsets, boolean hasKafkaOffsets,
                                             String group) throws Exception {
     // create a topic with 1 partition for simplicity
