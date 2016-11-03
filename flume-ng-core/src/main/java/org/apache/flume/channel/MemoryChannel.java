@@ -54,7 +54,10 @@ public class MemoryChannel extends BasicChannelSemantics {
   private static Logger LOGGER = LoggerFactory.getLogger(MemoryChannel.class);
   private static final Integer defaultCapacity = 100;
   private static final Integer defaultTransCapacity = 100;
-  private static final double byteCapacitySlotSize = 100;
+
+  @VisibleForTesting
+  static final double byteCapacitySlotSize = 100;
+
   private static final Long defaultByteCapacity = (long)(Runtime.getRuntime().maxMemory() * .80);
   private static final Integer defaultByteCapacityBufferPercentage = 20;
 

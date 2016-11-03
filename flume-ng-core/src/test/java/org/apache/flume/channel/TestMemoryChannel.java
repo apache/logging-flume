@@ -281,6 +281,29 @@ public class TestMemoryChannel {
     Assert.assertEquals(8, channel.getBytesRemainingValue());
   }
 
+  /**
+   * Due to the leaking semaphores in certain circumstances
+   * <code>java.lang.Error: Maximum permit count exceeded</code> was thrown when the transaction
+   * was rolled back.
+   * For more details see: https://issues.apache.org/jira/browse/FLUME-2812
+   */
+  @Test
+  public void testAvoidMaximumPermitCountExceeded() {
+    long byteCapacity = (long) (Integer.MAX_VALUE * MemoryChannel.byteCapacitySlotSize);
+    Context ctx = new Context(ImmutableMap.of("byteCapacity", String.valueOf(byteCapacity),
+        "byteCapacityBufferPercentage", "0"));
+    Configurables.configure(channel,  ctx);
+
+    Assert.assertEquals(Integer.MAX_VALUE, channel.getBytesRemainingValue());
+    Event e = new SimpleEvent();
+    Transaction t = channel.getTransaction();
+    t.begin();
+
+    channel.put(e);
+    t.rollback();
+    Assert.assertEquals(Integer.MAX_VALUE, channel.getBytesRemainingValue());
+  }
+
   public void testByteCapacityBufferEmptyingAfterTakeCommit() {
     Context context = new Context();
     Map<String, String> parms = new HashMap<String, String>();
