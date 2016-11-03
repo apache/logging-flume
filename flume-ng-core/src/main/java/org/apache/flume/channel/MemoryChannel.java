@@ -18,6 +18,7 @@
  */
 package org.apache.flume.channel;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import org.apache.flume.ChannelException;
 import org.apache.flume.ChannelFullException;
@@ -53,7 +54,10 @@ public class MemoryChannel extends BasicChannelSemantics {
   private static Logger LOGGER = LoggerFactory.getLogger(MemoryChannel.class);
   private static final Integer defaultCapacity = 100;
   private static final Integer defaultTransCapacity = 100;
-  private static final double byteCapacitySlotSize = 100;
+
+  @VisibleForTesting
+  static final double byteCapacitySlotSize = 100;
+
   private static final Long defaultByteCapacity = (long)(Runtime.getRuntime().maxMemory() * .80);
   private static final Integer defaultByteCapacityBufferPercentage = 20;
 
@@ -171,7 +175,6 @@ public class MemoryChannel extends BasicChannelSemantics {
         }
         putList.clear();
       }
-      bytesRemaining.release(putByteCounter);
       putByteCounter = 0;
       takeByteCounter = 0;
 
@@ -373,5 +376,10 @@ public class MemoryChannel extends BasicChannelSemantics {
     }
     //Each event occupies at least 1 slot, so return 1.
     return 1;
+  }
+
+  @VisibleForTesting
+  int getBytesRemainingValue() {
+    return bytesRemaining.availablePermits();
   }
 }
