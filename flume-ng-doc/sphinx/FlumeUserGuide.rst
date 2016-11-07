@@ -2923,7 +2923,7 @@ Required properties are in **bold**.
 Property Name              Default           Description
 ========================== ================= ===========================================================================================
 **channel**                --
-**type**                   --                The component type name, needs to be ``avro``.
+**type**                   --                The component type name, needs to be ``http``.
 **endpoint**               --                The fully qualified URL endpoint to POST to
 connectTimeout             5000ms            The socket connection timeout
 requestTimeout             5000ms            The maximum request processing time
