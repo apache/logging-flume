@@ -1,69 +1,69 @@
 package uk.gov.hmrc.flume.sink;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
-import static com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED;
-import static org.mockito.Mockito.*;
-import static org.apache.flume.Sink.Status;
-
 import com.github.tomakehurst.wiremock.global.RequestDelaySpec;
 import com.github.tomakehurst.wiremock.http.Fault;
 import com.github.tomakehurst.wiremock.http.Request;
 import com.github.tomakehurst.wiremock.http.RequestListener;
 import com.github.tomakehurst.wiremock.http.Response;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
-import org.apache.flume.*;
+import org.apache.flume.Context;
+import org.apache.flume.EventDeliveryException;
+import org.apache.flume.Sink;
+import org.apache.flume.Transaction;
+import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.event.SimpleEvent;
-import org.apache.flume.instrumentation.SinkCounter;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED;
+import static org.apache.flume.Sink.Status;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 /**
- * Runs a set of tests against a correctly configured external running Flume
- * instance.
+ * Runs a set of tests against a mocked HTTP endpoint.
  */
 @RunWith(MockitoJUnitRunner.class)
 public class TestHttpSinkIT {
 
     private static final int RESPONSE_TIMEOUT = 4000;
-    private static final int CONNECT_TIMEOUT = 2000;
+    private static final int CONNECT_TIMEOUT = 2500;
+
+    private MemoryChannel channel;
 
     private HttpSink httpSink;
-
-    @Mock
-    private SinkCounter sinkCounter;
-
-    @Mock
-    private Channel channel;
-
-    @Mock
-    private Transaction transaction;
 
     @Before
     public void setupSink() {
         if (httpSink == null) {
-            Context context = new Context();
-            context.put("endpoint", "http://localhost:8080/endpoint");
-            context.put("requestTimeout", "2000");
-            context.put("connectTimeout", "1500");
-            context.put("acceptHeader", "application/json");
-            context.put("contentTypeHeader", "application/json");
-            context.put("backoff.200", "false");
-            context.put("rollback.200", "false");
-            context.put("incrementMetrics.200", "true");
+            Context httpSinkContext = new Context();
+            httpSinkContext.put("endpoint", "http://localhost:8080/endpoint");
+            httpSinkContext.put("requestTimeout", "2000");
+            httpSinkContext.put("connectTimeout", "1500");
+            httpSinkContext.put("acceptHeader", "application/json");
+            httpSinkContext.put("contentTypeHeader", "application/json");
+            httpSinkContext.put("backoff.200", "false");
+            httpSinkContext.put("rollback.200", "false");
+            httpSinkContext.put("incrementMetrics.200", "true");
+
+            Context memoryChannelContext = new Context();
+
+            channel = new MemoryChannel();
+            channel.configure(memoryChannelContext);
+            channel.start();
 
             httpSink = new HttpSink();
-            httpSink.configure(context);
+            httpSink.configure(httpSinkContext);
             httpSink.setChannel(channel);
-            httpSink.setSinkCounter(sinkCounter);
             httpSink.start();
         }
     }
@@ -106,8 +106,8 @@ public class TestHttpSinkIT {
                 .withRequestBody(equalToJson(event("TRANSIENT_ERROR")))
                 .willReturn(aResponse().withStatus(200)));
 
-        addEventToChannel(event("TRANSIENT_ERROR"), false, Status.BACKOFF);
-        addEventToChannel(event("TRANSIENT_ERROR"), true, Status.READY);
+        addEventToChannel(event("TRANSIENT_ERROR"), Status.BACKOFF);
+        addEventToChannel(event("TRANSIENT_ERROR"), Status.READY);
 
         service.verify(2, postRequestedFor(urlEqualTo("/endpoint"))
                 .withRequestBody(equalToJson(event("TRANSIENT_ERROR"))));
@@ -130,8 +130,8 @@ public class TestHttpSinkIT {
                 .withRequestBody(equalToJson(event("NETWORK_ERROR")))
                 .willReturn(aResponse().withStatus(200)));
 
-        addEventToChannel(event("NETWORK_ERROR"), false, Status.BACKOFF);
-        addEventToChannel(event("NETWORK_ERROR"), true, Status.READY);
+        addEventToChannel(event("NETWORK_ERROR"), Status.BACKOFF);
+        addEventToChannel(event("NETWORK_ERROR"), Status.READY);
 
         service.verify(2, postRequestedFor(urlEqualTo("/endpoint"))
                 .withRequestBody(equalToJson(event("NETWORK_ERROR"))));
@@ -139,11 +139,14 @@ public class TestHttpSinkIT {
 
     @Test
     public void ensureEventsResentOnConnectionTimeout() throws Exception {
+        final CountDownLatch firstRequestReceived = new CountDownLatch(1);
+
         service.addSocketAcceptDelay(new RequestDelaySpec(CONNECT_TIMEOUT));
         service.addMockServiceRequestListener(new RequestListener() {
             @Override
             public void requestReceived(Request request, Response response) {
                 service.addSocketAcceptDelay(new RequestDelaySpec(0));
+                firstRequestReceived.countDown();
             }
         });
 
@@ -151,8 +154,12 @@ public class TestHttpSinkIT {
                 .withRequestBody(equalToJson(event("SLOW_SOCKET")))
                 .willReturn(aResponse().withStatus(200)));
 
-        addEventToChannel(event("SLOW_SOCKET"), false, Status.BACKOFF);
-        addEventToChannel(event("SLOW_SOCKET"), true, Status.READY);
+        addEventToChannel(event("SLOW_SOCKET"), Status.BACKOFF);
+
+        // wait until the socket is connected
+        firstRequestReceived.await(2000, TimeUnit.MILLISECONDS);
+
+        addEventToChannel(event("SLOW_SOCKET"), Status.READY);
 
         service.verify(2, postRequestedFor(urlEqualTo("/endpoint"))
                 .withRequestBody(equalToJson(event("SLOW_SOCKET"))));
@@ -175,8 +182,8 @@ public class TestHttpSinkIT {
                 .withRequestBody(equalToJson(event("SLOW_RESPONSE")))
                 .willReturn(aResponse().withStatus(200)));
 
-        addEventToChannel(event("SLOW_RESPONSE"), false, Status.BACKOFF);
-        addEventToChannel(event("SLOW_RESPONSE"), true, Status.READY);
+        addEventToChannel(event("SLOW_RESPONSE"), Status.BACKOFF);
+        addEventToChannel(event("SLOW_RESPONSE"), Status.READY);
 
         service.verify(2, postRequestedFor(urlEqualTo("/endpoint"))
                 .withRequestBody(equalToJson(event("SLOW_RESPONSE"))));
@@ -193,39 +200,36 @@ public class TestHttpSinkIT {
 
         long startTime = System.currentTimeMillis();
 
-        addEventToChannel(event("SUCCESS"), true, Status.READY);
-        addEventToChannel(event("SUCCESS"), true, Status.READY);
-        addEventToChannel(event("SUCCESS"), true, Status.READY);
+        addEventToChannel(event("SUCCESS"), Status.READY);
+        addEventToChannel(event("SUCCESS"), Status.READY);
+        addEventToChannel(event("SUCCESS"), Status.READY);
 
         long endTime = System.currentTimeMillis();
-        assert(endTime - startTime < 2500);
+        assertTrue("Test should have completed faster", endTime - startTime < 2500);
 
         service.verify(3, postRequestedFor(urlEqualTo("/endpoint"))
                 .withRequestBody(equalToJson(event("SUCCESS"))));
     }
 
     private void addEventToChannel(String line) throws EventDeliveryException {
-        addEventToChannel(line, true, Status.READY);
+        addEventToChannel(line, Status.READY);
     }
 
-    private void addEventToChannel(String line, boolean commitTx, Status expectedStatus)
+    private void addEventToChannel(String line, Status expectedStatus)
             throws EventDeliveryException {
 
         SimpleEvent event = new SimpleEvent();
         event.setBody(line.getBytes());
 
-        when(channel.getTransaction()).thenReturn(transaction);
-        when(channel.take()).thenReturn(event);
+        Transaction channelTransaction = channel.getTransaction();
+        channelTransaction.begin();
+        channel.put(event);
+        channelTransaction.commit();
+        channelTransaction.close();
 
         Sink.Status status = httpSink.process();
 
-        assert(status == expectedStatus);
-
-        if (commitTx) {
-            inOrder(transaction).verify(transaction).commit();
-        } else {
-            inOrder(transaction).verify(transaction).rollback();
-        }
+        assertEquals(expectedStatus, status);
     }
 
     private String event(String id) {
