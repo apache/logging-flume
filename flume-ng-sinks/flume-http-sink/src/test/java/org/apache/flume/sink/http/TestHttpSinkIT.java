@@ -1,4 +1,4 @@
-package uk.gov.hmrc.flume.sink;
+package org.apache.flume.sink.http;
 
 import com.github.tomakehurst.wiremock.global.RequestDelaySpec;
 import com.github.tomakehurst.wiremock.http.Fault;

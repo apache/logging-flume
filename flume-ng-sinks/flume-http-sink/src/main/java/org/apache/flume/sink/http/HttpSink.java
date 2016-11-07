@@ -1,4 +1,4 @@
-package uk.gov.hmrc.flume.sink;
+package org.apache.flume.sink.http;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.flume.*;
@@ -15,40 +15,6 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * HTTP Sink Implementation for Apache Flume.
- *
- * Behaviour of this sink is that it will take events from the channel, and
- * send those events to a remote service using an HTTP POST request. The event
- * content is sent as the POST body.
- *
- * Configurable options are :
- * endpoint - the fully qualified URL endpoint to POST to (required, no default)
- * connectTimeout - the socket connection timeout (default 5000ms)
- * requestTimeout - the maximum request processing time (default 5000ms)
- * contentTypeHeader - the HTTP Content-Type header (default text/plain)
- * acceptHeader - the HTTP Accept header value (default text/plain)
- * defaultBackoff - whether the default result for event processing is to BACKOFF (default false)
- * defaultRollback - whether by default the event processing transaction is rolled back (default false)
- * defaultIncrementMetrics - whether by default the event contributes to the sink metrics (default true)
- * backoff.[code] - whether to return a BACKOFF (if true) or READY (if false) result when the given HTTP response code
- *                  is returned from the remote host
- * rollback.[code] - whether the transaction is rolled back (if true) or committed (if false) when the given HTTP
- *                   response code is returned from the remote host
- * incrementMetrics.[code] - whether to increment the sink metrics when the given HTTP response code is returned from
- *                           the remote host
- *
- * Note that the values for [code] above can be either a single HTTP status code, i.e. 503 or 200, or a group of one
- * hundred status codes, i.e. 2XX or 5XX. If a single code and a group are specified, then the most specific result is
- * used. So for example both 503 and 5XX may be defined, and the 5XX case will apply for all codes in that range except
- * 503.
- *
- * Any malformed HTTP response returned by the server where the status code is
- * not readable will result in a backoff signal and the event is not consumed
- * from the channel.
- *
- * Any empty or null events are consumed without any request being made to the HTTP endpoint.
- */
 public class HttpSink extends AbstractSink implements Configurable {
 
     private static final Logger LOG = Logger.getLogger(HttpSink.class);

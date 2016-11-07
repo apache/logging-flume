@@ -1,4 +1,4 @@
-package uk.gov.hmrc.flume.sink;
+package org.apache.flume.sink.http;
 
 import static org.mockito.Mockito.*;
 
