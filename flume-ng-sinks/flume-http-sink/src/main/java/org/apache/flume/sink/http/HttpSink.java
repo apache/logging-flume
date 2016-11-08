@@ -27,7 +27,6 @@ import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.sink.AbstractSink;
-import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -50,6 +49,9 @@ public class HttpSink extends AbstractSink implements Configurable {
 
   /** Class logger. */
   private static final Logger LOG = Logger.getLogger(HttpSink.class);
+
+  /** Lowest valid HTTP status code. */
+  private static final int HTTP_STATUS_CONTINUE = 100;
 
   /** Default setting for the connection timeout when calling endpoint. */
   private static final int DEFAULT_CONNECT_TIMEOUT = 5000;
@@ -219,7 +221,7 @@ public class HttpSink extends AbstractSink implements Configurable {
           connection.getInputStream().close();
           LOG.debug("Response processed and closed");
 
-          if (httpStatusCode >= HttpStatus.SC_CONTINUE) {
+          if (httpStatusCode >= HTTP_STATUS_CONTINUE) {
             String httpStatusString = String.valueOf(httpStatusCode);
 
             boolean shouldRollback = findOverrideValue(httpStatusString,
