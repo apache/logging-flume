@@ -53,204 +53,204 @@ import static org.junit.Assert.assertTrue;
 @RunWith(MockitoJUnitRunner.class)
 public class TestHttpSinkIT {
 
-    private static final int RESPONSE_TIMEOUT = 4000;
-    private static final int CONNECT_TIMEOUT = 2500;
+  private static final int RESPONSE_TIMEOUT = 4000;
+  private static final int CONNECT_TIMEOUT = 2500;
 
-    private MemoryChannel channel;
+  private MemoryChannel channel;
 
-    private HttpSink httpSink;
+  private HttpSink httpSink;
 
-    @Before
-    public void setupSink() {
-        if (httpSink == null) {
-            Context httpSinkContext = new Context();
-            httpSinkContext.put("endpoint", "http://localhost:8080/endpoint");
-            httpSinkContext.put("requestTimeout", "2000");
-            httpSinkContext.put("connectTimeout", "1500");
-            httpSinkContext.put("acceptHeader", "application/json");
-            httpSinkContext.put("contentTypeHeader", "application/json");
-            httpSinkContext.put("backoff.200", "false");
-            httpSinkContext.put("rollback.200", "false");
-            httpSinkContext.put("incrementMetrics.200", "true");
+  @Before
+  public void setupSink() {
+    if (httpSink == null) {
+      Context httpSinkContext = new Context();
+      httpSinkContext.put("endpoint", "http://localhost:8080/endpoint");
+      httpSinkContext.put("requestTimeout", "2000");
+      httpSinkContext.put("connectTimeout", "1500");
+      httpSinkContext.put("acceptHeader", "application/json");
+      httpSinkContext.put("contentTypeHeader", "application/json");
+      httpSinkContext.put("backoff.200", "false");
+      httpSinkContext.put("rollback.200", "false");
+      httpSinkContext.put("incrementMetrics.200", "true");
 
-            Context memoryChannelContext = new Context();
+      Context memoryChannelContext = new Context();
 
-            channel = new MemoryChannel();
-            channel.configure(memoryChannelContext);
-            channel.start();
+      channel = new MemoryChannel();
+      channel.configure(memoryChannelContext);
+      channel.start();
 
-            httpSink = new HttpSink();
-            httpSink.configure(httpSinkContext);
-            httpSink.setChannel(channel);
-            httpSink.start();
-        }
+      httpSink = new HttpSink();
+      httpSink.configure(httpSinkContext);
+      httpSink.setChannel(channel);
+      httpSink.start();
     }
+  }
 
-    @After
-    public void waitForShutdown() throws InterruptedException {
-        httpSink.stop();
-        new CountDownLatch(1).await(500, TimeUnit.MILLISECONDS);
-    }
+  @After
+  public void waitForShutdown() throws InterruptedException {
+    httpSink.stop();
+    new CountDownLatch(1).await(500, TimeUnit.MILLISECONDS);
+  }
 
-    @Rule
-    public WireMockRule service = new WireMockRule(wireMockConfig().port(8080));
+  @Rule
+  public WireMockRule service = new WireMockRule(wireMockConfig().port(8080));
 
-    @Test
-    public void ensureSuccessfulMessageDelivery() throws Exception {
-        service.stubFor(post(urlEqualTo("/endpoint"))
-                .withRequestBody(equalToJson(event("SUCCESS")))
-                .willReturn(aResponse().withStatus(200)));
+  @Test
+  public void ensureSuccessfulMessageDelivery() throws Exception {
+    service.stubFor(post(urlEqualTo("/endpoint"))
+        .withRequestBody(equalToJson(event("SUCCESS")))
+        .willReturn(aResponse().withStatus(200)));
 
-        addEventToChannel(event("SUCCESS"));
+    addEventToChannel(event("SUCCESS"));
 
-        service.verify(1, postRequestedFor(urlEqualTo("/endpoint"))
-                .withRequestBody(equalToJson(event("SUCCESS"))));
-    }
+    service.verify(1, postRequestedFor(urlEqualTo("/endpoint"))
+        .withRequestBody(equalToJson(event("SUCCESS"))));
+  }
 
-    @Test
-    public void ensureEventsResentOn503Failure() throws Exception {
-        String errorScenario = "Error Scenario";
+  @Test
+  public void ensureEventsResentOn503Failure() throws Exception {
+    String errorScenario = "Error Scenario";
 
-        service.stubFor(post(urlEqualTo("/endpoint"))
-                .inScenario(errorScenario)
-                .whenScenarioStateIs(STARTED)
-                .withRequestBody(equalToJson(event("TRANSIENT_ERROR")))
-                .willReturn(aResponse().withStatus(503))
-                .willSetStateTo("Error Sent"));
+    service.stubFor(post(urlEqualTo("/endpoint"))
+        .inScenario(errorScenario)
+        .whenScenarioStateIs(STARTED)
+        .withRequestBody(equalToJson(event("TRANSIENT_ERROR")))
+        .willReturn(aResponse().withStatus(503))
+        .willSetStateTo("Error Sent"));
 
-        service.stubFor(post(urlEqualTo("/endpoint"))
-                .inScenario(errorScenario)
-                .whenScenarioStateIs("Error Sent")
-                .withRequestBody(equalToJson(event("TRANSIENT_ERROR")))
-                .willReturn(aResponse().withStatus(200)));
+    service.stubFor(post(urlEqualTo("/endpoint"))
+        .inScenario(errorScenario)
+        .whenScenarioStateIs("Error Sent")
+        .withRequestBody(equalToJson(event("TRANSIENT_ERROR")))
+        .willReturn(aResponse().withStatus(200)));
 
-        addEventToChannel(event("TRANSIENT_ERROR"), Status.BACKOFF);
-        addEventToChannel(event("TRANSIENT_ERROR"), Status.READY);
+    addEventToChannel(event("TRANSIENT_ERROR"), Status.BACKOFF);
+    addEventToChannel(event("TRANSIENT_ERROR"), Status.READY);
 
-        service.verify(2, postRequestedFor(urlEqualTo("/endpoint"))
-                .withRequestBody(equalToJson(event("TRANSIENT_ERROR"))));
-    }
+    service.verify(2, postRequestedFor(urlEqualTo("/endpoint"))
+        .withRequestBody(equalToJson(event("TRANSIENT_ERROR"))));
+  }
 
-    @Test
-    public void ensureEventsResentOnNetworkFailure() throws Exception {
-        String errorScenario = "Error Scenario";
+  @Test
+  public void ensureEventsResentOnNetworkFailure() throws Exception {
+    String errorScenario = "Error Scenario";
 
-        service.stubFor(post(urlEqualTo("/endpoint"))
-                .inScenario(errorScenario)
-                .whenScenarioStateIs(STARTED)
-                .withRequestBody(equalToJson(event("NETWORK_ERROR")))
-                .willReturn(aResponse().withFault(Fault.RANDOM_DATA_THEN_CLOSE))
-                .willSetStateTo("Error Sent"));
+    service.stubFor(post(urlEqualTo("/endpoint"))
+        .inScenario(errorScenario)
+        .whenScenarioStateIs(STARTED)
+        .withRequestBody(equalToJson(event("NETWORK_ERROR")))
+        .willReturn(aResponse().withFault(Fault.RANDOM_DATA_THEN_CLOSE))
+        .willSetStateTo("Error Sent"));
 
-        service.stubFor(post(urlEqualTo("/endpoint"))
-                .inScenario(errorScenario)
-                .whenScenarioStateIs("Error Sent")
-                .withRequestBody(equalToJson(event("NETWORK_ERROR")))
-                .willReturn(aResponse().withStatus(200)));
+    service.stubFor(post(urlEqualTo("/endpoint"))
+        .inScenario(errorScenario)
+        .whenScenarioStateIs("Error Sent")
+        .withRequestBody(equalToJson(event("NETWORK_ERROR")))
+        .willReturn(aResponse().withStatus(200)));
 
-        addEventToChannel(event("NETWORK_ERROR"), Status.BACKOFF);
-        addEventToChannel(event("NETWORK_ERROR"), Status.READY);
+    addEventToChannel(event("NETWORK_ERROR"), Status.BACKOFF);
+    addEventToChannel(event("NETWORK_ERROR"), Status.READY);
 
-        service.verify(2, postRequestedFor(urlEqualTo("/endpoint"))
-                .withRequestBody(equalToJson(event("NETWORK_ERROR"))));
-    }
+    service.verify(2, postRequestedFor(urlEqualTo("/endpoint"))
+        .withRequestBody(equalToJson(event("NETWORK_ERROR"))));
+  }
 
-    @Test
-    public void ensureEventsResentOnConnectionTimeout() throws Exception {
-        final CountDownLatch firstRequestReceived = new CountDownLatch(1);
+  @Test
+  public void ensureEventsResentOnConnectionTimeout() throws Exception {
+    final CountDownLatch firstRequestReceived = new CountDownLatch(1);
 
-        service.addSocketAcceptDelay(new RequestDelaySpec(CONNECT_TIMEOUT));
-        service.addMockServiceRequestListener(new RequestListener() {
-            @Override
-            public void requestReceived(Request request, Response response) {
-                service.addSocketAcceptDelay(new RequestDelaySpec(0));
-                firstRequestReceived.countDown();
-            }
-        });
+    service.addSocketAcceptDelay(new RequestDelaySpec(CONNECT_TIMEOUT));
+    service.addMockServiceRequestListener(new RequestListener() {
+      @Override
+      public void requestReceived(Request request, Response response) {
+        service.addSocketAcceptDelay(new RequestDelaySpec(0));
+        firstRequestReceived.countDown();
+      }
+    });
 
-        service.stubFor(post(urlEqualTo("/endpoint"))
-                .withRequestBody(equalToJson(event("SLOW_SOCKET")))
-                .willReturn(aResponse().withStatus(200)));
+    service.stubFor(post(urlEqualTo("/endpoint"))
+        .withRequestBody(equalToJson(event("SLOW_SOCKET")))
+        .willReturn(aResponse().withStatus(200)));
 
-        addEventToChannel(event("SLOW_SOCKET"), Status.BACKOFF);
+    addEventToChannel(event("SLOW_SOCKET"), Status.BACKOFF);
 
-        // wait until the socket is connected
-        firstRequestReceived.await(2000, TimeUnit.MILLISECONDS);
+    // wait until the socket is connected
+    firstRequestReceived.await(2000, TimeUnit.MILLISECONDS);
 
-        addEventToChannel(event("SLOW_SOCKET"), Status.READY);
+    addEventToChannel(event("SLOW_SOCKET"), Status.READY);
 
-        service.verify(2, postRequestedFor(urlEqualTo("/endpoint"))
-                .withRequestBody(equalToJson(event("SLOW_SOCKET"))));
-    }
+    service.verify(2, postRequestedFor(urlEqualTo("/endpoint"))
+        .withRequestBody(equalToJson(event("SLOW_SOCKET"))));
+  }
 
-    @Test
-    public void ensureEventsResentOnRequestTimeout() throws Exception {
-        String errorScenario = "Error Scenario";
+  @Test
+  public void ensureEventsResentOnRequestTimeout() throws Exception {
+    String errorScenario = "Error Scenario";
 
-        service.stubFor(post(urlEqualTo("/endpoint"))
-                .inScenario(errorScenario)
-                .whenScenarioStateIs(STARTED)
-                .withRequestBody(equalToJson(event("SLOW_RESPONSE")))
-                .willReturn(aResponse().withFixedDelay(RESPONSE_TIMEOUT).withStatus(200))
-                .willSetStateTo("Slow Response Sent"));
+    service.stubFor(post(urlEqualTo("/endpoint"))
+        .inScenario(errorScenario)
+        .whenScenarioStateIs(STARTED)
+        .withRequestBody(equalToJson(event("SLOW_RESPONSE")))
+        .willReturn(aResponse().withFixedDelay(RESPONSE_TIMEOUT).withStatus(200))
+        .willSetStateTo("Slow Response Sent"));
 
-        service.stubFor(post(urlEqualTo("/endpoint"))
-                .inScenario(errorScenario)
-                .whenScenarioStateIs("Slow Response Sent")
-                .withRequestBody(equalToJson(event("SLOW_RESPONSE")))
-                .willReturn(aResponse().withStatus(200)));
+    service.stubFor(post(urlEqualTo("/endpoint"))
+        .inScenario(errorScenario)
+        .whenScenarioStateIs("Slow Response Sent")
+        .withRequestBody(equalToJson(event("SLOW_RESPONSE")))
+        .willReturn(aResponse().withStatus(200)));
 
-        addEventToChannel(event("SLOW_RESPONSE"), Status.BACKOFF);
-        addEventToChannel(event("SLOW_RESPONSE"), Status.READY);
+    addEventToChannel(event("SLOW_RESPONSE"), Status.BACKOFF);
+    addEventToChannel(event("SLOW_RESPONSE"), Status.READY);
 
-        service.verify(2, postRequestedFor(urlEqualTo("/endpoint"))
-                .withRequestBody(equalToJson(event("SLOW_RESPONSE"))));
-    }
+    service.verify(2, postRequestedFor(urlEqualTo("/endpoint"))
+        .withRequestBody(equalToJson(event("SLOW_RESPONSE"))));
+  }
 
-    @Test
-    public void ensureHttpConnectionReusedForSuccessfulRequests() throws Exception {
-        // we should only get one delay when establishing a connection
-        service.addSocketAcceptDelay(new RequestDelaySpec(1000));
+  @Test
+  public void ensureHttpConnectionReusedForSuccessfulRequests() throws Exception {
+    // we should only get one delay when establishing a connection
+    service.addSocketAcceptDelay(new RequestDelaySpec(1000));
 
-        service.stubFor(post(urlEqualTo("/endpoint"))
-                .withRequestBody(equalToJson(event("SUCCESS")))
-                .willReturn(aResponse().withStatus(200)));
+    service.stubFor(post(urlEqualTo("/endpoint"))
+        .withRequestBody(equalToJson(event("SUCCESS")))
+        .willReturn(aResponse().withStatus(200)));
 
-        long startTime = System.currentTimeMillis();
+    long startTime = System.currentTimeMillis();
 
-        addEventToChannel(event("SUCCESS"), Status.READY);
-        addEventToChannel(event("SUCCESS"), Status.READY);
-        addEventToChannel(event("SUCCESS"), Status.READY);
+    addEventToChannel(event("SUCCESS"), Status.READY);
+    addEventToChannel(event("SUCCESS"), Status.READY);
+    addEventToChannel(event("SUCCESS"), Status.READY);
 
-        long endTime = System.currentTimeMillis();
-        assertTrue("Test should have completed faster", endTime - startTime < 2500);
+    long endTime = System.currentTimeMillis();
+    assertTrue("Test should have completed faster", endTime - startTime < 2500);
 
-        service.verify(3, postRequestedFor(urlEqualTo("/endpoint"))
-                .withRequestBody(equalToJson(event("SUCCESS"))));
-    }
+    service.verify(3, postRequestedFor(urlEqualTo("/endpoint"))
+        .withRequestBody(equalToJson(event("SUCCESS"))));
+  }
 
-    private void addEventToChannel(String line) throws EventDeliveryException {
-        addEventToChannel(line, Status.READY);
-    }
+  private void addEventToChannel(String line) throws EventDeliveryException {
+    addEventToChannel(line, Status.READY);
+  }
 
-    private void addEventToChannel(String line, Status expectedStatus)
-            throws EventDeliveryException {
+  private void addEventToChannel(String line, Status expectedStatus)
+      throws EventDeliveryException {
 
-        SimpleEvent event = new SimpleEvent();
-        event.setBody(line.getBytes());
+    SimpleEvent event = new SimpleEvent();
+    event.setBody(line.getBytes());
 
-        Transaction channelTransaction = channel.getTransaction();
-        channelTransaction.begin();
-        channel.put(event);
-        channelTransaction.commit();
-        channelTransaction.close();
+    Transaction channelTransaction = channel.getTransaction();
+    channelTransaction.begin();
+    channel.put(event);
+    channelTransaction.commit();
+    channelTransaction.close();
 
-        Sink.Status status = httpSink.process();
+    Sink.Status status = httpSink.process();
 
-        assertEquals(expectedStatus, status);
-    }
+    assertEquals(expectedStatus, status);
+  }
 
-    private String event(String id) {
-        return "{'id':'" + id + "'}";
-    }
+  private String event(String id) {
+    return "{'id':'" + id + "'}";
+  }
 }
