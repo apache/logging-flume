@@ -66,9 +66,6 @@ public class HttpSink extends AbstractSink implements Configurable {
   /** Endpoint URL to POST events to. */
   private URL endpointUrl;
 
-  /** HTTP connection used to POST events. */
-  private HttpURLConnection httpClient;
-
   /** Counter used to monitor event throughput. */
   private SinkCounter sinkCounter;
 
@@ -209,17 +206,17 @@ public class HttpSink extends AbstractSink implements Configurable {
         LOG.debug("Sending request : " + new String(event.getBody()));
 
         try {
-          httpClient = connectionBuilder.getConnection();
+          HttpURLConnection connection = connectionBuilder.getConnection();
 
-          outputStream = httpClient.getOutputStream();
+          outputStream = connection.getOutputStream();
           outputStream.write(eventBody);
           outputStream.flush();
           outputStream.close();
 
-          int httpStatusCode = httpClient.getResponseCode();
+          int httpStatusCode = connection.getResponseCode();
           LOG.debug("Got status code : " + httpStatusCode);
 
-          httpClient.getInputStream().close();
+          connection.getInputStream().close();
           LOG.debug("Response processed and closed");
 
           if (httpStatusCode >= HttpStatus.SC_CONTINUE) {
