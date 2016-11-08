@@ -114,6 +114,9 @@ public class HttpSink extends AbstractSink implements Configurable {
    */
   private HashMap<String, Boolean> incrementMetricsOverrides = new HashMap<>();
 
+  /** Used to create HTTP connections to the endpoint. */
+  private ConnectionBuilder connectionBuilder;
+
   @Override
   public final void configure(final Context context) {
     String configuredEndpoint = context.getString("endpoint", "");
@@ -168,6 +171,8 @@ public class HttpSink extends AbstractSink implements Configurable {
     if (this.sinkCounter == null) {
       this.sinkCounter = new SinkCounter(this.getName());
     }
+
+    connectionBuilder = new ConnectionBuilder();
   }
 
   @Override
@@ -204,7 +209,7 @@ public class HttpSink extends AbstractSink implements Configurable {
         LOG.debug("Sending request : " + new String(event.getBody()));
 
         try {
-          httpClient = getConnection();
+          httpClient = connectionBuilder.getConnection();
 
           outputStream = httpClient.getOutputStream();
           outputStream.write(eventBody);
@@ -356,26 +361,12 @@ public class HttpSink extends AbstractSink implements Configurable {
   }
 
   /**
-   * Creates an HTTP connection to the configured endpoint address. This
-   * connection is setup for a POST request, and uses the content type and
-   * accept header values in the configuration.
+   * Update the connection builder.
    *
-   * @return the connection object
-   * @throws IOException on any connection error
+   * @param builder  the new value
    */
-  final HttpURLConnection getConnection() throws IOException {
-    HttpURLConnection connection = (HttpURLConnection)
-        endpointUrl.openConnection();
-
-    connection.setRequestMethod("POST");
-    connection.setRequestProperty("Content-Type", contentTypeHeader);
-    connection.setRequestProperty("Accept", acceptHeader);
-    connection.setConnectTimeout(connectTimeout);
-    connection.setReadTimeout(requestTimeout);
-    connection.setDoOutput(true);
-    connection.setDoInput(true);
-    connection.connect();
-    return connection;
+  final void setConnectionBuilder(final ConnectionBuilder builder) {
+    this.connectionBuilder = builder;
   }
 
   /**
@@ -385,5 +376,34 @@ public class HttpSink extends AbstractSink implements Configurable {
    */
   final void setSinkCounter(final SinkCounter newSinkCounter) {
     this.sinkCounter = newSinkCounter;
+  }
+
+  /**
+   * Class used to allow extending the connection building functionality.
+   */
+  class ConnectionBuilder {
+
+    /**
+     * Creates an HTTP connection to the configured endpoint address. This
+     * connection is setup for a POST request, and uses the content type and
+     * accept header values in the configuration.
+     *
+     * @return the connection object
+     * @throws IOException on any connection error
+     */
+    public HttpURLConnection getConnection() throws IOException {
+      HttpURLConnection connection = (HttpURLConnection)
+          endpointUrl.openConnection();
+
+      connection.setRequestMethod("POST");
+      connection.setRequestProperty("Content-Type", contentTypeHeader);
+      connection.setRequestProperty("Accept", acceptHeader);
+      connection.setConnectTimeout(connectTimeout);
+      connection.setReadTimeout(requestTimeout);
+      connection.setDoOutput(true);
+      connection.setDoInput(true);
+      connection.connect();
+      return connection;
+    }
   }
 }

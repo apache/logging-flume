@@ -264,12 +264,13 @@ public class TestHttpSink {
 
     context.put("endpoint", "http://localhost:8080/endpoint");
 
-    HttpSink httpSink = new HttpSink() {
+    HttpSink httpSink = new HttpSink();
+    httpSink.setConnectionBuilder(httpSink.new ConnectionBuilder() {
       @Override
-      HttpURLConnection getConnection() throws IOException {
+      public HttpURLConnection getConnection() throws IOException {
         return httpURLConnection;
       }
-    };
+    });
     httpSink.configure(context);
     httpSink.setChannel(channel);
     httpSink.setSinkCounter(sinkCounter);
