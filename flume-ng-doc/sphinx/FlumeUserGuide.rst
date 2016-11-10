@@ -2925,8 +2925,8 @@ Property Name              Default           Description
 **channel**                --
 **type**                   --                The component type name, needs to be ``http``.
 **endpoint**               --                The fully qualified URL endpoint to POST to
-connectTimeout             5000ms            The socket connection timeout
-requestTimeout             5000ms            The maximum request processing time
+connectTimeout             5000              The socket connection timeout in milliseconds
+requestTimeout             5000              The maximum request processing time in milliseconds
 contentTypeHeader          text/plain        The HTTP Content-Type header
 acceptHeader               text/plain        The HTTP Accept header value
 defaultBackoff             true              Whether to backoff by default on receiving all HTTP status codes
