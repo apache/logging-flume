@@ -40,6 +40,7 @@ import org.apache.flume.channel.file.encryption.EncryptionConfiguration;
 import org.apache.flume.channel.file.encryption.KeyProvider;
 import org.apache.flume.channel.file.encryption.KeyProviderFactory;
 import org.apache.flume.instrumentation.ChannelCounter;
+import org.apache.flume.channel.file.instrumentation.FileChannelCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -267,13 +268,14 @@ public class FileChannel extends BasicChannelSemantics {
     }
 
     if (channelCounter == null) {
-      channelCounter = new ChannelCounter(getName());
+      channelCounter = new FileChannelCounter(this);
     }
   }
 
   @Override
   public synchronized void start() {
     LOG.info("Starting {}...", this);
+    channelCounter.start();
     try {
       Builder builder = new Log.Builder();
       builder.setCheckpointInterval(checkpointInterval);
@@ -312,7 +314,6 @@ public class FileChannel extends BasicChannelSemantics {
       }
     }
     if (open) {
-      channelCounter.start();
       channelCounter.setChannelSize(getDepth());
       channelCounter.setChannelCapacity(capacity);
     }
