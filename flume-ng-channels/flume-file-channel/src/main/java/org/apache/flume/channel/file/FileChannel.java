@@ -94,7 +94,7 @@ public class FileChannel extends BasicChannelSemantics {
   private final ThreadLocal<FileBackedTransaction> transactions =
       new ThreadLocal<FileBackedTransaction>();
   private String channelNameDescriptor = "[channel=unknown]";
-  private ChannelCounter channelCounter;
+  private FileChannelCounter channelCounter;
   private boolean useLogReplayV1;
   private boolean useFastReplay = false;
   private KeyProvider encryptionKeyProvider;
@@ -417,6 +417,11 @@ public class FileChannel extends BasicChannelSemantics {
   @VisibleForTesting
   Log getLog() {
     return log;
+  }
+
+  @VisibleForTesting
+  FileChannelCounter getChannelCounter() {
+    return channelCounter;
   }
 
   /**

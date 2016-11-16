@@ -26,6 +26,7 @@ import org.apache.flume.Event;
 import org.apache.flume.Transaction;
 import org.apache.flume.channel.file.FileChannel.FileBackedTransaction;
 import org.apache.flume.channel.file.FlumeEventQueue.InflightEventWrapper;
+import org.apache.flume.channel.file.instrumentation.FileChannelCounter;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
 import org.junit.After;
@@ -630,6 +631,19 @@ public class TestFileChannel extends TestFileChannelBase {
       // returned
       Assert.assertEquals(99, events.size());
     }
+  }
+
+  @Test
+  public void testFileChannelCounterIsOpen() {
+    FileChannel channel = createFileChannel();
+    FileChannelCounter counter = channel.getChannelCounter();
+    Assert.assertEquals(counter.isOpen(), false);
+
+    channel.start();
+    Assert.assertEquals(counter.isOpen(), true);
+
+    channel.stop();
+    Assert.assertEquals(counter.isOpen(), false);
   }
 
 }
