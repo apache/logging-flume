@@ -268,7 +268,7 @@ public class FileChannel extends BasicChannelSemantics {
     }
 
     if (channelCounter == null) {
-      channelCounter = new FileChannelCounter(this);
+      channelCounter = new FileChannelCounter(getName());
     }
   }
 
@@ -298,7 +298,7 @@ public class FileChannel extends BasicChannelSemantics {
       builder.setCheckpointOnClose(checkpointOnClose);
       log = builder.build();
       log.replay();
-      open = true;
+      setOpen(true);
 
       int depth = getDepth();
       Preconditions.checkState(queueRemaining.tryAcquire(depth),
@@ -306,7 +306,7 @@ public class FileChannel extends BasicChannelSemantics {
       LOG.info("Queue Size after replay: " + depth + " "
           + channelNameDescriptor);
     } catch (Throwable t) {
-      open = false;
+      setOpen(false);
       startupError = t;
       LOG.error("Failed to start the file channel " + channelNameDescriptor, t);
       if (t instanceof Error) {
@@ -374,7 +374,7 @@ public class FileChannel extends BasicChannelSemantics {
 
   void close() {
     if (open) {
-      open = false;
+      setOpen(false);
       try {
         log.close();
       } catch (Exception e) {
@@ -399,6 +399,18 @@ public class FileChannel extends BasicChannelSemantics {
 
   public boolean isOpen() {
     return open;
+  }
+
+  /**
+   * This method makes sure that <code>this.open</code> and <code>channelCounter.open</code>
+   * are in sync.
+   * Only for internal use, call from synchronized methods only. It also assumes that
+   * <code>channelCounter</code> is not null.
+   * @param open
+   */
+  private void setOpen(boolean open) {
+    this.open = open;
+    channelCounter.setOpen(this.open);
   }
 
   /**

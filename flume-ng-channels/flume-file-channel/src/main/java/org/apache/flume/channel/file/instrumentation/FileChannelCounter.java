@@ -18,20 +18,22 @@
  */
 package org.apache.flume.channel.file.instrumentation;
 
-import org.apache.flume.channel.file.FileChannel;
 import org.apache.flume.instrumentation.ChannelCounter;
 
 public class FileChannelCounter extends ChannelCounter implements FileChannelCounterMBean {
 
-  private final FileChannel fileChannel;
+  private boolean open;
 
-  public FileChannelCounter(FileChannel fileChannel) {
-    super(fileChannel.getName());
-    this.fileChannel = fileChannel;
+  public FileChannelCounter(String name) {
+    super(name);
   }
 
+  @Override
   public boolean isOpen() {
-    return fileChannel.isOpen();
+    return open;
   }
 
+  public void setOpen(boolean open) {
+    this.open = open;
+  }
 }
