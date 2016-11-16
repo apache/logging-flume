@@ -1351,13 +1351,13 @@ Example configuration with server side authentication and data encryption.
 
 .. code-block:: properties
 
-    a1.channels.channel1.type = org.apache.flume.channel.kafka.KafkaChannel
-    a1.channels.channel1.kafka.bootstrap.servers = kafka-1:9093,kafka-2:9093,kafka-3:9093
-    a1.channels.channel1.kafka.topic = channel1
-    a1.channels.channel1.kafka.consumer.group.id = flume-consumer
-    a1.channels.channel1.kafka.consumer.security.protocol = SSL
-    a1.channels.channel1.kafka.consumer.ssl.truststore.location=/path/to/truststore.jks
-    a1.channels.channel1.kafka.consumer.ssl.truststore.password=<password to access the truststore>
+    a1.sources.source1.type = org.apache.flume.source.kafka.KafkaSource
+    a1.sources.source1.kafka.bootstrap.servers = kafka-1:9093,kafka-2:9093,kafka-3:9093
+    a1.sources.source1.kafka.topics = mytopic
+    a1.sources.source1.kafka.consumer.group.id = flume-consumer
+    a1.sources.source1.kafka.consumer.security.protocol = SSL
+    a1.sources.source1.kafka.consumer.ssl.truststore.location=/path/to/truststore.jks
+    a1.sources.source1.kafka.consumer.ssl.truststore.password=<password to access the truststore>
 
 
 Note: By default the property ``ssl.endpoint.identification.algorithm``
@@ -1366,7 +1366,7 @@ In order to enable hostname verification, set the following properties
 
 .. code-block:: properties
 
-    a1.channels.channel1.kafka.consumer.ssl.endpoint.identification.algorithm=HTTPS
+    a1.sources.source1.kafka.consumer.ssl.endpoint.identification.algorithm=HTTPS
 
 Once enabled, clients will verify the server's fully qualified domain name (FQDN)
 against one of the following two fields:
@@ -1381,15 +1381,15 @@ which in turn is trusted by Kafka brokers.
 
 .. code-block:: properties
 
-    a1.channels.channel1.kafka.consumer.ssl.keystore.location=/path/to/client.keystore.jks
-    a1.channels.channel1.kafka.consumer.ssl.keystore.password=<password to access the keystore>
+    a1.sources.source1.kafka.consumer.ssl.keystore.location=/path/to/client.keystore.jks
+    a1.sources.source1.kafka.consumer.ssl.keystore.password=<password to access the keystore>
 
 If keystore and key use different password protection then ``ssl.key.password`` property will
 provide the required additional secret for both consumer keystores:
 
 .. code-block:: properties
 
-    a1.channels.channel1.kafka.consumer.ssl.key.password=<password to access the key>
+    a1.sources.source1.kafka.consumer.ssl.key.password=<password to access the key>
 
 
 **Kerberos and Kafka Source:**
@@ -1408,27 +1408,27 @@ Example secure configuration using SASL_PLAINTEXT:
 
 .. code-block:: properties
 
-    a1.channels.channel1.type = org.apache.flume.channel.kafka.KafkaChannel
-    a1.channels.channel1.kafka.bootstrap.servers = kafka-1:9093,kafka-2:9093,kafka-3:9093
-    a1.channels.channel1.kafka.topic = channel1
-    a1.channels.channel1.kafka.consumer.group.id = flume-consumer
-    a1.channels.channel1.kafka.consumer.security.protocol = SASL_PLAINTEXT
-    a1.channels.channel1.kafka.consumer.sasl.mechanism = GSSAPI
-    a1.channels.channel1.kafka.consumer.sasl.kerberos.service.name = kafka
+    a1.sources.source1.type = org.apache.flume.source.kafka.KafkaSource
+    a1.sources.source1.kafka.bootstrap.servers = kafka-1:9093,kafka-2:9093,kafka-3:9093
+    a1.sources.source1.kafka.topics = mytopic
+    a1.sources.source1.kafka.consumer.group.id = flume-consumer
+    a1.sources.source1.kafka.consumer.security.protocol = SASL_PLAINTEXT
+    a1.sources.source1.kafka.consumer.sasl.mechanism = GSSAPI
+    a1.sources.source1.kafka.consumer.sasl.kerberos.service.name = kafka
 
 Example secure configuration using SASL_SSL:
 
 .. code-block:: properties
 
-    a1.channels.channel1.type = org.apache.flume.channel.kafka.KafkaChannel
-    a1.channels.channel1.kafka.bootstrap.servers = kafka-1:9093,kafka-2:9093,kafka-3:9093
-    a1.channels.channel1.kafka.topic = channel1
-    a1.channels.channel1.kafka.consumer.group.id = flume-consumer
-    a1.channels.channel1.kafka.consumer.security.protocol = SASL_SSL
-    a1.channels.channel1.kafka.consumer.sasl.mechanism = GSSAPI
-    a1.channels.channel1.kafka.consumer.sasl.kerberos.service.name = kafka
-    a1.channels.channel1.kafka.consumer.ssl.truststore.location=/path/to/truststore.jks
-    a1.channels.channel1.kafka.consumer.ssl.truststore.password=<password to access the truststore>
+    a1.sources.source1.type = org.apache.flume.source.kafka.KafkaSource
+    a1.sources.source1.kafka.bootstrap.servers = kafka-1:9093,kafka-2:9093,kafka-3:9093
+    a1.sources.source1.kafka.topics = mytopic
+    a1.sources.source1.kafka.consumer.group.id = flume-consumer
+    a1.sources.source1.kafka.consumer.security.protocol = SASL_SSL
+    a1.sources.source1.kafka.consumer.sasl.mechanism = GSSAPI
+    a1.sources.source1.kafka.consumer.sasl.kerberos.service.name = kafka
+    a1.sources.source1.kafka.consumer.ssl.truststore.location=/path/to/truststore.jks
+    a1.sources.source1.kafka.consumer.ssl.truststore.password=<password to access the truststore>
 
 
 Sample JAAS file. For reference of its content please see client config sections of the desired authentication mechanism (GSSAPI/PLAIN)
@@ -2807,12 +2807,12 @@ Example configuration with server side authentication and data encryption.
 
 .. code-block:: properties
 
-    a1.channels.channel1.type = org.apache.flume.channel.kafka.KafkaChannel
-    a1.channels.channel1.kafka.bootstrap.servers = kafka-1:9093,kafka-2:9093,kafka-3:9093
-    a1.channels.channel1.kafka.topic = channel1
-    a1.channels.channel1.kafka.producer.security.protocol = SSL
-    a1.channels.channel1.kafka.producer.ssl.truststore.location = /path/to/truststore.jks
-    a1.channels.channel1.kafka.producer.ssl.truststore.password = <password to access the truststore>
+    a1.sinks.sink1.type = org.apache.flume.sink.kafka.KafkaSink
+    a1.sinks.sink1.kafka.bootstrap.servers = kafka-1:9093,kafka-2:9093,kafka-3:9093
+    a1.sinks.sink1.kafka.topic = mytopic
+    a1.sinks.sink1.kafka.producer.security.protocol = SSL
+    a1.sinks.sink1.kafka.producer.ssl.truststore.location = /path/to/truststore.jks
+    a1.sinks.sink1.kafka.producer.ssl.truststore.password = <password to access the truststore>
 
 
 Note: By default the property ``ssl.endpoint.identification.algorithm``
@@ -2821,7 +2821,7 @@ In order to enable hostname verification, set the following properties
 
 .. code-block:: properties
 
-    a1.channels.channel1.kafka.producer.ssl.endpoint.identification.algorithm = HTTPS
+    a1.sinks.sink1.kafka.producer.ssl.endpoint.identification.algorithm = HTTPS
 
 Once enabled, clients will verify the server's fully qualified domain name (FQDN)
 against one of the following two fields:
@@ -2836,15 +2836,15 @@ which in turn is trusted by Kafka brokers.
 
 .. code-block:: properties
 
-    a1.channels.channel1.kafka.producer.ssl.keystore.location = /path/to/client.keystore.jks
-    a1.channels.channel1.kafka.producer.ssl.keystore.password = <password to access the keystore>
+    a1.sinks.sink1.kafka.producer.ssl.keystore.location = /path/to/client.keystore.jks
+    a1.sinks.sink1.kafka.producer.ssl.keystore.password = <password to access the keystore>
 
 If keystore and key use different password protection then ``ssl.key.password`` property will
 provide the required additional secret for producer keystore:
 
 .. code-block:: properties
 
-    a1.channels.channel1.kafka.producer.ssl.key.password = <password to access the key>
+    a1.sinks.sink1.kafka.producer.ssl.key.password = <password to access the key>
 
 
 **Kerberos and Kafka Sink:**
@@ -2863,26 +2863,26 @@ Example secure configuration using SASL_PLAINTEXT:
 
 .. code-block:: properties
 
-    a1.channels.channel1.type = org.apache.flume.channel.kafka.KafkaChannel
-    a1.channels.channel1.kafka.bootstrap.servers = kafka-1:9093,kafka-2:9093,kafka-3:9093
-    a1.channels.channel1.kafka.topic = channel1
-    a1.channels.channel1.kafka.producer.security.protocol = SASL_PLAINTEXT
-    a1.channels.channel1.kafka.producer.sasl.mechanism = GSSAPI
-    a1.channels.channel1.kafka.producer.sasl.kerberos.service.name = kafka
+    a1.sinks.sink1.type = org.apache.flume.sink.kafka.KafkaSink
+    a1.sinks.sink1.kafka.bootstrap.servers = kafka-1:9093,kafka-2:9093,kafka-3:9093
+    a1.sinks.sink1.kafka.topic = mytopic
+    a1.sinks.sink1.kafka.producer.security.protocol = SASL_PLAINTEXT
+    a1.sinks.sink1.kafka.producer.sasl.mechanism = GSSAPI
+    a1.sinks.sink1.kafka.producer.sasl.kerberos.service.name = kafka
 
 
 Example secure configuration using SASL_SSL:
 
 .. code-block:: properties
 
-    a1.channels.channel1.type = org.apache.flume.channel.kafka.KafkaChannel
-    a1.channels.channel1.kafka.bootstrap.servers = kafka-1:9093,kafka-2:9093,kafka-3:9093
-    a1.channels.channel1.kafka.topic = channel1
-    a1.channels.channel1.kafka.producer.security.protocol = SASL_SSL
-    a1.channels.channel1.kafka.producer.sasl.mechanism = GSSAPI
-    a1.channels.channel1.kafka.producer.sasl.kerberos.service.name = kafka
-    a1.channels.channel1.kafka.producer.ssl.truststore.location = /path/to/truststore.jks
-    a1.channels.channel1.kafka.producer.ssl.truststore.password = <password to access the truststore>
+    a1.sinks.sink1.type = org.apache.flume.sink.kafka.KafkaSink
+    a1.sinks.sink1.kafka.bootstrap.servers = kafka-1:9093,kafka-2:9093,kafka-3:9093
+    a1.sinks.sink1.kafka.topic = mytopic
+    a1.sinks.sink1.kafka.producer.security.protocol = SASL_SSL
+    a1.sinks.sink1.kafka.producer.sasl.mechanism = GSSAPI
+    a1.sinks.sink1.kafka.producer.sasl.kerberos.service.name = kafka
+    a1.sinks.sink1.kafka.producer.ssl.truststore.location = /path/to/truststore.jks
+    a1.sinks.sink1.kafka.producer.ssl.truststore.password = <password to access the truststore>
 
 
 Sample JAAS file. For reference of its content please see client config sections of the desired authentication mechanism (GSSAPI/PLAIN)
