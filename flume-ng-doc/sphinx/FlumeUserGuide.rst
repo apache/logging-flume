@@ -357,8 +357,6 @@ There's an exec source that executes a given command and consumes the output. A
 single 'line' of output ie. text followed by carriage return ('\\r') or line
 feed ('\\n') or both together.
 
-.. note:: Flume does not support tail as a source. One can wrap the tail command in an exec source to stream the file.
-
 Network streams
 ~~~~~~~~~~~~~~~
 
@@ -882,12 +880,8 @@ interceptors.*
              asynchronous interface such as ExecSource! As an extension of this
              warning - and to be completely clear - there is absolutely zero guarantee
              of event delivery when using this source. For stronger reliability
-             guarantees, consider the Spooling Directory Source or direct integration
+             guarantees, consider the Spooling Directory Source, Taildir Source or direct integration
              with Flume via the SDK.
-
-.. note:: You can use ExecSource to emulate TailSource from Flume 0.9x (flume og).
-          Just use unix command ``tail -F /full/path/to/your/file``. Parameter
-          -F is better in this case than -f as it will also follow file rotation.
 
 Example for agent named a1:
 
