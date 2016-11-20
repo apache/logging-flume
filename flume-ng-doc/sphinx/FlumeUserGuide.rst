@@ -3906,6 +3906,25 @@ Example for agent named a1:
   a1.sources.r1.interceptors.i1.key = datacenter
   a1.sources.r1.interceptors.i1.value = NEW_YORK
 
+
+Remove Header Interceptor
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This interceptor manipulates Flume event headers, by removing one or many headers. It can remove a statically defined header, headers based on a regular expression or headers in a list. If none of these is defined, or if no header matches the criteria, the Flume events are not modified.
+
+Note that if only one header needs to be removed, specifying it by name provides performance benefits over the other 2 methods.
+
+=====================  ===========  ===============================================================
+Property Name          Default      Description
+=====================  ===========  ===============================================================
+**type**               --           The component type name has to be ``remove_header``
+withName               --           Name of the header to remove
+fromList               --           List of headers to remove, separated with the separator specified with from.list.separator
+fromListSeparator    \s*,\s*      Regular expression used to separate multiple header names in the list specified using from.list
+matching               --           All the headers which names match this regular expression are removed
+=====================  ===========  ===============================================================
+
+
 UUID Interceptor
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
