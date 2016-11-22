@@ -19,8 +19,6 @@ package org.apache.flume.node;
 
 import java.util.Map;
 
-import junit.framework.Assert;
-
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
@@ -37,6 +35,8 @@ import org.apache.flume.source.AbstractSource;
 import org.junit.Test;
 
 import com.google.common.collect.Maps;
+
+import junit.framework.Assert;
 
 public class TestAbstractConfigurationProvider {
 
@@ -181,6 +181,50 @@ public class TestAbstractConfigurationProvider {
     Assert.assertTrue(config.getChannels().size() == 0);
     Assert.assertTrue(config.getSinkRunners().size() == 0);
   }
+  @Test
+  public void testOverrideParamsWithInvalidFormats() {
+    String agentName = "agent1";
+    String sourceType = "seq";
+    String channelType = "memory";
+    String sinkType = "null";
+    Map<String, String> properties = getProperties(agentName, sourceType, channelType, sinkType);
+    String[] overrideParams = new String[]{
+      "...",
+      ". . . . . .",
+      "aa..==a",
+      "source.type=avro",
+      "source1.typ=avro",
+      "source1.type avro",
+      "channtype",
+      "channel1.capacity 10",
+      "===..",
+      " = "
+    };
+    MemoryConfigurationProvider provider =
+      new MemoryConfigurationProvider(agentName, properties, overrideParams);
+    MaterializedConfiguration config = provider.getConfiguration();
+    Assert.assertTrue(config.getSourceRunners().size() == 1);
+    Assert.assertTrue(config.getChannels().size() == 1);
+    Assert.assertTrue(config.getSinkRunners().size() == 1);
+  }
+  @Test
+  public void testOverrideParamsWithValidFormat() {
+    String agentName = "agent1";
+    String sourceType = "seq";
+    String channelType = "memory";
+    String sinkType = UnconfigurableSink.class.getName();
+    Map<String, String> properties = getProperties(agentName, sourceType, channelType, sinkType);
+    String[] overrideParams = new String[]{
+      "sink1.type=null",
+      "channel1.capacity=   100"
+    };
+    MemoryConfigurationProvider provider =
+      new MemoryConfigurationProvider(agentName, properties, overrideParams);
+    MaterializedConfiguration config = provider.getConfiguration();
+    Assert.assertTrue(config.getSourceRunners().size() == 1);
+    Assert.assertTrue(config.getChannels().size() == 1);
+    Assert.assertTrue(config.getSinkRunners().size() == 1);
+  }
   private Map<String, String> getProperties(String agentName,
       String sourceType, String channelType, String sinkType) {
     Map<String, String> properties = Maps.newHashMap();
@@ -202,7 +246,11 @@ public class TestAbstractConfigurationProvider {
   public static class MemoryConfigurationProvider extends AbstractConfigurationProvider {
     private Map<String, String> properties;
     public MemoryConfigurationProvider(String agentName, Map<String, String> properties) {
-      super(agentName);
+      this(agentName, properties, null);
+    }
+
+    public MemoryConfigurationProvider(String agentName, Map<String, String> properties, String[] override) {
+      super(agentName, override);
       this.properties = properties;
     }
 

@@ -73,17 +73,21 @@ public abstract class AbstractConfigurationProvider implements
   private final SourceFactory sourceFactory;
   private final SinkFactory sinkFactory;
   private final ChannelFactory channelFactory;
-
+  private final String[] override;
 
   private final Map<Class<? extends Channel>, Map<String, Channel>> channelCache;
 
   public AbstractConfigurationProvider(String agentName) {
+    this(agentName, null);
+  }
+
+  public AbstractConfigurationProvider(String agentName, String[] override) {
     super();
     this.agentName = agentName;
+    this.override = override;
     this.sourceFactory = new DefaultSourceFactory();
     this.sinkFactory = new DefaultSinkFactory();
     this.channelFactory = new DefaultChannelFactory();
-
     channelCache = new HashMap<Class<? extends Channel>, Map<String, Channel>>();
   }
 
@@ -91,7 +95,7 @@ public abstract class AbstractConfigurationProvider implements
 
   public MaterializedConfiguration getConfiguration() {
     MaterializedConfiguration conf = new SimpleMaterializedConfiguration();
-    FlumeConfiguration fconfig = getFlumeConfiguration();
+    FlumeConfiguration fconfig = overrideParams(getFlumeConfiguration());
     AgentConfiguration agentConf = fconfig.getConfigurationFor(getAgentName());
     if (agentConf != null) {
       Map<String, ChannelComponent> channelComponentMap = Maps.newHashMap();
@@ -138,6 +142,48 @@ public abstract class AbstractConfigurationProvider implements
       LOGGER.warn("No configuration found for this host:{}", getAgentName());
     }
     return conf;
+  }
+
+  private FlumeConfiguration overrideParams(FlumeConfiguration fconfig) {
+    AgentConfiguration agentConfiguration = fconfig.getConfigurationFor(agentName);
+    if (override != null) {
+      for (String overrideParam : override) {
+        String[] keyVal = overrideParam.split("=");
+        if (keyVal.length == 2) {
+          String keySegment = keyVal[0];
+          int index = keySegment.indexOf('.');
+          if (index > 0) {
+            override(agentConfiguration, getComponentName(keySegment, index), getComponentContext(keySegment, index), keyVal[1]);
+          }
+        }
+      }
+    }
+    return fconfig;
+  }
+
+  private String getComponentName(String keySegment, int index) {
+    return keySegment.substring(0, index);
+  }
+
+  private String getComponentContext(String keySegment, int index) {
+    return keySegment.substring(index + 1);
+  }
+
+  private void override(AgentConfiguration agentConfiguration, String key, String context, String value) {
+    if (!overrideContextParam(agentConfiguration.getSourceContext().get(key), context, value)) {
+      if (!overrideContextParam(agentConfiguration.getSinkContext().get(key), context, value)) {
+        overrideContextParam(agentConfiguration.getChannelContext().get(key), context, value);
+      }
+    }
+  }
+
+  private boolean overrideContextParam(Context context, String param, String value) {
+    boolean result = false;
+    if (context != null) {
+      context.put(param, value);
+      result = true;
+    }
+    return result;
   }
 
   public String getAgentName() {
