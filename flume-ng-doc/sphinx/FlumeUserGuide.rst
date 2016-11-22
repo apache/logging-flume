@@ -1498,7 +1498,9 @@ Sequence Generator Source
 
 A simple sequence generator that continuously generates events with a counter that starts from 0,
 increments by 1 and stops at totalEvents. Retries when it can't send events to the channel. Useful
-mainly for testing. Required properties are in **bold**.
+mainly for testing. During retries it keeps the body of the retried messages the same as before so
+that the number of unique events - after de-duplication at destination - is expected to be
+equal to the specified ``totalEvents``. Required properties are in **bold**.
 
 ==============  ===============  ========================================
 Property Name   Default          Description
@@ -1509,7 +1511,7 @@ selector.type                    replicating or multiplexing
 selector.*      replicating      Depends on the selector.type value
 interceptors    --               Space-separated list of interceptors
 interceptors.*
-batchSize       1
+batchSize       1                Number of events to attempt to process per request loop.
 totalEvents     Long.MAX_VALUE   Number of unique events sent by the source.
 ==============  ===============  ========================================
 
