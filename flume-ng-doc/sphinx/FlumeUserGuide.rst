@@ -3919,8 +3919,8 @@ Property Name          Default      Description
 =====================  ===========  ===============================================================
 **type**               --           The component type name has to be ``remove_header``
 withName               --           Name of the header to remove
-fromList               --           List of headers to remove, separated with the separator specified with from.list.separator
-fromListSeparator      \s*,\s*      Regular expression used to separate multiple header names in the list specified using from.list
+fromList               --           List of headers to remove, separated with the separator specified by ``fromListSeparator``
+fromListSeparator      \\s*,\\s*    Regular expression used to separate multiple header names in the list specified by ``fromList``. Default is a comma surrounded by any number of whitespace characters
 matching               --           All the headers which names match this regular expression are removed
 =====================  ===========  ===============================================================
 
