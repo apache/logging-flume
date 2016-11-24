@@ -52,6 +52,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Future;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.ArrayList;
 
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.BOOTSTRAP_SERVERS_CONFIG;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.BATCH_SIZE;
@@ -69,7 +72,8 @@ import static org.apache.flume.sink.kafka.KafkaSinkConstants.TOPIC_CONFIG;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.TOPIC_HEADER;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.KEY_SERIALIZER_KEY;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.MESSAGE_SERIALIZER_KEY;
-
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.MESSAGE_LIMIT;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_MESSAGE_LIMIT;
 
 /**
  * A Flume Sink that can publish messages to Kafka.
@@ -126,7 +130,7 @@ public class KafkaSink extends AbstractSink implements Configurable {
   //Fine to use null for initial value, Avro will create new ones if this
   // is null
   private BinaryEncoder encoder = null;
-
+  private long messageLimit;
 
   //For testing
   public String getTopic() {
@@ -209,7 +213,11 @@ public class KafkaSink extends AbstractSink implements Configurable {
             record = new ProducerRecord<String, byte[]>(eventTopic, eventKey,
                 serializeEvent(event, useAvroEventFormat));
           }
-          kafkaFutures.add(producer.send(record, new SinkCallback(startTime)));
+          if (eventBody.length < messageLimit) {
+            kafkaFutures.add(producer.send(record, new SinkCallback(startTime)));
+          } else {
+            logger.info("Event body too large to record, size: {}", eventBody.length);
+          }
         } catch (NumberFormatException ex) {
           throw new EventDeliveryException("Non integer partition id specified", ex);
         } catch (Exception ex) {
@@ -310,6 +318,12 @@ public class KafkaSink extends AbstractSink implements Configurable {
       logger.debug("Using batch size: {}", batchSize);
     }
 
+    messageLimit = context.getLong(MESSAGE_LIMIT, DEFAULT_MESSAGE_LIMIT);
+
+    if (logger.isDebugEnabled()) {
+        logger.debug("Using message limit: {} bytes", messageLimit);
+    }
+
     useAvroEventFormat = context.getBoolean(KafkaSinkConstants.AVRO_EVENT,
                                             KafkaSinkConstants.DEFAULT_AVRO_EVENT);
 
@@ -405,6 +419,30 @@ public class KafkaSink extends AbstractSink implements Configurable {
     return kafkaProps;
   }
 
+  //merge header and body
+  private byte[] byteMerge(byte byteHeader[], byte byteBody[]) {
+    byte byteMergeResult[] = new byte[byteHeader.length + byteBody.length];
+    System.arraycopy(byteHeader, 0, byteMergeResult, 0, byteHeader.length);
+    System.arraycopy(byteBody, 0, byteMergeResult, byteHeader.length, byteBody.length);
+    return byteMergeResult;
+  }
+
+  //Convert event headers to seq string
+  private String toSeqChar(Map header) {
+    Collection<String> headerKeySet = header.keySet();
+    List<String> headerKeyList = new ArrayList<String>(headerKeySet);
+    Collections.sort(headerKeyList);
+    String headerStr = "{";
+    for (int i = 0; i < headerKeyList.size() - 1; i++) {
+      headerStr += headerKeyList.get(i) + ": ";
+      headerStr += header.get(headerKeyList.get(i)) + ", ";
+    }
+    headerStr += headerKeyList.get(headerKeyList.size()-1) + ": ";
+    headerStr += header.get(headerKeyList.get(headerKeyList.size()-1));
+    headerStr += "}";
+    return headerStr;
+  }
+
   private byte[] serializeEvent(Event event, boolean useAvroEventFormat) throws IOException {
     byte[] bytes;
     if (useAvroEventFormat) {
@@ -422,7 +460,7 @@ public class KafkaSink extends AbstractSink implements Configurable {
       encoder.flush();
       bytes = tempOutStream.get().toByteArray();
     } else {
-      bytes = event.getBody();
+      bytes = byteMerge(toSeqChar(event.getHeaders()).getBytes(), event.getBody());
     }
     return bytes;
   }

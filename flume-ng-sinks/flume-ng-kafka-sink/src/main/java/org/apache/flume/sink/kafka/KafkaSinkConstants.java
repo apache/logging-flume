@@ -59,5 +59,8 @@ public class KafkaSinkConstants {
   public static final String KEY_SERIALIZER_KEY = "key.serializer.class";
   public static final String BROKER_LIST_FLUME_KEY = "brokerList";
   public static final String REQUIRED_ACKS_FLUME_KEY = "requiredAcks";
+
+  public static final String MESSAGE_LIMIT = "messageLimit";
+  public static final long DEFAULT_MESSAGE_LIMIT = 50000L;
 }
 
