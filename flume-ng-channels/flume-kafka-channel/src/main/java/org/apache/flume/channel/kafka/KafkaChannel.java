@@ -154,8 +154,7 @@ public class KafkaChannel extends BasicChannelSemantics {
     producer.close();
     counter.stop();
     super.stop();
-    logger.info("Kafka channel {} stopped. Metrics: {}", getName(),
-            counter);
+    logger.info("Kafka channel {} stopped.", getName());
   }
 
   @Override
@@ -372,6 +371,7 @@ public class KafkaChannel extends BasicChannelSemantics {
   }
 
   private void decommissionConsumerAndRecords(ConsumerAndRecords c) {
+    c.consumer.wakeup();
     c.consumer.close();
   }
 
@@ -564,23 +564,25 @@ public class KafkaChannel extends BasicChannelSemantics {
                   ex);
         }
       } else {
-        //event taken ensures that we have collected events in this transaction
+        // event taken ensures that we have collected events in this transaction
         // before committing
         if (consumerAndRecords.get().failedEvents.isEmpty() && eventTaken) {
-          logger.trace("about to commit batch.");
+          logger.trace("About to commit batch.");
           long startTime = System.nanoTime();
           consumerAndRecords.get().commitOffsets();
           long endTime = System.nanoTime();
           counter.addToKafkaCommitTimer((endTime - startTime) / (1000 * 1000));
-          counter.addToEventTakeSuccessCount(Long.valueOf(events.get().size()));
 
           if (logger.isDebugEnabled()) {
             logger.debug(consumerAndRecords.get().getCommittedOffsetsString());
           }
         }
-        logger.trace("clearing offsets map.");
-        consumerAndRecords.get().offsets.clear();
-        events.get().clear();
+
+        int takes = events.get().size();
+        if (takes > 0) {
+          counter.addToEventTakeSuccessCount(takes);
+          events.get().clear();
+        }
       }
     }
 
@@ -593,7 +595,7 @@ public class KafkaChannel extends BasicChannelSemantics {
         producerRecords.get().clear();
         kafkaFutures.get().clear();
       } else {
-        counter.addToRollbackCounter(Long.valueOf(events.get().size()));
+        counter.addToRollbackCounter(events.get().size());
         consumerAndRecords.get().failedEvents.addAll(events.get());
         events.get().clear();
       }
@@ -685,17 +687,19 @@ public class KafkaChannel extends BasicChannelSemantics {
     }
 
     void poll() {
-      logger.trace("polling with timeout: {}ms channel-{}", pollTimeout, channelUUID);
+      logger.trace("polling with timeout: {}ms channel-{}", pollTimeout, getName());
       this.records = consumer.poll(pollTimeout);
       this.recordIterator = records.iterator();
-      logger.debug("returned {} records from last poll channel-{}", records.count(), channelUUID);
+      logger.debug("returned {} records from last poll channel-{}", records.count(), getName());
     }
 
     void commitOffsets() {
       this.consumer.commitSync(offsets);
+      logger.trace("About to clear offsets map.");
+      this.offsets.clear();
     }
 
-    String getOffsetMapString() {
+    private String getOffsetMapString() {
       StringBuilder sb = new StringBuilder();
       sb.append("Current offsets map: ");
       for (TopicPartition tp : offsets.keySet()) {
@@ -706,7 +710,7 @@ public class KafkaChannel extends BasicChannelSemantics {
     }
 
     // This prints the current committed offsets when debug is enabled
-    String getCommittedOffsetsString() {
+    private String getCommittedOffsetsString() {
       StringBuilder sb = new StringBuilder();
       sb.append("Channel ").append(this.uuid)
           .append(" committed: ");
