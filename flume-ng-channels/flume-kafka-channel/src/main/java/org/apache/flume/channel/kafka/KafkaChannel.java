@@ -484,7 +484,7 @@ public class KafkaChannel extends BasicChannelSemantics {
         e = consumerAndRecords.get().failedEvents.removeFirst();
       } else {
         logger.trace("Assignment during take: {}",
-           consumerAndRecords.get().consumer.assignment().toString());
+            consumerAndRecords.get().consumer.assignment().toString());
         try {
           long startTime = System.nanoTime();
           if (!consumerAndRecords.get().recordIterator.hasNext()) {
@@ -568,8 +568,7 @@ public class KafkaChannel extends BasicChannelSemantics {
           consumerAndRecords.get().commitOffsets();
           long endTime = System.nanoTime();
           counter.addToKafkaCommitTimer((endTime - startTime) / (1000 * 1000));
-          logger.debug("Latest committed offsets: {}",
-              consumerAndRecords.get().getCommittedOffsetsString());
+          logger.debug("{}", consumerAndRecords.get().getCommittedOffsetsString());
         }
 
         int takes = events.get().size();
@@ -723,7 +722,7 @@ public class KafkaChannel extends BasicChannelSemantics {
               .append(this.consumer.committed(tp).offset())
               .append("] ");
         } catch (NullPointerException npe) {
-            logger.debug("Committed {}", tp);
+          logger.debug("Committed {}", tp);
         }
       }
       return sb.toString();
