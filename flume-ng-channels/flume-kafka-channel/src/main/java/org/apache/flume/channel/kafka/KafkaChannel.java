@@ -52,6 +52,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.security.JaasUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -482,10 +483,8 @@ public class KafkaChannel extends BasicChannelSemantics {
       if (!consumerAndRecords.get().failedEvents.isEmpty()) {
         e = consumerAndRecords.get().failedEvents.removeFirst();
       } else {
-        if (logger.isTraceEnabled()) {
-          logger.trace("Assignment during take: {}",
-              consumerAndRecords.get().consumer.assignment().toString());
-        }
+        logger.trace("Assignment during take: {}",
+           consumerAndRecords.get().consumer.assignment().toString());
         try {
           long startTime = System.nanoTime();
           if (!consumerAndRecords.get().recordIterator.hasNext()) {
@@ -496,21 +495,18 @@ public class KafkaChannel extends BasicChannelSemantics {
             e = deserializeValue(record.value(), parseAsFlumeEvent);
             TopicPartition tp = new TopicPartition(record.topic(), record.partition());
             OffsetAndMetadata oam = new OffsetAndMetadata(record.offset() + 1, batchUUID);
+            //we should refactor this into a method in the subclass
             consumerAndRecords.get().offsets.put(tp, oam);
 
-            if (logger.isTraceEnabled()) {
-              logger.trace(consumerAndRecords.get().getOffsetMapString());
-            }
+            logger.trace("Committted Offsets: {}", consumerAndRecords.get().getOffsetMapString());
 
             //Add the key to the header
             if (record.key() != null) {
               e.getHeaders().put(KEY_HEADER, record.key());
             }
 
-            if (logger.isDebugEnabled()) {
-              logger.debug("Processed output from partition {} offset {}",
-                           record.partition(), record.offset());
-            }
+            logger.debug("Processed output from partition {} offset {}",
+                record.partition(), record.offset());
 
             long endTime = System.nanoTime();
             counter.addToKafkaEventGetTimer((endTime - startTime) / (1000 * 1000));
@@ -572,10 +568,8 @@ public class KafkaChannel extends BasicChannelSemantics {
           consumerAndRecords.get().commitOffsets();
           long endTime = System.nanoTime();
           counter.addToKafkaCommitTimer((endTime - startTime) / (1000 * 1000));
-
-          if (logger.isDebugEnabled()) {
-            logger.debug(consumerAndRecords.get().getCommittedOffsetsString());
-          }
+          logger.debug("Latest committed offsets: {}",
+              consumerAndRecords.get().getCommittedOffsetsString());
         }
 
         int takes = events.get().size();
@@ -686,17 +680,26 @@ public class KafkaChannel extends BasicChannelSemantics {
       this.recordIterator = records.iterator();
     }
 
-    void poll() {
-      logger.trace("polling with timeout: {}ms channel-{}", pollTimeout, getName());
-      this.records = consumer.poll(pollTimeout);
-      this.recordIterator = records.iterator();
-      logger.debug("returned {} records from last poll channel-{}", records.count(), getName());
+    private void poll() {
+      logger.trace("Polling with timeout: {}ms channel-{}", pollTimeout, getName());
+      try {
+        this.records = consumer.poll(pollTimeout);
+        this.recordIterator = records.iterator();
+        logger.debug("Returned {} records from last poll channel-{}", records.count(), getName());
+      } catch (WakeupException e) {
+        logger.trace("Consumer woken up for channel {}.", getName());
+      }
     }
 
-    void commitOffsets() {
-      this.consumer.commitSync(offsets);
-      logger.trace("About to clear offsets map.");
-      this.offsets.clear();
+    private void commitOffsets() {
+      try {
+        this.consumer.commitSync(offsets);
+      } catch (Exception e) {
+        logger.info("Error committing offsets.", e);
+      } finally {
+        logger.trace("About to clear offsets map.");
+        this.offsets.clear();
+      }
     }
 
     private String getOffsetMapString() {
@@ -720,9 +723,7 @@ public class KafkaChannel extends BasicChannelSemantics {
               .append(this.consumer.committed(tp).offset())
               .append("] ");
         } catch (NullPointerException npe) {
-          if (logger.isDebugEnabled()) {
             logger.debug("Committed {}", tp);
-          }
         }
       }
       return sb.toString();
