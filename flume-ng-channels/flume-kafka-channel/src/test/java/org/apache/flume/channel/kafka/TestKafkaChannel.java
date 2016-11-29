@@ -39,6 +39,7 @@ import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.security.JaasUtils;
 import org.junit.AfterClass;
@@ -859,5 +860,86 @@ public class TestKafkaChannel {
         ZkUtils.apply(testUtil.getZkUrl(), sessionTimeoutMs, connectionTimeoutMs, false);
     AdminUtils.deleteTopic(zkUtils, topicName);
   }
+
+  @Test
+  public void testAutomaticOffsetsMigration() throws Exception {
+    String group="testMigrateOffsets-kafka";
+    Map<TopicPartition, OffsetAndMetadata> topicMetaData=null;
+
+    // create a topic with 1 partition for simplicity
+    topic = findUnusedTopic();
+    createTopic(topic, 1);
+
+    Context context = prepareDefaultContext(false);
+    context.put(ZOOKEEPER_CONNECT_FLUME_KEY, testUtil.getZkUrl());
+    context.put(GROUP_ID_FLUME, group);
+    context.put(MIGRATE_ZOOKEEPER_OFFSETS,"false");    // set this for not to automatically migrate offsets to Kafka at channel startup
+    final KafkaChannel channel = createChannel(context);
+
+    // Produce messages to channel and commit the offsets to zookeeper
+    produceAndCommitToZK(channel);
+
+    // Start the channel
+    channel.start();
+
+    //Get the committed offsets from Kafka
+    topicMetaData=getCommittedKafkaOffsets(channel);
+    Assert.assertEquals("No offsets should be migrated to Kafka",true, topicMetaData.isEmpty());
+    channel.stop();
+
+
+    // Start the channel with MIGRATE_ZOOKEEPER_OFFSETS to true so that KafkaChannel automatically migrates the offsets
+
+    context.put(MIGRATE_ZOOKEEPER_OFFSETS,"true");     // set this to automatically migrate offsets to kafka at channel startup
+    final KafkaChannel anotherChannel = createChannel(context);
+    anotherChannel.start();
+    //Get the committed offsets from Kafka
+    topicMetaData=getCommittedKafkaOffsets(anotherChannel);
+    Assert.assertEquals("Offsets should be migrated to Kafka",10, ((OffsetAndMetadata)topicMetaData.values().toArray()[0]).offset());
+    channel.stop();
+  }
+
+  private Map<TopicPartition, OffsetAndMetadata> getCommittedKafkaOffsets(KafkaChannel channel) throws Exception {
+    KafkaConsumer<String, byte[]> consumer = new KafkaConsumer<>(channel.getConsumerProps());
+    Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
+    List<PartitionInfo> partitions = consumer.partitionsFor(topic);
+    for (PartitionInfo partition : partitions) {
+      TopicPartition key = new TopicPartition(topic, partition.partition());
+      OffsetAndMetadata offsetAndMetadata = consumer.committed(key);
+      if (offsetAndMetadata != null) {
+        offsets.put(key, offsetAndMetadata);
+      }
+    }
+    return offsets;
+  }
+
+  private void produceAndCommitToZK(KafkaChannel channel) throws Exception {
+    // Produce some data and save an offset
+
+    String group="testMigrateOffsets-kafka";
+    Long tenthOffset = 0L;
+    Properties props = channel.getProducerProps();
+    KafkaProducer<String, byte[]> producer = new KafkaProducer<>(props);
+    for (int i = 1; i <= 20; i++) {
+      ProducerRecord<String, byte[]> data =
+              new ProducerRecord<>(topic, null, String.valueOf(i).getBytes());
+      RecordMetadata recordMetadata = producer.send(data).get();
+      if (i == 10) {
+        tenthOffset = recordMetadata.offset();
+      }
+    }
+
+    // Commit 10th offset to zookeeper
+    ZkUtils zkUtils = ZkUtils.apply(testUtil.getZkUrl(), 30000, 30000,
+            JaasUtils.isZkSecurityEnabled());
+    ZKGroupTopicDirs topicDirs = new ZKGroupTopicDirs(group, topic);
+    // we commit the tenth offset to ensure some data is missed.
+    Long offset = tenthOffset + 1;
+    zkUtils.updatePersistentPath(topicDirs.consumerOffsetDir() + "/0", offset.toString(),
+            zkUtils.updatePersistentPath$default$3());
+    zkUtils.close();
+
+  }
+
 
 }
