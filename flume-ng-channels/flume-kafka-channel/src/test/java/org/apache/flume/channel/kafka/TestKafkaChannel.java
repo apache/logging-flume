@@ -863,8 +863,8 @@ public class TestKafkaChannel {
 
   @Test
   public void testAutomaticOffsetsMigration() throws Exception {
-    String group="testMigrateOffsets-kafka";
-    Map<TopicPartition, OffsetAndMetadata> topicMetaData=null;
+    String group = "testMigrateOffsets-kafka";
+    Map<TopicPartition, OffsetAndMetadata> topicMetaData = null;
 
     // create a topic with 1 partition for simplicity
     topic = findUnusedTopic();
@@ -873,7 +873,8 @@ public class TestKafkaChannel {
     Context context = prepareDefaultContext(false);
     context.put(ZOOKEEPER_CONNECT_FLUME_KEY, testUtil.getZkUrl());
     context.put(GROUP_ID_FLUME, group);
-    context.put(MIGRATE_ZOOKEEPER_OFFSETS,"false");    // set this for not to automatically migrate offsets to Kafka at channel startup
+    // set below for not to automatically migrate offsets to Kafka at channel startup
+    context.put(MIGRATE_ZOOKEEPER_OFFSETS,"false");
     final KafkaChannel channel = createChannel(context);
 
     // Produce messages to channel and commit the offsets to zookeeper
@@ -883,23 +884,29 @@ public class TestKafkaChannel {
     channel.start();
 
     //Get the committed offsets from Kafka
-    topicMetaData=getCommittedKafkaOffsets(channel);
+    topicMetaData = getCommittedKafkaOffsets(channel);
     Assert.assertEquals("No offsets should be migrated to Kafka",true, topicMetaData.isEmpty());
     channel.stop();
 
 
-    // Start the channel with MIGRATE_ZOOKEEPER_OFFSETS to true so that KafkaChannel automatically migrates the offsets
+    // Start the channel with MIGRATE_ZOOKEEPER_OFFSETS to true so that KafkaChannel
+    // automatically migrates the offsets
 
-    context.put(MIGRATE_ZOOKEEPER_OFFSETS,"true");     // set this to automatically migrate offsets to kafka at channel startup
+    // set below to automatically migrate offsets to kafka at channel startup
+    context.put(MIGRATE_ZOOKEEPER_OFFSETS,"true");
     final KafkaChannel anotherChannel = createChannel(context);
     anotherChannel.start();
     //Get the committed offsets from Kafka
-    topicMetaData=getCommittedKafkaOffsets(anotherChannel);
-    Assert.assertEquals("Offsets should be migrated to Kafka",10, ((OffsetAndMetadata)topicMetaData.values().toArray()[0]).offset());
+    topicMetaData = getCommittedKafkaOffsets(anotherChannel);
+    Assert.assertEquals("Offsets should be migrated to Kafka",
+            10,
+            ((OffsetAndMetadata)topicMetaData.values().toArray()[0]).offset()
+    );
     channel.stop();
   }
 
-  private Map<TopicPartition, OffsetAndMetadata> getCommittedKafkaOffsets(KafkaChannel channel) throws Exception {
+  private Map<TopicPartition, OffsetAndMetadata> getCommittedKafkaOffsets(KafkaChannel channel)
+          throws Exception {
     KafkaConsumer<String, byte[]> consumer = new KafkaConsumer<>(channel.getConsumerProps());
     Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
     List<PartitionInfo> partitions = consumer.partitionsFor(topic);
@@ -916,7 +923,7 @@ public class TestKafkaChannel {
   private void produceAndCommitToZK(KafkaChannel channel) throws Exception {
     // Produce some data and save an offset
 
-    String group="testMigrateOffsets-kafka";
+    String group = "testMigrateOffsets-kafka";
     Long tenthOffset = 0L;
     Properties props = channel.getProducerProps();
     KafkaProducer<String, byte[]> producer = new KafkaProducer<>(props);
@@ -940,6 +947,5 @@ public class TestKafkaChannel {
     zkUtils.close();
 
   }
-
 
 }
