@@ -103,9 +103,9 @@ public class KafkaChannel extends BasicChannelSemantics {
   private Integer staticPartitionId;
   private boolean migrateZookeeperOffsets = DEFAULT_MIGRATE_ZOOKEEPER_OFFSETS;
 
-  //used to indicate if a rebalance has occurred during the current transaction
+  // used to indicate if a rebalance has occurred during the current transaction
   AtomicBoolean rebalanceFlag = new AtomicBoolean();
-  //This isn't a Kafka property per se, but we allow it to be configurable
+  // This isn't a Kafka property per se, but we allow it to be configurable
   private long pollTimeout = DEFAULT_POLL_TIMEOUT;
 
 
@@ -166,7 +166,7 @@ public class KafkaChannel extends BasicChannelSemantics {
   @Override
   public void configure(Context ctx) {
 
-    //Can remove in the next release
+    // Can remove in the next release
     translateOldProps(ctx);
 
     topicStr = ctx.getString(TOPIC_CONFIG);
@@ -217,7 +217,7 @@ public class KafkaChannel extends BasicChannelSemantics {
       logger.warn("{} is deprecated. Please use the parameter {}", "topic", TOPIC_CONFIG);
     }
 
-    //Broker List
+    // Broker List
     // If there is no value we need to check and set the old param and log a warning message
     if (!(ctx.containsKey(BOOTSTRAP_SERVERS_CONFIG))) {
       String brokerList = ctx.getString(BROKER_LIST_FLUME_KEY);
@@ -230,7 +230,7 @@ public class KafkaChannel extends BasicChannelSemantics {
       }
     }
 
-    //GroupId
+    // GroupId
     // If there is an old Group Id set, then use that if no groupId is set.
     if (!(ctx.containsKey(KAFKA_CONSUMER_PREFIX + ConsumerConfig.GROUP_ID_CONFIG))) {
       String oldGroupId = ctx.getString(GROUP_ID_FLUME);
@@ -265,7 +265,7 @@ public class KafkaChannel extends BasicChannelSemantics {
     producerProps.put(ProducerConfig.ACKS_CONFIG, DEFAULT_ACKS);
     producerProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, DEFAULT_KEY_SERIALIZER);
     producerProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, DEFAULT_VALUE_SERIAIZER);
-    //Defaults overridden based on config
+    // Defaults overridden based on config
     producerProps.putAll(ctx.getSubProperties(KAFKA_PRODUCER_PREFIX));
     producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootStrapServers);
   }
@@ -279,9 +279,9 @@ public class KafkaChannel extends BasicChannelSemantics {
     consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, DEFAULT_KEY_DESERIALIZER);
     consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, DEFAULT_VALUE_DESERIAIZER);
     consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, DEFAULT_AUTO_OFFSET_RESET);
-    //Defaults overridden based on config
+    // Defaults overridden based on config
     consumerProps.putAll(ctx.getSubProperties(KAFKA_CONSUMER_PREFIX));
-    //These always take precedence over config
+    // These always take precedence over config
     consumerProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootStrapServers);
     consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
     consumerProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
@@ -434,7 +434,7 @@ public class KafkaChannel extends BasicChannelSemantics {
         if (staticPartitionId != null) {
           partitionId = staticPartitionId;
         }
-        //Allow a specified header to override a static ID
+        // Allow a specified header to override a static ID
         if (partitionHeader != null) {
           String headerVal = event.getHeaders().get(partitionHeader);
           if (headerVal != null) {
@@ -460,7 +460,7 @@ public class KafkaChannel extends BasicChannelSemantics {
     @SuppressWarnings("unchecked")
     @Override
     protected Event doTake() throws InterruptedException {
-      logger.trace("Starting event take.");
+      logger.trace("Starting event take");
       type = TransactionType.TAKE;
       try {
         if (!(consumerAndRecords.get().uuid.equals(channelUUID))) {
@@ -483,8 +483,10 @@ public class KafkaChannel extends BasicChannelSemantics {
       if (!consumerAndRecords.get().failedEvents.isEmpty()) {
         e = consumerAndRecords.get().failedEvents.removeFirst();
       } else {
-        logger.trace("Assignment during take: {}",
-            consumerAndRecords.get().consumer.assignment().toString());
+        if ( logger.isTraceEnabled() ) {
+          logger.trace("Assignment during take: {}",
+              consumerAndRecords.get().consumer.assignment().toString());
+        }
         try {
           long startTime = System.nanoTime();
           if (!consumerAndRecords.get().recordIterator.hasNext()) {
@@ -495,21 +497,20 @@ public class KafkaChannel extends BasicChannelSemantics {
             e = deserializeValue(record.value(), parseAsFlumeEvent);
             TopicPartition tp = new TopicPartition(record.topic(), record.partition());
             OffsetAndMetadata oam = new OffsetAndMetadata(record.offset() + 1, batchUUID);
-            //we should refactor this into a method in the subclass
-            consumerAndRecords.get().offsets.put(tp, oam);
-
-            logger.trace("Committted Offsets: {}", consumerAndRecords.get().getOffsetMapString());
+            consumerAndRecords.get().saveOffsets(tp,oam);
 
             //Add the key to the header
             if (record.key() != null) {
               e.getHeaders().put(KEY_HEADER, record.key());
             }
 
-            logger.debug("Processed output from partition {} offset {}",
-                record.partition(), record.offset());
-
             long endTime = System.nanoTime();
             counter.addToKafkaEventGetTimer((endTime - startTime) / (1000 * 1000));
+
+            if (logger.isDebugEnabled()) {
+              logger.debug("{} processed output from partition {} offset {}",
+                  new Object[] {getName(), record.partition(), record.offset()});
+            }
           } else {
             return null;
           }
@@ -527,7 +528,7 @@ public class KafkaChannel extends BasicChannelSemantics {
 
     @Override
     protected void doCommit() throws InterruptedException {
-      logger.trace("Starting commit.");
+      logger.trace("Starting commit");
       if (type.equals(TransactionType.NONE)) {
         return;
       }
@@ -563,12 +564,14 @@ public class KafkaChannel extends BasicChannelSemantics {
         // event taken ensures that we have collected events in this transaction
         // before committing
         if (consumerAndRecords.get().failedEvents.isEmpty() && eventTaken) {
-          logger.trace("About to commit batch.");
+          logger.trace("About to commit batch");
           long startTime = System.nanoTime();
           consumerAndRecords.get().commitOffsets();
           long endTime = System.nanoTime();
           counter.addToKafkaCommitTimer((endTime - startTime) / (1000 * 1000));
-          logger.debug("{}", consumerAndRecords.get().getCommittedOffsetsString());
+          if (logger.isDebugEnabled()) {
+            logger.debug(consumerAndRecords.get().getCommittedOffsetsString());
+          }
         }
 
         int takes = events.get().size();
@@ -682,9 +685,9 @@ public class KafkaChannel extends BasicChannelSemantics {
     private void poll() {
       logger.trace("Polling with timeout: {}ms channel-{}", pollTimeout, getName());
       try {
-        this.records = consumer.poll(pollTimeout);
-        this.recordIterator = records.iterator();
-        logger.debug("Returned {} records from last poll channel-{}", records.count(), getName());
+        records = consumer.poll(pollTimeout);
+        recordIterator = records.iterator();
+        logger.debug("{} returned {} records from last poll", getName(), records.count());
       } catch (WakeupException e) {
         logger.trace("Consumer woken up for channel {}.", getName());
       }
@@ -692,18 +695,18 @@ public class KafkaChannel extends BasicChannelSemantics {
 
     private void commitOffsets() {
       try {
-        this.consumer.commitSync(offsets);
+        consumer.commitSync(offsets);
       } catch (Exception e) {
         logger.info("Error committing offsets.", e);
       } finally {
         logger.trace("About to clear offsets map.");
-        this.offsets.clear();
+        offsets.clear();
       }
     }
 
     private String getOffsetMapString() {
       StringBuilder sb = new StringBuilder();
-      sb.append("Current offsets map: ");
+      sb.append(getName()).append(" current offsets map: ");
       for (TopicPartition tp : offsets.keySet()) {
         sb.append("p").append(tp.partition()).append("-")
             .append(offsets.get(tp).offset()).append(" ");
@@ -714,12 +717,11 @@ public class KafkaChannel extends BasicChannelSemantics {
     // This prints the current committed offsets when debug is enabled
     private String getCommittedOffsetsString() {
       StringBuilder sb = new StringBuilder();
-      sb.append("Channel ").append(this.uuid)
-          .append(" committed: ");
-      for (TopicPartition tp : this.consumer.assignment()) {
+      sb.append(getName()).append(" committed: ");
+      for (TopicPartition tp : consumer.assignment()) {
         try {
           sb.append("[").append(tp).append(",")
-              .append(this.consumer.committed(tp).offset())
+              .append(consumer.committed(tp).offset())
               .append("] ");
         } catch (NullPointerException npe) {
           logger.debug("Committed {}", tp);
@@ -728,6 +730,12 @@ public class KafkaChannel extends BasicChannelSemantics {
       return sb.toString();
     }
 
+    private void saveOffsets(TopicPartition tp, OffsetAndMetadata oam) {
+      offsets.put(tp,oam);
+      if (logger.isTraceEnabled()) {
+        logger.trace(getOffsetMapString());
+      }
+    }
   }
 }
 
