@@ -236,9 +236,7 @@ Congratulations - you've successfully configured and deployed a Flume agent! Sub
 
 Using environment variables in configuration files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If we enable environment variable interpolation by adding `-DpropertiesImplementation=org.apache.flume.node.EnvVarResolverProperties`
-to our `bin/flume-ng` call, we can use environment variables in the config, such as::
+Flume has the ability to substitute environment variables in the configuration. For example::
 
   a1.sources = r1
   a1.sources.r1.type = netcat
@@ -246,10 +244,14 @@ to our `bin/flume-ng` call, we can use environment variables in the config, such
   a1.sources.r1.port = ${NC_PORT}
   a1.sources.r1.channels = c1
 
-So a complete command line start could look like::
+NB: it currently works for values only, not for keys. (Ie. only on the "right side" of the `=` mark of the config lines.)
 
+This can be enabled via Java system properties on agent invocation by setting `propertiesImplementation = org.apache.flume.node.EnvVarResolverProperties`.
+
+For example::
   $ NC_PORT=44444 bin/flume-ng agent --conf conf --conf-file example.conf --name a1 -Dflume.root.logger=INFO,console -DpropertiesImplementation=org.apache.flume.node.EnvVarResolverProperties
 
+Note the above is just an example, environment variables can be configured in other ways, including being set in `conf/flume-env.sh`.
 
 Logging raw data
 ~~~~~~~~~~~~~~~~
