@@ -40,10 +40,19 @@ public class TestEnvVarResolverProperties {
   }
 
   @Test
-  public void resolveEnvVars() throws Exception {
+  public void resolveEnvVar() throws Exception {
     environmentVariables.set("VARNAME", "varvalue");
     String resolved = EnvVarResolverProperties.resolveEnvVars("padding ${VARNAME} padding");
     Assert.assertEquals("padding varvalue padding", resolved);
+  }
+
+  @Test
+  public void resolveEnvVars() throws Exception {
+    environmentVariables.set("VARNAME1", "varvalue1");
+    environmentVariables.set("VARNAME2", "varvalue2");
+    String resolved = EnvVarResolverProperties
+        .resolveEnvVars("padding ${VARNAME1} ${VARNAME2} padding");
+    Assert.assertEquals("padding varvalue1 varvalue2 padding", resolved);
   }
 
   @Test
