@@ -21,13 +21,9 @@
 # The contract of this script is that it outputs the location of the generated
 # tarball to stdout upon successful completion.
 ################################################################################
+DEV_SUPPORT=$(cd $(dirname $0); pwd)
+source "$DEV_SUPPORT/includes.sh"
 
-error() {
-  echo $1 1>&2
-  exit 1
-}
-
-ROOT=$(cd $(dirname $0); pwd)
 VERSION_NUMBER=$1
 GIT_TAG=$2
 OUTPUT_DIR=$3
@@ -46,7 +42,7 @@ ARTIFACT_NAME=apache-flume-${VERSION_NUMBER}-src
 ARTIFACT_PATH=$ABS_OUTPUT_DIR/$ARTIFACT_NAME.$EXT
 
 # Need to call git archive from the root of the tree.
-cd $ROOT/..
+cd $DEV_SUPPORT/..
 
 echo git archive --prefix=$ARTIFACT_NAME/ --output=$ARTIFACT_PATH --format "$EXT" "$GIT_TAG" 1>&2
 git archive --prefix=$ARTIFACT_NAME/ --output=$ARTIFACT_PATH --format "$EXT" "$GIT_TAG"
