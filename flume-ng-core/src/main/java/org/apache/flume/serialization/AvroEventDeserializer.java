@@ -29,6 +29,7 @@ import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.EncoderFactory;
+import org.apache.avro.util.Utf8;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -41,9 +42,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 /**
  * A deserializer that parses Avro container files, generating one Flume event
@@ -117,13 +118,51 @@ public class AvroEventDeserializer implements EventDeserializer {
       out.reset();
       datumWriter.write(record, encoder);
       encoder.flush();
+
+      byte[] bodyBinary = out.toByteArray();
+
+      boolean size = schema.getFields().size() == 2;
+
+      boolean hasHeaders = false;
+      int headersPosition = -1;
+
+      boolean hasBody = false;
+      int bodyPosition = -1;
+
+      try {
+        Schema.Field f = schema.getField("headers");
+        headersPosition = f.pos();
+        hasHeaders = true;
+      } catch (Exception ex) {}
+
+      try {
+        Schema.Field f = schema.getField("body");
+        bodyPosition = f.pos();
+        hasBody = true;
+      } catch (Exception ex) {}
+
+      if (size && hasBody && hasHeaders) {
+        ByteBuffer body = (ByteBuffer) record.get(bodyPosition);
+        bodyBinary = body.array();
+      }
+
       // annotate header with 64-bit schema CRC hash in hex
-      Event event = EventBuilder.withBody(out.toByteArray());
+      Event event = EventBuilder.withBody(bodyBinary);
       if (schemaType == AvroSchemaType.HASH) {
         event.getHeaders().put(AVRO_SCHEMA_HEADER_HASH, schemaHashString);
       } else {
         event.getHeaders().put(AVRO_SCHEMA_HEADER_LITERAL, schema.toString());
       }
+
+      if (size && hasBody && hasHeaders) {
+        HashMap<String, String> header = (HashMap<String, String>) record.get(headersPosition);
+        Iterator it = header.entrySet().iterator();
+        while (it.hasNext()) {
+          Map.Entry<Utf8, Utf8> pair = (Map.Entry) it.next();
+          event.getHeaders().put(pair.getKey().toString(), pair.getValue().toString());
+        }
+      }
+
       return event;
     }
     return null;
