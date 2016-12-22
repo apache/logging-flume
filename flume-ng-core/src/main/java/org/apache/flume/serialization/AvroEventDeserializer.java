@@ -34,8 +34,6 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.FlumeException;
-import org.apache.flume.annotations.InterfaceAudience;
-import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.event.EventBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +42,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.Iterator;
+import java.util.Locale;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.List;
 
 /**
  * A deserializer that parses Avro container files, generating one Flume event
@@ -133,13 +135,17 @@ public class AvroEventDeserializer implements EventDeserializer {
         Schema.Field f = schema.getField("headers");
         headersPosition = f.pos();
         hasHeaders = true;
-      } catch (Exception ex) {}
+      } catch (Exception ex) {
+        logger.debug("No headers found");
+      }
 
       try {
         Schema.Field f = schema.getField("body");
         bodyPosition = f.pos();
         hasBody = true;
-      } catch (Exception ex) {}
+      } catch (Exception ex) {
+        logger.debug("No body found");
+      }
 
       if (size && hasBody && hasHeaders) {
         ByteBuffer body = (ByteBuffer) record.get(bodyPosition);

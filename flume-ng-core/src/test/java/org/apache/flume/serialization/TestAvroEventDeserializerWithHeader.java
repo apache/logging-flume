@@ -20,13 +20,9 @@ package org.apache.flume.serialization;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaNormalization;
 import org.apache.avro.file.DataFileWriter;
-import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
-import org.apache.avro.io.BinaryDecoder;
-import org.apache.avro.io.DatumReader;
-import org.apache.avro.io.DecoderFactory;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -39,10 +35,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class TestAvroEventDeserializerWithHeader {
 
