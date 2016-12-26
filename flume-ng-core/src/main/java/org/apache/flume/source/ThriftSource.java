@@ -151,7 +151,8 @@ public class ThriftSource extends AbstractSource implements Configurable, EventD
 
     try {
       maxReadBufferBytes = context.getInteger(MAX_READ_BUFFER_BYTES, DEFAULT_MAX_READ_BUFFER_BYTES);
-      maxReadBufferBytes = (maxReadBufferBytes <= 0) ? DEFAULT_MAX_READ_BUFFER_BYTES : maxReadBufferBytes;
+      maxReadBufferBytes = (maxReadBufferBytes <= 0) ?
+          DEFAULT_MAX_READ_BUFFER_BYTES : maxReadBufferBytes;
     } catch (NumberFormatException e) {
       logger.warn("Thrift source\'s \"maxReadBufferBytes\" property must specify an " +
           "integer value: " + context.getString(MAX_READ_BUFFER_BYTES) +
