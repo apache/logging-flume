@@ -59,7 +59,7 @@ public class TestAvroEventDeserializerWithHeader {
   }
 
   @Test
-  public void testSchemaHashPlista() throws IOException, NoSuchAlgorithmException {
+  public void testWithHeaderAndFooter() throws IOException, NoSuchAlgorithmException {
     File tempFile = newTestFile(true);
 
     String target = tempFile.getAbsolutePath();
@@ -73,7 +73,7 @@ public class TestAvroEventDeserializerWithHeader {
     ResettableInputStream in =
             new ResettableFileInputStream(tempFile, tracker);
     EventDeserializer des =
-            new AvroEventDeserializer.Builder().build(context, in);
+            new FlumeEventAvroEventDeserializer.Builder().build(context, in);
 
     Event event = des.readEvent();
     String eventSchemaHash =
