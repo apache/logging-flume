@@ -19,10 +19,6 @@ package org.apache.flume.serialization;
 
 import org.apache.flume.Context;
 import org.apache.flume.FlumeException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Locale;
 
 /**
  * A deserializer that parses Avro container files, generating one Flume event
@@ -31,21 +27,8 @@ import java.util.Locale;
  */
 public class AvroEventDeserializer extends AbstractAvroEventDeserializer {
 
-  private static final Logger logger = LoggerFactory.getLogger(AvroEventDeserializer.class);
-
   private AvroEventDeserializer(Context context, ResettableInputStream ris) {
-    this.ris = ris;
-
-    schemaType = AvroSchemaType.valueOf(
-        context.getString(CONFIG_SCHEMA_TYPE_KEY,
-            AvroSchemaType.HASH.toString()).toUpperCase(Locale.ENGLISH));
-    if (schemaType == AvroSchemaType.LITERAL) {
-      logger.warn(CONFIG_SCHEMA_TYPE_KEY + " set to " +
-          AvroSchemaType.LITERAL.toString() + ", so storing full Avro " +
-          "schema in the header of each event, which may be inefficient. " +
-          "Consider using the hash of the schema " +
-          "instead of the literal schema.");
-    }
+    super(context, ris);
   }
 
   public static class Builder implements EventDeserializer.Builder {
@@ -59,7 +42,7 @@ public class AvroEventDeserializer extends AbstractAvroEventDeserializer {
       AvroEventDeserializer deserializer
               = new AvroEventDeserializer(context, in);
       try {
-        deserializer.initialize(deserializer.ris);
+        deserializer.initialize();
       } catch (Exception e) {
         throw new FlumeException("Cannot instantiate deserializer", e);
       }

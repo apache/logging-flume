@@ -26,7 +26,7 @@ import org.apache.flume.annotations.InterfaceStability;
 public enum EventDeserializerType {
   LINE(LineDeserializer.Builder.class),
   AVRO(AvroEventDeserializer.Builder.class),
-  FLUME(FlumeEventAvroEventDeserializer.Builder.class),
+  FLUME_AVRO(FlumeEventAvroEventDeserializer.Builder.class),
   OTHER(null);
 
   private final Class<? extends EventDeserializer.Builder> builderClass;

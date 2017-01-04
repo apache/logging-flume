@@ -30,13 +30,17 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * A deserializer that parses Avro container files, generating one Flume event
@@ -45,8 +49,11 @@ import java.util.List;
  */
 public abstract class AbstractAvroEventDeserializer implements EventDeserializer {
 
-  protected AvroSchemaType schemaType;
-  protected ResettableInputStream ris;
+  private static final Logger logger =
+          LoggerFactory.getLogger(AbstractAvroEventDeserializer.class);
+
+  private final AvroSchemaType schemaType;
+  private final ResettableInputStream ris;
 
   protected Schema schema;
   private byte[] schemaHash;
@@ -63,6 +70,21 @@ public abstract class AbstractAvroEventDeserializer implements EventDeserializer
     LITERAL;
   }
 
+  public AbstractAvroEventDeserializer(Context context, ResettableInputStream ris){
+    this.ris = ris;
+
+    schemaType = AvroSchemaType.valueOf(
+            context.getString(CONFIG_SCHEMA_TYPE_KEY,
+                    AvroSchemaType.HASH.toString()).toUpperCase(Locale.ENGLISH));
+    if (schemaType == AvroSchemaType.LITERAL) {
+      logger.warn(CONFIG_SCHEMA_TYPE_KEY + " set to " +
+              AvroSchemaType.LITERAL.toString() + ", so storing full Avro " +
+              "schema in the header of each event, which may be inefficient. " +
+              "Consider using the hash of the schema " +
+              "instead of the literal schema.");
+    }
+  }
+
   public static final String CONFIG_SCHEMA_TYPE_KEY = "schemaType";
   public static final String AVRO_SCHEMA_HEADER_HASH
       = "flume.avro.schema.hash";
@@ -70,12 +92,12 @@ public abstract class AbstractAvroEventDeserializer implements EventDeserializer
       = "flume.avro.schema.literal";
 
 
-  protected void initialize(ResettableInputStream ris)
+  protected void initialize()
           throws IOException, NoSuchAlgorithmException {
     SeekableResettableInputBridge in = new SeekableResettableInputBridge(ris);
     long pos = in.tell();
     in.seek(0L);
-    fileReader = new DataFileReader<GenericRecord>(in,
+    fileReader = new DataFileReader<>(in,
         new GenericDatumReader<GenericRecord>());
     fileReader.sync(pos);
 

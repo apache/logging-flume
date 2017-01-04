@@ -29,13 +29,13 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Locale;
 import java.util.Map;
 
 /**
  * A deserializer that parses Avro container files, generating one Flume event
  * per record in the Avro file, and storing binary avro-encoded records in
  * the Flume event body.
+ * If a header is available, restore the header correctly by separating if from the payload
  */
 public class FlumeEventAvroEventDeserializer extends AbstractAvroEventDeserializer {
 
@@ -43,18 +43,7 @@ public class FlumeEventAvroEventDeserializer extends AbstractAvroEventDeserializ
           LoggerFactory.getLogger(FlumeEventAvroEventDeserializer.class);
 
   private FlumeEventAvroEventDeserializer(Context context, ResettableInputStream ris) {
-    this.ris = ris;
-
-    schemaType = AvroSchemaType.valueOf(
-        context.getString(CONFIG_SCHEMA_TYPE_KEY,
-            AvroSchemaType.HASH.toString()).toUpperCase(Locale.ENGLISH));
-    if (schemaType == AvroSchemaType.LITERAL) {
-      logger.warn(CONFIG_SCHEMA_TYPE_KEY + " set to " +
-          AvroSchemaType.LITERAL.toString() + ", so storing full Avro " +
-          "schema in the header of each event, which may be inefficient. " +
-          "Consider using the hash of the schema " +
-          "instead of the literal schema.");
-    }
+    super(context, ris);
   }
 
   @Override
@@ -120,7 +109,7 @@ public class FlumeEventAvroEventDeserializer extends AbstractAvroEventDeserializ
       FlumeEventAvroEventDeserializer deserializer
               = new FlumeEventAvroEventDeserializer(context, in);
       try {
-        deserializer.initialize(deserializer.ris);
+        deserializer.initialize();
       } catch (Exception e) {
         throw new FlumeException("Cannot instantiate deserializer", e);
       }
