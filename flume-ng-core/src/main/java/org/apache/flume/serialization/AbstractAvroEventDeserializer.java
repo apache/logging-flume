@@ -70,7 +70,7 @@ public abstract class AbstractAvroEventDeserializer implements EventDeserializer
     LITERAL;
   }
 
-  public AbstractAvroEventDeserializer(Context context, ResettableInputStream ris){
+  public AbstractAvroEventDeserializer(Context context, ResettableInputStream ris) {
     this.ris = ris;
 
     schemaType = AvroSchemaType.valueOf(
