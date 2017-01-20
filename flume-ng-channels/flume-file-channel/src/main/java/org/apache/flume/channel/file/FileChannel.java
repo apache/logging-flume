@@ -40,6 +40,7 @@ import org.apache.flume.channel.file.encryption.EncryptionConfiguration;
 import org.apache.flume.channel.file.encryption.KeyProvider;
 import org.apache.flume.channel.file.encryption.KeyProviderFactory;
 import org.apache.flume.instrumentation.ChannelCounter;
+import org.apache.flume.channel.file.instrumentation.FileChannelCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,7 +94,7 @@ public class FileChannel extends BasicChannelSemantics {
   private final ThreadLocal<FileBackedTransaction> transactions =
       new ThreadLocal<FileBackedTransaction>();
   private String channelNameDescriptor = "[channel=unknown]";
-  private ChannelCounter channelCounter;
+  private FileChannelCounter channelCounter;
   private boolean useLogReplayV1;
   private boolean useFastReplay = false;
   private KeyProvider encryptionKeyProvider;
@@ -267,13 +268,14 @@ public class FileChannel extends BasicChannelSemantics {
     }
 
     if (channelCounter == null) {
-      channelCounter = new ChannelCounter(getName());
+      channelCounter = new FileChannelCounter(getName());
     }
   }
 
   @Override
   public synchronized void start() {
     LOG.info("Starting {}...", this);
+    channelCounter.start();
     try {
       Builder builder = new Log.Builder();
       builder.setCheckpointInterval(checkpointInterval);
@@ -296,7 +298,7 @@ public class FileChannel extends BasicChannelSemantics {
       builder.setCheckpointOnClose(checkpointOnClose);
       log = builder.build();
       log.replay();
-      open = true;
+      setOpen(true);
 
       int depth = getDepth();
       Preconditions.checkState(queueRemaining.tryAcquire(depth),
@@ -304,7 +306,7 @@ public class FileChannel extends BasicChannelSemantics {
       LOG.info("Queue Size after replay: " + depth + " "
           + channelNameDescriptor);
     } catch (Throwable t) {
-      open = false;
+      setOpen(false);
       startupError = t;
       LOG.error("Failed to start the file channel " + channelNameDescriptor, t);
       if (t instanceof Error) {
@@ -312,7 +314,6 @@ public class FileChannel extends BasicChannelSemantics {
       }
     }
     if (open) {
-      channelCounter.start();
       channelCounter.setChannelSize(getDepth());
       channelCounter.setChannelCapacity(capacity);
     }
@@ -373,7 +374,7 @@ public class FileChannel extends BasicChannelSemantics {
 
   void close() {
     if (open) {
-      open = false;
+      setOpen(false);
       try {
         log.close();
       } catch (Exception e) {
@@ -401,6 +402,18 @@ public class FileChannel extends BasicChannelSemantics {
   }
 
   /**
+   * This method makes sure that <code>this.open</code> and <code>channelCounter.open</code>
+   * are in sync.
+   * Only for internal use, call from synchronized methods only. It also assumes that
+   * <code>channelCounter</code> is not null.
+   * @param open
+   */
+  private void setOpen(boolean open) {
+    this.open = open;
+    channelCounter.setOpen(this.open);
+  }
+
+  /**
    * Did this channel recover a backup of the checkpoint to restart?
    *
    * @return true if the channel recovered using a backup.
@@ -416,6 +429,11 @@ public class FileChannel extends BasicChannelSemantics {
   @VisibleForTesting
   Log getLog() {
     return log;
+  }
+
+  @VisibleForTesting
+  FileChannelCounter getChannelCounter() {
+    return channelCounter;
   }
 
   /**

@@ -234,6 +234,25 @@ The original Flume terminal will output the event in a log message.
 
 Congratulations - you've successfully configured and deployed a Flume agent! Subsequent sections cover agent configuration in much more detail.
 
+Using environment variables in configuration files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Flume has the ability to substitute environment variables in the configuration. For example::
+
+  a1.sources = r1
+  a1.sources.r1.type = netcat
+  a1.sources.r1.bind = 0.0.0.0
+  a1.sources.r1.port = ${NC_PORT}
+  a1.sources.r1.channels = c1
+
+NB: it currently works for values only, not for keys. (Ie. only on the "right side" of the `=` mark of the config lines.)
+
+This can be enabled via Java system properties on agent invocation by setting `propertiesImplementation = org.apache.flume.node.EnvVarResolverProperties`.
+
+For example::
+  $ NC_PORT=44444 bin/flume-ng agent --conf conf --conf-file example.conf --name a1 -Dflume.root.logger=INFO,console -DpropertiesImplementation=org.apache.flume.node.EnvVarResolverProperties
+
+Note the above is just an example, environment variables can be configured in other ways, including being set in `conf/flume-env.sh`.
+
 Logging raw data
 ~~~~~~~~~~~~~~~~
 
@@ -356,8 +375,6 @@ Executing commands
 There's an exec source that executes a given command and consumes the output. A
 single 'line' of output ie. text followed by carriage return ('\\r') or line
 feed ('\\n') or both together.
-
-.. note:: Flume does not support tail as a source. One can wrap the tail command in an exec source to stream the file.
 
 Network streams
 ~~~~~~~~~~~~~~~
@@ -882,12 +899,8 @@ interceptors.*
              asynchronous interface such as ExecSource! As an extension of this
              warning - and to be completely clear - there is absolutely zero guarantee
              of event delivery when using this source. For stronger reliability
-             guarantees, consider the Spooling Directory Source or direct integration
+             guarantees, consider the Spooling Directory Source, Taildir Source or direct integration
              with Flume via the SDK.
-
-.. note:: You can use ExecSource to emulate TailSource from Flume 0.9x (flume og).
-          Just use unix command ``tail -F /full/path/to/your/file``. Parameter
-          -F is better in this case than -f as it will also follow file rotation.
 
 Example for agent named a1:
 
@@ -1351,13 +1364,13 @@ Example configuration with server side authentication and data encryption.
 
 .. code-block:: properties
 
-    a1.channels.channel1.type = org.apache.flume.channel.kafka.KafkaChannel
-    a1.channels.channel1.kafka.bootstrap.servers = kafka-1:9093,kafka-2:9093,kafka-3:9093
-    a1.channels.channel1.kafka.topic = channel1
-    a1.channels.channel1.kafka.consumer.group.id = flume-consumer
-    a1.channels.channel1.kafka.consumer.security.protocol = SSL
-    a1.channels.channel1.kafka.consumer.ssl.truststore.location=/path/to/truststore.jks
-    a1.channels.channel1.kafka.consumer.ssl.truststore.password=<password to access the truststore>
+    a1.sources.source1.type = org.apache.flume.source.kafka.KafkaSource
+    a1.sources.source1.kafka.bootstrap.servers = kafka-1:9093,kafka-2:9093,kafka-3:9093
+    a1.sources.source1.kafka.topics = mytopic
+    a1.sources.source1.kafka.consumer.group.id = flume-consumer
+    a1.sources.source1.kafka.consumer.security.protocol = SSL
+    a1.sources.source1.kafka.consumer.ssl.truststore.location=/path/to/truststore.jks
+    a1.sources.source1.kafka.consumer.ssl.truststore.password=<password to access the truststore>
 
 
 Note: By default the property ``ssl.endpoint.identification.algorithm``
@@ -1366,7 +1379,7 @@ In order to enable hostname verification, set the following properties
 
 .. code-block:: properties
 
-    a1.channels.channel1.kafka.consumer.ssl.endpoint.identification.algorithm=HTTPS
+    a1.sources.source1.kafka.consumer.ssl.endpoint.identification.algorithm=HTTPS
 
 Once enabled, clients will verify the server's fully qualified domain name (FQDN)
 against one of the following two fields:
@@ -1381,15 +1394,15 @@ which in turn is trusted by Kafka brokers.
 
 .. code-block:: properties
 
-    a1.channels.channel1.kafka.consumer.ssl.keystore.location=/path/to/client.keystore.jks
-    a1.channels.channel1.kafka.consumer.ssl.keystore.password=<password to access the keystore>
+    a1.sources.source1.kafka.consumer.ssl.keystore.location=/path/to/client.keystore.jks
+    a1.sources.source1.kafka.consumer.ssl.keystore.password=<password to access the keystore>
 
 If keystore and key use different password protection then ``ssl.key.password`` property will
 provide the required additional secret for both consumer keystores:
 
 .. code-block:: properties
 
-    a1.channels.channel1.kafka.consumer.ssl.key.password=<password to access the key>
+    a1.sources.source1.kafka.consumer.ssl.key.password=<password to access the key>
 
 
 **Kerberos and Kafka Source:**
@@ -1408,27 +1421,27 @@ Example secure configuration using SASL_PLAINTEXT:
 
 .. code-block:: properties
 
-    a1.channels.channel1.type = org.apache.flume.channel.kafka.KafkaChannel
-    a1.channels.channel1.kafka.bootstrap.servers = kafka-1:9093,kafka-2:9093,kafka-3:9093
-    a1.channels.channel1.kafka.topic = channel1
-    a1.channels.channel1.kafka.consumer.group.id = flume-consumer
-    a1.channels.channel1.kafka.consumer.security.protocol = SASL_PLAINTEXT
-    a1.channels.channel1.kafka.consumer.sasl.mechanism = GSSAPI
-    a1.channels.channel1.kafka.consumer.sasl.kerberos.service.name = kafka
+    a1.sources.source1.type = org.apache.flume.source.kafka.KafkaSource
+    a1.sources.source1.kafka.bootstrap.servers = kafka-1:9093,kafka-2:9093,kafka-3:9093
+    a1.sources.source1.kafka.topics = mytopic
+    a1.sources.source1.kafka.consumer.group.id = flume-consumer
+    a1.sources.source1.kafka.consumer.security.protocol = SASL_PLAINTEXT
+    a1.sources.source1.kafka.consumer.sasl.mechanism = GSSAPI
+    a1.sources.source1.kafka.consumer.sasl.kerberos.service.name = kafka
 
 Example secure configuration using SASL_SSL:
 
 .. code-block:: properties
 
-    a1.channels.channel1.type = org.apache.flume.channel.kafka.KafkaChannel
-    a1.channels.channel1.kafka.bootstrap.servers = kafka-1:9093,kafka-2:9093,kafka-3:9093
-    a1.channels.channel1.kafka.topic = channel1
-    a1.channels.channel1.kafka.consumer.group.id = flume-consumer
-    a1.channels.channel1.kafka.consumer.security.protocol = SASL_SSL
-    a1.channels.channel1.kafka.consumer.sasl.mechanism = GSSAPI
-    a1.channels.channel1.kafka.consumer.sasl.kerberos.service.name = kafka
-    a1.channels.channel1.kafka.consumer.ssl.truststore.location=/path/to/truststore.jks
-    a1.channels.channel1.kafka.consumer.ssl.truststore.password=<password to access the truststore>
+    a1.sources.source1.type = org.apache.flume.source.kafka.KafkaSource
+    a1.sources.source1.kafka.bootstrap.servers = kafka-1:9093,kafka-2:9093,kafka-3:9093
+    a1.sources.source1.kafka.topics = mytopic
+    a1.sources.source1.kafka.consumer.group.id = flume-consumer
+    a1.sources.source1.kafka.consumer.security.protocol = SASL_SSL
+    a1.sources.source1.kafka.consumer.sasl.mechanism = GSSAPI
+    a1.sources.source1.kafka.consumer.sasl.kerberos.service.name = kafka
+    a1.sources.source1.kafka.consumer.ssl.truststore.location=/path/to/truststore.jks
+    a1.sources.source1.kafka.consumer.ssl.truststore.password=<password to access the truststore>
 
 
 Sample JAAS file. For reference of its content please see client config sections of the desired authentication mechanism (GSSAPI/PLAIN)
@@ -1498,7 +1511,9 @@ Sequence Generator Source
 
 A simple sequence generator that continuously generates events with a counter that starts from 0,
 increments by 1 and stops at totalEvents. Retries when it can't send events to the channel. Useful
-mainly for testing. Required properties are in **bold**.
+mainly for testing. During retries it keeps the body of the retried messages the same as before so
+that the number of unique events - after de-duplication at destination - is expected to be
+equal to the specified ``totalEvents``. Required properties are in **bold**.
 
 ==============  ===============  ========================================
 Property Name   Default          Description
@@ -1509,7 +1524,7 @@ selector.type                    replicating or multiplexing
 selector.*      replicating      Depends on the selector.type value
 interceptors    --               Space-separated list of interceptors
 interceptors.*
-batchSize       1
+batchSize       1                Number of events to attempt to process per request loop.
 totalEvents     Long.MAX_VALUE   Number of unique events sent by the source.
 ==============  ===============  ========================================
 
@@ -2807,12 +2822,12 @@ Example configuration with server side authentication and data encryption.
 
 .. code-block:: properties
 
-    a1.channels.channel1.type = org.apache.flume.channel.kafka.KafkaChannel
-    a1.channels.channel1.kafka.bootstrap.servers = kafka-1:9093,kafka-2:9093,kafka-3:9093
-    a1.channels.channel1.kafka.topic = channel1
-    a1.channels.channel1.kafka.producer.security.protocol = SSL
-    a1.channels.channel1.kafka.producer.ssl.truststore.location = /path/to/truststore.jks
-    a1.channels.channel1.kafka.producer.ssl.truststore.password = <password to access the truststore>
+    a1.sinks.sink1.type = org.apache.flume.sink.kafka.KafkaSink
+    a1.sinks.sink1.kafka.bootstrap.servers = kafka-1:9093,kafka-2:9093,kafka-3:9093
+    a1.sinks.sink1.kafka.topic = mytopic
+    a1.sinks.sink1.kafka.producer.security.protocol = SSL
+    a1.sinks.sink1.kafka.producer.ssl.truststore.location = /path/to/truststore.jks
+    a1.sinks.sink1.kafka.producer.ssl.truststore.password = <password to access the truststore>
 
 
 Note: By default the property ``ssl.endpoint.identification.algorithm``
@@ -2821,7 +2836,7 @@ In order to enable hostname verification, set the following properties
 
 .. code-block:: properties
 
-    a1.channels.channel1.kafka.producer.ssl.endpoint.identification.algorithm = HTTPS
+    a1.sinks.sink1.kafka.producer.ssl.endpoint.identification.algorithm = HTTPS
 
 Once enabled, clients will verify the server's fully qualified domain name (FQDN)
 against one of the following two fields:
@@ -2836,15 +2851,15 @@ which in turn is trusted by Kafka brokers.
 
 .. code-block:: properties
 
-    a1.channels.channel1.kafka.producer.ssl.keystore.location = /path/to/client.keystore.jks
-    a1.channels.channel1.kafka.producer.ssl.keystore.password = <password to access the keystore>
+    a1.sinks.sink1.kafka.producer.ssl.keystore.location = /path/to/client.keystore.jks
+    a1.sinks.sink1.kafka.producer.ssl.keystore.password = <password to access the keystore>
 
 If keystore and key use different password protection then ``ssl.key.password`` property will
 provide the required additional secret for producer keystore:
 
 .. code-block:: properties
 
-    a1.channels.channel1.kafka.producer.ssl.key.password = <password to access the key>
+    a1.sinks.sink1.kafka.producer.ssl.key.password = <password to access the key>
 
 
 **Kerberos and Kafka Sink:**
@@ -2863,26 +2878,26 @@ Example secure configuration using SASL_PLAINTEXT:
 
 .. code-block:: properties
 
-    a1.channels.channel1.type = org.apache.flume.channel.kafka.KafkaChannel
-    a1.channels.channel1.kafka.bootstrap.servers = kafka-1:9093,kafka-2:9093,kafka-3:9093
-    a1.channels.channel1.kafka.topic = channel1
-    a1.channels.channel1.kafka.producer.security.protocol = SASL_PLAINTEXT
-    a1.channels.channel1.kafka.producer.sasl.mechanism = GSSAPI
-    a1.channels.channel1.kafka.producer.sasl.kerberos.service.name = kafka
+    a1.sinks.sink1.type = org.apache.flume.sink.kafka.KafkaSink
+    a1.sinks.sink1.kafka.bootstrap.servers = kafka-1:9093,kafka-2:9093,kafka-3:9093
+    a1.sinks.sink1.kafka.topic = mytopic
+    a1.sinks.sink1.kafka.producer.security.protocol = SASL_PLAINTEXT
+    a1.sinks.sink1.kafka.producer.sasl.mechanism = GSSAPI
+    a1.sinks.sink1.kafka.producer.sasl.kerberos.service.name = kafka
 
 
 Example secure configuration using SASL_SSL:
 
 .. code-block:: properties
 
-    a1.channels.channel1.type = org.apache.flume.channel.kafka.KafkaChannel
-    a1.channels.channel1.kafka.bootstrap.servers = kafka-1:9093,kafka-2:9093,kafka-3:9093
-    a1.channels.channel1.kafka.topic = channel1
-    a1.channels.channel1.kafka.producer.security.protocol = SASL_SSL
-    a1.channels.channel1.kafka.producer.sasl.mechanism = GSSAPI
-    a1.channels.channel1.kafka.producer.sasl.kerberos.service.name = kafka
-    a1.channels.channel1.kafka.producer.ssl.truststore.location = /path/to/truststore.jks
-    a1.channels.channel1.kafka.producer.ssl.truststore.password = <password to access the truststore>
+    a1.sinks.sink1.type = org.apache.flume.sink.kafka.KafkaSink
+    a1.sinks.sink1.kafka.bootstrap.servers = kafka-1:9093,kafka-2:9093,kafka-3:9093
+    a1.sinks.sink1.kafka.topic = mytopic
+    a1.sinks.sink1.kafka.producer.security.protocol = SASL_SSL
+    a1.sinks.sink1.kafka.producer.sasl.mechanism = GSSAPI
+    a1.sinks.sink1.kafka.producer.sasl.kerberos.service.name = kafka
+    a1.sinks.sink1.kafka.producer.ssl.truststore.location = /path/to/truststore.jks
+    a1.sinks.sink1.kafka.producer.ssl.truststore.password = <password to access the truststore>
 
 
 Sample JAAS file. For reference of its content please see client config sections of the desired authentication mechanism (GSSAPI/PLAIN)
@@ -3943,7 +3958,6 @@ Example for agent named a1:
   a1.channels = c1
   a1.sources.r1.interceptors = i1
   a1.sources.r1.interceptors.i1.type = host
-  a1.sources.r1.interceptors.i1.hostHeader = hostname
 
 Static Interceptor
 ~~~~~~~~~~~~~~~~~~
@@ -3974,6 +3988,25 @@ Example for agent named a1:
   a1.sources.r1.interceptors.i1.type = static
   a1.sources.r1.interceptors.i1.key = datacenter
   a1.sources.r1.interceptors.i1.value = NEW_YORK
+
+
+Remove Header Interceptor
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This interceptor manipulates Flume event headers, by removing one or many headers. It can remove a statically defined header, headers based on a regular expression or headers in a list. If none of these is defined, or if no header matches the criteria, the Flume events are not modified.
+
+Note that if only one header needs to be removed, specifying it by name provides performance benefits over the other 2 methods.
+
+=====================  ===========  ===============================================================
+Property Name          Default      Description
+=====================  ===========  ===============================================================
+**type**               --           The component type name has to be ``remove_header``
+withName               --           Name of the header to remove
+fromList               --           List of headers to remove, separated with the separator specified by ``fromListSeparator``
+fromListSeparator      \\s*,\\s*    Regular expression used to separate multiple header names in the list specified by ``fromList``. Default is a comma surrounded by any number of whitespace characters
+matching               --           All the headers which names match this regular expression are removed
+=====================  ===========  ===============================================================
+
 
 UUID Interceptor
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

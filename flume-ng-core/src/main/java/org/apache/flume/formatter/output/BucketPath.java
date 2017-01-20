@@ -218,25 +218,20 @@ public class BucketPath {
   @VisibleForTesting
   protected static String replaceStaticString(String key) {
     String replacementString = "";
-    try {
-      InetAddress addr = InetAddress.getLocalHost();
-      switch (key.toLowerCase()) {
-        case "localhost":
-          replacementString = addr.getHostName();
-          break;
-        case "ip":
-          replacementString = addr.getHostAddress();
-          break;
-        case "fqdn":
-          replacementString = addr.getCanonicalHostName();
-          break;
-        default:
-          throw new RuntimeException("The static escape string '" + key + "'"
-                  + " was provided but does not match any of (localhost,IP,FQDN)");
-      }
-    } catch (UnknownHostException e) {
-      throw new RuntimeException("Flume wasn't able to parse the static escape "
-              + " sequence '" + key + "' due to UnkownHostException.", e);
+    
+    switch (key.toLowerCase()) {
+      case "localhost":
+        replacementString = InetAddressCache.hostName;
+        break;
+      case "ip":
+        replacementString = InetAddressCache.hostAddress;
+        break;
+      case "fqdn":
+        replacementString = InetAddressCache.canonicalHostName;
+        break;
+      default:
+        throw new RuntimeException("The static escape string '" + key + "'"
+                + " was provided but does not match any of (localhost,IP,FQDN)");
     }
     return replacementString;
   }
@@ -547,6 +542,23 @@ public class BucketPath {
   @VisibleForTesting
   public static Clock getClock() {
     return clock;
+  }
+
+  private static final class InetAddressCache {
+    static String hostName = null;
+    static String hostAddress = null;
+    static String canonicalHostName = null;
+
+    static {
+      try {
+        InetAddress addr = InetAddress.getLocalHost();
+        hostName = addr.getHostName();
+        hostAddress = addr.getHostAddress();
+        canonicalHostName = addr.getCanonicalHostName();
+      } catch (UnknownHostException e) {
+        throw new RuntimeException("Unable to get localhost", e);
+      }
+    }
   }
 }
 
