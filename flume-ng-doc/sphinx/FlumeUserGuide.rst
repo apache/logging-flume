@@ -1278,6 +1278,12 @@ useFlumeEventFormat                 false        By default events are taken as 
                                                  true to read events as the Flume Avro binary format. Used in conjunction with the same property
                                                  on the KafkaSink or with the parseAsFlumeEvent property on the Kafka Channel this will preserve
                                                  any Flume headers sent on the producing side.
+setTopicHeader                      true         When set to true, stores the topic of the retrieved message into a header, defined by the
+                                                 ``topicHeader`` property.
+topicHeader                         topic        Defines the name of the header in which to store the name of the topic the message was received
+                                                 from, if the ``setTopicHeader`` property is set to ``true``. Care should be taken if combining
+                                                 with the Kafka Sink ``topicHeader`` property so as to avoid sending the message back to the same
+                                                 topic in a loop.
 migrateZookeeperOffsets             true         When no Kafka stored offset is found, look up the offsets in Zookeeper and commit them to Kafka.
                                                  This should be true to support seamless Kafka client migration from older versions of Flume.
                                                  Once migrated this can be set to false, though that should generally not be required.
@@ -2743,6 +2749,9 @@ partitionIdHeader                   --                   When set, the sink will
                                                          from the event header and send the message to the specified partition of the topic. If the
                                                          value represents an invalid partition, an EventDeliveryException will be thrown. If the header value
                                                          is present then this setting overrides ``defaultPartitionId``.
+allowTopicHeader                    true                 When set, the sink will allow a message to be produced into a topic specified by the ``topicHeader`` property (if provided).
+topicHeader                         topic                When set in conjunction with ``allowTopicHeader`` will produce a message into the value of the header named using the value of this property.
+                                                         Care should be taken when using in conjunction with the Kafka Source ``topicHeader`` property to avoid creating a loopback.
 kafka.producer.security.protocol    PLAINTEXT            Set to SASL_PLAINTEXT, SASL_SSL or SSL if writing to Kafka using some level of security. See below for additional info on secure setup.
 *more producer security props*                           If using SASL_PLAINTEXT, SASL_SSL or SSL refer to `Kafka security <http://kafka.apache.org/documentation.html#security>`_ for additional
                                                          properties that need to be set on producer.
@@ -3077,7 +3086,7 @@ pollTimeout                              500                         The amount 
                                                                      https://kafka.apache.org/090/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html#poll(long)
 defaultPartitionId                       --                          Specifies a Kafka partition ID (integer) for all events in this channel to be sent to, unless
                                                                      overriden by ``partitionIdHeader``. By default, if this property is not set, events will be
-                                                                     distributed by the Kafka Producer's partitioner - including by ``key`` if specified (or by a 
+                                                                     distributed by the Kafka Producer's partitioner - including by ``key`` if specified (or by a
                                                                      partitioner specified by ``kafka.partitioner.class``).
 partitionIdHeader                        --                          When set, the producer will take the value of the field named using the value of this property
                                                                      from the event header and send the message to the specified partition of the topic. If the
@@ -4574,7 +4583,7 @@ become unavailable and may lose data.
 
 **Whether you use redundant topologies.** Flume let's you replicate flows
 across redundant topologies. This can provide a very easy source of fault
-tolerance and one which is overcomes both disk or machine failures. 
+tolerance and one which is overcomes both disk or machine failures.
 
 *The best way to think about reliability in a Flume topology is to consider
 various failure scenarios and their outcomes.* What happens if a disk fails?

@@ -33,7 +33,10 @@ public class KafkaSinkConstants {
       KAFKA_PREFIX + CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG;
 
   public static final String KEY_HEADER = "key";
-  public static final String TOPIC_HEADER = "topic";
+  public static final String TOPIC_DEFAULT_HEADER_NAME = "topic";
+  public static final String TOPIC_HEADER_NAME = "topicHeader";
+  public static final String ALLOW_TOPIC_HEADER = "allowTopicHeader";
+  public static final boolean DEFAULT_ALLOW_TOPIC_HEADER = true;
 
   public static final String AVRO_EVENT = "useFlumeEventFormat";
   public static final boolean DEFAULT_AVRO_EVENT = false;

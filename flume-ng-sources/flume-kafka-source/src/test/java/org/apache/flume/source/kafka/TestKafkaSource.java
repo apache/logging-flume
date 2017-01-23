@@ -76,7 +76,7 @@ import static org.apache.flume.source.kafka.KafkaSourceConstants.TIMESTAMP_HEADE
 import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPIC;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPICS;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPICS_REGEX;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPIC_HEADER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPIC_HEADER_DEFAULT;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.ZOOKEEPER_CONNECT_FLUME_KEY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -556,7 +556,7 @@ public class TestKafkaSource {
 
     headers.put(TIMESTAMP_HEADER, currentTimestamp);
     headers.put(PARTITION_HEADER, "1");
-    headers.put(TOPIC_HEADER, "topic0");
+    headers.put(TOPIC_HEADER_DEFAULT, "topic0");
 
     e = new AvroFlumeEvent(headers, ByteBuffer.wrap("hello, world2".getBytes()));
     tempOutStream.reset();
@@ -590,7 +590,7 @@ public class TestKafkaSource {
     Assert.assertEquals("value2", e.getHeaders().get("header2"));
     Assert.assertEquals(currentTimestamp, e.getHeaders().get(TIMESTAMP_HEADER));
     Assert.assertEquals(e.getHeaders().get(PARTITION_HEADER), "1");
-    Assert.assertEquals(e.getHeaders().get(TOPIC_HEADER),"topic0");
+    Assert.assertEquals(e.getHeaders().get(TOPIC_HEADER_DEFAULT),"topic0");
 
   }
 
@@ -653,6 +653,76 @@ public class TestKafkaSource {
 
     kafkaSource.configure(context);
     Assert.assertNull(kafkaSource.getConsumerProps().getProperty(sampleConsumerProp));
+  }
+
+  /**
+   * Tests the availability (or not) of the topic header in the output events,
+   * based on the configuration parameters added in FLUME-3046
+   * @throws InterruptedException
+   * @throws EventDeliveryException
+   */
+  @Test
+  public void testTopicHeaderSetNotSet() throws InterruptedException, EventDeliveryException {
+    context.put(TOPICS, topic0);
+    kafkaSource.configure(context);
+    kafkaSource.start();
+
+    Thread.sleep(500L);
+
+    kafkaServer.produce(topic0, "", "hello, world");
+
+    Thread.sleep(500L);
+
+    Status status = kafkaSource.process();
+    assertEquals(Status.READY, status);
+    Assert.assertEquals("hello, world", new String(events.get(0).getBody(),
+            Charsets.UTF_8));
+
+    Assert.assertEquals(topic0, events.get(0).getHeaders().get("topic"));
+
+    kafkaSource.stop();
+    events.clear();
+
+    context.put(KafkaSourceConstants.TOPIC_HEADER_CONF, "customTopicHeader");
+    kafkaSource.configure(context);
+
+    kafkaSource.start();
+
+    Thread.sleep(500L);
+
+    kafkaServer.produce(topic0, "", "hello, world2");
+
+    Thread.sleep(500L);
+
+    status = kafkaSource.process();
+    assertEquals(Status.READY, status);
+    Assert.assertEquals("hello, world2", new String(events.get(0).getBody(),
+            Charsets.UTF_8));
+
+    Assert.assertEquals(topic0, events.get(0).getHeaders().get("customTopicHeader"));
+
+    kafkaSource.stop();
+    events.clear();
+
+    context.put(KafkaSourceConstants.SET_TOPIC_HEADER, "false");
+    kafkaSource.configure(context);
+
+    kafkaSource.start();
+
+    Thread.sleep(500L);
+
+    kafkaServer.produce(topic0, "", "hello, world3");
+
+    Thread.sleep(500L);
+
+    status = kafkaSource.process();
+    assertEquals(Status.READY, status);
+    Assert.assertEquals("hello, world3", new String(events.get(0).getBody(),
+            Charsets.UTF_8));
+
+    Assert.assertNull(events.get(0).getHeaders().get("customTopicHeader"));
+
+    kafkaSource.stop();
   }
 
   public void doTestMigrateZookeeperOffsets(boolean hasZookeeperOffsets, boolean hasKafkaOffsets,

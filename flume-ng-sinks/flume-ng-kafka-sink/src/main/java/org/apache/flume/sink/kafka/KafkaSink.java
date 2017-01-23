@@ -66,7 +66,6 @@ import static org.apache.flume.sink.kafka.KafkaSinkConstants.KEY_HEADER;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.OLD_BATCH_SIZE;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.REQUIRED_ACKS_FLUME_KEY;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.TOPIC_CONFIG;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.TOPIC_HEADER;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.KEY_SERIALIZER_KEY;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.MESSAGE_SERIALIZER_KEY;
 
@@ -116,6 +115,9 @@ public class KafkaSink extends AbstractSink implements Configurable {
   private boolean useAvroEventFormat;
   private String partitionHeader = null;
   private Integer staticPartitionId = null;
+  private boolean allowTopicHeader;
+  private String topicHeader = null;
+
   private Optional<SpecificDatumWriter<AvroFlumeEvent>> writer =
           Optional.absent();
   private Optional<SpecificDatumReader<AvroFlumeEvent>> reader =
@@ -171,8 +173,8 @@ public class KafkaSink extends AbstractSink implements Configurable {
         byte[] eventBody = event.getBody();
         Map<String, String> headers = event.getHeaders();
 
-        eventTopic = headers.get(TOPIC_HEADER);
-        if (eventTopic == null) {
+        eventTopic = headers.get(topicHeader);
+        if (eventTopic == null || !allowTopicHeader) {
           eventTopic = topic;
         }
         eventKey = headers.get(KEY_HEADER);
@@ -315,6 +317,12 @@ public class KafkaSink extends AbstractSink implements Configurable {
 
     partitionHeader = context.getString(KafkaSinkConstants.PARTITION_HEADER_NAME);
     staticPartitionId = context.getInteger(KafkaSinkConstants.STATIC_PARTITION_CONF);
+
+    allowTopicHeader = context.getBoolean(KafkaSinkConstants.ALLOW_TOPIC_HEADER,
+                                          KafkaSinkConstants.DEFAULT_ALLOW_TOPIC_HEADER);
+
+    topicHeader = context.getString(KafkaSinkConstants.TOPIC_HEADER_NAME,
+                                    KafkaSinkConstants.TOPIC_DEFAULT_HEADER_NAME);
 
     if (logger.isDebugEnabled()) {
       logger.debug(KafkaSinkConstants.AVRO_EVENT + " set to: {}", useAvroEventFormat);

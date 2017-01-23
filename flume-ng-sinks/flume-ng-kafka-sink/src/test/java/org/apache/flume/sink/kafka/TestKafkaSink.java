@@ -239,6 +239,98 @@ public class TestKafkaSink {
                  new String((byte[]) fetchedMsg.key(), "UTF-8"));
   }
 
+  /**
+   * Tests that a message will be produced to a topic as specified by the
+   * topicHeader parameter (FLUME-3046).
+   * @throws UnsupportedEncodingException
+   */
+  @Test
+  public void testTopicFromConfHeader() throws UnsupportedEncodingException {
+    String customTopicHeader = "customTopicHeader";
+    Sink kafkaSink = new KafkaSink();
+    Context context = prepareDefaultContext();
+    context.put(KafkaSinkConstants.TOPIC_HEADER_NAME, customTopicHeader);
+    Configurables.configure(kafkaSink, context);
+    Channel memoryChannel = new MemoryChannel();
+    Configurables.configure(memoryChannel, context);
+    kafkaSink.setChannel(memoryChannel);
+    kafkaSink.start();
+
+    String msg = "test-topic-from-config-header";
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put(customTopicHeader, TestConstants.CUSTOM_TOPIC);
+    headers.put("key", TestConstants.CUSTOM_KEY);
+    Transaction tx = memoryChannel.getTransaction();
+    tx.begin();
+    Event event = EventBuilder.withBody(msg.getBytes(), headers);
+    memoryChannel.put(event);
+    tx.commit();
+    tx.close();
+
+    try {
+      Sink.Status status = kafkaSink.process();
+      if (status == Sink.Status.BACKOFF) {
+        fail("Error Occurred");
+      }
+    } catch (EventDeliveryException ex) {
+      // ignore
+    }
+
+    MessageAndMetadata fetchedMsg =
+        testUtil.getNextMessageFromConsumer(TestConstants.CUSTOM_TOPIC);
+
+    assertEquals(msg, new String((byte[]) fetchedMsg.message(), "UTF-8"));
+    assertEquals(TestConstants.CUSTOM_KEY,
+                 new String((byte[]) fetchedMsg.key(), "UTF-8"));
+  }
+
+  /**
+   * Tests that the topicHeader parameter will be ignored if the allowTopicHeader
+   * parameter is set to false (FLUME-3046).
+   * @throws UnsupportedEncodingException
+   */
+  @Test
+  public void testTopicNotFromConfHeader() throws UnsupportedEncodingException {
+    Sink kafkaSink = new KafkaSink();
+    Context context = prepareDefaultContext();
+    context.put(KafkaSinkConstants.ALLOW_TOPIC_HEADER, "false");
+    context.put(KafkaSinkConstants.TOPIC_HEADER_NAME, "foo");
+    context.put(KafkaSinkConstants.TOPIC_HEADER_NAME, "bar");
+
+    Configurables.configure(kafkaSink, context);
+    Channel memoryChannel = new MemoryChannel();
+    Configurables.configure(memoryChannel, context);
+    kafkaSink.setChannel(memoryChannel);
+    kafkaSink.start();
+
+    String msg = "test-topic-from-config-header";
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put(KafkaSinkConstants.TOPIC_DEFAULT_HEADER_NAME, TestConstants.CUSTOM_TOPIC);
+    headers.put("key", TestConstants.CUSTOM_KEY);
+    Transaction tx = memoryChannel.getTransaction();
+    tx.begin();
+    Event event = EventBuilder.withBody(msg.getBytes(), headers);
+    memoryChannel.put(event);
+    tx.commit();
+    tx.close();
+
+    try {
+      Sink.Status status = kafkaSink.process();
+      if (status == Sink.Status.BACKOFF) {
+        fail("Error Occurred");
+      }
+    } catch (EventDeliveryException ex) {
+      // ignore
+    }
+
+    MessageAndMetadata fetchedMsg =
+        testUtil.getNextMessageFromConsumer(DEFAULT_TOPIC);
+
+    assertEquals(msg, new String((byte[]) fetchedMsg.message(), "UTF-8"));
+    assertEquals(TestConstants.CUSTOM_KEY,
+                 new String((byte[]) fetchedMsg.key(), "UTF-8"));
+  }
+
   @SuppressWarnings("rawtypes")
   @Test
   public void testAvroEvent() throws IOException {
