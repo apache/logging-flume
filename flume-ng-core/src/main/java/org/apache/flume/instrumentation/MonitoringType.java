@@ -33,7 +33,7 @@ public enum MonitoringType {
     this.monitoringClass = klass;
   }
 
-  public Class<? extends MonitorService> getMonitorClass(){
+  public Class<? extends MonitorService> getMonitorClass() {
     return this.monitoringClass;
   }
 }

@@ -39,10 +39,12 @@ import org.apache.avro.reflect.ReflectDatumWriter;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
+import org.apache.flume.serialization.AvroEventSerializerConfigurationConstants;
 import org.apache.flume.serialization.EventSerializer;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.After;
 
 public class TestAvroEventSerializer {
 
@@ -53,39 +55,55 @@ public class TestAvroEventSerializer {
     file = File.createTempFile(getClass().getSimpleName(), "");
   }
 
+  @After
+  public void tearDown() throws Exception {
+    file.delete();
+  }
+
   @Test
   public void testNoCompression() throws IOException {
-    createAvroFile(file, null, false);
+    createAvroFile(file, null, false, false);
     validateAvroFile(file);
   }
 
   @Test
   public void testNullCompression() throws IOException {
-    createAvroFile(file, "null", false);
+    createAvroFile(file, "null", false, false);
     validateAvroFile(file);
   }
 
   @Test
   public void testDeflateCompression() throws IOException {
-    createAvroFile(file, "deflate", false);
+    createAvroFile(file, "deflate", false, false);
     validateAvroFile(file);
   }
 
   @Test
   public void testSnappyCompression() throws IOException {
-    createAvroFile(file, "snappy", false);
+    createAvroFile(file, "snappy", false, false);
     validateAvroFile(file);
   }
 
   @Test
   public void testSchemaUrl() throws IOException {
-    createAvroFile(file, null, true);
+    createAvroFile(file, null, true, false);
     validateAvroFile(file);
   }
 
-  public void createAvroFile(File file, String codec, boolean useSchemaUrl) throws
-      IOException {
+  @Test
+  public void testStaticSchemaUrl() throws IOException {
+    createAvroFile(file,null,false, true);
+    validateAvroFile(file);
+  }
 
+  @Test
+  public void testBothUrls() throws IOException {
+    createAvroFile(file,null,true,true);
+    validateAvroFile(file);
+  }
+
+  public void createAvroFile(File file, String codec, boolean useSchemaUrl,
+                             boolean useStaticSchemaUrl) throws IOException {
     // serialize a few events using the reflection-based avro serializer
     OutputStream out = new FileOutputStream(file);
 
@@ -100,9 +118,14 @@ public class TestAvroEventSerializer {
     }));
     GenericRecordBuilder recordBuilder = new GenericRecordBuilder(schema);
     File schemaFile = null;
-    if (useSchemaUrl) {
+    if (useSchemaUrl || useStaticSchemaUrl) {
       schemaFile = File.createTempFile(getClass().getSimpleName(), ".avsc");
       Files.write(schema.toString(), schemaFile, Charsets.UTF_8);
+    }
+
+    if (useStaticSchemaUrl) {
+      ctx.put(AvroEventSerializerConfigurationConstants.STATIC_SCHEMA_URL,
+              schemaFile.toURI().toURL().toExternalForm());
     }
 
     EventSerializer.Builder builder = new AvroEventSerializer.Builder();
@@ -112,10 +135,10 @@ public class TestAvroEventSerializer {
     for (int i = 0; i < 3; i++) {
       GenericRecord record = recordBuilder.set("message", "Hello " + i).build();
       Event event = EventBuilder.withBody(serializeAvro(record, schema));
-      if (schemaFile == null) {
+      if (schemaFile == null && !useSchemaUrl) {
         event.getHeaders().put(AvroEventSerializer.AVRO_SCHEMA_LITERAL_HEADER,
             schema.toString());
-      } else {
+      } else if (useSchemaUrl) {
         event.getHeaders().put(AvroEventSerializer.AVRO_SCHEMA_URL_HEADER,
             schemaFile.toURI().toURL().toExternalForm());
       }
@@ -125,6 +148,10 @@ public class TestAvroEventSerializer {
     serializer.beforeClose();
     out.flush();
     out.close();
+    if (schemaFile != null ) {
+      schemaFile.delete();
+    }
+
   }
 
   private byte[] serializeAvro(Object datum, Schema schema) throws IOException {

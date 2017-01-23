@@ -93,21 +93,7 @@ add_hadoop_paths() {
     # determine hadoop classpath
     HADOOP_CLASSPATH=$($HADOOP_IN_PATH classpath)
 
-    # hack up and filter hadoop classpath
-    local ELEMENTS=$(sed -e 's/:/ /g' <<<${HADOOP_CLASSPATH})
-    local ELEMENT
-    for ELEMENT in $ELEMENTS; do
-      local PIECE
-      for PIECE in $(echo $ELEMENT); do
-        if [[ $PIECE =~ slf4j-(api|log4j12).*\.jar ]]; then
-          info "Excluding $PIECE from classpath"
-          continue
-        else
-          FLUME_CLASSPATH="$FLUME_CLASSPATH:$PIECE"
-        fi
-      done
-    done
-
+    FLUME_CLASSPATH="$FLUME_CLASSPATH:$HADOOP_CLASSPATH"
   fi
 }
 add_HBASE_paths() {
@@ -142,20 +128,7 @@ add_HBASE_paths() {
     # determine HBASE classpath
     HBASE_CLASSPATH=$($HBASE_IN_PATH classpath)
 
-    # hack up and filter HBASE classpath
-    local ELEMENTS=$(sed -e 's/:/ /g' <<<${HBASE_CLASSPATH})
-    local ELEMENT
-    for ELEMENT in $ELEMENTS; do
-      local PIECE
-      for PIECE in $(echo $ELEMENT); do
-        if [[ $PIECE =~ slf4j-(api|log4j12).*\.jar ]]; then
-          info "Excluding $PIECE from classpath"
-          continue
-        else
-          FLUME_CLASSPATH="$FLUME_CLASSPATH:$PIECE"
-        fi
-      done
-    done
+    FLUME_CLASSPATH="$FLUME_CLASSPATH:$HBASE_CLASSPATH"
     FLUME_CLASSPATH="$FLUME_CLASSPATH:$HBASE_HOME/conf"
 
   fi

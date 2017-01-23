@@ -35,6 +35,7 @@ class Rollback extends TransactionEventRecord {
   Rollback(Long transactionID, Long logWriteOrderID) {
     super(transactionID, logWriteOrderID);
   }
+
   @Override
   public void readFields(DataInput in) throws IOException {
     super.readFields(in);
@@ -44,22 +45,26 @@ class Rollback extends TransactionEventRecord {
   public void write(DataOutput out) throws IOException {
     super.write(out);
   }
+
   @Override
   void writeProtos(OutputStream out) throws IOException {
     ProtosFactory.Rollback.Builder rollbackBuilder =
         ProtosFactory.Rollback.newBuilder();
     rollbackBuilder.build().writeDelimitedTo(out);
   }
+
   @Override
   void readProtos(InputStream in) throws IOException {
     @SuppressWarnings("unused")
-    ProtosFactory.Rollback rollback = Preconditions.checkNotNull(ProtosFactory.
-        Rollback.parseDelimitedFrom(in), "Rollback cannot be null");
+    ProtosFactory.Rollback rollback = Preconditions.checkNotNull(
+        ProtosFactory.Rollback.parseDelimitedFrom(in), "Rollback cannot be null");
   }
+
   @Override
   short getRecordType() {
     return Type.ROLLBACK.get();
   }
+
   @Override
   public String toString() {
     StringBuilder builder = new StringBuilder();

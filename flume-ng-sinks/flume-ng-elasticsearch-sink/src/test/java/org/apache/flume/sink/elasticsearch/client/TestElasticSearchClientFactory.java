@@ -21,10 +21,10 @@ package org.apache.flume.sink.elasticsearch.client;
 import org.apache.flume.sink.elasticsearch.ElasticSearchEventSerializer;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertThat;
-import org.mockito.Mock;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 public class TestElasticSearchClientFactory {
@@ -44,7 +44,7 @@ public class TestElasticSearchClientFactory {
   public void shouldReturnTransportClient() throws Exception {
     String[] hostNames = { "127.0.0.1" };
     Object o = factory.getClient(ElasticSearchClientFactory.TransportClient,
-            hostNames, "test", serializer, null);
+                                 hostNames, "test", serializer, null);
     assertThat(o, instanceOf(ElasticSearchTransportClient.class));
   }
 
@@ -52,13 +52,13 @@ public class TestElasticSearchClientFactory {
   public void shouldReturnRestClient() throws NoSuchClientTypeException {
     String[] hostNames = { "127.0.0.1" };
     Object o = factory.getClient(ElasticSearchClientFactory.RestClient,
-            hostNames, "test", serializer, null);
+                                 hostNames, "test", serializer, null);
     assertThat(o, instanceOf(ElasticSearchRestClient.class));
   }
 
-  @Test(expected=NoSuchClientTypeException.class)
+  @Test(expected = NoSuchClientTypeException.class)
   public void shouldThrowNoSuchClientTypeException() throws NoSuchClientTypeException {
-    String[] hostNames = {"127.0.0.1"};
+    String[] hostNames = { "127.0.0.1" };
     factory.getClient("not_existing_client", hostNames, "test", null, null);
   }
 }

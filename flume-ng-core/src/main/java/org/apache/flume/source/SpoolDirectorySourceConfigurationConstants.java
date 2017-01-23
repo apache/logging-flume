@@ -59,6 +59,10 @@ public class SpoolDirectorySourceConfigurationConstants {
   @Deprecated
   public static final int DEFAULT_BUFFER_MAX_LINE_LENGTH = 5000;
 
+  /** Pattern of files to include */
+  public static final String INCLUDE_PAT = "includePattern";
+  public static final String DEFAULT_INCLUDE_PAT = "^.*$"; // any file
+
   /** Pattern of files to ignore */
   public static final String IGNORE_PAT = "ignorePattern";
   public static final String DEFAULT_IGNORE_PAT = "^$"; // no effect
@@ -91,9 +95,18 @@ public class SpoolDirectorySourceConfigurationConstants {
   public enum ConsumeOrder {
     OLDEST, YOUNGEST, RANDOM
   }
+
   public static final String CONSUME_ORDER = "consumeOrder";
-  public static final ConsumeOrder DEFAULT_CONSUME_ORDER = ConsumeOrder.OLDEST;    
-  
+  public static final ConsumeOrder DEFAULT_CONSUME_ORDER = ConsumeOrder.OLDEST;
+
+  /**
+   * Flag to indicate if we should recursively checking for new files. The
+   * default is false, so a configuration file entry would be needed to enable
+   * this setting
+   */
+  public static final String RECURSIVE_DIRECTORY_SEARCH = "recursiveDirectorySearch";
+  public static final boolean DEFAULT_RECURSIVE_DIRECTORY_SEARCH = false;
+
   /** Delay(in milliseconds) used when polling for new files. The default is 500ms */
   public static final String POLL_DELAY = "pollDelay";
   public static final int DEFAULT_POLL_DELAY = 500;

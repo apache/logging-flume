@@ -46,14 +46,12 @@ public class Serialization {
   static final long SIZE_OF_INT = 4;
   static final int SIZE_OF_LONG = 8;
 
-
   static final int VERSION_2 = 2;
   static final int VERSION_3 = 3;
 
   public static final String METADATA_FILENAME = ".meta";
   public static final String METADATA_TMP_FILENAME = ".tmp";
-  public static final String OLD_METADATA_FILENAME = METADATA_FILENAME +
-    ".old";
+  public static final String OLD_METADATA_FILENAME = METADATA_FILENAME + ".old";
 
   // 64 K buffer to copy and compress files.
   private static final int FILE_BUFFER_SIZE = 64 * 1024;
@@ -63,12 +61,11 @@ public class Serialization {
   static File getMetaDataTempFile(File metaDataFile) {
     String metaDataFileName = metaDataFile.getName() + METADATA_TMP_FILENAME;
     return new File(metaDataFile.getParentFile(), metaDataFileName);
-
   }
+
   static File getMetaDataFile(File file) {
     String metaDataFileName = file.getName() + METADATA_FILENAME;
     return new File(file.getParentFile(), metaDataFileName);
-
   }
 
   // Support platforms that cannot do atomic renames - FLUME-1699
@@ -79,19 +76,20 @@ public class Serialization {
 
   /**
    * Deletes all files in given directory.
+   *
    * @param checkpointDir - The directory whose files are to be deleted
-   * @param excludes - Names of files which should not be deleted from this
-   *                 directory.
+   * @param excludes      - Names of files which should not be deleted from this
+   *                      directory.
    * @return - true if all files were successfully deleted, false otherwise.
    */
   static boolean deleteAllFiles(File checkpointDir,
-    @Nullable Set<String> excludes) {
+                                @Nullable Set<String> excludes) {
     if (!checkpointDir.isDirectory()) {
       return false;
     }
 
     File[] files = checkpointDir.listFiles();
-    if(files == null) {
+    if (files == null) {
       return false;
     }
     StringBuilder builder;
@@ -100,13 +98,13 @@ public class Serialization {
     } else {
       builder = new StringBuilder("Deleted the following files: ");
     }
-    if(excludes == null) {
+    if (excludes == null) {
       excludes = Collections.emptySet();
     }
     for (File file : files) {
-      if(excludes.contains(file.getName())) {
+      if (excludes.contains(file.getName())) {
         LOG.info("Skipping " + file.getName() + " because it is in excludes " +
-          "set");
+            "set");
         continue;
       }
       if (!FileUtils.deleteQuietly(file)) {
@@ -125,18 +123,19 @@ public class Serialization {
   /**
    * Copy a file using a 64K size buffer. This method will copy the file and
    * then fsync to disk
+   *
    * @param from File to copy - this file should exist
-   * @param to Destination file - this file should not exist
+   * @param to   Destination file - this file should not exist
    * @return true if the copy was successful
    */
   public static boolean copyFile(File from, File to) throws IOException {
     Preconditions.checkNotNull(from, "Source file is null, file copy failed.");
     Preconditions.checkNotNull(to, "Destination file is null, " +
-      "file copy failed.");
+        "file copy failed.");
     Preconditions.checkState(from.exists(), "Source file: " + from.toString() +
-      " does not exist.");
+        " does not exist.");
     Preconditions.checkState(!to.exists(), "Destination file: "
-      + to.toString() + " unexpectedly exists.");
+        + to.toString() + " unexpectedly exists.");
 
     BufferedInputStream in = null;
     RandomAccessFile out = null; //use a RandomAccessFile for easy fsync
@@ -145,7 +144,7 @@ public class Serialization {
       out = new RandomAccessFile(to, "rw");
       byte[] buf = new byte[FILE_BUFFER_SIZE];
       int total = 0;
-      while(true) {
+      while (true) {
         int read = in.read(buf);
         if (read == -1) {
           break;
@@ -155,11 +154,11 @@ public class Serialization {
       }
       out.getFD().sync();
       Preconditions.checkState(total == from.length(),
-        "The size of the origin file and destination file are not equal.");
+          "The size of the origin file and destination file are not equal.");
       return true;
     } catch (Exception ex) {
       LOG.error("Error while attempting to copy " + from.toString() + " to "
-        + to.toString() + ".", ex);
+          + to.toString() + ".", ex);
       Throwables.propagate(ex);
     } finally {
       Throwable th = null;
@@ -185,26 +184,26 @@ public class Serialization {
     }
     // Should never reach here.
     throw new IOException("Copying file: " + from.toString() + " to: " + to
-      .toString() + " may have failed.");
+        .toString() + " may have failed.");
   }
 
   /**
    * Compress file using Snappy
+   *
    * @param uncompressed File to compress - this file should exist
-   * @param compressed Compressed file - this file should not exist
+   * @param compressed   Compressed file - this file should not exist
    * @return true if compression was successful
    */
   public static boolean compressFile(File uncompressed, File compressed)
-    throws IOException {
+      throws IOException {
     Preconditions.checkNotNull(uncompressed,
-      "Source file is null, compression failed.");
+        "Source file is null, compression failed.");
     Preconditions.checkNotNull(compressed,
-      "Destination file is null, compression failed.");
+        "Destination file is null, compression failed.");
     Preconditions.checkState(uncompressed.exists(), "Source file: " +
-      uncompressed.toString() + " does not exist.");
+        uncompressed.toString() + " does not exist.");
     Preconditions.checkState(!compressed.exists(),
-      "Compressed file: " + compressed.toString() + " unexpectedly " +
-        "exists.");
+        "Compressed file: " + compressed.toString() + " unexpectedly " + "exists.");
 
     BufferedInputStream in = null;
     FileOutputStream out = null;
@@ -215,7 +214,7 @@ public class Serialization {
       snappyOut = new SnappyOutputStream(out);
 
       byte[] buf = new byte[FILE_BUFFER_SIZE];
-      while(true) {
+      while (true) {
         int read = in.read(buf);
         if (read == -1) {
           break;
@@ -226,8 +225,7 @@ public class Serialization {
       return true;
     } catch (Exception ex) {
       LOG.error("Error while attempting to compress " +
-        uncompressed.toString() + " to " + compressed.toString()
-        + ".", ex);
+                uncompressed.toString() + " to " + compressed.toString() + ".", ex);
       Throwables.propagate(ex);
     } finally {
       Throwable th = null;
@@ -253,26 +251,24 @@ public class Serialization {
     }
     // Should never reach here.
     throw new IOException("Copying file: " + uncompressed.toString()
-      + " to: " + compressed.toString() + " may have failed.");
+        + " to: " + compressed.toString() + " may have failed.");
   }
 
   /**
    * Decompress file using Snappy
-   * @param compressed File to compress - this file should exist
+   *
+   * @param compressed   File to compress - this file should exist
    * @param decompressed Compressed file - this file should not exist
    * @return true if decompression was successful
    */
-  public static boolean decompressFile(File compressed, File decompressed)
-    throws IOException {
-    Preconditions.checkNotNull(compressed,
-      "Source file is null, decompression failed.");
+  public static boolean decompressFile(File compressed, File decompressed) throws IOException {
+    Preconditions.checkNotNull(compressed, "Source file is null, decompression failed.");
     Preconditions.checkNotNull(decompressed, "Destination file is " +
-      "null, decompression failed.");
+        "null, decompression failed.");
     Preconditions.checkState(compressed.exists(), "Source file: " +
-      compressed.toString() + " does not exist.");
+        compressed.toString() + " does not exist.");
     Preconditions.checkState(!decompressed.exists(),
-      "Decompressed file: " + decompressed.toString() +
-        " unexpectedly exists.");
+        "Decompressed file: " + decompressed.toString() + " unexpectedly exists.");
 
     BufferedInputStream in = null;
     SnappyInputStream snappyIn = null;
@@ -283,7 +279,7 @@ public class Serialization {
       out = new FileOutputStream(decompressed);
 
       byte[] buf = new byte[FILE_BUFFER_SIZE];
-      while(true) {
+      while (true) {
         int read = snappyIn.read(buf);
         if (read == -1) {
           break;
@@ -294,8 +290,8 @@ public class Serialization {
       return true;
     } catch (Exception ex) {
       LOG.error("Error while attempting to compress " +
-        compressed.toString() + " to " + decompressed.toString() +
-        ".", ex);
+          compressed.toString() + " to " + decompressed.toString() +
+          ".", ex);
       Throwables.propagate(ex);
     } finally {
       Throwable th = null;
@@ -321,7 +317,7 @@ public class Serialization {
     }
     // Should never reach here.
     throw new IOException("Decompressing file: " +
-      compressed.toString() + " to: " + decompressed.toString() +
-      " may have failed.");
+        compressed.toString() + " to: " + decompressed.toString() +
+        " may have failed.");
   }
 }

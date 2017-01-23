@@ -210,6 +210,7 @@ public abstract class BasicTransactionSemantics implements Transaction {
    * perform any further operations beyond closing it.</dd>
    * <dt>CLOSED</dt>
    * <dd>A closed transaction. No further operations are permitted.</dd>
+   * </dl>
    */
   protected static enum State {
     NEW, OPEN, COMPLETED, CLOSED

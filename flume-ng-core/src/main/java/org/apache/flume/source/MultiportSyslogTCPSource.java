@@ -36,6 +36,7 @@ import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.conf.Configurable;
+import org.apache.flume.conf.LogPrivacyUtil;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.mina.core.buffer.IoBuffer;
@@ -113,7 +114,7 @@ public class MultiportSyslogTCPSource extends AbstractSource implements
     portCharsets.clear();
     {
       ImmutableMap<String, String> portCharsetCfg = context.getSubProperties(
-        SyslogSourceConfigurationConstants.CONFIG_PORT_CHARSET_PREFIX);
+          SyslogSourceConfigurationConstants.CONFIG_PORT_CHARSET_PREFIX);
       for (Map.Entry<String, String> entry : portCharsetCfg.entrySet()) {
         String portStr = entry.getKey();
         String charsetStr = entry.getValue();
@@ -357,7 +358,13 @@ public class MultiportSyslogTCPSource extends AbstractSource implements
         return event;
       }
 
-      logger.trace("Seen raw event: {}", msg);
+      if (logger.isTraceEnabled()) {
+        if (LogPrivacyUtil.allowLogRawData()) {
+          logger.trace("Seen raw event: {}", msg);
+        } else {
+          logger.trace("Seen raw event.");
+        }
+      }
 
       Event event;
       try {
@@ -386,7 +393,7 @@ public class MultiportSyslogTCPSource extends AbstractSource implements
    */
   static class LineSplitter {
 
-    private final static byte NEWLINE = '\n';
+    private static final byte NEWLINE = '\n';
     private final int maxLineLength;
 
     public LineSplitter(int maxLineLength) {

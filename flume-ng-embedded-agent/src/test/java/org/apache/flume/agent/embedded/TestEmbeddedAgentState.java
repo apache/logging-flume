@@ -18,19 +18,19 @@
  */
 package org.apache.flume.agent.embedded;
 
-import java.util.Map;
-
+import com.google.common.base.Throwables;
+import com.google.common.collect.Maps;
 import org.apache.flume.FlumeException;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.base.Throwables;
-import com.google.common.collect.Maps;
+import java.util.Map;
 
 public class TestEmbeddedAgentState {
   private static final String HOSTNAME = "localhost";
   private EmbeddedAgent agent;
   private Map<String, String> properties;
+
   @Before
   public void setUp() throws Exception {
     agent = new EmbeddedAgent("dummy");
@@ -47,13 +47,13 @@ public class TestEmbeddedAgentState {
     properties.put("processor.type", "load_balance");
   }
 
-  @Test(expected=FlumeException.class)
+  @Test(expected = FlumeException.class)
   public void testConfigureWithBadSourceType() {
     properties.put(EmbeddedAgentConfiguration.SOURCE_TYPE, "bad");
     agent.configure(properties);
   }
 
-  @Test(expected=IllegalStateException.class)
+  @Test(expected = IllegalStateException.class)
   public void testConfigureWhileStarted() {
     try {
       agent.configure(properties);
@@ -63,13 +63,14 @@ public class TestEmbeddedAgentState {
     }
     agent.configure(properties);
   }
+
   @Test
   public void testConfigureMultipleTimes() {
     agent.configure(properties);
     agent.configure(properties);
   }
 
-  @Test(expected=IllegalStateException.class)
+  @Test(expected = IllegalStateException.class)
   public void testStartWhileStarted() {
     try {
       agent.configure(properties);
@@ -79,15 +80,18 @@ public class TestEmbeddedAgentState {
     }
     agent.start();
   }
-  @Test(expected=IllegalStateException.class)
+
+  @Test(expected = IllegalStateException.class)
   public void testStartUnconfigured() {
     agent.start();
   }
-  @Test(expected=IllegalStateException.class)
+
+  @Test(expected = IllegalStateException.class)
   public void testStopBeforeConfigure() {
     agent.stop();
   }
-  @Test(expected=IllegalStateException.class)
+
+  @Test(expected = IllegalStateException.class)
   public void testStoppedWhileStopped() {
     try {
       agent.configure(properties);
@@ -96,7 +100,8 @@ public class TestEmbeddedAgentState {
     }
     agent.stop();
   }
-  @Test(expected=IllegalStateException.class)
+
+  @Test(expected = IllegalStateException.class)
   public void testStopAfterStop() {
     try {
       agent.configure(properties);
@@ -107,7 +112,8 @@ public class TestEmbeddedAgentState {
     }
     agent.stop();
   }
-  @Test(expected=IllegalStateException.class)
+
+  @Test(expected = IllegalStateException.class)
   public void testStopAfterConfigure() {
     try {
       agent.configure(properties);

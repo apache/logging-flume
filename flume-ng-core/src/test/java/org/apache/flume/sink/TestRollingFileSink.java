@@ -19,11 +19,6 @@
 
 package org.apache.flume.sink;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -38,6 +33,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 
 public class TestRollingFileSink {
 
@@ -108,8 +108,8 @@ public class TestRollingFileSink {
     sink.stop();
 
     for (String file : sink.getDirectory().list()) {
-      BufferedReader reader = new BufferedReader(new FileReader(new File(
-          sink.getDirectory(), file)));
+      BufferedReader reader =
+          new BufferedReader(new FileReader(new File(sink.getDirectory(), file)));
 
       String lastLine = null;
       String currentLine = null;
@@ -157,8 +157,8 @@ public class TestRollingFileSink {
     sink.stop();
 
     for (String file : sink.getDirectory().list()) {
-      BufferedReader reader = new BufferedReader(new FileReader(new File(
-          sink.getDirectory(), file)));
+      BufferedReader reader =
+          new BufferedReader(new FileReader(new File(sink.getDirectory(), file)));
 
       String lastLine = null;
       String currentLine = null;
@@ -174,7 +174,8 @@ public class TestRollingFileSink {
   }
 
   @Test
-  public void testAppend3() throws InterruptedException, LifecycleException, EventDeliveryException, IOException {
+  public void testAppend3()
+      throws InterruptedException, LifecycleException, EventDeliveryException, IOException {
     File tmpDir = new File("target/tmpLog");
     tmpDir.mkdirs();
     cleanDirectory(tmpDir);
@@ -208,7 +209,8 @@ public class TestRollingFileSink {
     sink.stop();
 
     for (String file : sink.getDirectory().list()) {
-      BufferedReader reader = new BufferedReader(new FileReader(new File(sink.getDirectory(), file)));
+      BufferedReader reader =
+          new BufferedReader(new FileReader(new File(sink.getDirectory(), file)));
 
       String lastLine = null;
       String currentLine = null;
@@ -223,7 +225,8 @@ public class TestRollingFileSink {
   }
 
   @Test
-  public void testRollTime() throws InterruptedException, LifecycleException, EventDeliveryException, IOException {
+  public void testRollTime()
+      throws InterruptedException, LifecycleException, EventDeliveryException, IOException {
     File tmpDir = new File("target/tempLog");
     tmpDir.mkdirs();
     cleanDirectory(tmpDir);
@@ -258,7 +261,8 @@ public class TestRollingFileSink {
     sink.stop();
 
     for (String file : sink.getDirectory().list()) {
-      BufferedReader reader = new BufferedReader(new FileReader(new File(sink.getDirectory(), file)));
+      BufferedReader reader =
+          new BufferedReader(new FileReader(new File(sink.getDirectory(), file)));
 
       String lastLine = null;
       String currentLine = null;

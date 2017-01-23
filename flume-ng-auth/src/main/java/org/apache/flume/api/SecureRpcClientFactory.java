@@ -26,8 +26,8 @@ import java.util.Properties;
 public class SecureRpcClientFactory {
 
   /**
-   * Return a secure {@linkplain org.apache.flume.api.RpcClient} that uses Thrift for communicating with
-   * the next hop.
+   * Return a secure {@linkplain org.apache.flume.api.RpcClient} that uses Thrift for communicating
+   * with the next hop.
    * @param props
    * @return - An {@linkplain org.apache.flume.api.RpcClient} which uses thrift configured with the
    * given parameters.

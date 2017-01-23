@@ -18,13 +18,6 @@
  */
 package org.apache.flume.api;
 
-import java.net.InetSocketAddress;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-import java.util.concurrent.Executors;
-
 import junit.framework.Assert;
 import org.apache.avro.AvroRemoteException;
 import org.apache.avro.ipc.NettyServer;
@@ -46,6 +39,13 @@ import org.jboss.netty.handler.codec.compression.ZlibDecoder;
 import org.jboss.netty.handler.codec.compression.ZlibEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.Executors;
 
 /**
  * Helpers for Netty Avro RPC testing
@@ -75,7 +75,9 @@ public class RpcTestUtils {
    * @throws FlumeException
    * @throws EventDeliveryException
    */
-  public static void handlerSimpleAppendTest(AvroSourceProtocol handler, boolean enableServerCompression, boolean enableClientCompression, int compressionLevel)
+  public static void handlerSimpleAppendTest(AvroSourceProtocol handler,
+                                             boolean enableServerCompression,
+                                             boolean enableClientCompression, int compressionLevel)
       throws FlumeException, EventDeliveryException {
     NettyAvroRpcClient client = null;
     Server server = startServer(handler, 0, enableServerCompression);
@@ -83,7 +85,8 @@ public class RpcTestUtils {
       Properties starterProp = new Properties();
       if (enableClientCompression) {
         starterProp.setProperty(RpcClientConfigurationConstants.CONFIG_COMPRESSION_TYPE, "deflate");
-        starterProp.setProperty(RpcClientConfigurationConstants.CONFIG_COMPRESSION_LEVEL, "" + compressionLevel);
+        starterProp.setProperty(RpcClientConfigurationConstants.CONFIG_COMPRESSION_LEVEL,
+                                "" + compressionLevel);
       } else {
         starterProp.setProperty(RpcClientConfigurationConstants.CONFIG_COMPRESSION_TYPE, "none");
       }
@@ -108,7 +111,9 @@ public class RpcTestUtils {
    * @throws FlumeException
    * @throws EventDeliveryException
    */
-  public static void handlerBatchAppendTest(AvroSourceProtocol handler, boolean enableServerCompression, boolean enableClientCompression, int compressionLevel)
+  public static void handlerBatchAppendTest(AvroSourceProtocol handler,
+                                            boolean enableServerCompression,
+                                            boolean enableClientCompression, int compressionLevel)
       throws FlumeException, EventDeliveryException {
     NettyAvroRpcClient client = null;
     Server server = startServer(handler, 0 , enableServerCompression);
@@ -117,7 +122,8 @@ public class RpcTestUtils {
       Properties starterProp = new Properties();
       if (enableClientCompression) {
         starterProp.setProperty(RpcClientConfigurationConstants.CONFIG_COMPRESSION_TYPE, "deflate");
-        starterProp.setProperty(RpcClientConfigurationConstants.CONFIG_COMPRESSION_LEVEL, "" + compressionLevel);
+        starterProp.setProperty(RpcClientConfigurationConstants.CONFIG_COMPRESSION_LEVEL,
+                                "" + compressionLevel);
       } else {
         starterProp.setProperty(RpcClientConfigurationConstants.CONFIG_COMPRESSION_TYPE, "none");
       }
@@ -161,28 +167,24 @@ public class RpcTestUtils {
   /**
    * Start a NettyServer, wait a moment for it to spin up, and return it.
    */
-  public static Server startServer(AvroSourceProtocol handler, int port, boolean enableCompression) {
-    Responder responder = new SpecificResponder(AvroSourceProtocol.class,
-        handler);
+  public static Server startServer(AvroSourceProtocol handler, int port,
+                                   boolean enableCompression) {
+    Responder responder = new SpecificResponder(AvroSourceProtocol.class, handler);
     Server server;
     if (enableCompression) {
-      server = new NettyServer(responder,
-          new InetSocketAddress(localhost, port),
-          new NioServerSocketChannelFactory
-          (Executors .newCachedThreadPool(), Executors.newCachedThreadPool()),
-          new CompressionChannelPipelineFactory(), null);
+      server = new NettyServer(responder, new InetSocketAddress(localhost, port),
+                               new NioServerSocketChannelFactory(Executors.newCachedThreadPool(),
+                                                                 Executors.newCachedThreadPool()),
+                               new CompressionChannelPipelineFactory(), null);
     } else {
-      server = new NettyServer(responder,
-        new InetSocketAddress(localhost, port));
+      server = new NettyServer(responder, new InetSocketAddress(localhost, port));
     }
     server.start();
     logger.info("Server started on hostname: {}, port: {}",
-        new Object[] { localhost, Integer.toString(server.getPort()) });
+                new Object[] { localhost, Integer.toString(server.getPort()) });
 
     try {
-
       Thread.sleep(300L);
-
     } catch (InterruptedException ex) {
       logger.error("Thread interrupted. Exception follows.", ex);
       Thread.currentThread().interrupt();
@@ -298,15 +300,13 @@ public class RpcTestUtils {
     @Override
     public Status append(AvroFlumeEvent event) throws AvroRemoteException {
       logger.info("Failed: Received event from append(): {}",
-          new String(event.getBody().array(), Charset.forName("UTF8")));
+                  new String(event.getBody().array(), Charset.forName("UTF8")));
       return Status.FAILED;
     }
 
     @Override
-    public Status appendBatch(List<AvroFlumeEvent> events) throws
-        AvroRemoteException {
-      logger.info("Failed: Received {} events from appendBatch()",
-          events.size());
+    public Status appendBatch(List<AvroFlumeEvent> events) throws AvroRemoteException {
+      logger.info("Failed: Received {} events from appendBatch()", events.size());
       return Status.FAILED;
     }
 
@@ -320,15 +320,14 @@ public class RpcTestUtils {
     @Override
     public Status append(AvroFlumeEvent event) throws AvroRemoteException {
       logger.info("Unknown: Received event from append(): {}",
-          new String(event.getBody().array(), Charset.forName("UTF8")));
+                  new String(event.getBody().array(), Charset.forName("UTF8")));
       return Status.UNKNOWN;
     }
 
     @Override
-    public Status appendBatch(List<AvroFlumeEvent> events) throws
-        AvroRemoteException {
+    public Status appendBatch(List<AvroFlumeEvent> events) throws AvroRemoteException {
       logger.info("Unknown: Received {} events from appendBatch()",
-          events.size());
+                  events.size());
       return Status.UNKNOWN;
     }
 
@@ -342,22 +341,18 @@ public class RpcTestUtils {
     @Override
     public Status append(AvroFlumeEvent event) throws AvroRemoteException {
       logger.info("Throwing: Received event from append(): {}",
-          new String(event.getBody().array(), Charset.forName("UTF8")));
+                  new String(event.getBody().array(), Charset.forName("UTF8")));
       throw new AvroRemoteException("Handler smash!");
     }
 
     @Override
-    public Status appendBatch(List<AvroFlumeEvent> events) throws
-        AvroRemoteException {
-      logger.info("Throwing: Received {} events from appendBatch()",
-          events.size());
+    public Status appendBatch(List<AvroFlumeEvent> events) throws AvroRemoteException {
+      logger.info("Throwing: Received {} events from appendBatch()", events.size());
       throw new AvroRemoteException("Handler smash!");
     }
-
   }
 
-  private static class CompressionChannelPipelineFactory implements
-  ChannelPipelineFactory {
+  private static class CompressionChannelPipelineFactory implements ChannelPipelineFactory {
 
     @Override
     public ChannelPipeline getPipeline() throws Exception {

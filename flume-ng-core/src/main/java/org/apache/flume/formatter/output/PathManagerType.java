@@ -27,17 +27,17 @@ import org.apache.flume.annotations.InterfaceStability;
 @InterfaceAudience.Private
 @InterfaceStability.Unstable
 public enum PathManagerType {
-    DEFAULT(DefaultPathManager.Builder.class),
-    ROLLTIME(RollTimePathManager.Builder.class),
-    OTHER(null);
+  DEFAULT(DefaultPathManager.Builder.class),
+  ROLLTIME(RollTimePathManager.Builder.class),
+  OTHER(null);
 
-    private final Class<? extends PathManager.Builder> builderClass;
+  private final Class<? extends PathManager.Builder> builderClass;
 
-    PathManagerType(Class<? extends PathManager.Builder> builderClass) {
-        this.builderClass = builderClass;
-    }
+  PathManagerType(Class<? extends PathManager.Builder> builderClass) {
+    this.builderClass = builderClass;
+  }
 
-    public Class<? extends PathManager.Builder> getBuilderClass() {
-        return builderClass;
-    }
+  public Class<? extends PathManager.Builder> getBuilderClass() {
+    return builderClass;
+  }
 }

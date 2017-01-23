@@ -20,12 +20,6 @@ package org.apache.flume.instrumentation.http;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.lang.reflect.Type;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.Map;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Transaction;
@@ -39,6 +33,12 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Map;
 
 /**
  *
@@ -47,9 +47,7 @@ public class TestHTTPMetricsServer {
 
   Channel memChannel = new MemoryChannel();
   Channel pmemChannel = new PseudoTxnMemoryChannel();
-  Type mapType =
-          new TypeToken<Map<String, Map<String, String>>>() {
-          }.getType();
+  Type mapType = new TypeToken<Map<String, Map<String, String>>>() {}.getType();
   Gson gson = new Gson();
 
   @Test
@@ -99,7 +97,7 @@ public class TestHTTPMetricsServer {
   private void testWithPort(int port) throws Exception {
     MonitorService srv = new HTTPMetricsServer();
     Context context = new Context();
-    if(port > 1024){
+    if (port > 1024) {
       context.put(HTTPMetricsServer.CONFIG_PORT, String.valueOf(port));
     } else {
       port = HTTPMetricsServer.DEFAULT_PORT;
@@ -139,8 +137,7 @@ public class TestHTTPMetricsServer {
     doTestForbiddenMethods(4432,"OPTIONS");
   }
 
-  public void doTestForbiddenMethods(int port, String method)
-    throws Exception {
+  public void doTestForbiddenMethods(int port, String method) throws Exception {
     MonitorService srv = new HTTPMetricsServer();
     Context context = new Context();
     if (port > 1024) {
@@ -154,8 +151,7 @@ public class TestHTTPMetricsServer {
     URL url = new URL("http://0.0.0.0:" + String.valueOf(port) + "/metrics");
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     conn.setRequestMethod(method);
-    Assert.assertEquals(HttpServletResponse.SC_FORBIDDEN,
-      conn.getResponseCode());
+    Assert.assertEquals(HttpServletResponse.SC_FORBIDDEN, conn.getResponseCode());
     srv.stop();
   }
 }

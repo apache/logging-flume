@@ -113,9 +113,7 @@ public class TestFailoverRpcClient {
     server5.close();
     Thread.sleep(1000L); // wait a second for the close to occur
     Server server6 = RpcTestUtils.startServer(new OKAvroHandler(), s1Port);
-    client
-    .append(EventBuilder.withBody("Had a whole watermelon?",
-        Charset.forName("UTF8")));
+    client.append(EventBuilder.withBody("Had a whole watermelon?", Charset.forName("UTF8")));
     Assert.assertEquals(new InetSocketAddress("localhost", s1Port),
         client.getLastConnectedServerAddress());
 

@@ -87,10 +87,8 @@ public class FileChannelConfiguration {
   public static final String USE_DUAL_CHECKPOINTS = "useDualCheckpoints";
   public static final boolean DEFAULT_USE_DUAL_CHECKPOINTS = false;
 
-  public static final String COMPRESS_BACKUP_CHECKPOINT =
-    "compressBackupCheckpoint";
-  public static final boolean DEFAULT_COMPRESS_BACKUP_CHECKPOINT
-    = false;
+  public static final String COMPRESS_BACKUP_CHECKPOINT = "compressBackupCheckpoint";
+  public static final boolean DEFAULT_COMPRESS_BACKUP_CHECKPOINT = false;
 
   public static final String FSYNC_PER_TXN = "fsyncPerTransaction";
   public static final boolean DEFAULT_FSYNC_PRE_TXN = true;

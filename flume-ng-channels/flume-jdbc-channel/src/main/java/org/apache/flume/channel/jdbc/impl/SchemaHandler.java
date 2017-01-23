@@ -26,14 +26,12 @@ import java.sql.Connection;
 public interface SchemaHandler {
 
   /**
-   * @param connection the connection to check for schema.
    * @return true if the schema exists. False otherwise.
    */
   public boolean schemaExists();
 
   /**
    * Validates the schema.
-   * @param connection
    */
   public void validateSchema();
 
@@ -74,8 +72,6 @@ public interface SchemaHandler {
    * must have an active transaction ongoing. This allows the provider impl to
    * enforce channel capacity limits when persisting events.
    * @return the current size of the channel.
-   * @param connection
-   * @return
    */
   public long getChannelSize(Connection connection);
 }

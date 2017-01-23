@@ -22,7 +22,11 @@ import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import junit.framework.Assert;
-import org.apache.flume.*;
+import org.apache.flume.Channel;
+import org.apache.flume.ChannelSelector;
+import org.apache.flume.Context;
+import org.apache.flume.Event;
+import org.apache.flume.Transaction;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
@@ -41,11 +45,22 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import javax.net.ssl.*;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.net.*;
+import java.net.HttpURLConnection;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.URL;
+import java.net.UnknownHostException;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
@@ -114,9 +129,10 @@ public class TestHTTPSource {
     sslContext.put(HTTPSourceConfigurationConstants.SSL_ENABLED, "true");
     sslPort = findFreePort();
     sslContext.put(HTTPSourceConfigurationConstants.CONFIG_PORT,
-      String.valueOf(sslPort));
+                   String.valueOf(sslPort));
     sslContext.put(HTTPSourceConfigurationConstants.SSL_KEYSTORE_PASSWORD, "password");
-    sslContext.put(HTTPSourceConfigurationConstants.SSL_KEYSTORE, "src/test/resources/jettykeystore");
+    sslContext.put(HTTPSourceConfigurationConstants.SSL_KEYSTORE,
+                   "src/test/resources/jettykeystore");
 
     Configurables.configure(source, context);
     Configurables.configure(httpsSource, sslContext);
@@ -180,7 +196,7 @@ public class TestHTTPSource {
   private void doTestForbidden(HttpRequestBase request) throws Exception {
     HttpResponse response = httpClient.execute(request);
     Assert.assertEquals(HttpServletResponse.SC_FORBIDDEN,
-      response.getStatusLine().getStatusCode());
+                        response.getStatusLine().getStatusCode());
   }
 
   @Test
@@ -286,10 +302,8 @@ public class TestHTTPSource {
   }
 
 
-  private ResultWrapper putWithEncoding(String encoding, int n)
-          throws Exception{
-    Type listType = new TypeToken<List<JSONEvent>>() {
-    }.getType();
+  private ResultWrapper putWithEncoding(String encoding, int n) throws Exception {
+    Type listType = new TypeToken<List<JSONEvent>>() {}.getType();
     List<JSONEvent> events = Lists.newArrayList();
     Random rand = new Random();
     for (int i = 0; i < n; i++) {
@@ -341,25 +355,25 @@ public class TestHTTPSource {
     String json = gson.toJson(events, listType);
     HttpsURLConnection httpsURLConnection = null;
     try {
-      TrustManager[] trustAllCerts = {new X509TrustManager() {
-        @Override
-        public void checkClientTrusted(
-          java.security.cert.X509Certificate[] x509Certificates, String s)
-          throws CertificateException {
-          // noop
-        }
+      TrustManager[] trustAllCerts = {
+        new X509TrustManager() {
+          @Override
+          public void checkClientTrusted(java.security.cert.X509Certificate[] x509Certificates,
+                                         String s) throws CertificateException {
+            // noop
+          }
 
-        @Override
-        public void checkServerTrusted(
-          java.security.cert.X509Certificate[] x509Certificates, String s)
-          throws CertificateException {
-          // noop
-        }
+          @Override
+          public void checkServerTrusted(java.security.cert.X509Certificate[] x509Certificates,
+                                         String s) throws CertificateException {
+            // noop
+          }
 
-        public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-          return null;
+          public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+            return null;
+          }
         }
-      }};
+      };
 
       SSLContext sc = null;
       javax.net.ssl.SSLSocketFactory factory = null;
@@ -376,14 +390,13 @@ public class TestHTTPSource {
       };
       sc.init(null, trustAllCerts, new SecureRandom());
 
-      if(protocol != null) {
+      if (protocol != null) {
         factory = new DisabledProtocolsSocketFactory(sc.getSocketFactory(), protocol);
       } else {
         factory = sc.getSocketFactory();
       }
       HttpsURLConnection.setDefaultSSLSocketFactory(factory);
-      HttpsURLConnection.setDefaultHostnameVerifier(
-        SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+      HttpsURLConnection.setDefaultHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
       URL sslUrl = new URL("https://0.0.0.0:" + sslPort);
       httpsURLConnection = (HttpsURLConnection) sslUrl.openConnection();
       httpsURLConnection.setDoInput(true);
@@ -396,14 +409,14 @@ public class TestHTTPSource {
 
       Transaction transaction = channel.getTransaction();
       transaction.begin();
-      for(int i = 0; i < 10; i++) {
+      for (int i = 0; i < 10; i++) {
         Event e = channel.take();
         Assert.assertNotNull(e);
         Assert.assertEquals(String.valueOf(i), e.getHeaders().get("MsgNum"));
       }
 
-    transaction.commit();
-    transaction.close();
+      transaction.commit();
+      transaction.close();
     } finally {
       httpsURLConnection.disconnect();
     }
@@ -416,38 +429,37 @@ public class TestHTTPSource {
     List<JSONEvent> events = Lists.newArrayList();
     Random rand = new Random();
     for (int i = 0; i < 10; i++) {
-        Map<String, String> input = Maps.newHashMap();
-        for (int j = 0; j < 10; j++) {
-            input.put(String.valueOf(i) + String.valueOf(j), String.valueOf(i));
-        }
-        input.put("MsgNum", String.valueOf(i));
-        JSONEvent e = new JSONEvent();
-        e.setHeaders(input);
-        e.setBody(String.valueOf(rand.nextGaussian()).getBytes("UTF-8"));
-        events.add(e);
+      Map<String, String> input = Maps.newHashMap();
+      for (int j = 0; j < 10; j++) {
+        input.put(String.valueOf(i) + String.valueOf(j), String.valueOf(i));
+      }
+      input.put("MsgNum", String.valueOf(i));
+      JSONEvent e = new JSONEvent();
+      e.setHeaders(input);
+      e.setBody(String.valueOf(rand.nextGaussian()).getBytes("UTF-8"));
+      events.add(e);
     }
     Gson gson = new Gson();
     String json = gson.toJson(events, listType);
     HttpURLConnection httpURLConnection = null;
     try {
-        URL url = new URL("http://0.0.0.0:" + sslPort);
-        httpURLConnection = (HttpURLConnection) url.openConnection();
-        httpURLConnection.setDoInput(true);
-        httpURLConnection.setDoOutput(true);
-        httpURLConnection.setRequestMethod("POST");
-        httpURLConnection.getOutputStream().write(json.getBytes());
-        httpURLConnection.getResponseCode();
+      URL url = new URL("http://0.0.0.0:" + sslPort);
+      httpURLConnection = (HttpURLConnection) url.openConnection();
+      httpURLConnection.setDoInput(true);
+      httpURLConnection.setDoOutput(true);
+      httpURLConnection.setRequestMethod("POST");
+      httpURLConnection.getOutputStream().write(json.getBytes());
+      httpURLConnection.getResponseCode();
 
-        Assert.fail("HTTP Client cannot connect to HTTPS source");
+      Assert.fail("HTTP Client cannot connect to HTTPS source");
     } catch (Exception exception) {
-        Assert.assertTrue("Exception expected", true);
+      Assert.assertTrue("Exception expected", true);
     } finally {
-        httpURLConnection.disconnect();
+      httpURLConnection.disconnect();
     }
   }
 
-  private void takeWithEncoding(String encoding, int n, List<JSONEvent> events)
-          throws Exception{
+  private void takeWithEncoding(String encoding, int n, List<JSONEvent> events) throws Exception {
     Transaction tx = channel.getTransaction();
     tx.begin();
     Event e = null;
@@ -459,7 +471,7 @@ public class TestHTTPSource {
       }
       Event current = events.get(i++);
       Assert.assertEquals(new String(current.getBody(), encoding),
-              new String(e.getBody(), encoding));
+                          new String(e.getBody(), encoding));
       Assert.assertEquals(current.getHeaders(), e.getHeaders());
     }
     Assert.assertEquals(n, events.size());
@@ -480,7 +492,8 @@ public class TestHTTPSource {
   private class ResultWrapper {
     public final HttpResponse response;
     public final List<JSONEvent> events;
-    public ResultWrapper(HttpResponse resp, List<JSONEvent> events){
+
+    public ResultWrapper(HttpResponse resp, List<JSONEvent> events) {
       this.response = resp;
       this.events = events;
     }
@@ -508,43 +521,39 @@ public class TestHTTPSource {
     }
 
     @Override
-    public Socket createSocket(Socket socket, String s, int i, boolean b)
-      throws IOException {
+    public Socket createSocket(Socket socket, String s, int i, boolean b) throws IOException {
       SSLSocket sc = (SSLSocket) socketFactory.createSocket(socket, s, i, b);
       sc.setEnabledProtocols(protocols);
       return sc;
     }
 
     @Override
-    public Socket createSocket(String s, int i)
-      throws IOException, UnknownHostException {
-      SSLSocket sc = (SSLSocket)socketFactory.createSocket(s, i);
+    public Socket createSocket(String s, int i) throws IOException, UnknownHostException {
+      SSLSocket sc = (SSLSocket) socketFactory.createSocket(s, i);
       sc.setEnabledProtocols(protocols);
       return sc;
     }
 
     @Override
     public Socket createSocket(String s, int i, InetAddress inetAddress, int i2)
-      throws IOException, UnknownHostException {
-      SSLSocket sc = (SSLSocket)socketFactory.createSocket(s, i, inetAddress,
-        i2);
+        throws IOException, UnknownHostException {
+      SSLSocket sc = (SSLSocket) socketFactory.createSocket(s, i, inetAddress, i2);
       sc.setEnabledProtocols(protocols);
       return sc;
     }
 
     @Override
-    public Socket createSocket(InetAddress inetAddress, int i)
-      throws IOException {
-      SSLSocket sc = (SSLSocket)socketFactory.createSocket(inetAddress, i);
+    public Socket createSocket(InetAddress inetAddress, int i) throws IOException {
+      SSLSocket sc = (SSLSocket) socketFactory.createSocket(inetAddress, i);
       sc.setEnabledProtocols(protocols);
       return sc;
     }
 
     @Override
     public Socket createSocket(InetAddress inetAddress, int i,
-      InetAddress inetAddress2, int i2) throws IOException {
-      SSLSocket sc = (SSLSocket)socketFactory.createSocket(inetAddress, i,
-        inetAddress2, i2);
+                               InetAddress inetAddress2, int i2) throws IOException {
+      SSLSocket sc = (SSLSocket) socketFactory.createSocket(inetAddress, i,
+                                                            inetAddress2, i2);
       sc.setEnabledProtocols(protocols);
       return sc;
     }

@@ -53,8 +53,7 @@ public class DefaultSinkFactory implements SinkFactory {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Class<? extends Sink> getClass(String type)
-  throws FlumeException {
+  public Class<? extends Sink> getClass(String type) throws FlumeException {
     String sinkClassName = type;
     SinkType sinkType = SinkType.OTHER;
     try {

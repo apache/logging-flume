@@ -34,7 +34,7 @@ public enum FlumeToolType {
 
   public static String getNames() {
     StringBuilder builder = new StringBuilder();
-    for(FlumeToolType type: values()) {
+    for (FlumeToolType type: values()) {
       builder.append(type.name().toLowerCase(Locale.ENGLISH) + "\n");
     }
     return builder.toString();

@@ -32,7 +32,7 @@ import org.apache.flume.conf.Configurable;
 import org.apache.flume.formatter.output.BucketPath;
 import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.sink.AbstractSink;
-import org.apache.hive.hcatalog.streaming.*;
+import org.apache.hive.hcatalog.streaming.HiveEndPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,8 +52,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class HiveSink extends AbstractSink implements Configurable {
 
-  private static final Logger LOG = LoggerFactory
-      .getLogger(HiveSink.class);
+  private static final Logger LOG = LoggerFactory.getLogger(HiveSink.class);
 
   private static final int DEFAULT_MAXOPENCONNECTIONS = 500;
   private static final int DEFAULT_TXNSPERBATCH = 100;
@@ -61,7 +60,6 @@ public class HiveSink extends AbstractSink implements Configurable {
   private static final int DEFAULT_CALLTIMEOUT = 10000;
   private static final int DEFAULT_IDLETIMEOUT = 0;
   private static final int DEFAULT_HEARTBEATINTERVAL = 240; // seconds
-
 
   private Map<HiveEndPoint, HiveWriter> allWriters;
 
@@ -162,7 +160,8 @@ public class HiveSink extends AbstractSink implements Configurable {
               + DEFAULT_HEARTBEATINTERVAL);
       heartBeatInterval = DEFAULT_HEARTBEATINTERVAL;
     }
-    maxOpenConnections = context.getInteger(Config.MAX_OPEN_CONNECTIONS, DEFAULT_MAXOPENCONNECTIONS);
+    maxOpenConnections = context.getInteger(Config.MAX_OPEN_CONNECTIONS,
+                                            DEFAULT_MAXOPENCONNECTIONS);
     autoCreatePartitions =  context.getBoolean("autoCreatePartitions", true);
 
     // Timestamp processing
@@ -177,7 +176,7 @@ public class HiveSink extends AbstractSink implements Configurable {
       this.roundUnit = Calendar.HOUR_OF_DAY;
     } else if (unit.equalsIgnoreCase(Config.MINUTE)) {
       this.roundUnit = Calendar.MINUTE;
-    } else if (unit.equalsIgnoreCase(Config.SECOND)){
+    } else if (unit.equalsIgnoreCase(Config.SECOND)) {
       this.roundUnit = Calendar.SECOND;
     } else {
       LOG.warn(getName() + ". Rounding unit is not valid, please set one of " +
@@ -185,10 +184,10 @@ public class HiveSink extends AbstractSink implements Configurable {
       needRounding = false;
     }
     this.roundValue = context.getInteger(Config.ROUND_VALUE, 1);
-    if (roundUnit == Calendar.SECOND || roundUnit == Calendar.MINUTE){
+    if (roundUnit == Calendar.SECOND || roundUnit == Calendar.MINUTE) {
       Preconditions.checkArgument(roundValue > 0 && roundValue <= 60,
               "Round value must be > 0 and <= 60");
-    } else if (roundUnit == Calendar.HOUR_OF_DAY){
+    } else if (roundUnit == Calendar.HOUR_OF_DAY) {
       Preconditions.checkArgument(roundValue > 0 && roundValue <= 24,
               "Round value must be > 0 and <= 24");
     }
@@ -215,8 +214,8 @@ public class HiveSink extends AbstractSink implements Configurable {
     return sinkCounter;
   }
   private HiveEventSerializer createSerializer(String serializerName)  {
-    if(serializerName.compareToIgnoreCase(HiveDelimitedTextSerializer.ALIAS) == 0 ||
-            serializerName.compareTo(HiveDelimitedTextSerializer.class.getName()) == 0) {
+    if (serializerName.compareToIgnoreCase(HiveDelimitedTextSerializer.ALIAS) == 0 ||
+        serializerName.compareTo(HiveDelimitedTextSerializer.class.getName()) == 0) {
       return new HiveDelimitedTextSerializer();
     } else if (serializerName.compareToIgnoreCase(HiveJsonSerializer.ALIAS) == 0 ||
             serializerName.compareTo(HiveJsonSerializer.class.getName()) == 0) {
@@ -345,7 +344,7 @@ public class HiveSink extends AbstractSink implements Configurable {
                 callTimeout, callTimeoutPool, proxyUser, serializer, sinkCounter);
 
         sinkCounter.incrementConnectionCreatedCount();
-        if (allWriters.size() > maxOpenConnections){
+        if (allWriters.size() > maxOpenConnections) {
           int retired = closeIdleWriters();
           if (retired == 0) {
             closeEldestWriter();
@@ -353,8 +352,7 @@ public class HiveSink extends AbstractSink implements Configurable {
         }
         allWriters.put(endPoint, writer);
         activeWriters.put(endPoint, writer);
-      }
-      else {
+      } else {
         if (activeWriters.get(endPoint) == null)  {
           activeWriters.put(endPoint,writer);
         }
@@ -425,7 +423,7 @@ public class HiveSink extends AbstractSink implements Configurable {
       }
     }
     //2) Retire them
-    for(HiveEndPoint ep : retirees) {
+    for (HiveEndPoint ep : retirees) {
       sinkCounter.incrementConnectionClosedCount();
       LOG.info(getName() + ": Closing idle Writer to Hive end point : {}", ep);
       allWriters.remove(ep).close();
@@ -440,7 +438,7 @@ public class HiveSink extends AbstractSink implements Configurable {
   private void closeAllWriters() throws InterruptedException {
     //1) Retire writers
     for (Entry<HiveEndPoint,HiveWriter> entry : allWriters.entrySet()) {
-        entry.getValue().close();
+      entry.getValue().close();
     }
 
     //2) Clear cache
@@ -453,7 +451,7 @@ public class HiveSink extends AbstractSink implements Configurable {
    */
   private void abortAllWriters() throws InterruptedException {
     for (Entry<HiveEndPoint,HiveWriter> entry : allWriters.entrySet()) {
-        entry.getValue().abort();
+      entry.getValue().abort();
     }
   }
 

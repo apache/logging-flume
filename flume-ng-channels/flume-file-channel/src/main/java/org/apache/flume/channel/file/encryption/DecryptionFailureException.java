@@ -27,7 +27,6 @@ import org.apache.flume.FlumeException;
 public class DecryptionFailureException extends FlumeException {
   private static final long serialVersionUID = 6646810195384793646L;
 
-
   public DecryptionFailureException(String msg) {
     super(msg);
   }

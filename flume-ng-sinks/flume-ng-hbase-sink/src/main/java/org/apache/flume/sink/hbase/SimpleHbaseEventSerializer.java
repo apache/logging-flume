@@ -19,9 +19,7 @@
 
 package org.apache.flume.sink.hbase;
 
-import java.util.LinkedList;
-import java.util.List;
-
+import com.google.common.base.Charsets;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.FlumeException;
@@ -30,19 +28,18 @@ import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Row;
 
-import com.google.common.base.Charsets;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * A simple serializer that returns puts from an event, by writing the event
  * body into it. The headers are discarded. It also updates a row in hbase
  * which acts as an event counter.
- *
- * Takes optional parameters:<p>
+ * <p>Takes optional parameters:<p>
  * <tt>rowPrefix:</tt> The prefix to be used. Default: <i>default</i><p>
  * <tt>incrementRow</tt> The row to increment. Default: <i>incRow</i><p>
  * <tt>suffix:</tt> <i>uuid/random/timestamp.</i>Default: <i>uuid</i><p>
- *
- * Mandatory parameters: <p>
+ * <p>Mandatory parameters: <p>
  * <tt>cf:</tt>Column family.<p>
  * Components that have no defaults and will not be used if null:
  * <tt>payloadColumn:</tt> Which column to put payload in. If it is null,
@@ -59,8 +56,7 @@ public class SimpleHbaseEventSerializer implements HbaseEventSerializer {
   private KeyType keyType;
   private byte[] payload;
 
-  public SimpleHbaseEventSerializer(){
-
+  public SimpleHbaseEventSerializer() {
   }
 
   @Override
@@ -70,21 +66,21 @@ public class SimpleHbaseEventSerializer implements HbaseEventSerializer {
         context.getString("incrementRow", "incRow").getBytes(Charsets.UTF_8);
     String suffix = context.getString("suffix", "uuid");
 
-    String payloadColumn = context.getString("payloadColumn","pCol");
-    String incColumn = context.getString("incrementColumn","iCol");
-    if(payloadColumn != null && !payloadColumn.isEmpty()) {
-      if(suffix.equals("timestamp")){
+    String payloadColumn = context.getString("payloadColumn", "pCol");
+    String incColumn = context.getString("incrementColumn", "iCol");
+    if (payloadColumn != null && !payloadColumn.isEmpty()) {
+      if (suffix.equals("timestamp")) {
         keyType = KeyType.TS;
       } else if (suffix.equals("random")) {
         keyType = KeyType.RANDOM;
-      } else if(suffix.equals("nano")){
+      } else if (suffix.equals("nano")) {
         keyType = KeyType.TSNANO;
       } else {
         keyType = KeyType.UUID;
       }
       plCol = payloadColumn.getBytes(Charsets.UTF_8);
     }
-    if(incColumn != null && !incColumn.isEmpty()) {
+    if (incColumn != null && !incColumn.isEmpty()) {
       incCol = incColumn.getBytes(Charsets.UTF_8);
     }
   }
@@ -102,14 +98,14 @@ public class SimpleHbaseEventSerializer implements HbaseEventSerializer {
   @Override
   public List<Row> getActions() throws FlumeException {
     List<Row> actions = new LinkedList<Row>();
-    if(plCol != null){
+    if (plCol != null) {
       byte[] rowKey;
       try {
         if (keyType == KeyType.TS) {
           rowKey = SimpleRowKeyGenerator.getTimestampKey(rowPrefix);
-        } else if(keyType == KeyType.RANDOM) {
+        } else if (keyType == KeyType.RANDOM) {
           rowKey = SimpleRowKeyGenerator.getRandomKey(rowPrefix);
-        } else if(keyType == KeyType.TSNANO) {
+        } else if (keyType == KeyType.TSNANO) {
           rowKey = SimpleRowKeyGenerator.getNanoTimestampKey(rowPrefix);
         } else {
           rowKey = SimpleRowKeyGenerator.getUUIDKey(rowPrefix);
@@ -117,33 +113,34 @@ public class SimpleHbaseEventSerializer implements HbaseEventSerializer {
         Put put = new Put(rowKey);
         put.add(cf, plCol, payload);
         actions.add(put);
-      } catch (Exception e){
+      } catch (Exception e) {
         throw new FlumeException("Could not get row key!", e);
       }
 
     }
     return actions;
   }
-    @Override
-    public List<Increment> getIncrements(){
-      List<Increment> incs = new LinkedList<Increment>();
-      if(incCol != null) {
-        Increment inc = new Increment(incrementRow);
-        inc.addColumn(cf, incCol, 1);
-        incs.add(inc);
-      }
-      return incs;
-    }
 
-    @Override
-    public void close() {
+  @Override
+  public List<Increment> getIncrements() {
+    List<Increment> incs = new LinkedList<Increment>();
+    if (incCol != null) {
+      Increment inc = new Increment(incrementRow);
+      inc.addColumn(cf, incCol, 1);
+      incs.add(inc);
     }
-
-    public enum KeyType{
-      UUID,
-      RANDOM,
-      TS,
-      TSNANO;
-    }
-
+    return incs;
   }
+
+  @Override
+  public void close() {
+  }
+
+  public enum KeyType {
+    UUID,
+    RANDOM,
+    TS,
+    TSNANO;
+  }
+
+}

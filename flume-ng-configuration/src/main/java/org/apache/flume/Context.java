@@ -86,7 +86,7 @@ public class Context {
     Preconditions.checkArgument(prefix.endsWith("."),
         "The given prefix does not end with a period (" + prefix + ")");
     Map<String, String> result = Maps.newHashMap();
-    synchronized(parameters) {
+    synchronized (parameters) {
       for (String key : parameters.keySet()) {
         if (key.startsWith(prefix)) {
           String name = key.substring(prefix.length());
@@ -129,7 +129,7 @@ public class Context {
    */
   public Boolean getBoolean(String key, Boolean defaultValue) {
     String value = get(key);
-    if(value != null) {
+    if (value != null) {
       return Boolean.parseBoolean(value.trim());
     }
     return defaultValue;
@@ -158,7 +158,7 @@ public class Context {
    */
   public Integer getInteger(String key, Integer defaultValue) {
     String value = get(key);
-    if(value != null) {
+    if (value != null) {
       return Integer.parseInt(value.trim());
     }
     return defaultValue;
@@ -187,7 +187,7 @@ public class Context {
    */
   public Long getLong(String key, Long defaultValue) {
     String value = get(key);
-    if(value != null) {
+    if (value != null) {
       return Long.parseLong(value.trim());
     }
     return defaultValue;
@@ -227,7 +227,7 @@ public class Context {
   }
   private String get(String key, String defaultValue) {
     String result = parameters.get(key);
-    if(result != null) {
+    if (result != null) {
       return result;
     }
     return defaultValue;

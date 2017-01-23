@@ -46,7 +46,9 @@ public class KerberosUser {
       return false;
     }
     final KerberosUser other = (KerberosUser) obj;
-    if ((this.principal == null) ? (other.principal != null) : !this.principal.equals(other.principal)) {
+    if ((this.principal == null) ?
+        (other.principal != null) :
+        !this.principal.equals(other.principal)) {
       return false;
     }
     if ((this.keyTab == null) ? (other.keyTab != null) : !this.keyTab.equals(other.keyTab)) {

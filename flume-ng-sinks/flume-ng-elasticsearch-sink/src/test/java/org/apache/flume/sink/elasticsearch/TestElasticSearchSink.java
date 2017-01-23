@@ -18,25 +18,7 @@
  */
 package org.apache.flume.sink.elasticsearch;
 
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.BATCH_SIZE;
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.CLUSTER_NAME;
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.HOSTNAMES;
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.INDEX_NAME;
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.INDEX_TYPE;
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.SERIALIZER;
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.TTL;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertNull;
-
-import java.io.IOException;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang.time.FastDateFormat;
-
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -55,6 +37,24 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
+
+import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.BATCH_SIZE;
+import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.CLUSTER_NAME;
+import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.HOSTNAMES;
+import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.INDEX_NAME;
+import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.INDEX_TYPE;
+import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.SERIALIZER;
+import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.TTL;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
 
@@ -373,23 +373,22 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
   public static final class CustomElasticSearchIndexRequestBuilderFactory
       extends AbstractElasticSearchIndexRequestBuilderFactory {
 
-    static String actualIndexName, actualIndexType;
+    static String actualIndexName;
+    static String actualIndexType;
     static byte[] actualEventBody;
     static boolean hasContext;
 
     public CustomElasticSearchIndexRequestBuilderFactory() {
-      super(FastDateFormat.getInstance("HH_mm_ss_SSS",
-          TimeZone.getTimeZone("EST5EDT")));
+      super(FastDateFormat.getInstance("HH_mm_ss_SSS", TimeZone.getTimeZone("EST5EDT")));
     }
 
     @Override
-    protected void prepareIndexRequest(IndexRequestBuilder indexRequest,
-        String indexName, String indexType, Event event) throws IOException {
+    protected void prepareIndexRequest(IndexRequestBuilder indexRequest, String indexName,
+                                       String indexType, Event event) throws IOException {
       actualIndexName = indexName;
       actualIndexType = indexType;
       actualEventBody = event.getBody();
-      indexRequest.setIndex(indexName).setType(indexType)
-          .setSource(event.getBody());
+      indexRequest.setIndex(indexName).setType(indexType).setSource(event.getBody());
     }
 
     @Override
@@ -458,7 +457,8 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
 class FakeEventSerializer implements ElasticSearchEventSerializer {
 
   static final byte[] FAKE_BYTES = new byte[] { 9, 8, 7, 6 };
-  boolean configuredWithContext, configuredWithComponentConfiguration;
+  boolean configuredWithContext;
+  boolean configuredWithComponentConfiguration;
 
   @Override
   public BytesStream getContentBuilder(Event event) throws IOException {

@@ -29,39 +29,39 @@ import org.junit.Test;
 
 public class TestRpcClientCommunicationFailure {
 
-   public static final String CONFIG_FILE_PRCCLIENT_TEST =
-        "rpc-client-test.properties";
+  public static final String CONFIG_FILE_PRCCLIENT_TEST =
+      "rpc-client-test.properties";
 
-   @Test
-   public void testFailure() throws Exception {
-     try {
+  @Test
+  public void testFailure() throws Exception {
+    try {
 
-       StagedInstall.getInstance().startAgent(
-         "rpccagent", CONFIG_FILE_PRCCLIENT_TEST);
-       StagedInstall.waitUntilPortOpens("localhost", 12121, 20000);
-       RpcClient client = RpcClientFactory.getDefaultInstance(
-           "localhost", 12121);
-       String[] text = {"foo", "bar", "xyz", "abc"};
-       for (String str : text) {
-         client.append(EventBuilder.withBody(str.getBytes()));
-       }
+      StagedInstall.getInstance().startAgent(
+          "rpccagent", CONFIG_FILE_PRCCLIENT_TEST);
+      StagedInstall.waitUntilPortOpens("localhost", 12121, 20000);
+      RpcClient client = RpcClientFactory.getDefaultInstance(
+          "localhost", 12121);
+      String[] text = {"foo", "bar", "xyz", "abc"};
+      for (String str : text) {
+        client.append(EventBuilder.withBody(str.getBytes()));
+      }
 
-       // Stop the agent
-       StagedInstall.getInstance().stopAgent();
+      // Stop the agent
+      StagedInstall.getInstance().stopAgent();
 
-       // Try sending the event which should fail
-       try {
-         client.append(EventBuilder.withBody("test".getBytes()));
-         Assert.fail("EventDeliveryException expected but not raised");
-       } catch (EventDeliveryException ex) {
-         System.out.println("Attempting to close client");
-         client.close();
-       }
-     } finally {
-       if (StagedInstall.getInstance().isRunning()) {
-         StagedInstall.getInstance().stopAgent();
-       }
-     }
-   }
+      // Try sending the event which should fail
+      try {
+        client.append(EventBuilder.withBody("test".getBytes()));
+        Assert.fail("EventDeliveryException expected but not raised");
+      } catch (EventDeliveryException ex) {
+        System.out.println("Attempting to close client");
+        client.close();
+      }
+    } finally {
+      if (StagedInstall.getInstance().isRunning()) {
+        StagedInstall.getInstance().stopAgent();
+      }
+    }
+  }
 
 }

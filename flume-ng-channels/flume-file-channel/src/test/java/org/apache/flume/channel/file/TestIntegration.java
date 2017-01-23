@@ -18,13 +18,8 @@
  */
 package org.apache.flume.channel.file;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
+import com.google.common.collect.Lists;
+import com.google.common.io.Files;
 import org.apache.commons.io.FileUtils;
 import org.apache.flume.Context;
 import org.apache.flume.conf.Configurables;
@@ -37,8 +32,12 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Lists;
-import com.google.common.io.Files;
+import java.io.File;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public class TestIntegration {
 
@@ -58,19 +57,21 @@ public class TestIntegration {
     dataDirs = new File[3];
     dataDir = "";
     for (int i = 0; i < dataDirs.length; i++) {
-      dataDirs[i] = new File(baseDir, "data" + (i+1));
+      dataDirs[i] = new File(baseDir, "data" + (i + 1));
       Assert.assertTrue(dataDirs[i].mkdirs() || dataDirs[i].isDirectory());
       dataDir += dataDirs[i].getAbsolutePath() + ",";
     }
     dataDir = dataDir.substring(0, dataDir.length() - 1);
   }
+
   @After
   public void teardown() {
-    if(channel != null && channel.isOpen()) {
+    if (channel != null && channel.isOpen()) {
       channel.stop();
     }
     FileUtils.deleteQuietly(baseDir);
   }
+
   @Test
   public void testIntegration() throws IOException, InterruptedException {
     // set shorter checkpoint and filesize to ensure
@@ -106,11 +107,11 @@ public class TestIntegration {
     TimeUnit.SECONDS.sleep(30);
     // shutdown source
     sourceRunner.shutdown();
-    while(sourceRunner.isAlive()) {
+    while (sourceRunner.isAlive()) {
       Thread.sleep(10L);
     }
     // wait for queue to clear
-    while(channel.getDepth() > 0) {
+    while (channel.getDepth() > 0) {
       Thread.sleep(10L);
     }
     // shutdown size
@@ -122,15 +123,15 @@ public class TestIntegration {
       logs.addAll(LogUtils.getLogs(dataDirs[i]));
     }
     LOG.info("Total Number of Logs = " + logs.size());
-    for(File logFile : logs) {
+    for (File logFile : logs) {
       LOG.info("LogFile = " + logFile);
     }
     LOG.info("Source processed " + sinkRunner.getCount());
     LOG.info("Sink processed " + sourceRunner.getCount());
-    for(Exception ex : sourceRunner.getErrors()) {
+    for (Exception ex : sourceRunner.getErrors()) {
       LOG.warn("Source had error", ex);
     }
-    for(Exception ex : sinkRunner.getErrors()) {
+    for (Exception ex : sinkRunner.getErrors()) {
       LOG.warn("Sink had error", ex);
     }
     Assert.assertEquals(sinkRunner.getCount(), sinkRunner.getCount());

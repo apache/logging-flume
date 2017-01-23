@@ -59,7 +59,6 @@ public abstract class MonitoredCounterGroup {
   private AtomicLong stopTime;
   private volatile boolean registered = false;
 
-
   protected MonitoredCounterGroup(Type type, String name, String... attrs) {
     this.type = type;
     this.name = name;
@@ -154,15 +153,15 @@ public abstract class MonitoredCounterGroup {
 
     // Print out the startTime for this component
     logger.info("Shutdown Metric for type: " + type + ", "
-      + "name: " + name + ". "
-      + typePrefix + "." + COUNTER_GROUP_START_TIME
-      + " == " + startTime);
+        + "name: " + name + ". "
+        + typePrefix + "." + COUNTER_GROUP_START_TIME
+        + " == " + startTime);
 
     // Print out the stopTime for this component
     logger.info("Shutdown Metric for type: " + type + ", "
-      + "name: " + name + ". "
-      + typePrefix + "." + COUNTER_GROUP_STOP_TIME
-      + " == " + stopTime);
+        + "name: " + name + ". "
+        + typePrefix + "." + COUNTER_GROUP_STOP_TIME
+        + " == " + stopTime);
 
     // Retrieve and sort counter group map keys
     final List<String> mapKeys = new ArrayList<String>(counterMap.keySet());
@@ -176,8 +175,8 @@ public abstract class MonitoredCounterGroup {
       final long counterMapValue = get(counterMapKey);
 
       logger.info("Shutdown Metric for type: " + type + ", "
-        + "name: " + name + ". "
-        + counterMapKey + " == " + counterMapValue);
+          + "name: " + name + ". "
+          + counterMapKey + " == " + counterMapValue);
     }
   }
 
@@ -276,9 +275,9 @@ public abstract class MonitoredCounterGroup {
     INTERCEPTOR,
     SERIALIZER,
     OTHER
-  };
+  }
 
-  public String getType(){
+  public String getType() {
     return type.name();
   }
 }

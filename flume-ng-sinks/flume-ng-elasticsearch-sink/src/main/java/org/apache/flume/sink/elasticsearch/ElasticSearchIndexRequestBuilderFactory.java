@@ -40,7 +40,6 @@ public interface ElasticSearchIndexRequestBuilderFactory extends Configurable,
       TimeZone.getTimeZone("Etc/UTC"));
 
   /**
-   * @return prepared ElasticSearch {@link IndexRequestBuilder} instance
    * @param client
    *          ElasticSearch {@link Client} to prepare index from
    * @param indexPrefix
@@ -49,6 +48,7 @@ public interface ElasticSearchIndexRequestBuilderFactory extends Configurable,
    *          Index type to use -- as configured on the sink
    * @param event
    *          Flume event to serialize and add to index request
+   * @return prepared ElasticSearch {@link IndexRequestBuilder} instance
    * @throws IOException
    *           If an error occurs e.g. during serialization
    */

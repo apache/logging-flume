@@ -26,7 +26,8 @@ public class TestRegexExtractorInterceptorPassThroughSerializer {
 
   @Test
   public void shouldReturnSameValue() {
-    RegexExtractorInterceptorPassThroughSerializer fixture = new RegexExtractorInterceptorPassThroughSerializer();
+    RegexExtractorInterceptorPassThroughSerializer fixture =
+        new RegexExtractorInterceptorPassThroughSerializer();
     fixture.configure(new Context());
     String input = "testing (1,2,3,4)";
     Assert.assertEquals(input, fixture.serialize(input));

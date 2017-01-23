@@ -54,12 +54,10 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
   private static final Logger LOGGER =
       LoggerFactory.getLogger(JdbcChannelProviderImpl.class);
 
-
   private static final String EMBEDDED_DERBY_DRIVER_CLASSNAME
-        = "org.apache.derby.jdbc.EmbeddedDriver";
+      = "org.apache.derby.jdbc.EmbeddedDriver";
 
-  private static final String DEFAULT_DRIVER_CLASSNAME
-         = EMBEDDED_DERBY_DRIVER_CLASSNAME;
+  private static final String DEFAULT_DRIVER_CLASSNAME = EMBEDDED_DERBY_DRIVER_CLASSNAME;
   private static final String DEFAULT_USERNAME = "sa";
   private static final String DEFAULT_PASSWORD = "";
   private static final String DEFAULT_DBTYPE = "DERBY";
@@ -96,10 +94,7 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
 
   @Override
   public void initialize(Context context) {
-    if (LOGGER.isDebugEnabled()) {
-      LOGGER.debug("Initializing JDBC Channel provider with props: "
-          + context);
-    }
+    LOGGER.debug("Initializing JDBC Channel provider");
 
     initializeSystemProperties(context);
     initializeDataSource(context);
@@ -133,7 +128,7 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
 
     for (String key: sysProps.keySet()) {
       String value = sysProps.get(key);
-      if(key != null && value != null) {
+      if (key != null && value != null) {
         System.setProperty(key, value);
       }
     }
@@ -254,7 +249,7 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
         int index = connectUrl.indexOf(";");
         String baseUrl = null;
         if (index != -1) {
-          baseUrl = connectUrl.substring(0, index+1);
+          baseUrl = connectUrl.substring(0, index + 1);
         } else {
           baseUrl = connectUrl + ";";
         }
@@ -365,7 +360,7 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
   /**
 
    * Initializes the datasource and the underlying connection pool.
-   * @param properties
+   * @param context
    */
   private void initializeDataSource(Context context) {
     driverClassName = getConfigurationString(context,
@@ -440,12 +435,12 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
     databaseType = DatabaseType.getByName(dbTypeName);
 
     switch (databaseType) {
-    case DERBY:
-    case MYSQL:
-      break;
-    default:
-      throw new JdbcChannelException("Database " + databaseType
-          + " not supported at this time");
+      case DERBY:
+      case MYSQL:
+        break;
+      default:
+        throw new JdbcChannelException("Database " + databaseType
+            + " not supported at this time");
     }
 
     // Register driver
@@ -594,7 +589,7 @@ public class JdbcChannelProviderImpl implements JdbcChannelProvider {
    * @param context
    * @param key the expected configuration key
    * @param oldKey the deprecated configuration key
-   * @param  default value, null if no default
+   * @param defaultValue default value, null if no default
    * @return the value associated with the key
    */
   private String getConfigurationString(Context context, String key,

@@ -32,6 +32,7 @@ import org.apache.flume.Source;
 import org.apache.flume.SourceRunner;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
+import org.apache.flume.conf.LogPrivacyUtil;
 import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.lifecycle.LifecycleSupervisor;
@@ -76,9 +77,11 @@ public class EmbeddedAgent {
     supervisor = new LifecycleSupervisor();
 
   }
+
   public EmbeddedAgent(String name) {
     this(new MaterializedConfigurationProvider(), name);
   }
+
   /**
    * Configures the embedded agent. Can only be called after the object
    * is created or after the stop() method is called.
@@ -89,12 +92,13 @@ public class EmbeddedAgent {
    */
   public void configure(Map<String, String> properties)
       throws FlumeException {
-    if(state == State.STARTED) {
+    if (state == State.STARTED) {
       throw new IllegalStateException("Cannot be configured while started");
     }
     doConfigure(properties);
     state = State.STOPPED;
   }
+
   /**
    * Started the agent. Can only be called after a successful call to
    * configure().
@@ -105,9 +109,9 @@ public class EmbeddedAgent {
    */
   public void start()
       throws FlumeException {
-    if(state == State.STARTED) {
+    if (state == State.STARTED) {
       throw new IllegalStateException("Cannot be started while started");
-    } else if(state == State.NEW) {
+    } else if (state == State.NEW) {
       throw new IllegalStateException("Cannot be started before being " +
           "configured");
     }
@@ -115,15 +119,15 @@ public class EmbeddedAgent {
     // as doStart() accesses sourceRunner.getSource()
     Source source = Preconditions.checkNotNull(sourceRunner.getSource(),
         "Source runner returned null source");
-    if(source instanceof EmbeddedSource) {
+    if (source instanceof EmbeddedSource) {
       embeddedSource = (EmbeddedSource)source;
     } else {
-      throw new IllegalStateException("Unknown source type: " + source.
-          getClass().getName());
+      throw new IllegalStateException("Unknown source type: " + source.getClass().getName());
     }
     doStart();
     state = State.STARTED;
   }
+
   /**
    * Stops the agent. Can only be called after a successful call to start().
    * After a call to stop(), the agent can be re-configured with the
@@ -134,7 +138,7 @@ public class EmbeddedAgent {
    */
   public void stop()
       throws FlumeException {
-    if(state != State.STARTED) {
+    if (state != State.STARTED) {
       throw new IllegalStateException("Cannot be stopped unless started");
     }
     supervisor.stop();
@@ -146,9 +150,9 @@ public class EmbeddedAgent {
 
     properties = EmbeddedAgentConfiguration.configure(name, properties);
 
-    if(LOGGER.isDebugEnabled()) {
+    if (LOGGER.isDebugEnabled() && LogPrivacyUtil.allowLogPrintConfig()) {
       LOGGER.debug("Agent configuration values");
-      for(String key : new TreeSet<String>(properties.keySet())) {
+      for (String key : new TreeSet<String>(properties.keySet())) {
         LOGGER.debug(key + " = " + properties.get(key));
       }
     }
@@ -156,17 +160,17 @@ public class EmbeddedAgent {
     MaterializedConfiguration conf = configurationProvider.get(name,
         properties);
     Map<String, SourceRunner> sources = conf.getSourceRunners();
-    if(sources.size() != 1) {
+    if (sources.size() != 1) {
       throw new FlumeException("Expected one source and got "  +
           sources.size());
     }
     Map<String, Channel> channels = conf.getChannels();
-    if(channels.size() != 1) {
+    if (channels.size() != 1) {
       throw new FlumeException("Expected one channel and got "  +
           channels.size());
     }
     Map<String, SinkRunner> sinks = conf.getSinkRunners();
-    if(sinks.size() != 1) {
+    if (sinks.size() != 1) {
       throw new FlumeException("Expected one sink group and got "  +
           sinks.size());
     }
@@ -174,6 +178,7 @@ public class EmbeddedAgent {
     this.channel = channels.values().iterator().next();
     this.sinkRunner = sinks.values().iterator().next();
   }
+
   /**
    * Adds event to the channel owned by the agent. Note however, that the
    * event is not copied and as such, the byte array and headers cannot
@@ -182,7 +187,7 @@ public class EmbeddedAgent {
    * @throws EventDeliveryException if unable to add event to channel
    */
   public void put(Event event) throws EventDeliveryException {
-    if(state != State.STARTED) {
+    if (state != State.STARTED) {
       throw new IllegalStateException("Cannot put events unless started");
     }
     try {
@@ -192,6 +197,7 @@ public class EmbeddedAgent {
           ": Unable to process event: " + ex.getMessage(), ex);
     }
   }
+
   /**
    * Adds events to the channel owned by the agent. Note however, that the
    * event is not copied and as such, the byte array and headers cannot
@@ -200,7 +206,7 @@ public class EmbeddedAgent {
    * @throws EventDeliveryException if unable to add event to channel
    */
   public void putAll(List<Event> events) throws EventDeliveryException {
-    if(state != State.STARTED) {
+    if (state != State.STARTED) {
       throw new IllegalStateException("Cannot put events unless started");
     }
     try {
@@ -226,7 +232,7 @@ public class EmbeddedAgent {
           new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
       error = false;
     } finally {
-      if(error) {
+      if (error) {
         stopLogError(sourceRunner);
         stopLogError(channel);
         stopLogError(sinkRunner);
@@ -234,9 +240,10 @@ public class EmbeddedAgent {
       }
     }
   }
+
   private void stopLogError(LifecycleAware lifeCycleAware) {
     try {
-      if(LifecycleState.START.equals(lifeCycleAware.getLifecycleState())) {
+      if (LifecycleState.START.equals(lifeCycleAware.getLifecycleState())) {
         lifeCycleAware.stop();
       }
     } catch (Exception e) {

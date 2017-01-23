@@ -19,7 +19,12 @@ package org.apache.flume.sink.irc;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.flume.*;
+import org.apache.flume.Channel;
+import org.apache.flume.Context;
+import org.apache.flume.Event;
+import org.apache.flume.EventDeliveryException;
+import org.apache.flume.Sink;
+import org.apache.flume.Transaction;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
@@ -116,7 +121,9 @@ public class TestIRCSink {
           try {
             Socket socket = ss.accept();
             process(socket);
-          } catch (Exception ex) {/* noop */ }
+          } catch (Exception ex) {
+            /* noop */
+          }
         }
       } catch (IOException e) {
         // noop

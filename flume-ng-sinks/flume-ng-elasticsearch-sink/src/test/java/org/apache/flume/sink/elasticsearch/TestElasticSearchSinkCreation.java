@@ -28,7 +28,7 @@ import org.junit.Test;
 
 public class TestElasticSearchSinkCreation {
 
-private SinkFactory sinkFactory;
+  private SinkFactory sinkFactory;
 
   @Before
   public void setUp() {

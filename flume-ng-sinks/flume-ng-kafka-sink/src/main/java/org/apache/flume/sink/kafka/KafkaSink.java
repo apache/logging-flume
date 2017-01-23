@@ -20,7 +20,6 @@ package org.apache.flume.sink.kafka;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
-
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.specific.SpecificDatumReader;
@@ -32,6 +31,7 @@ import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.ConfigurationException;
+import org.apache.flume.conf.LogPrivacyUtil;
 import org.apache.flume.instrumentation.kafka.KafkaSinkCounter;
 import org.apache.flume.sink.AbstractSink;
 import org.apache.flume.source.avro.AvroFlumeEvent;
@@ -114,6 +114,8 @@ public class KafkaSink extends AbstractSink implements Configurable {
   private List<Future<RecordMetadata>> kafkaFutures;
   private KafkaSinkCounter counter;
   private boolean useAvroEventFormat;
+  private String partitionHeader = null;
+  private Integer staticPartitionId = null;
   private Optional<SpecificDatumWriter<AvroFlumeEvent>> writer =
           Optional.absent();
   private Optional<SpecificDatumReader<AvroFlumeEvent>> reader =
@@ -157,7 +159,7 @@ public class KafkaSink extends AbstractSink implements Configurable {
 
         if (event == null) {
           // no events available in channel
-          if(processedEvents == 0) {
+          if (processedEvents == 0) {
             result = Status.BACKOFF;
             counter.incrementBatchEmptyCount();
           } else {
@@ -174,21 +176,47 @@ public class KafkaSink extends AbstractSink implements Configurable {
           eventTopic = topic;
         }
         eventKey = headers.get(KEY_HEADER);
-
-        if (logger.isDebugEnabled()) {
-          logger.debug("{Event} " + eventTopic + " : " + eventKey + " : "
-            + new String(eventBody, "UTF-8"));
-          logger.debug("event #{}", processedEvents);
+        if (logger.isTraceEnabled()) {
+          if (LogPrivacyUtil.allowLogRawData()) {
+            logger.trace("{Event} " + eventTopic + " : " + eventKey + " : "
+                + new String(eventBody, "UTF-8"));
+          } else {
+            logger.trace("{Event} " + eventTopic + " : " + eventKey);
+          }
         }
+        logger.debug("event #{}", processedEvents);
 
         // create a message and add to buffer
         long startTime = System.currentTimeMillis();
 
+        Integer partitionId = null;
         try {
-          kafkaFutures.add(producer.send(new ProducerRecord<String, byte[]> (eventTopic, eventKey, serializeEvent(event, useAvroEventFormat)),
-                                         new SinkCallback(startTime)));
-        } catch (IOException ex) {
-          throw new EventDeliveryException("Could not serialize event", ex);
+          ProducerRecord<String, byte[]> record;
+          if (staticPartitionId != null) {
+            partitionId = staticPartitionId;
+          }
+          //Allow a specified header to override a static ID
+          if (partitionHeader != null) {
+            String headerVal = event.getHeaders().get(partitionHeader);
+            if (headerVal != null) {
+              partitionId = Integer.parseInt(headerVal);
+            }
+          }
+          if (partitionId != null) {
+            record = new ProducerRecord<String, byte[]>(eventTopic, partitionId, eventKey,
+                serializeEvent(event, useAvroEventFormat));
+          } else {
+            record = new ProducerRecord<String, byte[]>(eventTopic, eventKey,
+                serializeEvent(event, useAvroEventFormat));
+          }
+          kafkaFutures.add(producer.send(record, new SinkCallback(startTime)));
+        } catch (NumberFormatException ex) {
+          throw new EventDeliveryException("Non integer partition id specified", ex);
+        } catch (Exception ex) {
+          // N.B. The producer.send() method throws all sorts of RuntimeExceptions
+          // Catching Exception here to wrap them neatly in an EventDeliveryException
+          // which is what our consumers will expect
+          throw new EventDeliveryException("Could not send event", ex);
         }
       }
 
@@ -197,11 +225,11 @@ public class KafkaSink extends AbstractSink implements Configurable {
 
       // publish batch and commit.
       if (processedEvents > 0) {
-          for (Future<RecordMetadata> future : kafkaFutures) {
-            future.get();
-          }
+        for (Future<RecordMetadata> future : kafkaFutures) {
+          future.get();
+        }
         long endTime = System.nanoTime();
-        counter.addToKafkaEventSendTimer((endTime-batchStartTime)/(1000*1000));
+        counter.addToKafkaEventSendTimer((endTime - batchStartTime) / (1000 * 1000));
         counter.addToEventDrainSuccessCount(Long.valueOf(kafkaFutures.size()));
       }
 
@@ -270,8 +298,7 @@ public class KafkaSink extends AbstractSink implements Configurable {
     if (topicStr == null || topicStr.isEmpty()) {
       topicStr = DEFAULT_TOPIC;
       logger.warn("Topic was not specified. Using {} as the topic.", topicStr);
-    }
-    else {
+    } else {
       logger.info("Using the static topic {}. This may be overridden by event headers", topicStr);
     }
 
@@ -283,7 +310,11 @@ public class KafkaSink extends AbstractSink implements Configurable {
       logger.debug("Using batch size: {}", batchSize);
     }
 
-    useAvroEventFormat = context.getBoolean(KafkaSinkConstants.AVRO_EVENT, KafkaSinkConstants.DEFAULT_AVRO_EVENT);
+    useAvroEventFormat = context.getBoolean(KafkaSinkConstants.AVRO_EVENT,
+                                            KafkaSinkConstants.DEFAULT_AVRO_EVENT);
+
+    partitionHeader = context.getString(KafkaSinkConstants.PARTITION_HEADER_NAME);
+    staticPartitionId = context.getInteger(KafkaSinkConstants.STATIC_PARTITION_CONF);
 
     if (logger.isDebugEnabled()) {
       logger.debug(KafkaSinkConstants.AVRO_EVENT + " set to: {}", useAvroEventFormat);
@@ -298,8 +329,8 @@ public class KafkaSink extends AbstractSink implements Configurable {
 
     setProducerProps(context, bootStrapServers);
 
-    if (logger.isDebugEnabled()) {
-      logger.debug("Kafka producer properties: {}" , kafkaProps);
+    if (logger.isDebugEnabled() && LogPrivacyUtil.allowLogPrintConfig()) {
+      logger.debug("Kafka producer properties: {}", kafkaProps);
     }
 
     if (counter == null) {
@@ -322,7 +353,8 @@ public class KafkaSink extends AbstractSink implements Configurable {
         throw new ConfigurationException("Bootstrap Servers must be specified");
       } else {
         ctx.put(BOOTSTRAP_SERVERS_CONFIG, brokerList);
-        logger.warn("{} is deprecated. Please use the parameter {}", BROKER_LIST_FLUME_KEY, BOOTSTRAP_SERVERS_CONFIG);
+        logger.warn("{} is deprecated. Please use the parameter {}",
+                    BROKER_LIST_FLUME_KEY, BOOTSTRAP_SERVERS_CONFIG);
       }
     }
 
@@ -348,29 +380,26 @@ public class KafkaSink extends AbstractSink implements Configurable {
 
     if (ctx.containsKey(KEY_SERIALIZER_KEY )) {
       logger.warn("{} is deprecated. Flume now uses the latest Kafka producer which implements " +
-              "a different interface for serializers. Please use the parameter {}",
-              KEY_SERIALIZER_KEY,KAFKA_PRODUCER_PREFIX + ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG);
+          "a different interface for serializers. Please use the parameter {}",
+          KEY_SERIALIZER_KEY,KAFKA_PRODUCER_PREFIX + ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG);
     }
 
     if (ctx.containsKey(MESSAGE_SERIALIZER_KEY)) {
       logger.warn("{} is deprecated. Flume now uses the latest Kafka producer which implements " +
-                      "a different interface for serializers. Please use the parameter {}",
-              MESSAGE_SERIALIZER_KEY,KAFKA_PRODUCER_PREFIX + ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG);
+                  "a different interface for serializers. Please use the parameter {}",
+                  MESSAGE_SERIALIZER_KEY,
+                  KAFKA_PRODUCER_PREFIX + ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG);
     }
-
-
-
-
-
   }
+
   private void setProducerProps(Context context, String bootStrapServers) {
+    kafkaProps.clear();
     kafkaProps.put(ProducerConfig.ACKS_CONFIG, DEFAULT_ACKS);
     //Defaults overridden based on config
     kafkaProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, DEFAULT_KEY_SERIALIZER);
     kafkaProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, DEFAULT_VALUE_SERIAIZER);
     kafkaProps.putAll(context.getSubProperties(KAFKA_PRODUCER_PREFIX));
     kafkaProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootStrapServers);
-    logger.info("Producer properties: {}" , kafkaProps.toString());
   }
 
   protected Properties getKafkaProps() {
@@ -387,7 +416,8 @@ public class KafkaSink extends AbstractSink implements Configurable {
         writer = Optional.of(new SpecificDatumWriter<AvroFlumeEvent>(AvroFlumeEvent.class));
       }
       tempOutStream.get().reset();
-      AvroFlumeEvent e = new AvroFlumeEvent(toCharSeqMap(event.getHeaders()), ByteBuffer.wrap(event.getBody()));
+      AvroFlumeEvent e = new AvroFlumeEvent(toCharSeqMap(event.getHeaders()),
+                                            ByteBuffer.wrap(event.getBody()));
       encoder = EncoderFactory.get().directBinaryEncoder(tempOutStream.get(), encoder);
       writer.get().write(e, encoder);
       encoder.flush();

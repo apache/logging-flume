@@ -18,8 +18,12 @@
  */
 package org.apache.flume.source.jms;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
+import org.apache.flume.Event;
+import org.apache.flume.FlumeException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
@@ -30,14 +34,8 @@ import javax.jms.MessageConsumer;
 import javax.jms.Session;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
-
-import org.apache.flume.Event;
-import org.apache.flume.FlumeException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Optional;
-import com.google.common.base.Preconditions;
+import java.util.ArrayList;
+import java.util.List;
 
 class JMSMessageConsumer {
   private static final Logger logger = LoggerFactory
@@ -52,11 +50,11 @@ class JMSMessageConsumer {
   private final Destination destination;
   private final MessageConsumer messageConsumer;
 
-  JMSMessageConsumer(InitialContext initialContext, ConnectionFactory connectionFactory, String destinationName,
-    JMSDestinationLocator destinationLocator, JMSDestinationType destinationType,
-    String messageSelector, int batchSize, long pollTimeout,
-    JMSMessageConverter messageConverter,
-    Optional<String> userName, Optional<String> password) {
+  JMSMessageConsumer(InitialContext initialContext, ConnectionFactory connectionFactory,
+                     String destinationName, JMSDestinationLocator destinationLocator,
+                     JMSDestinationType destinationType, String messageSelector, int batchSize,
+                     long pollTimeout, JMSMessageConverter messageConverter,
+                     Optional<String> userName, Optional<String> password) {
     this.batchSize = batchSize;
     this.pollTimeout = pollTimeout;
     this.messageConverter = messageConverter;
@@ -65,7 +63,7 @@ class JMSMessageConsumer {
     Preconditions.checkArgument(pollTimeout >= 0, "Poll timeout cannot be " +
         "negative");
     try {
-      if(userName.isPresent()) {
+      if (userName.isPresent()) {
         connection = connectionFactory.createConnection(userName.get(),
             password.get());
       } else {
@@ -82,37 +80,37 @@ class JMSMessageConsumer {
       throw new FlumeException("Could not create session", e);
     }
 
-  try {
-    if (destinationLocator.equals(JMSDestinationLocator.CDI)) {
-      switch (destinationType) {
-        case QUEUE:
-          destination = session.createQueue(destinationName);
-          break;
-        case TOPIC:
-          destination = session.createTopic(destinationName);
-          break;
-        default:
-          throw new IllegalStateException(String.valueOf(destinationType));
+    try {
+      if (destinationLocator.equals(JMSDestinationLocator.CDI)) {
+        switch (destinationType) {
+          case QUEUE:
+            destination = session.createQueue(destinationName);
+            break;
+          case TOPIC:
+            destination = session.createTopic(destinationName);
+            break;
+          default:
+            throw new IllegalStateException(String.valueOf(destinationType));
+        }
+      } else {
+        destination = (Destination) initialContext.lookup(destinationName);
       }
-    } else {
-      destination = (Destination) initialContext.lookup(destinationName);
+    } catch (JMSException e) {
+      throw new FlumeException("Could not create destination " + destinationName, e);
+    } catch (NamingException e) {
+      throw new FlumeException("Could not find destination " + destinationName, e);
     }
-  } catch (JMSException e) {
-    throw new FlumeException("Could not create destination " + destinationName, e);
-  } catch (NamingException e) {
-    throw new FlumeException("Could not find destination " + destinationName, e);
-  }
 
-  try {
+    try {
       messageConsumer = session.createConsumer(destination,
-          messageSelector.isEmpty() ? null: messageSelector);
+          messageSelector.isEmpty() ? null : messageSelector);
     } catch (JMSException e) {
       throw new FlumeException("Could not create consumer", e);
     }
     String startupMsg = String.format("Connected to '%s' of type '%s' with " +
-        "user '%s', batch size '%d', selector '%s' ", destinationName,
+            "user '%s', batch size '%d', selector '%s' ", destinationName,
         destinationType, userName.isPresent() ? userName.get() : "null",
-            batchSize, messageSelector.isEmpty() ? null : messageSelector);
+        batchSize, messageSelector.isEmpty() ? null : messageSelector);
     logger.info(startupMsg);
   }
 
@@ -120,23 +118,23 @@ class JMSMessageConsumer {
     List<Event> result = new ArrayList<Event>(batchSize);
     Message message;
     message = messageConsumer.receive(pollTimeout);
-    if(message != null) {
+    if (message != null) {
       result.addAll(messageConverter.convert(message));
       int max = batchSize - 1;
       for (int i = 0; i < max; i++) {
         message = messageConsumer.receiveNoWait();
-        if(message == null) {
+        if (message == null) {
           break;
         }
         result.addAll(messageConverter.convert(message));
       }
     }
-    if(logger.isDebugEnabled()) {
-      logger.debug(String.format("Took batch of %s from %s", result.size(),
-          destination));
+    if (logger.isDebugEnabled()) {
+      logger.debug(String.format("Took batch of %s from %s", result.size(), destination));
     }
     return result;
   }
+
   void commit() {
     try {
       session.commit();

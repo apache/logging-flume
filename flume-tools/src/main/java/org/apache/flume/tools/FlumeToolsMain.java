@@ -36,33 +36,32 @@ public class FlumeToolsMain implements FlumeTool {
   }
 
   @Override
-  public void run(String[] args) throws Exception{
+  public void run(String[] args) throws Exception {
     String error = "Expected name of tool and arguments for" +
-      " tool to be passed in on the command line. Please pass one of the " +
-      "following as arguments to this command: \n";
+        " tool to be passed in on the command line. Please pass one of the " +
+        "following as arguments to this command: \n";
     StringBuilder builder = new StringBuilder(error);
-    for(FlumeToolType type : FlumeToolType.values()) {
+    for (FlumeToolType type : FlumeToolType.values()) {
       builder.append(type.name()).append("\n");
     }
-    if(args == null || args.length == 0) {
+    if (args == null || args.length == 0) {
       System.out.println(builder.toString());
       System.exit(1);
     }
     String toolName = args[0];
     FlumeTool tool = null;
-    for(FlumeToolType type : FlumeToolType.values()) {
-      if(toolName.equalsIgnoreCase(type.name())) {
+    for (FlumeToolType type : FlumeToolType.values()) {
+      if (toolName.equalsIgnoreCase(type.name())) {
         tool = type.getClassInstance().newInstance();
         break;
       }
     }
     Preconditions.checkNotNull(tool, "Cannot find tool matching " + toolName
-      + ". Please select one of: \n " + FlumeToolType.getNames());
+        + ". Please select one of: \n " + FlumeToolType.getNames());
     if (args.length == 1) {
       tool.run(new String[0]);
     } else {
-      tool.run(Arrays.asList(args).subList(1, args.length).
-        toArray(new String[0]));
+      tool.run(Arrays.asList(args).subList(1, args.length).toArray(new String[0]));
     }
   }
 }

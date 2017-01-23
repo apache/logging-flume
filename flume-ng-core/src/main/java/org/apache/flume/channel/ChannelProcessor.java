@@ -20,6 +20,7 @@ package org.apache.flume.channel;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -43,7 +44,7 @@ import org.slf4j.LoggerFactory;
  * A channel processor exposes operations to put {@link Event}s into
  * {@link Channel}s. These operations will propagate a {@link ChannelException}
  * if any errors occur while attempting to write to {@code required} channels.
- *
+ * <p>
  * Each channel processor instance is configured with a {@link ChannelSelector}
  * instance that specifies which channels are
  * {@linkplain ChannelSelector#getRequiredChannels(Event) required} and which
@@ -73,6 +74,7 @@ public class ChannelProcessor implements Configurable {
 
   /**
    * The Context of the associated Source is passed.
+   *
    * @param context
    */
   @Override
@@ -103,7 +105,7 @@ public class ChannelProcessor implements Configurable {
       if (type == null) {
         LOG.error("Type not specified for interceptor " + interceptorName);
         throw new FlumeException("Interceptor.Type not specified for " +
-          interceptorName);
+            interceptorName);
       }
       try {
         Interceptor.Builder builder = factory.newInstance(type);
@@ -132,7 +134,7 @@ public class ChannelProcessor implements Configurable {
    * Attempts to {@linkplain Channel#put(Event) put} the given events into each
    * configured channel. If any {@code required} channel throws a
    * {@link ChannelException}, that exception will be propagated.
-   *
+   * <p>
    * <p>Note that if multiple channels are configured, some {@link Transaction}s
    * may have already been committed while others may be rolled back in the
    * case of an exception.
@@ -165,7 +167,7 @@ public class ChannelProcessor implements Configurable {
 
       List<Channel> optChannels = selector.getOptionalChannels(event);
 
-      for (Channel ch: optChannels) {
+      for (Channel ch : optChannels) {
         List<Event> eventQueue = optChannelQueue.get(ch);
         if (eventQueue == null) {
           eventQueue = new ArrayList<Event>();
@@ -193,9 +195,10 @@ public class ChannelProcessor implements Configurable {
       } catch (Throwable t) {
         tx.rollback();
         if (t instanceof Error) {
-          LOG.error("Error while writing to required channel: " +
-              reqChannel, t);
+          LOG.error("Error while writing to required channel: " + reqChannel, t);
           throw (Error) t;
+        } else if (t instanceof ChannelException) {
+          throw (ChannelException) t;
         } else {
           throw new ChannelException("Unable to put batch on required " +
               "channel: " + reqChannel, t);
@@ -216,7 +219,7 @@ public class ChannelProcessor implements Configurable {
 
         List<Event> batch = optChannelQueue.get(optChannel);
 
-        for (Event event : batch ) {
+        for (Event event : batch) {
           optChannel.put(event);
         }
 
@@ -239,7 +242,7 @@ public class ChannelProcessor implements Configurable {
    * Attempts to {@linkplain Channel#put(Event) put} the given event into each
    * configured channel. If any {@code required} channel throws a
    * {@link ChannelException}, that exception will be propagated.
-   *
+   * <p>
    * <p>Note that if multiple channels are configured, some {@link Transaction}s
    * may have already been committed while others may be rolled back in the
    * case of an exception.
@@ -268,9 +271,10 @@ public class ChannelProcessor implements Configurable {
       } catch (Throwable t) {
         tx.rollback();
         if (t instanceof Error) {
-          LOG.error("Error while writing to required channel: " +
-              reqChannel, t);
+          LOG.error("Error while writing to required channel: " + reqChannel, t);
           throw (Error) t;
+        } else if (t instanceof ChannelException) {
+          throw (ChannelException) t;
         } else {
           throw new ChannelException("Unable to put event on required " +
               "channel: " + reqChannel, t);

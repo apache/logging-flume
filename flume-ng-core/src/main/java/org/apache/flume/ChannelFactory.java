@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -17,12 +17,9 @@
  */
 package org.apache.flume;
 
-
 public interface ChannelFactory {
 
-  public Channel create(String name, String type) throws FlumeException;
+  Channel create(String name, String type) throws FlumeException;
 
-  public Class<? extends Channel> getClass(String type)
-  throws FlumeException;
-
+  Class<? extends Channel> getClass(String type) throws FlumeException;
 }

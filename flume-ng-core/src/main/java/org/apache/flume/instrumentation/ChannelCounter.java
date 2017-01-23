@@ -100,20 +100,20 @@ public class ChannelCounter extends MonitoredCounterGroup implements
     return addAndGet(COUNTER_EVENT_TAKE_SUCCESS, delta);
   }
 
-  public void setChannelCapacity(long capacity){
+  public void setChannelCapacity(long capacity) {
     set(COUNTER_CHANNEL_CAPACITY, capacity);
   }
 
   @Override
-  public long getChannelCapacity(){
+  public long getChannelCapacity() {
     return get(COUNTER_CHANNEL_CAPACITY);
   }
 
   @Override
-  public double getChannelFillPercentage(){
+  public double getChannelFillPercentage() {
     long capacity = getChannelCapacity();
-    if(capacity != 0L) {
-      return ((getChannelSize()/(double)capacity) * 100);
+    if (capacity != 0L) {
+      return (getChannelSize() / (double)capacity) * 100;
     }
     return Double.MAX_VALUE;
   }

@@ -18,7 +18,6 @@
  */
 package org.apache.flume.source;
 
-
 public class ExecSourceConfigurationConstants {
 
   /**
@@ -50,7 +49,7 @@ public class ExecSourceConfigurationConstants {
    * to data is pushed downstream: : default 3000 ms
    */
   public static final String CONFIG_BATCH_TIME_OUT = "batchTimeout";
-  public static final long DEFAULT_BATCH_TIME_OUT = 3000l;
+  public static final long DEFAULT_BATCH_TIME_OUT = 3000L;
 
   /**
    * Charset for reading input

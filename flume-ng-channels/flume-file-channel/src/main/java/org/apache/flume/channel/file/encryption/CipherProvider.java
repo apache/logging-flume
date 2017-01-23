@@ -27,44 +27,45 @@ public abstract class CipherProvider {
   public abstract Encryptor.Builder<?> newEncryptorBuilder();
   public abstract Decryptor.Builder<?> newDecryptorBuilder();
 
-  public static abstract class Encryptor {
+  public abstract static class Encryptor {
 
     public abstract byte[] encrypt(byte[] clearText);
     public abstract byte[] getParameters();
     public abstract String getCodec();
 
     /** Builder implementations MUST have a no-arg constructor */
-    public static abstract class Builder<T extends Encryptor> {
+    public abstract static class Builder<T extends Encryptor> {
       protected Key key;
+
       public Builder<T> setKey(Key key) {
         this.key = Preconditions.checkNotNull(key, "key cannot be null");
         return this;
       }
+
       public abstract T build();
     }
-
   }
 
-  public static abstract class Decryptor {
+  public abstract static class Decryptor {
     public abstract byte[] decrypt(byte[] cipherText);
     public abstract String getCodec();
 
     /** Builder implementations MUST have a no-arg constructor */
-    public static abstract class Builder<T extends Decryptor> {
+    public abstract static class Builder<T extends Decryptor> {
       protected byte[] parameters;
       protected Key key;
+
       public Builder<T> setKey(Key key) {
         this.key = Preconditions.checkNotNull(key, "key cannot be null");
         return this;
       }
+
       public Builder<T> setParameters(byte[] parameters) {
         this.parameters = parameters;
         return this;
       }
+
       public abstract T build();
     }
-
   }
-
-
 }

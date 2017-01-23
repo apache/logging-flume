@@ -35,7 +35,7 @@ public abstract class AbstractRpcClient implements RpcClient {
       RpcClientConfigurationConstants.DEFAULT_REQUEST_TIMEOUT_MILLIS;
 
   @Override
-  public int getBatchSize(){
+  public int getBatchSize() {
     return batchSize;
   }
   @Override

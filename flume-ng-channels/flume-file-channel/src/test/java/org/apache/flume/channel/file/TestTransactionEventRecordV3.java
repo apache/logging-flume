@@ -18,7 +18,8 @@
  */
 package org.apache.flume.channel.file;
 
-import static org.mockito.Mockito.*;
+import junit.framework.Assert;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -26,9 +27,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import junit.framework.Assert;
-
-import org.junit.Test;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class TestTransactionEventRecordV3 {
 
@@ -52,6 +52,7 @@ public class TestTransactionEventRecordV3 {
     Assert.assertEquals(TransactionEventRecord.Type.COMMIT.get(),
         commit.getRecordType());
   }
+
   @Test
   public void testPutSerialization() throws IOException, CorruptEventException {
     Map<String, String> headers = new HashMap<String, String>();
@@ -69,9 +70,9 @@ public class TestTransactionEventRecordV3 {
     Assert.assertEquals(headers, out.getEvent().getHeaders());
     Assert.assertTrue(Arrays.equals(in.getEvent().getBody(), out.getEvent().getBody()));
   }
+
   @Test
-  public void testPutSerializationNullHeader() throws IOException,
-    CorruptEventException {
+  public void testPutSerializationNullHeader() throws IOException, CorruptEventException {
     Put in = new Put(System.currentTimeMillis(),
         WriteOrderOracle.next(),
         new FlumeEvent(null, new byte[0]));
@@ -84,11 +85,10 @@ public class TestTransactionEventRecordV3 {
     Assert.assertNotNull(out.getEvent().getHeaders());
     Assert.assertTrue(Arrays.equals(in.getEvent().getBody(), out.getEvent().getBody()));
   }
+
   @Test
-  public void testTakeSerialization() throws IOException,
-    CorruptEventException {
-    Take in = new Take(System.currentTimeMillis(),
-        WriteOrderOracle.next(), 10, 20);
+  public void testTakeSerialization() throws IOException, CorruptEventException {
+    Take in = new Take(System.currentTimeMillis(), WriteOrderOracle.next(), 10, 20);
     Take out = (Take)TransactionEventRecord.fromByteArray(toByteArray(in));
     Assert.assertEquals(in.getClass(), out.getClass());
     Assert.assertEquals(in.getRecordType(), out.getRecordType());
@@ -99,10 +99,8 @@ public class TestTransactionEventRecordV3 {
   }
 
   @Test
-  public void testRollbackSerialization() throws IOException,
-    CorruptEventException {
-    Rollback in = new Rollback(System.currentTimeMillis(),
-        WriteOrderOracle.next());
+  public void testRollbackSerialization() throws IOException, CorruptEventException {
+    Rollback in = new Rollback(System.currentTimeMillis(), WriteOrderOracle.next());
     Rollback out = (Rollback)TransactionEventRecord.fromByteArray(toByteArray(in));
     Assert.assertEquals(in.getClass(), out.getClass());
     Assert.assertEquals(in.getRecordType(), out.getRecordType());
@@ -111,10 +109,8 @@ public class TestTransactionEventRecordV3 {
   }
 
   @Test
-  public void testCommitSerialization() throws IOException,
-    CorruptEventException {
-    Commit in = new Commit(System.currentTimeMillis(),
-        WriteOrderOracle.next());
+  public void testCommitSerialization() throws IOException, CorruptEventException {
+    Commit in = new Commit(System.currentTimeMillis(), WriteOrderOracle.next());
     Commit out = (Commit)TransactionEventRecord.fromByteArray(toByteArray(in));
     Assert.assertEquals(in.getClass(), out.getClass());
     Assert.assertEquals(in.getRecordType(), out.getRecordType());
@@ -129,7 +125,7 @@ public class TestTransactionEventRecordV3 {
     try {
       TransactionEventRecord.fromByteArray(toByteArray(in));
       Assert.fail();
-    } catch(NullPointerException e) {
+    } catch (NullPointerException e) {
       Assert.assertEquals("Unknown action ffff8000", e.getMessage());
     }
   }

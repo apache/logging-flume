@@ -23,7 +23,6 @@ import org.apache.flume.Context;
 
 import static org.apache.flume.sink.kite.DatasetSinkConstants.*;
 
-
 public class FailurePolicyFactory {
 
   public FailurePolicy newPolicy(Context config) {

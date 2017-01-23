@@ -37,7 +37,6 @@ public class TestDefaultSinkFactory {
   @Test
   public void testDuplicateCreate() {
 
-
     Sink avroSink1 = sinkFactory.create("avroSink1", "avro");
     Sink avroSink2 = sinkFactory.create("avroSink2", "avro");
 
@@ -55,7 +54,7 @@ public class TestDefaultSinkFactory {
   }
 
   private void verifySinkCreation(String name, String type, Class<?> typeClass)
-    throws Exception {
+      throws Exception {
     Sink sink = sinkFactory.create(name, type);
     Assert.assertNotNull(sink);
     Assert.assertTrue(typeClass.isInstance(sink));

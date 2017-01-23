@@ -125,8 +125,7 @@ public class TestLog4jAppenderWithAvro {
     Assert.assertNull(hdrs.get(Log4jAvroHeaders.MESSAGE_ENCODING.toString()));
 
     Assert.assertEquals("Schema URL should be set",
-        "file:///tmp/myrecord.avsc", hdrs.get(Log4jAvroHeaders.AVRO_SCHEMA_URL.toString
-        ()));
+        "file:///tmp/myrecord.avsc", hdrs.get(Log4jAvroHeaders.AVRO_SCHEMA_URL.toString()));
     Assert.assertNull("Schema string should not be set",
         hdrs.get(Log4jAvroHeaders.AVRO_SCHEMA_LITERAL.toString()));
 
@@ -174,7 +173,7 @@ public class TestLog4jAppenderWithAvro {
   }
 
   @After
-  public void cleanUp(){
+  public void cleanUp() {
     source.stop();
     ch.stop();
     props.clear();

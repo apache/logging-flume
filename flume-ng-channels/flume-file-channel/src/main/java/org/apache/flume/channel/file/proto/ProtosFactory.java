@@ -5010,18 +5010,21 @@ public final class ProtosFactory {
   public interface RollbackOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
   }
+
   /**
    * Protobuf type {@code Rollback}
    */
-  public static final class Rollback extends
-      com.google.protobuf.GeneratedMessage
-      implements RollbackOrBuilder {
+  public static final class Rollback extends com.google.protobuf.GeneratedMessage
+                                     implements RollbackOrBuilder {
     // Use Rollback.newBuilder() to construct.
     private Rollback(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
       this.unknownFields = builder.getUnknownFields();
     }
-    private Rollback(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private Rollback(boolean noInit) {
+      this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance();
+    }
 
     private static final Rollback defaultInstance;
     public static Rollback getDefaultInstance() {

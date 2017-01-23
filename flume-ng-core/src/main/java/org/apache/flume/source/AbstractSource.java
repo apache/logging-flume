@@ -29,7 +29,7 @@ import com.google.common.base.Preconditions;
 
 @InterfaceAudience.Public
 @InterfaceStability.Stable
-abstract public class AbstractSource implements Source {
+public abstract class AbstractSource implements Source {
 
   private ChannelProcessor channelProcessor;
   private String name;
@@ -79,6 +79,6 @@ abstract public class AbstractSource implements Source {
   }
 
   public String toString() {
-	  return this.getClass().getName() + "{name:" + name + ",state:" + lifecycleState +"}";
+    return this.getClass().getName() + "{name:" + name + ",state:" + lifecycleState + "}";
   }  
 }

@@ -19,8 +19,7 @@
 
 package org.apache.flume.source;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.google.common.base.Preconditions;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -32,22 +31,19 @@ import org.apache.flume.instrumentation.SourceCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class SequenceGeneratorSource extends AbstractPollableSource implements
         Configurable {
 
   private static final Logger logger = LoggerFactory
       .getLogger(SequenceGeneratorSource.class);
 
-  private long sequence;
   private int batchSize;
   private SourceCounter sourceCounter;
-  private List<Event> batchArrayList;
   private long totalEvents;
   private long eventsSent = 0;
-
-  public SequenceGeneratorSource() {
-    sequence = 0;
-  }
 
   /**
    * Read parameters from context
@@ -56,10 +52,9 @@ public class SequenceGeneratorSource extends AbstractPollableSource implements
   @Override
   protected void doConfigure(Context context) throws FlumeException {
     batchSize = context.getInteger("batchSize", 1);
-    if (batchSize > 1) {
-      batchArrayList = new ArrayList<Event>(batchSize);
-    }
     totalEvents = context.getLong("totalEvents", Long.MAX_VALUE);
+
+    Preconditions.checkArgument(batchSize > 0, "batchSize was %s but expected positive", batchSize);
     if (sourceCounter == null) {
       sourceCounter = new SourceCounter(getName());
     }
@@ -68,37 +63,35 @@ public class SequenceGeneratorSource extends AbstractPollableSource implements
   @Override
   protected Status doProcess() throws EventDeliveryException {
     Status status = Status.READY;
-    int i = 0;
+    long eventsSentTX = eventsSent;
     try {
-      if (batchSize <= 1) {
-        if(eventsSent < totalEvents) {
+      if (batchSize == 1) {
+        if (eventsSentTX < totalEvents) {
           getChannelProcessor().processEvent(
-                  EventBuilder.withBody(String.valueOf(sequence++).getBytes()));
+                  EventBuilder.withBody(String.valueOf(eventsSentTX++).getBytes()));
           sourceCounter.incrementEventAcceptedCount();
-          eventsSent++;
         } else {
           status = Status.BACKOFF;
         }
       } else {
-        batchArrayList.clear();
-        for (i = 0; i < batchSize; i++) {
-          if(eventsSent < totalEvents){
+        List<Event> batchArrayList = new ArrayList<>(batchSize);
+        for (int i = 0; i < batchSize; i++) {
+          if (eventsSentTX < totalEvents) {
             batchArrayList.add(i, EventBuilder.withBody(String
-                    .valueOf(sequence++).getBytes()));
-            eventsSent++;
+                    .valueOf(eventsSentTX++).getBytes()));
           } else {
             status = Status.BACKOFF;
+            break;
           }
         }
-        if(!batchArrayList.isEmpty()) {
+        if (!batchArrayList.isEmpty()) {
           getChannelProcessor().processEventBatch(batchArrayList);
           sourceCounter.incrementAppendBatchAcceptedCount();
           sourceCounter.addToEventAcceptedCount(batchArrayList.size());
         }
       }
-
+      eventsSent = eventsSentTX;
     } catch (ChannelException ex) {
-      eventsSent -= i;
       logger.error( getName() + " source could not write to channel.", ex);
     }
 

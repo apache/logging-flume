@@ -112,7 +112,7 @@ public class RollingFileSink extends AbstractSink implements Configurable {
     super.start();
 
     pathController.setBaseDirectory(directory);
-    if(rollInterval > 0){
+    if (rollInterval > 0) {
 
       rollService = Executors.newScheduledThreadPool(
           1,
@@ -136,7 +136,7 @@ public class RollingFileSink extends AbstractSink implements Configurable {
         }
 
       }, rollInterval, rollInterval, TimeUnit.SECONDS);
-    } else{
+    } else {
       logger.info("RollInterval is not valid, file rolling will not happen.");
     }
     logger.info("RollingFileSink {} started.", getName());
@@ -251,17 +251,15 @@ public class RollingFileSink extends AbstractSink implements Configurable {
         serializer = null;
       }
     }
-    if(rollInterval > 0){
+    if (rollInterval > 0) {
       rollService.shutdown();
 
       while (!rollService.isTerminated()) {
         try {
           rollService.awaitTermination(1, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-          logger
-          .debug(
-              "Interrupted while waiting for roll service to stop. " +
-              "Please report this.", e);
+          logger.debug("Interrupted while waiting for roll service to stop. " +
+                       "Please report this.", e);
         }
       }
     }

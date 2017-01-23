@@ -20,7 +20,12 @@ package org.apache.flume.source;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import org.apache.flume.*;
+import org.apache.flume.ChannelException;
+import org.apache.flume.ChannelFullException;
+import org.apache.flume.Context;
+import org.apache.flume.Event;
+import org.apache.flume.EventDrivenSource;
+import org.apache.flume.FlumeException;
 import org.apache.flume.client.avro.ReliableSpoolingFileEventReader;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.instrumentation.SourceCounter;
@@ -39,11 +44,10 @@ import java.util.concurrent.TimeUnit;
 
 import static org.apache.flume.source.SpoolDirectorySourceConfigurationConstants.*;
 
-public class SpoolDirectorySource extends AbstractSource implements
-Configurable, EventDrivenSource {
+public class SpoolDirectorySource extends AbstractSource
+    implements Configurable, EventDrivenSource {
 
-  private static final Logger logger = LoggerFactory
-      .getLogger(SpoolDirectorySource.class);
+  private static final Logger logger = LoggerFactory.getLogger(SpoolDirectorySource.class);
 
   /* Config options */
   private String completedSuffix;
@@ -53,6 +57,7 @@ Configurable, EventDrivenSource {
   private boolean basenameHeader;
   private String basenameHeaderKey;
   private int batchSize;
+  private String includePattern;
   private String ignorePattern;
   private String trackerDirPath;
   private String deserializerType;
@@ -67,9 +72,11 @@ Configurable, EventDrivenSource {
   private ScheduledExecutorService executor;
   private boolean backoff = true;
   private boolean hitChannelException = false;
+  private boolean hitChannelFullException = false;
   private int maxBackoff;
   private ConsumeOrder consumeOrder;
   private int pollDelay;
+  private boolean recursiveDirectorySearch;
 
   @Override
   public synchronized void start() {
@@ -83,6 +90,7 @@ Configurable, EventDrivenSource {
       reader = new ReliableSpoolingFileEventReader.Builder()
           .spoolDirectory(directory)
           .completedSuffix(completedSuffix)
+          .includePattern(includePattern)
           .ignorePattern(ignorePattern)
           .trackerDirPath(trackerDirPath)
           .annotateFileName(fileHeader)
@@ -95,6 +103,7 @@ Configurable, EventDrivenSource {
           .inputCharset(inputCharset)
           .decodeErrorPolicy(decodeErrorPolicy)
           .consumeOrder(consumeOrder)
+          .recursiveDirectorySearch(recursiveDirectorySearch)
           .build();
     } catch (IOException ioe) {
       throw new FlumeException("Error instantiating spooling event parser",
@@ -122,8 +131,7 @@ Configurable, EventDrivenSource {
 
     super.stop();
     sourceCounter.stop();
-    logger.info("SpoolDir source {} stopped. Metrics: {}", getName(),
-      sourceCounter);
+    logger.info("SpoolDir source {} stopped. Metrics: {}", getName(), sourceCounter);
   }
 
   @Override
@@ -154,19 +162,23 @@ Configurable, EventDrivenSource {
     inputCharset = context.getString(INPUT_CHARSET, DEFAULT_INPUT_CHARSET);
     decodeErrorPolicy = DecodeErrorPolicy.valueOf(
         context.getString(DECODE_ERROR_POLICY, DEFAULT_DECODE_ERROR_POLICY)
-        .toUpperCase(Locale.ENGLISH));
+            .toUpperCase(Locale.ENGLISH));
 
+    includePattern = context.getString(INCLUDE_PAT, DEFAULT_INCLUDE_PAT);
     ignorePattern = context.getString(IGNORE_PAT, DEFAULT_IGNORE_PAT);
     trackerDirPath = context.getString(TRACKER_DIR, DEFAULT_TRACKER_DIR);
 
     deserializerType = context.getString(DESERIALIZER, DEFAULT_DESERIALIZER);
     deserializerContext = new Context(context.getSubProperties(DESERIALIZER +
         "."));
-    
-    consumeOrder = ConsumeOrder.valueOf(context.getString(CONSUME_ORDER, 
+
+    consumeOrder = ConsumeOrder.valueOf(context.getString(CONSUME_ORDER,
         DEFAULT_CONSUME_ORDER.toString()).toUpperCase(Locale.ENGLISH));
 
     pollDelay = context.getInteger(POLL_DELAY, DEFAULT_POLL_DELAY);
+
+    recursiveDirectorySearch = context.getBoolean(RECURSIVE_DIRECTORY_SEARCH,
+        DEFAULT_RECURSIVE_DIRECTORY_SEARCH);
 
     // "Hack" to support backwards compatibility with previous generation of
     // spooling directory source, which did not support deserializers
@@ -189,10 +201,10 @@ Configurable, EventDrivenSource {
   }
 
 
-
   /**
    * The class always backs off, this exists only so that we can test without
    * taking a really long time.
+   *
    * @param backoff - whether the source should backoff if the channel is full
    */
   @VisibleForTesting
@@ -201,8 +213,13 @@ Configurable, EventDrivenSource {
   }
 
   @VisibleForTesting
-  protected boolean hitChannelException() {
+  protected boolean didHitChannelException() {
     return hitChannelException;
+  }
+
+  @VisibleForTesting
+  protected boolean didHitChannelFullException() {
+    return hitChannelFullException;
   }
 
   @VisibleForTesting
@@ -210,12 +227,17 @@ Configurable, EventDrivenSource {
     return sourceCounter;
   }
 
+  @VisibleForTesting
+  protected boolean getRecursiveDirectorySearch() {
+    return recursiveDirectorySearch;
+  }
+
   private class SpoolDirectoryRunnable implements Runnable {
     private ReliableSpoolingFileEventReader reader;
     private SourceCounter sourceCounter;
 
     public SpoolDirectoryRunnable(ReliableSpoolingFileEventReader reader,
-        SourceCounter sourceCounter) {
+                                  SourceCounter sourceCounter) {
       this.reader = reader;
       this.sourceCounter = sourceCounter;
     }
@@ -235,17 +257,19 @@ Configurable, EventDrivenSource {
           try {
             getChannelProcessor().processEventBatch(events);
             reader.commit();
-          } catch (ChannelException ex) {
+          } catch (ChannelFullException ex) {
             logger.warn("The channel is full, and cannot write data now. The " +
-              "source will try again after " + String.valueOf(backoffInterval) +
-              " milliseconds");
+                "source will try again after " + backoffInterval +
+                " milliseconds");
+            hitChannelFullException = true;
+            backoffInterval = waitAndGetNewBackoffInterval(backoffInterval);
+            continue;
+          } catch (ChannelException ex) {
+            logger.warn("The channel threw an exception, and cannot write data now. The " +
+                "source will try again after " + backoffInterval +
+                " milliseconds");
             hitChannelException = true;
-            if (backoff) {
-              TimeUnit.MILLISECONDS.sleep(backoffInterval);
-              backoffInterval = backoffInterval << 1;
-              backoffInterval = backoffInterval >= maxBackoff ? maxBackoff :
-                                backoffInterval;
-            }
+            backoffInterval = waitAndGetNewBackoffInterval(backoffInterval);
             continue;
           }
           backoffInterval = 250;
@@ -259,6 +283,16 @@ Configurable, EventDrivenSource {
         hasFatalError = true;
         Throwables.propagate(t);
       }
+    }
+
+    private int waitAndGetNewBackoffInterval(int backoffInterval) throws InterruptedException {
+      if (backoff) {
+        TimeUnit.MILLISECONDS.sleep(backoffInterval);
+        backoffInterval = backoffInterval << 1;
+        backoffInterval = backoffInterval >= maxBackoff ? maxBackoff :
+            backoffInterval;
+      }
+      return backoffInterval;
     }
   }
 }

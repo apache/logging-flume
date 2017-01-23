@@ -27,6 +27,7 @@ package org.apache.flume.channel.file;
 class FlumeEventPointer {
   private final int fileID;
   private final int offset;
+
   FlumeEventPointer(int fileID, int offset) {
     this.fileID = fileID;
     this.offset = offset;
@@ -34,24 +35,28 @@ class FlumeEventPointer {
      * Log files used to have a header, now metadata is in
      * a separate file so data starts at offset 0.
      */
-    if(offset < 0) {
+    if (offset < 0) {
       throw new IllegalArgumentException("offset = " + offset + "(" +
           Integer.toHexString(offset) + ")" + ", fileID = " + fileID
             + "(" + Integer.toHexString(fileID) + ")");
     }
   }
+
   int getFileID() {
     return fileID;
   }
+
   int getOffset() {
     return offset;
   }
+
   public long toLong() {
     long result = fileID;
     result = (long)fileID << 32;
     result += (long)offset;
     return result;
   }
+
   @Override
   public int hashCode() {
     final int prime = 31;
@@ -60,6 +65,7 @@ class FlumeEventPointer {
     result = prime * result + offset;
     return result;
   }
+
   @Override
   public boolean equals(Object obj) {
     if (this == obj) {
@@ -80,10 +86,12 @@ class FlumeEventPointer {
     }
     return true;
   }
+
   @Override
   public String toString() {
     return "FlumeEventPointer [fileID=" + fileID + ", offset=" + offset + "]";
   }
+
   public static FlumeEventPointer fromLong(long value) {
     int fileID = (int)(value >>> 32);
     int offset = (int)value;

@@ -18,14 +18,8 @@
  */
 package org.apache.flume.sink.hbase;
 
-import java.nio.charset.Charset;
-import java.util.Calendar;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
+import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -35,20 +29,25 @@ import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Row;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
+import java.nio.charset.Charset;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
- * An {@link HbaseEventSerializer} which parses columns based on a supplied 
- * regular expression and column name list. 
- * 
+ * An {@link HbaseEventSerializer} which parses columns based on a supplied
+ * regular expression and column name list.
+ * <p>
  * Note that if the regular expression does not return the correct number of
  * groups for a particular event, or it does not correctly match an event,
  * the event is silently dropped.
- * 
+ * <p>
  * Row keys for each event consist of a timestamp concatenated with an
  * identifier which enforces uniqueness of keys across flume agents.
- * 
+ * <p>
  * See static constant variables for configuration options.
  */
 public class RegexHbaseEventSerializer implements HbaseEventSerializer {
@@ -108,21 +107,21 @@ public class RegexHbaseEventSerializer implements HbaseEventSerializer {
 
     String colNameStr = context.getString(COL_NAME_CONFIG, COLUMN_NAME_DEFAULT);
     String[] columnNames = colNameStr.split(",");
-    for (String s: columnNames) {
+    for (String s : columnNames) {
       colNames.add(s.getBytes(charset));
     }
 
     //Rowkey is optional, default is -1
     rowKeyIndex = context.getInteger(ROW_KEY_INDEX_CONFIG, -1);
     //if row key is being used, make sure it is specified correct
-    if(rowKeyIndex >=0){
-      if(rowKeyIndex >= columnNames.length) {
+    if (rowKeyIndex >= 0) {
+      if (rowKeyIndex >= columnNames.length) {
         throw new IllegalArgumentException(ROW_KEY_INDEX_CONFIG + " must be " +
-          "less than num columns " + columnNames.length);
+            "less than num columns " + columnNames.length);
       }
-      if(!ROW_KEY_NAME.equalsIgnoreCase(columnNames[rowKeyIndex])) {
+      if (!ROW_KEY_NAME.equalsIgnoreCase(columnNames[rowKeyIndex])) {
         throw new IllegalArgumentException("Column at " + rowKeyIndex + " must be "
-        + ROW_KEY_NAME + " and is " + columnNames[rowKeyIndex]);
+            + ROW_KEY_NAME + " and is " + columnNames[rowKeyIndex]);
       }
     }
   }
@@ -181,15 +180,15 @@ public class RegexHbaseEventSerializer implements HbaseEventSerializer {
     }
 
     try {
-      if(rowKeyIndex < 0){
+      if (rowKeyIndex < 0) {
         rowKey = getRowKey();
-      }else{
+      } else {
         rowKey = m.group(rowKeyIndex + 1).getBytes(Charsets.UTF_8);
       }
       Put put = new Put(rowKey);
 
       for (int i = 0; i < colNames.size(); i++) {
-        if(i != rowKeyIndex) {
+        if (i != rowKeyIndex) {
           put.add(cf, colNames.get(i), m.group(i + 1).getBytes(Charsets.UTF_8));
         }
       }
@@ -211,5 +210,6 @@ public class RegexHbaseEventSerializer implements HbaseEventSerializer {
   }
 
   @Override
-  public void close() {  }
+  public void close() {
+  }
 }

@@ -60,7 +60,7 @@ public class IRCSink extends AbstractSink implements Configurable {
   
   private CounterGroup counterGroup;
 
-  static public class IRCConnectionListener implements IRCEventListener {
+  public static class IRCConnectionListener implements IRCEventListener {
 
     public void onRegistered() {
     }
@@ -214,7 +214,7 @@ public class IRCSink extends AbstractSink implements Configurable {
     
     if (splitLines) {
       String[] lines = body.split(splitChars);
-      for(String line: lines) {
+      for (String line: lines) {
         connection.doPrivmsg(IRC_CHANNEL_PREFIX + this.chan, line);
       }
     } else {

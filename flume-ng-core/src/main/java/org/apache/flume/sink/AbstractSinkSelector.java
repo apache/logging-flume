@@ -38,7 +38,7 @@ public abstract class AbstractSinkSelector implements SinkSelector {
   @Override
   public void configure(Context context) {
     Long timeOut = context.getLong("maxTimeOut");
-    if(timeOut != null){
+    if (timeOut != null) {
       maxTimeOut = timeOut;
     }
   }

@@ -17,14 +17,9 @@
 
 package org.apache.flume.source.taildir;
 
-import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.*;
-import static org.junit.Assert.*;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
+import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
+import com.google.common.io.Files;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
@@ -40,9 +35,23 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
-import com.google.common.io.Files;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.FILE_GROUPS;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.FILE_GROUPS_PREFIX;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.HEADERS_PREFIX;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.POSITION_FILE;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.FILENAME_HEADER;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.FILENAME_HEADER_KEY;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class TestTaildirSource {
   static TaildirSource source;
@@ -77,7 +86,7 @@ public class TestTaildirSource {
   }
 
   @Test
-  public void testRegexFileNameFiltering() throws IOException {
+  public void testRegexFileNameFilteringEndToEnd() throws IOException {
     File f1 = new File(tmpDir, "a.log");
     File f2 = new File(tmpDir, "a.log.1");
     File f3 = new File(tmpDir, "b.log");
@@ -274,10 +283,37 @@ public class TestTaildirSource {
                                                     line1b, line2b, line3b, // file2
                                                     line1d, line2d, line3d, // file4
                                                     line1c, line2c, line3c  // file3
-                                                     );
-    for(int i =0; i!=expected.size(); ++i) {
-      expected.set(i, expected.get(i).trim() );
+                                                   );
+    for (int i = 0; i != expected.size(); ++i) {
+      expected.set(i, expected.get(i).trim());
     }
-    assertArrayEquals("Files not consumed in expected order", expected.toArray(), consumedOrder.toArray());
+    assertArrayEquals("Files not consumed in expected order", expected.toArray(),
+                      consumedOrder.toArray());
+  }
+
+  @Test
+  public void testPutFilenameHeader() throws IOException {
+    File f1 = new File(tmpDir, "file1");
+    Files.write("f1\n", f1, Charsets.UTF_8);
+
+    Context context = new Context();
+    context.put(POSITION_FILE, posFilePath);
+    context.put(FILE_GROUPS, "fg");
+    context.put(FILE_GROUPS_PREFIX + "fg", tmpDir.getAbsolutePath() + "/file.*");
+    context.put(FILENAME_HEADER, "true");
+    context.put(FILENAME_HEADER_KEY, "path");
+
+    Configurables.configure(source, context);
+    source.start();
+    source.process();
+    Transaction txn = channel.getTransaction();
+    txn.begin();
+    Event e = channel.take();
+    txn.commit();
+    txn.close();
+
+    assertNotNull(e.getHeaders().get("path"));
+    assertEquals(f1.getAbsolutePath(),
+            e.getHeaders().get("path"));
   }
 }

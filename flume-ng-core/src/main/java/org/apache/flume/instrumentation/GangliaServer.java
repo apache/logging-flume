@@ -85,12 +85,6 @@ public class GangliaServer implements MonitorService {
   public final String CONF_ISGANGLIA3 = "isGanglia3";
   private static final String GANGLIA_CONTEXT = "flume.";
 
-  /**
-   *
-   * @param hosts List of hosts to send the metrics to. All of them have to be
-   * running the version of ganglia specified by the configuration.
-   * @throws FlumeException
-   */
   public GangliaServer() throws FlumeException {
     collectorRunnable = new GangliaCollector();
   }

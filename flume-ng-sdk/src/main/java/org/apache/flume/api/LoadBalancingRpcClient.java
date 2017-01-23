@@ -161,7 +161,7 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
         RpcClientConfigurationConstants.CONFIG_MAX_BACKOFF);
 
     long maxBackoff = 0;
-    if(maxBackoffStr != null) {
+    if (maxBackoffStr != null) {
       maxBackoff = Long.parseLong(maxBackoffStr);
     }
 
@@ -240,12 +240,13 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
 
     private OrderSelector<HostInfo> selector;
 
-    RoundRobinHostSelector(boolean backoff, long maxBackoff){
+    RoundRobinHostSelector(boolean backoff, long maxBackoff) {
       selector = new RoundRobinOrderSelector<HostInfo>(backoff);
-      if(maxBackoff != 0){
+      if (maxBackoff != 0) {
         selector.setMaxTimeOut(maxBackoff);
       }
     }
+
     @Override
     public synchronized Iterator<HostInfo> createHostIterator() {
       return selector.createIterator();
@@ -256,7 +257,7 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
       selector.setObjects(hosts);
     }
 
-    public synchronized void informFailure(HostInfo failedHost){
+    public synchronized void informFailure(HostInfo failedHost) {
       selector.informFailure(failedHost);
     }
   }

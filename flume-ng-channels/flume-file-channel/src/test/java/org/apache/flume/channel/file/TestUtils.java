@@ -18,7 +18,21 @@
  */
 package org.apache.flume.channel.file;
 
-import static org.fest.reflect.core.Reflection.*;
+import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
+import com.google.common.io.Resources;
+import org.apache.flume.Channel;
+import org.apache.flume.ChannelException;
+import org.apache.flume.Context;
+import org.apache.flume.Event;
+import org.apache.flume.Transaction;
+import org.apache.flume.conf.Configurables;
+import org.apache.flume.event.EventBuilder;
+import org.junit.Assert;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -36,22 +50,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.zip.GZIPInputStream;
 
-import org.apache.flume.Channel;
-import org.apache.flume.ChannelException;
-import org.apache.flume.Context;
-import org.apache.flume.Event;
-import org.apache.flume.Transaction;
-import org.apache.flume.conf.Configurables;
-import org.apache.flume.event.EventBuilder;
-import org.junit.Assert;
-
-import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
-import com.google.common.io.Resources;
+import static org.fest.reflect.core.Reflection.field;
+import static org.fest.reflect.core.Reflection.method;
 
 public class TestUtils {
 
@@ -119,7 +119,7 @@ public class TestUtils {
 
   public static List<File> getAllLogs(File[] dataDirs) {
     List<File> result = Lists.newArrayList();
-    for(File dataDir : dataDirs) {
+    for (File dataDir : dataDirs) {
       result.addAll(LogUtils.getLogs(dataDir));
     }
     return result;
@@ -139,24 +139,22 @@ public class TestUtils {
             .invoke(true));
   }
 
-  public static Set<String> takeEvents(Channel channel, int batchSize)
-    throws Exception {
+  public static Set<String> takeEvents(Channel channel, int batchSize) throws Exception {
     return takeEvents(channel, batchSize, false);
   }
 
-  public static Set<String> takeEvents(Channel channel,
-          int batchSize, boolean checkForCorruption) throws Exception {
+  public static Set<String> takeEvents(Channel channel, int batchSize, boolean checkForCorruption)
+      throws Exception {
     return takeEvents(channel, batchSize, Integer.MAX_VALUE, checkForCorruption);
   }
 
-  public static Set<String> takeEvents(Channel channel,
-    int batchSize, int numEvents) throws Exception {
+  public static Set<String> takeEvents(Channel channel, int batchSize, int numEvents)
+      throws Exception {
     return takeEvents(channel, batchSize, numEvents, false);
   }
 
-  public static Set<String> takeEvents(Channel channel,
-          int batchSize, int numEvents, boolean checkForCorruption) throws
-    Exception {
+  public static Set<String> takeEvents(Channel channel, int batchSize, int numEvents,
+                                       boolean checkForCorruption) throws Exception {
     Set<String> result = Sets.newHashSet();
     for (int i = 0; i < numEvents; i += batchSize) {
       Transaction transaction = channel.getTransaction();
@@ -169,16 +167,15 @@ public class TestUtils {
           } catch (ChannelException ex) {
             Throwable th = ex;
             String msg;
-            if(checkForCorruption) {
+            if (checkForCorruption) {
               msg = "Corrupt event found. Please run File Channel";
               th = ex.getCause();
             } else {
               msg = "Take list for FileBackedTransaction, capacity";
             }
-            Assert.assertTrue(th.getMessage().startsWith(
-                msg));
-            if(checkForCorruption) {
-              throw (Exception) th;
+            Assert.assertTrue(th.getMessage().startsWith(msg));
+            if (checkForCorruption) {
+              throw (Exception)th;
             }
             transaction.commit();
             return result;
@@ -204,16 +201,16 @@ public class TestUtils {
   public static Set<String> consumeChannel(Channel channel) throws Exception {
     return consumeChannel(channel, false);
   }
-  public static Set<String> consumeChannel(Channel channel,
-    boolean checkForCorruption) throws Exception {
+  public static Set<String> consumeChannel(Channel channel, boolean checkForCorruption)
+      throws Exception {
     Set<String> result = Sets.newHashSet();
     int[] batchSizes = new int[] {
         1000, 100, 10, 1
     };
     for (int i = 0; i < batchSizes.length; i++) {
-      while(true) {
+      while (true) {
         Set<String> batch = takeEvents(channel, batchSizes[i], checkForCorruption);
-        if(batch.isEmpty()) {
+        if (batch.isEmpty()) {
           break;
         }
         result.addAll(batch);
@@ -221,18 +218,16 @@ public class TestUtils {
     }
     return result;
   }
-  public static Set<String> fillChannel(Channel channel, String prefix)
-      throws Exception {
+  public static Set<String> fillChannel(Channel channel, String prefix) throws Exception {
     Set<String> result = Sets.newHashSet();
     int[] batchSizes = new int[] {
         1000, 100, 10, 1
     };
     for (int i = 0; i < batchSizes.length; i++) {
       try {
-        while(true) {
-          Set<String> batch = putEvents(channel, prefix, batchSizes[i],
-              Integer.MAX_VALUE, true);
-          if(batch.isEmpty()) {
+        while (true) {
+          Set<String> batch = putEvents(channel, prefix, batchSizes[i], Integer.MAX_VALUE, true);
+          if (batch.isEmpty()) {
             break;
           }
           result.addAll(batch);
@@ -243,19 +238,17 @@ public class TestUtils {
             + "size, a downstream system running slower than normal, or that "
             + "the channel capacity is just too low. [channel="
             + channel.getName() + "]").equals(e.getMessage())
-            || e.getMessage().startsWith("Put queue for FileBackedTransaction " +
-            "of capacity "));
+            || e.getMessage().startsWith("Put queue for FileBackedTransaction of capacity "));
       }
     }
     return result;
   }
-  public static Set<String> putEvents(Channel channel, String prefix,
-      int batchSize, int numEvents) throws Exception {
+  public static Set<String> putEvents(Channel channel, String prefix, int batchSize, int numEvents)
+      throws Exception {
     return putEvents(channel, prefix, batchSize, numEvents, false);
   }
-  public static Set<String> putEvents(Channel channel, String prefix,
-          int batchSize, int numEvents, boolean untilCapacityIsReached)
-              throws Exception {
+  public static Set<String> putEvents(Channel channel, String prefix, int batchSize, int numEvents,
+                                      boolean untilCapacityIsReached) throws Exception {
     Set<String> result = Sets.newHashSet();
     for (int i = 0; i < numEvents; i += batchSize) {
       Transaction transaction = channel.getTransaction();
@@ -272,13 +265,12 @@ public class TestUtils {
         result.addAll(batch);
       } catch (Exception ex) {
         transaction.rollback();
-        if(untilCapacityIsReached && ex instanceof ChannelException &&
+        if (untilCapacityIsReached && ex instanceof ChannelException &&
             ("The channel has reached it's capacity. "
                 + "This might be the result of a sink on the channel having too "
                 + "low of batch size, a downstream system running slower than "
                 + "normal, or that the channel capacity is just too low. "
-                + "[channel=" +channel.getName() + "]").
-              equals(ex.getMessage())) {
+                + "[channel=" + channel.getName() + "]").equals(ex.getMessage())) {
           break;
         }
         throw ex;
@@ -288,6 +280,7 @@ public class TestUtils {
     }
     return result;
   }
+
   public static void copyDecompressed(String resource, File output)
       throws IOException {
     URL input =  Resources.getResource(resource);
@@ -298,12 +291,11 @@ public class TestUtils {
     gzis.close();
   }
 
-  public static Context createFileChannelContext(String checkpointDir,
-      String dataDir, String backupDir, Map<String, String> overrides) {
+  public static Context createFileChannelContext(String checkpointDir, String dataDir,
+                                                 String backupDir, Map<String, String> overrides) {
     Context context = new Context();
-    context.put(FileChannelConfiguration.CHECKPOINT_DIR,
-            checkpointDir);
-    if(backupDir != null) {
+    context.put(FileChannelConfiguration.CHECKPOINT_DIR, checkpointDir);
+    if (backupDir != null) {
       context.put(FileChannelConfiguration.BACKUP_CHECKPOINT_DIR, backupDir);
     }
     context.put(FileChannelConfiguration.DATA_DIRS, dataDir);
@@ -312,22 +304,22 @@ public class TestUtils {
     context.putAll(overrides);
     return context;
   }
-  public static FileChannel createFileChannel(String checkpointDir,
-    String dataDir, Map<String, String> overrides) {
+
+  public static FileChannel createFileChannel(String checkpointDir, String dataDir,
+                                              Map<String, String> overrides) {
     return createFileChannel(checkpointDir, dataDir, null, overrides);
   }
 
-  public static FileChannel createFileChannel(String checkpointDir,
-      String dataDir, String backupDir, Map<String, String> overrides) {
+  public static FileChannel createFileChannel(String checkpointDir, String dataDir,
+                                              String backupDir, Map<String, String> overrides) {
     FileChannel channel = new FileChannel();
     channel.setName("FileChannel-" + UUID.randomUUID());
-    Context context = createFileChannelContext(checkpointDir, dataDir,
-      backupDir, overrides);
+    Context context = createFileChannelContext(checkpointDir, dataDir, backupDir, overrides);
     Configurables.configure(channel, context);
     return channel;
   }
-  public static File writeStringToFile(File baseDir, String name,
-      String text) throws IOException {
+
+  public static File writeStringToFile(File baseDir, String name, String text) throws IOException {
     File passwordFile = new File(baseDir, name);
     Files.write(text, passwordFile, Charsets.UTF_8);
     return passwordFile;

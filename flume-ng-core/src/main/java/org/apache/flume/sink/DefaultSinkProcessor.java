@@ -35,8 +35,7 @@ import com.google.common.base.Preconditions;
  * results without any additional handling. Suitable for all sinks that aren't
  * assigned to a group.
  */
-public class DefaultSinkProcessor implements SinkProcessor,
-ConfigurableComponent {
+public class DefaultSinkProcessor implements SinkProcessor, ConfigurableComponent {
   private Sink sink;
   private LifecycleState lifecycleState;
 

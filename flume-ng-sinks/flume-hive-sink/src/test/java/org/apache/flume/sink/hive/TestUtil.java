@@ -46,7 +46,7 @@ import java.util.List;
 
 public class TestUtil {
 
-  private final static String txnMgr = "org.apache.hadoop.hive.ql.lockmgr.DbTxnManager";
+  private static final String txnMgr = "org.apache.hadoop.hive.ql.lockmgr.DbTxnManager";
 
   /**
    * Set up the configuration so it will use the DbTxnManager, concurrency will be set to true,
@@ -81,7 +81,7 @@ public class TestUtil {
 
     runDDL(driver, crtTbl);
     System.out.println("crtTbl = " + crtTbl);
-    if (partNames!=null && partNames.length!=0) {
+    if (partNames != null && partNames.length != 0) {
       String addPart = "alter table " + tableName + " add partition ( " +
               getTablePartsStr2(partNames, partVals) + " )";
       runDDL(driver, addPart);
@@ -96,7 +96,8 @@ public class TestUtil {
   }
 
   // delete db and all tables in it
-  public static void dropDB(HiveConf conf, String databaseName) throws HiveException, MetaException {
+  public static void dropDB(HiveConf conf, String databaseName)
+      throws HiveException, MetaException {
     IMetaStoreClient client = new HiveMetaStoreClient(conf);
     try {
       for (String table : client.listTableNamesByFilter(databaseName, "", (short)-1)) {
@@ -110,9 +111,9 @@ public class TestUtil {
 
   private static String getTableColumnsStr(String[] colNames, String[] colTypes) {
     StringBuffer sb = new StringBuffer();
-    for (int i=0; i < colNames.length; ++i) {
+    for (int i = 0; i < colNames.length; ++i) {
       sb.append(colNames[i] + " " + colTypes[i]);
-      if (i<colNames.length-1) {
+      if (i < colNames.length - 1) {
         sb.append(",");
       }
     }
@@ -121,13 +122,13 @@ public class TestUtil {
 
   // converts partNames into "partName1 string, partName2 string"
   private static String getTablePartsStr(String[] partNames) {
-    if (partNames==null || partNames.length==0) {
+    if (partNames == null || partNames.length == 0) {
       return "";
     }
     StringBuffer sb = new StringBuffer();
-    for (int i=0; i < partNames.length; ++i) {
+    for (int i = 0; i < partNames.length; ++i) {
       sb.append(partNames[i] + " string");
-      if (i < partNames.length-1) {
+      if (i < partNames.length - 1) {
         sb.append(",");
       }
     }
@@ -137,9 +138,9 @@ public class TestUtil {
   // converts partNames,partVals into "partName1=val1, partName2=val2"
   private static String getTablePartsStr2(String[] partNames, List<String> partVals) {
     StringBuffer sb = new StringBuffer();
-    for (int i=0; i < partVals.size(); ++i) {
+    for (int i = 0; i < partVals.size(); ++i) {
       sb.append(partNames[i] + " = '" + partVals.get(i) + "'");
-      if (i < partVals.size()-1) {
+      if (i < partVals.size() - 1) {
         sb.append(",");
       }
     }
@@ -147,7 +148,7 @@ public class TestUtil {
   }
 
   public static ArrayList<String> listRecordsInTable(Driver driver, String dbName, String tblName)
-          throws CommandNeedRetryException, IOException {
+      throws CommandNeedRetryException, IOException {
     driver.run("select * from " + dbName + "." + tblName);
     ArrayList<String> res = new ArrayList<String>();
     driver.getResults(res);
@@ -155,8 +156,9 @@ public class TestUtil {
   }
 
   public static ArrayList<String> listRecordsInPartition(Driver driver, String dbName,
-                               String tblName, String continent, String country)
-          throws CommandNeedRetryException, IOException {
+                                                         String tblName, String continent,
+                                                         String country)
+      throws CommandNeedRetryException, IOException {
     driver.run("select * from " + dbName + "." + tblName + " where continent='"
             + continent + "' and country='" + country + "'");
     ArrayList<String> res = new ArrayList<String>();
@@ -164,9 +166,9 @@ public class TestUtil {
     return res;
   }
 
-
   public static class RawFileSystem extends RawLocalFileSystem {
     private static final URI NAME;
+
     static {
       try {
         NAME = new URI("raw:///");
@@ -211,9 +213,10 @@ public class TestUtil {
               FsPermission.createImmutable(mod), "owen", "users", path);
     }
   }
+
   private static boolean runDDL(Driver driver, String sql) throws QueryFailedException {
     int retryCount = 1; // # of times to retry if first attempt fails
-    for (int attempt=0; attempt <= retryCount; ++attempt) {
+    for (int attempt = 0; attempt <= retryCount; ++attempt) {
       try {
         driver.run(sql);
         return true;

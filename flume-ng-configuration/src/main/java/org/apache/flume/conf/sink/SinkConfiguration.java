@@ -54,7 +54,7 @@ public class SinkConfiguration extends ComponentConfiguration {
   }
 
   @Override
-  public String toString(int indentCount){
+  public String toString(int indentCount) {
     StringBuilder indentSb = new StringBuilder("");
 
     for (int i = 0; i < indentCount; i++) {
@@ -187,7 +187,7 @@ public class SinkConfiguration extends ComponentConfiguration {
         instance = new SinkConfiguration(name);
         // Let the caller know that this was created because of this exception.
         instance.setNotFoundConfigClass();
-      } catch (Exception e){
+      } catch (Exception e) {
         throw new ConfigurationException("Couldn't create configuration", e);
       }
       return instance;

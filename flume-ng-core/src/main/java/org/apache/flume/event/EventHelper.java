@@ -53,18 +53,18 @@ public class EventHelper {
         HexDump.dump(data, 0, out, 0);
         String hexDump = new String(out.toByteArray());
         // remove offset since it's not relevant for such a small dataset
-        if(hexDump.startsWith(HEXDUMP_OFFSET)) {
+        if (hexDump.startsWith(HEXDUMP_OFFSET)) {
           hexDump = hexDump.substring(HEXDUMP_OFFSET.length());
         }
         buffer.append(hexDump);
       } catch (Exception e) {
-       if(LOGGER.isInfoEnabled()) {
-         LOGGER.info("Exception while dumping event", e);
-       }
+        if (LOGGER.isInfoEnabled()) {
+          LOGGER.info("Exception while dumping event", e);
+        }
         buffer.append("...Exception while dumping: ").append(e.getMessage());
       }
       String result = buffer.toString();
-      if(result.endsWith(EOL) && buffer.length() > EOL.length()) {
+      if (result.endsWith(EOL) && buffer.length() > EOL.length()) {
         buffer.delete(buffer.length() - EOL.length(), buffer.length()).toString();
       }
     }

@@ -76,7 +76,7 @@ public class HostInfo {
         // Ignore that host if value is not there
         if (hostAndPortStr != null) {
           String[] hostAndPort = hostAndPortStr.split(":");
-          if (hostAndPort.length != 2){
+          if (hostAndPort.length != 2) {
             LOGGER.error("Invalid host address" + hostAndPortStr);
             throw new FlumeException("Invalid host address" + hostAndPortStr);
           }

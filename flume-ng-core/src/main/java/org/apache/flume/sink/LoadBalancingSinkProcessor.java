@@ -56,12 +56,14 @@ import org.apache.flume.util.RoundRobinOrderSelector;
  *
  * <p>
  * Sample configuration:
- *  <pre>
- *  host1.sinkgroups.group1.sinks = sink1 sink2
- *  host1.sinkgroups.group1.processor.type = load_balance
- *  host1.sinkgroups.group1.processor.selector = <selector type>
- *  host1.sinkgroups.group1.processor.selector.selector_property = <value>
- *  </pre>
+ * <pre>
+ * {@code
+ * host1.sinkgroups.group1.sinks = sink1 sink2
+ * host1.sinkgroups.group1.processor.type = load_balance
+ * host1.sinkgroups.group1.processor.selector = <selector type>
+ * host1.sinkgroups.group1.processor.selector.selector_property = <value>
+ * }
+ * </pre>
  *
  * The value of processor.selector could be either <tt>round_robin</tt> for
  * round-robin scheme of load-balancing or <tt>random</tt> for random
@@ -200,26 +202,28 @@ public class LoadBalancingSinkProcessor extends AbstractSinkProcessor {
   }
 
   /**
-   * A sink selector that implements the round-robin sink selection policy.
-   * This implementation is not MT safe.
+   * <p>A sink selector that implements the round-robin sink selection policy.
+   * This implementation is not MT safe.</p>
+   *
+   * <p>Unfortunately both implementations need to override the base implementation
+   * in AbstractSinkSelector class, because any custom sink selectors
+   * will break if this stuff is moved to that class.</p>
    */
-  //Unfortunately both implementations need to override the base implementation
-  //in AbstractSinkSelector class, because any custom sink selectors
-  //will break if this stuff is moved to that class.
   private static class RoundRobinSinkSelector extends AbstractSinkSelector {
-
     private OrderSelector<Sink> selector;
-    RoundRobinSinkSelector(boolean backoff){
+
+    RoundRobinSinkSelector(boolean backoff) {
       selector = new RoundRobinOrderSelector<Sink>(backoff);
     }
 
     @Override
-    public void configure(Context context){
+    public void configure(Context context) {
       super.configure(context);
       if (maxTimeOut != 0) {
         selector.setMaxTimeOut(maxTimeOut);
       }
     }
+
     @Override
     public Iterator<Sink> createSinkIterator() {
       return selector.createIterator();
@@ -245,7 +249,7 @@ public class LoadBalancingSinkProcessor extends AbstractSinkProcessor {
 
     private OrderSelector<Sink> selector;
 
-    RandomOrderSinkSelector(boolean backoff){
+    RandomOrderSinkSelector(boolean backoff) {
       selector = new RandomOrderSelector<Sink>(backoff);
     }
 

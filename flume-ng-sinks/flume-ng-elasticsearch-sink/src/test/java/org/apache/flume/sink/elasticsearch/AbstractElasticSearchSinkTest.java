@@ -18,17 +18,6 @@
  */
 package org.apache.flume.sink.elasticsearch;
 
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.BATCH_SIZE;
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.CLUSTER_NAME;
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.INDEX_NAME;
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.INDEX_TYPE;
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.TTL;
-import static org.junit.Assert.assertEquals;
-
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Map;
-
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -50,6 +39,17 @@ import org.elasticsearch.search.SearchHits;
 import org.joda.time.DateTimeUtils;
 import org.junit.After;
 import org.junit.Before;
+
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Map;
+
+import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.BATCH_SIZE;
+import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.CLUSTER_NAME;
+import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.INDEX_NAME;
+import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.INDEX_TYPE;
+import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.TTL;
+import static org.junit.Assert.assertEquals;
 
 public abstract class AbstractElasticSearchSinkTest {
 
@@ -136,7 +136,8 @@ public abstract class AbstractElasticSearchSinkTest {
         .setTypes(DEFAULT_INDEX_TYPE).setQuery(query).execute().actionGet();
   }
 
-  void assertSearch(int expectedHits, SearchResponse response, Map<String, Object> expectedBody, Event... events) {
+  void assertSearch(int expectedHits, SearchResponse response, Map<String, Object> expectedBody,
+                    Event... events) {
     SearchHits hitResponse = response.getHits();
     assertEquals(expectedHits, hitResponse.getTotalHits());
 

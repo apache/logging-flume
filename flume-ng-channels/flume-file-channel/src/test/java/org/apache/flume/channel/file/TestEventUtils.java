@@ -28,7 +28,7 @@ public class TestEventUtils {
   @Test
   public void testPutEvent() {
     FlumeEvent event = new FlumeEvent(null, new byte[5]);
-    Put put = new Put(1l, 1l, event);
+    Put put = new Put(1L, 1L, event);
     Event returnEvent = EventUtils.getEventFromTransactionEvent(put);
     Assert.assertNotNull(returnEvent);
     Assert.assertEquals(5, returnEvent.getBody().length);
@@ -36,7 +36,7 @@ public class TestEventUtils {
 
   @Test
   public void testInvalidEvent() {
-    Take take = new Take(1l, 1l);
+    Take take = new Take(1L, 1L);
     Event returnEvent = EventUtils.getEventFromTransactionEvent(take);
     Assert.assertNull(returnEvent);
   }

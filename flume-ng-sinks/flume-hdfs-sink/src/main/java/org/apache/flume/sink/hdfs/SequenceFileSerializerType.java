@@ -25,8 +25,7 @@ public enum SequenceFileSerializerType {
 
   private final Class<? extends SequenceFileSerializer.Builder> builderClass;
 
-  SequenceFileSerializerType(
-    Class<? extends SequenceFileSerializer.Builder> builderClass) {
+  SequenceFileSerializerType(Class<? extends SequenceFileSerializer.Builder> builderClass) {
     this.builderClass = builderClass;
   }
 

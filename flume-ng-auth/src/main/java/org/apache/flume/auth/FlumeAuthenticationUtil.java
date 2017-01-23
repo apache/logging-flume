@@ -50,10 +50,10 @@ public class FlumeAuthenticationUtil {
    *
    * @throws org.apache.flume.auth.SecurityException
    */
-  public synchronized static FlumeAuthenticator getAuthenticator(
+  public static synchronized FlumeAuthenticator getAuthenticator(
           String principal, String keytab) throws SecurityException {
 
-    if(principal == null && keytab == null) {
+    if (principal == null && keytab == null) {
       return SimpleAuthenticator.getSimpleAuthenticator();
     }
 
@@ -62,7 +62,7 @@ public class FlumeAuthenticationUtil {
     Preconditions.checkArgument(keytab != null,
             "Keytab can not be null when Principal is provided");
 
-    if(kerbAuthenticator == null) {
+    if (kerbAuthenticator == null) {
       kerbAuthenticator = new KerberosAuthenticator();
     }
     kerbAuthenticator.authenticate(principal, keytab);

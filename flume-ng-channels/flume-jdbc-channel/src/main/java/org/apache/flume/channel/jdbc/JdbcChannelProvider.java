@@ -29,7 +29,7 @@ public interface JdbcChannelProvider {
   /**
    * Initializes the channel provider. This method must be called before
    * the channel can be used in any way.
-   * @param properties the configuration for the system
+   * @param context the configuration for the system
    */
   public void initialize(Context context);
 

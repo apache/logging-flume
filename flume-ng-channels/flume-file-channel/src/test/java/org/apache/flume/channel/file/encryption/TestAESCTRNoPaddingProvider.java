@@ -35,13 +35,13 @@ public class TestAESCTRNoPaddingProvider {
   public void setup() throws Exception {
     KeyGenerator keyGen = KeyGenerator.getInstance("AES");
     key = keyGen.generateKey();
-    encryptor = CipherProviderFactory.
-        getEncrypter(CipherProviderType.AESCTRNOPADDING.name(), key);
-    decryptor = CipherProviderFactory.
-        getDecrypter(CipherProviderType.AESCTRNOPADDING.name(), key,
-            encryptor.getParameters());
+    encryptor = CipherProviderFactory.getEncrypter(
+        CipherProviderType.AESCTRNOPADDING.name(), key);
+    decryptor = CipherProviderFactory.getDecrypter(
+        CipherProviderType.AESCTRNOPADDING.name(), key, encryptor.getParameters());
     cipherProviderTestSuite = new CipherProviderTestSuite(encryptor, decryptor);
   }
+
   @Test
   public void test() throws Exception {
     cipherProviderTestSuite.test();
