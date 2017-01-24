@@ -105,7 +105,14 @@ public enum SinkType {
    * Hive Sink
    * @see org.apache.flume.sink.hive.HiveSink
    */
-  HIVE("org.apache.flume.sink.hive.HiveSink");
+  HIVE("org.apache.flume.sink.hive.HiveSink"),
+
+  /**
+   * HTTP Sink
+   *
+   * @see org.apache.flume.sink.http.HttpSink
+   */
+  HTTP("org.apache.flume.sink.http.HttpSink");
 
   private final String sinkClassName;
 
