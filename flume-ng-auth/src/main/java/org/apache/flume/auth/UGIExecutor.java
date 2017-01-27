@@ -43,14 +43,7 @@ class UGIExecutor implements PrivilegedExecutor {
   @Override
   public <T> T execute(PrivilegedExceptionAction<T> action) throws Exception {
     ensureValidAuth();
-    try {
-      return ugi.doAs(action);
-    } catch (IOException ex) {
-      throw new SecurityException("Privileged action failed", ex);
-    } catch (InterruptedException ex) {
-      Thread.interrupted();
-      throw new SecurityException(ex);
-    }
+    return ugi.doAs(action);
   }
 
   private void ensureValidAuth() {
