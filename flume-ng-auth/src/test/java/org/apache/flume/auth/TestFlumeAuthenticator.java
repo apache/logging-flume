@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.PrivilegedExceptionAction;
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
@@ -108,6 +109,46 @@ public class TestFlumeAuthenticator {
           + "reason: " + ex.getMessage(),
           ex.getMessage().contains("Cannot use multiple kerberos principals"));
     }
+  }
+
+  /**
+   * Test whether the exception raised in the <code>PrivilegedExceptionAction</code> gets
+   * propagated as-is from {@link KerberosAuthenticator#execute(PrivilegedExceptionAction)}.
+   */
+  @Test(expected = IOException.class)
+  public void testKerberosAuthenticatorExceptionInExecute() throws Exception {
+    String principal = flumePrincipal;
+    String keytab = flumeKeytab.getAbsolutePath();
+
+    // Clear the previous statically stored logged in credentials
+    FlumeAuthenticationUtil.clearCredentials();
+    FlumeAuthenticator authenticator = FlumeAuthenticationUtil.getAuthenticator(principal, keytab);
+    assertTrue(authenticator instanceof KerberosAuthenticator);
+
+    authenticator.execute(new PrivilegedExceptionAction<Object>() {
+      @Override
+      public Object run() throws Exception {
+        throw new IOException();
+      }
+    });
+  }
+
+  /**
+   * Test whether the exception raised in the <code>PrivilegedExceptionAction</code> gets
+   * propagated as-is from {@link SimpleAuthenticator#execute(PrivilegedExceptionAction)}.
+   */
+  @Test(expected = IOException.class)
+  public void testSimpleAuthenticatorExceptionInExecute() throws Exception {
+    FlumeAuthenticationUtil.clearCredentials();
+    FlumeAuthenticator authenticator = FlumeAuthenticationUtil.getAuthenticator(null, null);
+    assertTrue(authenticator instanceof SimpleAuthenticator);
+
+    authenticator.execute(new PrivilegedExceptionAction<Object>() {
+      @Override
+      public Object run() throws Exception {
+        throw new IOException();
+      }
+    });
   }
 
   @Test
