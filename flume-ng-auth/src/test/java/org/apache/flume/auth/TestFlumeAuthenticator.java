@@ -18,6 +18,7 @@
 package org.apache.flume.auth;
 
 import org.apache.hadoop.minikdc.MiniKdc;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -67,6 +68,12 @@ public class TestFlumeAuthenticator {
     }
   }
 
+  @After
+  public void tearDown() {
+    // Clear the previous statically stored logged in credentials
+    FlumeAuthenticationUtil.clearCredentials();
+  }
+
   @Test
   public void testNullLogin() throws IOException {
     String principal = null;
@@ -83,8 +90,6 @@ public class TestFlumeAuthenticator {
     String keytab = flumeKeytab.getAbsolutePath();
     String expResult = principal;
 
-    // Clear the previous statically stored logged in credentials
-    FlumeAuthenticationUtil.clearCredentials();
     FlumeAuthenticator authenticator = FlumeAuthenticationUtil.getAuthenticator(
             principal, keytab);
     assertTrue(authenticator.isAuthenticated());
@@ -120,8 +125,6 @@ public class TestFlumeAuthenticator {
     String principal = flumePrincipal;
     String keytab = flumeKeytab.getAbsolutePath();
 
-    // Clear the previous statically stored logged in credentials
-    FlumeAuthenticationUtil.clearCredentials();
     FlumeAuthenticator authenticator = FlumeAuthenticationUtil.getAuthenticator(principal, keytab);
     assertTrue(authenticator instanceof KerberosAuthenticator);
 
@@ -139,7 +142,6 @@ public class TestFlumeAuthenticator {
    */
   @Test(expected = IOException.class)
   public void testSimpleAuthenticatorExceptionInExecute() throws Exception {
-    FlumeAuthenticationUtil.clearCredentials();
     FlumeAuthenticator authenticator = FlumeAuthenticationUtil.getAuthenticator(null, null);
     assertTrue(authenticator instanceof SimpleAuthenticator);
 
@@ -178,9 +180,6 @@ public class TestFlumeAuthenticator {
     File keytab = new File(workDir, "flume2.keytab");
     kdc.createPrincipal(keytab, principal);
     String expResult = principal + "@" + kdc.getRealm();
-
-    // Clear the previous statically stored logged in credentials
-    FlumeAuthenticationUtil.clearCredentials();
 
     FlumeAuthenticator authenticator = FlumeAuthenticationUtil.getAuthenticator(
             principal, keytab.getAbsolutePath());
