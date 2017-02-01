@@ -36,6 +36,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -447,5 +448,51 @@ public class TestBucketWriter {
     Assert.assertTrue("Expected " + numberOfRetriesRequired + " " +
                       "but got " + bucketWriter.renameTries.get(),
                       bucketWriter.renameTries.get() == numberOfRetriesRequired);
+  }
+
+  // Test that we don't swallow IOExceptions in secure mode. We should close the bucket writer
+  // and rethrow the exception. Regression test for FLUME-3049.
+  @Test
+  public void testRotateBucketOnIOException() throws IOException, InterruptedException {
+    MockHDFSWriter hdfsWriter = Mockito.spy(new MockHDFSWriter());
+    PrivilegedExecutor ugiProxy =
+        FlumeAuthenticationUtil.getAuthenticator(null, null).proxyAs("alice");
+
+    BucketWriter bucketWriter = new BucketWriter(
+        0, 300, 1, 0, ctx, "/tmp", "file", "", ".tmp", null, null,
+        SequenceFile.CompressionType.NONE, hdfsWriter, timedRollerPool, ugiProxy,
+        new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()), 0, null, null, 30000,
+        Executors.newSingleThreadExecutor(), 0, 0);
+
+    Event e = EventBuilder.withBody("foo", Charsets.UTF_8);
+    // Write one event successfully.
+    bucketWriter.append(e);
+
+    // Fail the next write.
+    IOException expectedIOException = new IOException("Test injected IOException");
+    Mockito.doThrow(expectedIOException).when(hdfsWriter)
+        .append(Mockito.any(Event.class));
+
+    // The second time we try to write we should get an IOException.
+    try {
+      bucketWriter.append(e);
+      Assert.fail("Expected IOException wasn't thrown during append");
+    } catch (IOException ex) {
+      Assert.assertEquals(expectedIOException, ex);
+      logger.info("Caught expected IOException", ex);
+    }
+
+    // The third time we try to write we should get a BucketClosedException, because the
+    // BucketWriter should attempt to close itself before rethrowing the IOException on the first
+    // call.
+    try {
+      bucketWriter.append(e);
+      Assert.fail("BucketWriter should be already closed, BucketClosedException expected");
+    } catch (BucketClosedException ex) {
+      logger.info("Caught expected BucketClosedException", ex);
+    }
+
+    Assert.assertEquals("events written", 1, hdfsWriter.getEventsWritten());
+    Assert.assertEquals("2 files should be closed", 2, hdfsWriter.getFilesClosed());
   }
 }
