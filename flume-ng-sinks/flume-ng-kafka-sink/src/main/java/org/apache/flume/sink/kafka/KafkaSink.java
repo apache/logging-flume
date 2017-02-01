@@ -115,7 +115,7 @@ public class KafkaSink extends AbstractSink implements Configurable {
   private boolean useAvroEventFormat;
   private String partitionHeader = null;
   private Integer staticPartitionId = null;
-  private boolean allowTopicHeader;
+  private boolean allowTopicOverride;
   private String topicHeader = null;
 
   private Optional<SpecificDatumWriter<AvroFlumeEvent>> writer =
@@ -173,10 +173,16 @@ public class KafkaSink extends AbstractSink implements Configurable {
         byte[] eventBody = event.getBody();
         Map<String, String> headers = event.getHeaders();
 
-        eventTopic = headers.get(topicHeader);
-        if (eventTopic == null || !allowTopicHeader) {
+        if (allowTopicOverride) {
+          eventTopic = headers.get(topicHeader);
+          if (eventTopic == null) {
+            logger.debug("Usage of topicheader was configured but header was not available");
+            eventTopic = topic;
+          }
+        } else {
           eventTopic = topic;
         }
+
         eventKey = headers.get(KEY_HEADER);
         if (logger.isTraceEnabled()) {
           if (LogPrivacyUtil.allowLogRawData()) {
@@ -318,11 +324,11 @@ public class KafkaSink extends AbstractSink implements Configurable {
     partitionHeader = context.getString(KafkaSinkConstants.PARTITION_HEADER_NAME);
     staticPartitionId = context.getInteger(KafkaSinkConstants.STATIC_PARTITION_CONF);
 
-    allowTopicHeader = context.getBoolean(KafkaSinkConstants.ALLOW_TOPIC_HEADER,
-                                          KafkaSinkConstants.DEFAULT_ALLOW_TOPIC_HEADER);
+    allowTopicOverride = context.getBoolean(KafkaSinkConstants.ALLOW_TOPIC_OVERRIDE_HEADER,
+                                          KafkaSinkConstants.DEFAULT_ALLOW_TOPIC_OVERRIDE_HEADER);
 
-    topicHeader = context.getString(KafkaSinkConstants.TOPIC_HEADER_NAME,
-                                    KafkaSinkConstants.TOPIC_DEFAULT_HEADER_NAME);
+    topicHeader = context.getString(KafkaSinkConstants.TOPIC_OVERRIDE_HEADER,
+                                    KafkaSinkConstants.DEFAULT_TOPIC_OVERRIDE_HEADER);
 
     if (logger.isDebugEnabled()) {
       logger.debug(KafkaSinkConstants.AVRO_EVENT + " set to: {}", useAvroEventFormat);

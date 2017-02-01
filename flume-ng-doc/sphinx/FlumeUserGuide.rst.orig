@@ -2749,8 +2749,8 @@ partitionIdHeader                   --                   When set, the sink will
                                                          from the event header and send the message to the specified partition of the topic. If the
                                                          value represents an invalid partition, an EventDeliveryException will be thrown. If the header value
                                                          is present then this setting overrides ``defaultPartitionId``.
-allowTopicOverride                  true                 When set, the sink will allow a message to be produced into a topic specified by the ``topicHeader`` property (if provided).
-topicHeader                         topic                When set in conjunction with ``allowTopicOverride`` will produce a message into the value of the header named using the value of this property.
+allowTopicHeader                    true                 When set, the sink will allow a message to be produced into a topic specified by the ``topicHeader`` property (if provided).
+topicHeader                         topic                When set in conjunction with ``allowTopicHeader`` will produce a message into the value of the header named using the value of this property.
                                                          Care should be taken when using in conjunction with the Kafka Source ``topicHeader`` property to avoid creating a loopback.
 kafka.producer.security.protocol    PLAINTEXT            Set to SASL_PLAINTEXT, SASL_SSL or SSL if writing to Kafka using some level of security. See below for additional info on secure setup.
 *more producer security props*                           If using SASL_PLAINTEXT, SASL_SSL or SSL refer to `Kafka security <http://kafka.apache.org/documentation.html#security>`_ for additional

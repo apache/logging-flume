@@ -249,7 +249,7 @@ public class TestKafkaSink {
     String customTopicHeader = "customTopicHeader";
     Sink kafkaSink = new KafkaSink();
     Context context = prepareDefaultContext();
-    context.put(KafkaSinkConstants.TOPIC_HEADER_NAME, customTopicHeader);
+    context.put(KafkaSinkConstants.TOPIC_OVERRIDE_HEADER, customTopicHeader);
     Configurables.configure(kafkaSink, context);
     Channel memoryChannel = new MemoryChannel();
     Configurables.configure(memoryChannel, context);
@@ -293,9 +293,9 @@ public class TestKafkaSink {
   public void testTopicNotFromConfHeader() throws UnsupportedEncodingException {
     Sink kafkaSink = new KafkaSink();
     Context context = prepareDefaultContext();
-    context.put(KafkaSinkConstants.ALLOW_TOPIC_HEADER, "false");
-    context.put(KafkaSinkConstants.TOPIC_HEADER_NAME, "foo");
-    context.put(KafkaSinkConstants.TOPIC_HEADER_NAME, "bar");
+    context.put(KafkaSinkConstants.ALLOW_TOPIC_OVERRIDE_HEADER, "false");
+    context.put(KafkaSinkConstants.TOPIC_OVERRIDE_HEADER, "foo");
+    context.put(KafkaSinkConstants.TOPIC_OVERRIDE_HEADER, "bar");
 
     Configurables.configure(kafkaSink, context);
     Channel memoryChannel = new MemoryChannel();
@@ -305,7 +305,7 @@ public class TestKafkaSink {
 
     String msg = "test-topic-from-config-header";
     Map<String, String> headers = new HashMap<String, String>();
-    headers.put(KafkaSinkConstants.TOPIC_DEFAULT_HEADER_NAME, TestConstants.CUSTOM_TOPIC);
+    headers.put(KafkaSinkConstants.DEFAULT_TOPIC_OVERRIDE_HEADER, TestConstants.CUSTOM_TOPIC);
     headers.put("key", TestConstants.CUSTOM_KEY);
     Transaction tx = memoryChannel.getTransaction();
     tx.begin();
