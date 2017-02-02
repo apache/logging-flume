@@ -176,7 +176,9 @@ public class KafkaSink extends AbstractSink implements Configurable {
         if (allowTopicOverride) {
           eventTopic = headers.get(topicHeader);
           if (eventTopic == null) {
-            logger.debug("Usage of topicheader was configured but header was not available");
+            logger.debug("{} was set to true but header {} was null. Producing to {}" + 
+                         " topic instead.",
+                new Object[]{KafkaSinkConstants.ALLOW_TOPIC_OVERRIDE_HEADER, topicHeader, topic});
             eventTopic = topic;
           }
         } else {
