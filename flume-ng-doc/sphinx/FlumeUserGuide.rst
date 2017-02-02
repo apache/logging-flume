@@ -1253,6 +1253,8 @@ Kafka Source is an Apache Kafka consumer that reads messages from Kafka topics.
 If you have multiple Kafka sources running, you can configure them with the same Consumer Group
 so each will read a unique set of partitions for the topics.
 
+This version of Flume no longer supports older versions (0.8.x) of Kafka and currently supports Kafka 0.9.x series of releases.
+
 ==================================  ===========  ===================================================
 Property Name                       Default      Description
 ==================================  ===========  ===================================================
