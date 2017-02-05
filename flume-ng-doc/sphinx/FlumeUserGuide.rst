@@ -1253,7 +1253,8 @@ Kafka Source is an Apache Kafka consumer that reads messages from Kafka topics.
 If you have multiple Kafka sources running, you can configure them with the same Consumer Group
 so each will read a unique set of partitions for the topics.
 
-This version of Flume no longer supports older versions (0.8.x) of Kafka and currently supports Kafka 0.9.x series of releases.
+This version of Flume no longer supports older Kafka versions (0.8.x) and requires Kafka version 0.9 or greater due to
+the reliance on the Kafka clients shipped with that version.
 
 ==================================  ===========  ===================================================
 Property Name                       Default      Description
@@ -2713,7 +2714,8 @@ This is a Flume Sink implementation that can publish data to a
 with Kafka so that pull based processing systems can process the data coming
 through various Flume sources. This currently supports Kafka 0.9.x series of releases.
 
-This version of Flume no longer supports Older Versions (0.8.x) of Kafka.
+This version of Flume no longer supports older Kafka versions (0.8.x) and requires Kafka version 0.9 or greater due to
+the reliance on the Kafka clients shipped with that version.
 
 Required properties are marked in bold font.
 
@@ -3040,8 +3042,9 @@ The Kafka channel can be used for multiple scenarios:
 #. With Flume sink, but no source - it is a low-latency, fault tolerant way to send events from Kafka to Flume sinks such as HDFS, HBase or Solr
 
 
-This version of Flume requires Kafka version 0.9 or greater due to the reliance on the Kafka clients shipped with that version. The configuration of
-the channel has changed compared to previous flume versions.
+This version of Flume no longer supports older Kafka versions (0.8.x) and requires Kafka version 0.9 or greater due to
+the reliance on the Kafka clients shipped with that version.
+The configuration of the channel has changed compared to previous flume versions.
 
 The configuration parameters are organized as such:
 
