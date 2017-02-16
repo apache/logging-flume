@@ -693,7 +693,7 @@ public class TestKafkaSource {
   @Test
   public void testTopicCustomHeaderSet() throws InterruptedException, EventDeliveryException {
     context.put(TOPICS, topic0);
-    context.put(KafkaSourceConstants.TOPIC_HEADER_CONF, "customTopicHeader");
+    context.put(KafkaSourceConstants.TOPIC_HEADER, "customTopicHeader");
     kafkaSource.configure(context);
 
     kafkaSource.start();

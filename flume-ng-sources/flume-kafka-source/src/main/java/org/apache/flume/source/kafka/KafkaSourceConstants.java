@@ -56,6 +56,6 @@ public class KafkaSourceConstants {
 
   public static final String SET_TOPIC_HEADER = "setTopicHeader";
   public static final boolean DEFAULT_SET_TOPIC_HEADER = true;
-  public static final String TOPIC_HEADER_CONF = "topicHeader";
+  public static final String TOPIC_HEADER = "topicHeader";
 
 }

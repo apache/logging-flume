@@ -240,8 +240,8 @@ public class TestKafkaSink {
   }
 
   /**
-   * Tests that a message will be produced to a topic as specified by the
-   * topicHeader parameter (FLUME-3046).
+   * Tests that a message will be produced to a topic as specified by a
+   * custom topicHeader parameter (FLUME-3046).
    * @throws UnsupportedEncodingException
    */
   @Test
@@ -259,7 +259,6 @@ public class TestKafkaSink {
     String msg = "test-topic-from-config-header";
     Map<String, String> headers = new HashMap<String, String>();
     headers.put(customTopicHeader, TestConstants.CUSTOM_TOPIC);
-    headers.put("key", TestConstants.CUSTOM_KEY);
     Transaction tx = memoryChannel.getTransaction();
     tx.begin();
     Event event = EventBuilder.withBody(msg.getBytes(), headers);
@@ -276,12 +275,10 @@ public class TestKafkaSink {
       // ignore
     }
 
-    MessageAndMetadata fetchedMsg =
+    MessageAndMetadata<?, ?> fetchedMsg =
         testUtil.getNextMessageFromConsumer(TestConstants.CUSTOM_TOPIC);
 
     assertEquals(msg, new String((byte[]) fetchedMsg.message(), "UTF-8"));
-    assertEquals(TestConstants.CUSTOM_KEY,
-                 new String((byte[]) fetchedMsg.key(), "UTF-8"));
   }
 
   /**
@@ -295,7 +292,6 @@ public class TestKafkaSink {
     Context context = prepareDefaultContext();
     context.put(KafkaSinkConstants.ALLOW_TOPIC_OVERRIDE_HEADER, "false");
     context.put(KafkaSinkConstants.TOPIC_OVERRIDE_HEADER, "foo");
-    context.put(KafkaSinkConstants.TOPIC_OVERRIDE_HEADER, "bar");
 
     Configurables.configure(kafkaSink, context);
     Channel memoryChannel = new MemoryChannel();
@@ -306,7 +302,7 @@ public class TestKafkaSink {
     String msg = "test-topic-from-config-header";
     Map<String, String> headers = new HashMap<String, String>();
     headers.put(KafkaSinkConstants.DEFAULT_TOPIC_OVERRIDE_HEADER, TestConstants.CUSTOM_TOPIC);
-    headers.put("key", TestConstants.CUSTOM_KEY);
+    headers.put("foo", TestConstants.CUSTOM_TOPIC);
     Transaction tx = memoryChannel.getTransaction();
     tx.begin();
     Event event = EventBuilder.withBody(msg.getBytes(), headers);
@@ -323,12 +319,10 @@ public class TestKafkaSink {
       // ignore
     }
 
-    MessageAndMetadata fetchedMsg =
+    MessageAndMetadata<?, ?> fetchedMsg =
         testUtil.getNextMessageFromConsumer(DEFAULT_TOPIC);
 
     assertEquals(msg, new String((byte[]) fetchedMsg.message(), "UTF-8"));
-    assertEquals(TestConstants.CUSTOM_KEY,
-                 new String((byte[]) fetchedMsg.key(), "UTF-8"));
   }
 
   @SuppressWarnings("rawtypes")

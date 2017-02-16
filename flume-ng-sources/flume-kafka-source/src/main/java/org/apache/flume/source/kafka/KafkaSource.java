@@ -406,7 +406,7 @@ public class KafkaSource extends AbstractPollableSource
     setTopicHeader = context.getBoolean(KafkaSourceConstants.SET_TOPIC_HEADER,
                                         KafkaSourceConstants.DEFAULT_SET_TOPIC_HEADER);
 
-    topicHeader = context.getString(KafkaSourceConstants.TOPIC_HEADER_CONF,
+    topicHeader = context.getString(KafkaSourceConstants.TOPIC_HEADER,
                                     KafkaSourceConstants.DEFAULT_TOPIC_HEADER);
 
     setConsumerProps(context);
