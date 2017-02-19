@@ -65,6 +65,7 @@ public class Application {
   private final LifecycleSupervisor supervisor;
   private MaterializedConfiguration materializedConfiguration;
   private MonitorService monitorServer;
+  private volatile boolean stopping = false;
 
   public Application() {
     this(new ArrayList<LifecycleAware>(0));
@@ -83,16 +84,25 @@ public class Application {
   }
 
   @Subscribe
-  public synchronized void handleConfigurationEvent(MaterializedConfiguration conf) {
-    stopAllComponents();
-    startAllComponents(conf);
+  public void handleConfigurationEvent(MaterializedConfiguration conf) {
+    if (stopping) {
+      logger.info("Will not handle Configuration Event while stopping");
+      return;
+    }
+    synchronized (this) {
+      stopAllComponents();
+      startAllComponents(conf);
+      
+    }
   }
 
   public synchronized void stop() {
+    stopping = true;
     supervisor.stop();
     if (monitorServer != null) {
       monitorServer.stop();
     }
+    stopping = false;
   }
 
   private void stopAllComponents() {
