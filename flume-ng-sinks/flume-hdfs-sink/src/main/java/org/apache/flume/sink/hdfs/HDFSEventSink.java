@@ -369,7 +369,9 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
             timeZone, needRounding, roundUnit, roundValue, useLocalTime);
         String realName = BucketPath.escapeString(fileName, event.getHeaders(),
             timeZone, needRounding, roundUnit, roundValue, useLocalTime);
-
+        String realSuffix = BucketPath.escapeString(suffix, event.getHeaders(), 
+            timeZone, needRounding, roundUnit, roundValue, useLocalTime);
+        
         String lookupPath = realPath + DIRECTORY_DELIMITER + realName;
         BucketWriter bucketWriter;
         HDFSWriter hdfsWriter = null;
@@ -390,7 +392,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
           // we haven't seen this file yet, so open it and cache the handle
           if (bucketWriter == null) {
             hdfsWriter = writerFactory.getWriter(fileType);
-            bucketWriter = initializeBucketWriter(realPath, realName,
+            bucketWriter = initializeBucketWriter(realPath, realName, realSuffix,
               lookupPath, hdfsWriter, closeCallback);
             sfWriters.put(lookupPath, bucketWriter);
           }
@@ -408,7 +410,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
           LOG.info("Bucket was closed while trying to append, " +
                    "reinitializing bucket and writing event.");
           hdfsWriter = writerFactory.getWriter(fileType);
-          bucketWriter = initializeBucketWriter(realPath, realName,
+          bucketWriter = initializeBucketWriter(realPath, realName, realSuffix,
             lookupPath, hdfsWriter, closeCallback);
           synchronized (sfWritersLock) {
             sfWriters.put(lookupPath, bucketWriter);
@@ -456,12 +458,12 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   }
 
   private BucketWriter initializeBucketWriter(String realPath,
-      String realName, String lookupPath, HDFSWriter hdfsWriter,
+      String realName, String realSuffix, String lookupPath, HDFSWriter hdfsWriter,
       WriterCallback closeCallback) {
     BucketWriter bucketWriter = new BucketWriter(rollInterval,
         rollSize, rollCount,
         batchSize, context, realPath, realName, inUsePrefix, inUseSuffix,
-        suffix, codeC, compType, hdfsWriter, timedRollerPool,
+        realSuffix, codeC, compType, hdfsWriter, timedRollerPool,
         privExecutor, sinkCounter, idleTimeout, closeCallback,
         lookupPath, callTimeout, callTimeoutPool, retryInterval,
         tryCount);
