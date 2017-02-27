@@ -33,6 +33,7 @@ import org.apache.commons.cli.ParseException;
 import org.apache.flume.Channel;
 import org.apache.flume.Constants;
 import org.apache.flume.Context;
+import org.apache.flume.FlumeException;
 import org.apache.flume.SinkRunner;
 import org.apache.flume.SourceRunner;
 import org.apache.flume.instrumentation.MonitorService;
@@ -52,6 +53,8 @@ import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Application {
 
@@ -65,7 +68,7 @@ public class Application {
   private final LifecycleSupervisor supervisor;
   private MaterializedConfiguration materializedConfiguration;
   private MonitorService monitorServer;
-  private volatile boolean stopping = false;
+  private volatile Lock lock = new ReentrantLock();
 
   public Application() {
     this(new ArrayList<LifecycleAware>(0));
@@ -76,33 +79,44 @@ public class Application {
     supervisor = new LifecycleSupervisor();
   }
 
-  public synchronized void start() {
-    for (LifecycleAware component : components) {
-      supervisor.supervise(component,
-          new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
+  public void start() {
+    lock.lock();
+    try {
+      for (LifecycleAware component : components) {
+        supervisor.supervise(component,
+            new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
+      }
+    } finally {
+      lock.unlock();
     }
   }
 
   @Subscribe
   public void handleConfigurationEvent(MaterializedConfiguration conf) {
-    if (stopping) {
-      logger.info("Will not handle Configuration Event while stopping");
+    try {
+      lock.lockInterruptibly();
+    } catch (InterruptedException e) {
+      logger.info("Interrupted while trying to handle configuration event");
       return;
     }
-    synchronized (this) {
+    try {
       stopAllComponents();
       startAllComponents(conf);
-      
+    } finally {
+      lock.unlock();
     }
   }
 
-  public synchronized void stop() {
-    stopping = true;
-    supervisor.stop();
-    if (monitorServer != null) {
-      monitorServer.stop();
+  public void stop() {
+    lock.lock();
+    try {
+      supervisor.stop();
+      if (monitorServer != null) {
+        monitorServer.stop();
+      }
+    } finally {
+      lock.unlock();
     }
-    stopping = false;
   }
 
   private void stopAllComponents() {
