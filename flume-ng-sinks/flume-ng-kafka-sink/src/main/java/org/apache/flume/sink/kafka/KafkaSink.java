@@ -453,7 +453,9 @@ class SinkCallback implements Callback {
 
     if (logger.isDebugEnabled()) {
       long eventElapsedTime = System.currentTimeMillis() - startTime;
-      logger.debug("Acked message partition:{} offset:{}",  metadata.partition(), metadata.offset());
+      logger.debug("Acked message partition:{} offset:{}",
+      	      metadata == null ? null : metadata.partition(),
+		      metadata == null ? null : metadata.offset());
       logger.debug("Elapsed time for send: {}", eventElapsedTime);
     }
   }
