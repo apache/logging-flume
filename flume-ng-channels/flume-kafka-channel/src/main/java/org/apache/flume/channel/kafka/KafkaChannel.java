@@ -752,7 +752,7 @@ class ChannelCallback implements Callback {
 
   public void onCompletion(RecordMetadata metadata, Exception exception) {
     if (exception != null) {
-      log.trace("Error sending message to Kafka due to " + exception.getMessage());
+      log.warn("Error sending message to Kafka due to " + exception.getMessage(), exception);
     }
     if (log.isDebugEnabled()) {
       long batchElapsedTime = System.currentTimeMillis() - startTime;
