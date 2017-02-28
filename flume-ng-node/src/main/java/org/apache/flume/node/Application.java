@@ -33,7 +33,6 @@ import org.apache.commons.cli.ParseException;
 import org.apache.flume.Channel;
 import org.apache.flume.Constants;
 import org.apache.flume.Context;
-import org.apache.flume.FlumeException;
 import org.apache.flume.SinkRunner;
 import org.apache.flume.SourceRunner;
 import org.apache.flume.instrumentation.MonitorService;
@@ -68,7 +67,7 @@ public class Application {
   private final LifecycleSupervisor supervisor;
   private MaterializedConfiguration materializedConfiguration;
   private MonitorService monitorServer;
-  private volatile Lock lock = new ReentrantLock();
+  private final Lock lifecycleLock = new ReentrantLock();
 
   public Application() {
     this(new ArrayList<LifecycleAware>(0));
@@ -80,21 +79,21 @@ public class Application {
   }
 
   public void start() {
-    lock.lock();
+    lifecycleLock.lock();
     try {
       for (LifecycleAware component : components) {
         supervisor.supervise(component,
             new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
       }
     } finally {
-      lock.unlock();
+      lifecycleLock.unlock();
     }
   }
 
   @Subscribe
   public void handleConfigurationEvent(MaterializedConfiguration conf) {
     try {
-      lock.lockInterruptibly();
+      lifecycleLock.lockInterruptibly();
     } catch (InterruptedException e) {
       logger.info("Interrupted while trying to handle configuration event");
       return;
@@ -103,19 +102,19 @@ public class Application {
       stopAllComponents();
       startAllComponents(conf);
     } finally {
-      lock.unlock();
+      lifecycleLock.unlock();
     }
   }
 
   public void stop() {
-    lock.lock();
+    lifecycleLock.lock();
     try {
       supervisor.stop();
       if (monitorServer != null) {
         monitorServer.stop();
       }
     } finally {
-      lock.unlock();
+      lifecycleLock.unlock();
     }
   }
 
