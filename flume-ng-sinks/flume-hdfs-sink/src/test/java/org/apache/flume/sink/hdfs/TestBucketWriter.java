@@ -375,44 +375,6 @@ public class TestBucketWriter {
     Assert.assertTrue("Incorrect in use suffix", hdfsWriter.getOpenedFilePath().contains(SUFFIX));
   }
 
-  @Test
-  public void testTranslatedInUseSuffix() throws IOException, InterruptedException {
-    final int ROLL_INTERVAL = 1000; // seconds. Make sure it doesn't change in course of test
-    final String SUFFIX = "JAI_MATA_DI_%Y%m%d";
-    
-    // Need to override system time use for test so we know what to expect
-    final long testTime = System.currentTimeMillis();
-
-    Clock testClock = new Clock() {
-      public long currentTimeMillis() {
-        return testTime;
-      }
-    };
-    Clock prevClock = BucketPath.getClock();
-    
-    BucketPath.setClock(testClock);
-    
-    MockHDFSWriter hdfsWriter = new MockHDFSWriter();
-    
-
-    Event e = EventBuilder.withBody("foo", Charsets.UTF_8);
-    e.getHeaders().put("timestamp", String.valueOf(testTime));
-
-    String translatedSuffixString = BucketPath.escapeString(SUFFIX, e.getHeaders());
-    
-    BucketWriter bucketWriter = new BucketWriter(
-        ROLL_INTERVAL, 0, 0, 0, ctx, "/tmp", "file", "", translatedSuffixString, null, null,
-        SequenceFile.CompressionType.NONE, hdfsWriter, timedRollerPool, proxy,
-        new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()), 0, null, null, 30000,
-        Executors.newSingleThreadExecutor(), 0, 0, testClock);
-    bucketWriter.append(e);
-    
-    BucketPath.setClock(prevClock);
-    
-    Assert.assertTrue("Incorrect translated in use suffix", 
-        hdfsWriter.getOpenedFilePath().contains(translatedSuffixString));
-    
-  }
   
   @Test
   public void testCallbackOnClose() throws IOException, InterruptedException {
