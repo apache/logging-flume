@@ -13,7 +13,6 @@
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  See the License for the specific language governing permissions and
  limitations under the License.
- limitations under the License.
  */
 
 package org.apache.flume.sink.kafka;
@@ -449,13 +448,10 @@ class SinkCallback implements Callback {
   public void onCompletion(RecordMetadata metadata, Exception exception) {
     if (exception != null) {
       logger.warn("Error sending message to Kafka {} ", exception.getMessage());
-    }
-
-    if (logger.isDebugEnabled()) {
+    } else if (logger.isDebugEnabled()) {
+      // assuming metadata is not null if exception is
       long eventElapsedTime = System.currentTimeMillis() - startTime;
-      logger.debug("Acked message partition:{} offset:{}",
-      	      metadata == null ? null : metadata.partition(),
-		      metadata == null ? null : metadata.offset());
+      logger.debug("Acked message partition:{} offset:{}", metadata.partition(), metadata.offset());
       logger.debug("Elapsed time for send: {}", eventElapsedTime);
     }
   }
