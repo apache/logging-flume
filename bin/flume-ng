@@ -227,7 +227,7 @@ run_flume() {
 FLUME_CLASSPATH=""
 FLUME_JAVA_LIBRARY_PATH=""
 JAVA_OPTS=""
-JAVA_HEAP_MAX ="-Xmx20m"
+JAVA_HEAP_MAX="-Xmx20m"
 LD_LIBRARY_PATH=""
 
 opt_conf=""
