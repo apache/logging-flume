@@ -212,7 +212,7 @@ run_flume() {
     set -x
   fi
   
-  if [[ $FLUME_JAVA_OPTS =~ "Xmx" ]] || [[ $JAVA_OPTS =~ "Xmx" ]]; then
+  if [[ $FLUME_JAVA_OPTS =~ Xmx[0-9]+ ]] || [[ $JAVA_OPTS =~ Xmx[0-9]+ ]]; then
     unset JAVA_HEAP_MAX 
   fi
   $EXEC $JAVA_HOME/bin/java $JAVA_HEAP_MAX $JAVA_OPTS $FLUME_JAVA_OPTS "${arr_java_props[@]}" -cp "$FLUME_CLASSPATH" \
