@@ -144,8 +144,10 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
     expectedBody.put("event", "json content");
     expectedBody.put("num", 1);
 
-    assertMinSearch(1, performSearch(QueryBuilders.matchAllQuery()), expectedBody, event);
-    assertMinSearch(1, performSearch(QueryBuilders.matchQuery("@message", "TEST")), expectedBody, event);
+    assertMinSearch(1,
+        performSearch(QueryBuilders.matchAllQuery()), expectedBody, event);
+    assertMinSearch(1,
+        performSearch(QueryBuilders.matchQuery("@message", "TEST")), expectedBody, event);
   }
 
   @Test
@@ -425,7 +427,8 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
   @Test
   public void shouldUseSpecifiedIndexNameBuilder() throws Exception {
     Context context = new Context();
-    context.put(ElasticSearchSinkConstants.INDEX_NAME_BUILDER, "org.apache.flume.sink.elasticsearch.FakeIndexNameBuilder");
+    context.put(ElasticSearchSinkConstants.INDEX_NAME_BUILDER,
+        "org.apache.flume.sink.elasticsearch.FakeIndexNameBuilder");
 
     assertNull(fixture.getIndexNameBuilder());
     fixture.configure(context);

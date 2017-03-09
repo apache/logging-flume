@@ -80,16 +80,13 @@ public abstract class AbstractElasticSearchSinkTest {
 
     try {
       Settings settings = Settings.builder()
-          //.put("number_of_shards", 1)
-          //.put("number_of_replicas", 0)
-          //.put("routing.hash.type", "simple")
-          //.put("gateway.type", "none")
           .put("path.data", "target/es-test")
           .put("path.home", "D:\\dev\\elasticsearch\\elasticsearch-5.2.1")
           .build();
 
-      //client = new PreBuiltTransportClient(settings);
-      client = new PreBuiltTransportClient(settings).addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName("localhost"), 9300));
+      client = new PreBuiltTransportClient(settings)
+          .addTransportAddress(
+              new InetSocketTransportAddress(InetAddress.getByName("localhost"), 9300));
     } catch (UnknownHostException e) {
       e.printStackTrace();
     }
@@ -99,7 +96,6 @@ public abstract class AbstractElasticSearchSinkTest {
 
     //shutdown api removed in 5.X
     //((InternalNode) node).injector().getInstance(Gateway.class).reset();
-
 
     client.close();
     //node.close();
@@ -139,13 +135,15 @@ public abstract class AbstractElasticSearchSinkTest {
   void assertBodyQuery(int expectedHits, Event... events) {
 
     // Perform Multi Field Match
-    assertSearch(expectedHits, performSearch(QueryBuilders.matchQuery("@message", "event")), null, events);
+    assertSearch(expectedHits,
+        performSearch(QueryBuilders.matchQuery("@message", "event")), null, events);
   }
 
   void assertMinBodyQuery(int expectedMinHits, Event... events) {
 
     // Perform Multi Field Match
-    assertMinSearch(expectedMinHits, performSearch(QueryBuilders.matchQuery("@message", "event")), null, events);
+    assertMinSearch(expectedMinHits,
+        performSearch(QueryBuilders.matchQuery("@message", "event")), null, events);
   }
 
   SearchResponse performSearch(QueryBuilder query) {
@@ -178,10 +176,10 @@ public abstract class AbstractElasticSearchSinkTest {
     }
   }
 
-  void assertMinSearch(int expectedMinHits, SearchResponse response, Map<String, Object> expectedBody,
+  void assertMinSearch(int expectedMinHits, SearchResponse response,
+                       Map<String, Object> expectedBody,
                        Event... events) {
     SearchHits hitResponse = response.getHits();
-    //assertEquals(expectedMinHits, hitResponse.getTotalHits());
     assertTrue(expectedMinHits <= hitResponse.getTotalHits());
 
     SearchHit[] hits = hitResponse.getHits();
@@ -191,17 +189,5 @@ public abstract class AbstractElasticSearchSinkTest {
         return o1.getSourceAsString().compareTo(o2.getSourceAsString());
       }
     });
-
-    /*for (int i = 0; i < events.length; i++) {
-      Event event = events[i];
-      SearchHit hit = hits[i];
-      Map<String, Object> source = hit.getSource();
-      if (expectedBody == null) {
-        assertEquals(new String(event.getBody()), source.get("@message"));
-      } else {
-        assertEquals(expectedBody, source.get("@message"));
-      }
-    }*/
   }
-
 }

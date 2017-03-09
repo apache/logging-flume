@@ -33,7 +33,7 @@ public class FastByteArrayOutputStream extends OutputStream implements BytesStre
   /**
    * The buffer where data is stored.
    */
-  protected byte buf[];
+  protected byte[] buf;
 
   /**
    * The number of valid bytes in the buffer.
@@ -90,7 +90,7 @@ public class FastByteArrayOutputStream extends OutputStream implements BytesStre
    * @param off the start offset in the data.
    * @param len the number of bytes to write.
    */
-  public void write(byte b[], int off, int len) {
+  public void write(byte[] b, int off, int len) {
     if (len == 0) {
       return;
     }
@@ -184,7 +184,6 @@ public class FastByteArrayOutputStream extends OutputStream implements BytesStre
    * over the decoding process is required.
    *
    * @param charsetName the name of a supported
-   *                    {@linkplain java.nio.charset.Charset </code>charset<code>}
    * @return String decoded from the buffer's contents.
    * @throws java.io.UnsupportedEncodingException If the named charset is not supported
    * @since JDK1.1

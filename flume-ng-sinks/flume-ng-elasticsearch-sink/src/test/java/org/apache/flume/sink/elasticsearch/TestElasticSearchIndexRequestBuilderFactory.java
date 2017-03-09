@@ -57,18 +57,15 @@ public class TestElasticSearchIndexRequestBuilderFactory
     factory = new EventSerializerIndexRequestBuilderFactory(serializer) {
       @Override
       IndexRequestBuilder prepareIndex(Client client) {
-
         Settings settings = Settings.builder()
-            //.put("number_of_shards", 1)
-            //.put("number_of_replicas", 0)
-            //.put("routing.hash.type", "simple")
-            //.put("gateway.type", "none")
             .put("path.data", "target/es-test")
             .put("path.home", "D:\\dev\\elasticsearch\\elasticsearch-5.2.1")
             .build();
 
         try {
-          FAKE_CLIENT = new PreBuiltTransportClient(settings).addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName("localhost"), 9300));
+          FAKE_CLIENT = new PreBuiltTransportClient(settings)
+              .addTransportAddress(
+                  new InetSocketTransportAddress(InetAddress.getByName("localhost"), 9300));
           ;
         } catch (UnknownHostException e) {
           e.printStackTrace();
@@ -147,14 +144,16 @@ public class TestElasticSearchIndexRequestBuilderFactory
     String indexType = "uiop";
     Event event = new SimpleEvent();
 
-    IndexRequestBuilder indexRequestBuilder = factory.createIndexRequest(FAKE_CLIENT, indexPrefix, indexType, event);
+    IndexRequestBuilder indexRequestBuilder =
+        factory.createIndexRequest(FAKE_CLIENT, indexPrefix, indexType, event);
 
     assertEquals(indexPrefix + '-'
             + ElasticSearchIndexRequestBuilderFactory.df.format(FIXED_TIME_MILLIS),
         indexRequestBuilder.request().index());
     assertEquals(indexType, indexRequestBuilder.request().type());
 
-    assertArrayEquals(FakeEventSerializer.FAKE_BYTES, indexRequestBuilder.request().source().toBytesRef().bytes);
+    assertArrayEquals(FakeEventSerializer.FAKE_BYTES,
+        indexRequestBuilder.request().source().toBytesRef().bytes);
   }
 
   @Test
@@ -193,10 +192,12 @@ public class TestElasticSearchIndexRequestBuilderFactory
         .build();
 
     try {
-      FAKE_CLIENT = new PreBuiltTransportClient(settings).addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName("localhost"), 9300));
-      ;
+      FAKE_CLIENT = new PreBuiltTransportClient(settings)
+          .addTransportAddress(
+              new InetSocketTransportAddress(InetAddress.getByName("localhost"), 9300));
 
-      IndexRequestBuilder indexRequestBuilder = factory.createIndexRequest(FAKE_CLIENT, indexPrefix, indexType, event);
+      IndexRequestBuilder indexRequestBuilder =
+          factory.createIndexRequest(FAKE_CLIENT, indexPrefix, indexType, event);
 
       assertEquals(indexValue + '-'
               + ElasticSearchIndexRequestBuilderFactory.df.format(FIXED_TIME_MILLIS),

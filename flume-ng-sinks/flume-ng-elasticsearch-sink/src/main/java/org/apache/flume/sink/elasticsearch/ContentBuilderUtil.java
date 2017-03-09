@@ -19,7 +19,11 @@
 package org.apache.flume.sink.elasticsearch;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import org.elasticsearch.common.xcontent.*;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -63,7 +67,8 @@ public class ContentBuilderUtil {
 
       //parser = XContentFactory.xContent(contentType).createParser(data);
 
-      parser = XContentFactory.xContent(contentType).createParser(NamedXContentRegistry.EMPTY, data);
+      parser = XContentFactory.xContent(contentType)
+          .createParser(NamedXContentRegistry.EMPTY, data);
 
       while (parser.nextToken() != null) {
       }
@@ -71,7 +76,8 @@ public class ContentBuilderUtil {
 
       // If the JSON is valid then include it
 
-      parser = XContentFactory.xContent(contentType).createParser(NamedXContentRegistry.EMPTY, data);
+      parser = XContentFactory.xContent(contentType)
+          .createParser(NamedXContentRegistry.EMPTY, data);
 
       // Add the field name, but not the value.
       builder.field(fieldName);

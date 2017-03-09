@@ -51,28 +51,7 @@ public class Bytes {
     if (newSize + 7 < 0) {
       // int overflowed -- return max allowed array size
       return Integer.MAX_VALUE;
-    }
-
-        /*if (JvmUtils.JRE_IS_64BIT) {
-            // round up to 8 byte alignment in 64bit env
-            switch (bytesPerElement) {
-                case 4:
-                    // round up to multiple of 2
-                    return (newSize + 1) & 0x7ffffffe;
-                case 2:
-                    // round up to multiple of 4
-                    return (newSize + 3) & 0x7ffffffc;
-                case 1:
-                    // round up to multiple of 8
-                    return (newSize + 7) & 0x7ffffff8;
-                case 8:
-                    // no rounding
-                default:
-                    // odd (invalid?) size
-                    return newSize;
-            }
-        } */
-    else {
+    } else {
       // round up to 4 byte alignment in 64bit env
       switch (bytesPerElement) {
         case 2:
@@ -91,11 +70,9 @@ public class Bytes {
     }
   }
 
-
   public static final byte[] EMPTY_ARRAY = new byte[0];
 
-
-  final static int[] sizeTable = {9, 99, 999, 9999, 99999, 999999, 9999999,
+  static final int[] sizeTable = {9, 99, 999, 9999, 99999, 999999, 9999999,
       99999999, 999999999, Integer.MAX_VALUE};
   private static final byte[] LONG_MIN_VALUE_BYTES = "-9223372036854775808".getBytes();
 
@@ -107,6 +84,19 @@ public class Bytes {
         return i + 1;
       }
     }
+  }
+
+  // Requires positive x
+
+  static int stringSize(long x) {
+    long p = 10;
+    for (int i = 1; i < 19; i++) {
+      if (x < p) {
+        return i;
+      }
+      p = 10 * p;
+    }
+    return 19;
   }
 
   /**
@@ -123,7 +113,7 @@ public class Bytes {
     return buf;
   }
 
-  final static byte[] digits = {
+  static final byte[] digits = {
       '0', '1', '2', '3', '4', '5',
       '6', '7', '8', '9', 'a', 'b',
       'c', 'd', 'e', 'f', 'g', 'h',
@@ -132,7 +122,7 @@ public class Bytes {
       'u', 'v', 'w', 'x', 'y', 'z'
   };
 
-  final static byte[] DigitTens = {
+  static final byte[] DigitTens = {
       '0', '0', '0', '0', '0', '0', '0', '0', '0', '0',
       '1', '1', '1', '1', '1', '1', '1', '1', '1', '1',
       '2', '2', '2', '2', '2', '2', '2', '2', '2', '2',
@@ -145,7 +135,7 @@ public class Bytes {
       '9', '9', '9', '9', '9', '9', '9', '9', '9', '9',
   };
 
-  final static byte[] DigitOnes = {
+  static final byte[] DigitOnes = {
       '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
       '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
       '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
@@ -192,63 +182,6 @@ public class Bytes {
     }
   }
 
-  public static int atoi(byte[] s)
-      throws NumberFormatException {
-    int result = 0;
-    boolean negative = false;
-    int i = 0, len = s.length;
-    int limit = -Integer.MAX_VALUE;
-    int multmin;
-    int digit;
-
-    if (len > 0) {
-      byte firstChar = s[0];
-      if (firstChar < '0') { // Possible leading "-"
-        if (firstChar == '-') {
-          negative = true;
-          limit = Integer.MIN_VALUE;
-        } else {
-          throw new NumberFormatException();
-        }
-
-        if (len == 1) // Cannot have lone "-"
-        {
-          throw new NumberFormatException();
-        }
-        i++;
-      }
-      multmin = limit / 10;
-      while (i < len) {
-        // Accumulating negatively avoids surprises near MAX_VALUE
-        digit = Character.digit(s[i++], 10);
-        if (digit < 0) {
-          throw new NumberFormatException();
-        }
-        if (result < multmin) {
-          throw new NumberFormatException();
-        }
-        result *= 10;
-        if (result < limit + digit) {
-          throw new NumberFormatException();
-        }
-        result -= digit;
-      }
-    } else {
-      throw new NumberFormatException();
-    }
-    return negative ? result : -result;
-  }
-
-  public static byte[] ltoa(long i) {
-    if (i == Long.MIN_VALUE) {
-      return LONG_MIN_VALUE_BYTES;
-    }
-    int size = (i < 0) ? stringSize(-i) + 1 : stringSize(i);
-    byte[] buf = new byte[size];
-    getChars(i, size, buf);
-    return buf;
-  }
-
   /**
    * Places characters representing the integer i into the
    * character array buf. The characters are placed into
@@ -258,7 +191,7 @@ public class Bytes {
    * <p/>
    * Will fail if i == Long.MIN_VALUE
    */
-  static void getChars(long i, int index, byte[] buf) {
+  static void getChars(long i, int index, byte[ ] buf) {
     long q;
     int r;
     int charPos = index;
@@ -305,17 +238,60 @@ public class Bytes {
     }
   }
 
-  // Requires positive x
+  public static int atoi(byte[] s)
+      throws NumberFormatException {
+    int result = 0;
+    boolean negative = false;
+    int i = 0, len = s.length;
+    int limit = -Integer.MAX_VALUE;
+    int multmin;
+    int digit;
 
-  static int stringSize(long x) {
-    long p = 10;
-    for (int i = 1; i < 19; i++) {
-      if (x < p) {
-        return i;
+    if (len > 0) {
+      byte firstChar = s[0];
+      if (firstChar < '0') { // Possible leading "-"
+        if (firstChar == '-') {
+          negative = true;
+          limit = Integer.MIN_VALUE;
+        } else {
+          throw new NumberFormatException();
+        }
+
+        if (len == 1) { // Cannot have lone "-"
+          throw new NumberFormatException();
+        }
+        i++;
       }
-      p = 10 * p;
+      multmin = limit / 10;
+      while (i < len) {
+        // Accumulating negatively avoids surprises near MAX_VALUE
+        digit = Character.digit(s[i++], 10);
+        if (digit < 0) {
+          throw new NumberFormatException();
+        }
+        if (result < multmin) {
+          throw new NumberFormatException();
+        }
+        result *= 10;
+        if (result < limit + digit) {
+          throw new NumberFormatException();
+        }
+        result -= digit;
+      }
+    } else {
+      throw new NumberFormatException();
     }
-    return 19;
+    return negative ? result : -result;
+  }
+
+  public static byte[] ltoa(long i) {
+    if (i == Long.MIN_VALUE) {
+      return LONG_MIN_VALUE_BYTES;
+    }
+    int size = (i < 0) ? stringSize(-i) + 1 : stringSize(i);
+    byte[] buf = new byte[size];
+    getChars(i, size, buf);
+    return buf;
   }
 
   public static long atol(byte[] s)
@@ -337,8 +313,7 @@ public class Bytes {
           throw new NumberFormatException();
         }
 
-        if (len == 1) // Cannot have lone "-"
-        {
+        if (len == 1) { // Cannot have lone "-"
           throw new NumberFormatException();
         }
         i++;

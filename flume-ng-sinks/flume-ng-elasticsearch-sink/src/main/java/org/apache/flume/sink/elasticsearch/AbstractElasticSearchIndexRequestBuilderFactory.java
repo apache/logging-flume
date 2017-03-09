@@ -74,7 +74,8 @@ public abstract class AbstractElasticSearchIndexRequestBuilderFactory
    */
   @Override
   public IndexRequestBuilder createIndexRequest(Client client,
-                                                String indexPrefix, String indexType, Event event) throws IOException {
+                                                String indexPrefix, String indexType, Event event)
+      throws IOException {
     IndexRequestBuilder request = prepareIndex(client);
     String realIndexPrefix = BucketPath.escapeString(indexPrefix, event.getHeaders());
     String realIndexType = BucketPath.escapeString(indexType, event.getHeaders());

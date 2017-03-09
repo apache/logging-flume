@@ -57,6 +57,7 @@ public class TestElasticSearchDynamicSerializer {
 
     XContentBuilder actual = fixture.getContentBuilder(event);
 
-    assertEquals(new String(expected.bytes().utf8ToString()), new String(actual.bytes().utf8ToString()));
+    assertEquals(new String(expected.bytes().utf8ToString()),
+        new String(actual.bytes().utf8ToString()));
   }
 }

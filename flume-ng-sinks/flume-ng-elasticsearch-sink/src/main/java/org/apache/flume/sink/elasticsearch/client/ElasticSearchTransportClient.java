@@ -236,8 +236,9 @@ public class ElasticSearchTransportClient implements ElasticSearchClient {
     client = node.client();*/
 
     try {
-      client = new PreBuiltTransportClient(settings).addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName("localhost"), 9300));
-      ;
+      client = new PreBuiltTransportClient(settings)
+          .addTransportAddress(
+              new InetSocketTransportAddress(InetAddress.getByName("localhost"), 9300));
     } catch (UnknownHostException e) {
       e.printStackTrace();
     }
