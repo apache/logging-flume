@@ -78,8 +78,9 @@ public class TestElasticSearchIndexRequestBuilderFactory
 
   @Test
   public void shouldUseUtcAsBasisForDateFormat() {
-    assertEquals("Temps universel coordonné",
-        factory.fastDateFormat.getTimeZone().getDisplayName());
+    String timeZone = factory.fastDateFormat.getTimeZone().getDisplayName();
+    assertTrue("Temps universel coordonné".equals(timeZone) ||
+        "Coordinated Universal Time".equals(timeZone));
   }
 
   @Test

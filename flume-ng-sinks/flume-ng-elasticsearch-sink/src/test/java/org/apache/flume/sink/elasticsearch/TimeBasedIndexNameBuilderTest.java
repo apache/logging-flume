@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class TimeBasedIndexNameBuilderTest {
 
@@ -43,8 +44,9 @@ public class TimeBasedIndexNameBuilderTest {
 
   @Test
   public void shouldUseUtcAsBasisForDateFormat() {
-    assertEquals("Temps universel coordonné",
-        indexNameBuilder.getFastDateFormat().getTimeZone().getDisplayName());
+    String timeZone = indexNameBuilder.getFastDateFormat().getTimeZone().getDisplayName();
+    assertTrue("Temps universel coordonné".equals(timeZone) ||
+        "Coordinated Universal Time".equals(timeZone));
   }
 
   @Test
