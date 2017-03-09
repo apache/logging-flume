@@ -126,7 +126,8 @@ public class TaildirMatcher {
     this.fileFilter = new DirectoryStream.Filter<Path>() {
       @Override
       public boolean accept(Path entry) throws IOException {
-        return matcher.matches(entry.getFileName()) && !Files.isDirectory(entry);
+        return matcher.matches(entry.getFileName())
+                 && !Files.isDirectory(entry) && !Files.isHidden(entry);
       }
     };
 
