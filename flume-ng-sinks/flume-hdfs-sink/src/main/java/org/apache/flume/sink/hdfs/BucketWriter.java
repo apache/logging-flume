@@ -440,6 +440,7 @@ class BucketWriter {
               if (isOpen) {
                 close(true);
               }
+              idleFuture = null;
               return null;
             }
           };
