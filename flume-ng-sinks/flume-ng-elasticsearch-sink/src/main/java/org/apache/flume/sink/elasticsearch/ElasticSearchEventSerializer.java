@@ -32,17 +32,16 @@ import org.elasticsearch.common.io.BytesStream;
  * params required should be taken through this.
  */
 public interface ElasticSearchEventSerializer extends Configurable,
-    ConfigurableComponent {
+        ConfigurableComponent {
 
-  public static final Charset charset = Charset.defaultCharset();
+    public static final Charset charset = Charset.defaultCharset();
 
-  /**
-   * Return an {@link BytesStream} made up of the serialized flume event
-   * @param event
-   *          The flume event to serialize
-   * @return A {@link BytesStream} used to write to ElasticSearch
-   * @throws IOException
-   *           If an error occurs during serialization
-   */
-  abstract BytesStream getContentBuilder(Event event) throws IOException;
+    /**
+     * Return an {@link BytesStream} made up of the serialized flume event
+     *
+     * @param event The flume event to serialize
+     * @return A {@link BytesStream} used to write to ElasticSearch
+     * @throws IOException If an error occurs during serialization
+     */
+    abstract BytesStream getContentBuilder(Event event) throws IOException;
 }

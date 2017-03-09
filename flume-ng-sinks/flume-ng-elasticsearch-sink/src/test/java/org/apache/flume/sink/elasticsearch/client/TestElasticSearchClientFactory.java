@@ -29,36 +29,36 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 public class TestElasticSearchClientFactory {
 
-  ElasticSearchClientFactory factory;
-  
-  @Mock
-  ElasticSearchEventSerializer serializer;
+    ElasticSearchClientFactory factory;
 
-  @Before
-  public void setUp() {
-    initMocks(this);
-    factory = new ElasticSearchClientFactory();
-  }
+    @Mock
+    ElasticSearchEventSerializer serializer;
 
-  @Test
-  public void shouldReturnTransportClient() throws Exception {
-    String[] hostNames = { "127.0.0.1" };
-    Object o = factory.getClient(ElasticSearchClientFactory.TransportClient,
-                                 hostNames, "test", serializer, null);
-    assertThat(o, instanceOf(ElasticSearchTransportClient.class));
-  }
+    @Before
+    public void setUp() {
+        initMocks(this);
+        factory = new ElasticSearchClientFactory();
+    }
 
-  @Test
-  public void shouldReturnRestClient() throws NoSuchClientTypeException {
-    String[] hostNames = { "127.0.0.1" };
-    Object o = factory.getClient(ElasticSearchClientFactory.RestClient,
-                                 hostNames, "test", serializer, null);
-    assertThat(o, instanceOf(ElasticSearchRestClient.class));
-  }
+    @Test
+    public void shouldReturnTransportClient() throws Exception {
+        String[] hostNames = {"127.0.0.1"};
+        Object o = factory.getClient(ElasticSearchClientFactory.Client,
+                hostNames, "test", serializer, null);
+        assertThat(o, instanceOf(ElasticSearchTransportClient.class));
+    }
 
-  @Test(expected = NoSuchClientTypeException.class)
-  public void shouldThrowNoSuchClientTypeException() throws NoSuchClientTypeException {
-    String[] hostNames = { "127.0.0.1" };
-    factory.getClient("not_existing_client", hostNames, "test", null, null);
-  }
+    @Test
+    public void shouldReturnRestClient() throws NoSuchClientTypeException {
+        String[] hostNames = {"127.0.0.1"};
+        Object o = factory.getClient(ElasticSearchClientFactory.RestClient,
+                hostNames, "test", serializer, null);
+        assertThat(o, instanceOf(ElasticSearchRestClient.class));
+    }
+
+    @Test(expected = NoSuchClientTypeException.class)
+    public void shouldThrowNoSuchClientTypeException() throws NoSuchClientTypeException {
+        String[] hostNames = {"127.0.0.1"};
+        factory.getClient("not_existing_client", hostNames, "test", null, null);
+    }
 }

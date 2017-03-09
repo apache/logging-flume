@@ -18,47 +18,45 @@
  */
 package org.apache.flume.sink.elasticsearch;
 
+import com.google.common.collect.Maps;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
-import org.elasticsearch.common.collect.Maps;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.junit.Test;
 
 import java.util.Map;
 
+import static junit.framework.Assert.assertEquals;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchEventSerializer.charset;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
-import static org.junit.Assert.assertEquals;
 
 public class TestElasticSearchDynamicSerializer {
 
-  @Test
-  public void testRoundTrip() throws Exception {
-    ElasticSearchDynamicSerializer fixture = new ElasticSearchDynamicSerializer();
-    Context context = new Context();
-    fixture.configure(context);
+    @Test
+    public void testRoundTrip() throws Exception {
+        ElasticSearchDynamicSerializer fixture = new ElasticSearchDynamicSerializer();
+        Context context = new Context();
+        fixture.configure(context);
 
-    String message = "test body";
-    Map<String, String> headers = Maps.newHashMap();
-    headers.put("headerNameOne", "headerValueOne");
-    headers.put("headerNameTwo", "headerValueTwo");
-    headers.put("headerNameThree", "headerValueThree");
-    Event event = EventBuilder.withBody(message.getBytes(charset));
-    event.setHeaders(headers);
+        String message = "test body";
+        Map<String, String> headers = Maps.newHashMap();
+        headers.put("headerNameOne", "headerValueOne");
+        headers.put("headerNameTwo", "headerValueTwo");
+        headers.put("headerNameThree", "headerValueThree");
+        Event event = EventBuilder.withBody(message.getBytes(charset));
+        event.setHeaders(headers);
 
-    XContentBuilder expected = jsonBuilder().startObject();
-    expected.field("body", new String(message.getBytes(), charset));
-    for (String headerName : headers.keySet()) {
-      expected.field(headerName, new String(headers.get(headerName).getBytes(),
-          charset));
+        XContentBuilder expected = jsonBuilder().startObject();
+        expected.field("body", new String(message.getBytes(), charset));
+        for (String headerName : headers.keySet()) {
+            expected.field(headerName, new String(headers.get(headerName).getBytes(),
+                    charset));
+        }
+        expected.endObject();
+
+        XContentBuilder actual = fixture.getContentBuilder(event);
+
+        assertEquals(new String(expected.bytes().utf8ToString()), new String(actual.bytes().utf8ToString()));
     }
-    expected.endObject();
-
-    XContentBuilder actual = fixture.getContentBuilder(event);
-
-    assertEquals(new String(expected.bytes().array()), new String(actual
-        .bytes().array()));
-
-  }
 }

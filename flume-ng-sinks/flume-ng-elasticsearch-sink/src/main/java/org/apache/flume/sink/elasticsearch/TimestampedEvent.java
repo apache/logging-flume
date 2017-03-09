@@ -36,25 +36,25 @@ import java.util.Map;
  */
 final class TimestampedEvent extends SimpleEvent {
 
-  private final long timestamp;
+    private final long timestamp;
 
-  TimestampedEvent(Event base) {
-    setBody(base.getBody());
-    Map<String, String> headers = Maps.newHashMap(base.getHeaders());
-    String timestampString = headers.get("timestamp");
-    if (StringUtils.isBlank(timestampString)) {
-      timestampString = headers.get("@timestamp");
+    TimestampedEvent(Event base) {
+        setBody(base.getBody());
+        Map<String, String> headers = Maps.newHashMap(base.getHeaders());
+        String timestampString = headers.get("timestamp");
+        if (StringUtils.isBlank(timestampString)) {
+            timestampString = headers.get("@timestamp");
+        }
+        if (StringUtils.isBlank(timestampString)) {
+            this.timestamp = DateTimeUtils.currentTimeMillis();
+            headers.put("timestamp", String.valueOf(timestamp));
+        } else {
+            this.timestamp = Long.valueOf(timestampString);
+        }
+        setHeaders(headers);
     }
-    if (StringUtils.isBlank(timestampString)) {
-      this.timestamp = DateTimeUtils.currentTimeMillis();
-      headers.put("timestamp", String.valueOf(timestamp ));
-    } else {
-      this.timestamp = Long.valueOf(timestampString);
-    }
-    setHeaders(headers);
-  }
 
-  long getTimestamp() {
-    return timestamp;
-  }
+    long getTimestamp() {
+        return timestamp;
+    }
 }

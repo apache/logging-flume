@@ -26,7 +26,7 @@ import org.elasticsearch.action.ListenableActionFuture;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequestBuilder;
-import org.elasticsearch.client.Client;
+import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.io.BytesStream;
 import org.junit.Before;
@@ -42,86 +42,86 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 public class TestElasticSearchTransportClient {
 
-  private ElasticSearchTransportClient fixture;
+    private ElasticSearchTransportClient fixture;
 
-  @Mock
-  private ElasticSearchEventSerializer serializer;
+    @Mock
+    private ElasticSearchEventSerializer serializer;
 
-  @Mock
-  private IndexNameBuilder nameBuilder;
+    @Mock
+    private IndexNameBuilder nameBuilder;
 
-  @Mock
-  private Client elasticSearchClient;
+    @Mock
+    private TransportClient elasticSearchClient;
 
-  @Mock
-  private BulkRequestBuilder bulkRequestBuilder;
+    @Mock
+    private BulkRequestBuilder bulkRequestBuilder;
 
-  @Mock
-  private IndexRequestBuilder indexRequestBuilder;
+    @Mock
+    private IndexRequestBuilder indexRequestBuilder;
 
-  @Mock
-  private Event event;
+    @Mock
+    private Event event;
 
-  @Before
-  public void setUp() throws IOException {
-    initMocks(this);
-    BytesReference bytesReference = mock(BytesReference.class);
-    BytesStream bytesStream = mock(BytesStream.class);
+    @Before
+    public void setUp() throws IOException {
+        initMocks(this);
+        BytesReference bytesReference = mock(BytesReference.class);
+        BytesStream bytesStream = mock(BytesStream.class);
 
-    when(nameBuilder.getIndexName(any(Event.class))).thenReturn("foo_index");
-    when(bytesReference.toBytes()).thenReturn("{\"body\":\"test\"}".getBytes());
-    when(bytesStream.bytes()).thenReturn(bytesReference);
-    when(serializer.getContentBuilder(any(Event.class)))
-        .thenReturn(bytesStream);
-    when(elasticSearchClient.prepareIndex(anyString(), anyString()))
-        .thenReturn(indexRequestBuilder);
-    when(indexRequestBuilder.setSource(bytesReference)).thenReturn(
-        indexRequestBuilder);
+        when(nameBuilder.getIndexName(any(Event.class))).thenReturn("foo_index");
+        when(bytesReference.utf8ToString()).thenReturn("{\"body\":\"test\"}");
+        when(bytesStream.bytes()).thenReturn(bytesReference);
+        when(serializer.getContentBuilder(any(Event.class)))
+                .thenReturn(bytesStream);
+        when(elasticSearchClient.prepareIndex(anyString(), anyString()))
+                .thenReturn(indexRequestBuilder);
+        when(indexRequestBuilder.setSource(bytesReference)).thenReturn(
+                indexRequestBuilder);
 
-    fixture = new ElasticSearchTransportClient(elasticSearchClient, serializer);
-    fixture.setBulkRequestBuilder(bulkRequestBuilder);
-  }
+        fixture = new ElasticSearchTransportClient(elasticSearchClient, serializer);
+        fixture.setBulkRequestBuilder(bulkRequestBuilder);
+    }
 
-  @Test
-  public void shouldAddNewEventWithoutTTL() throws Exception {
-    fixture.addEvent(event, nameBuilder, "bar_type", -1);
-    verify(indexRequestBuilder).setSource(
-        serializer.getContentBuilder(event).bytes());
-    verify(bulkRequestBuilder).add(indexRequestBuilder);
-  }
+    @Test
+    public void shouldAddNewEventWithoutTTL() throws Exception {
+        fixture.addEvent(event, nameBuilder, "bar_type", -1);
+        verify(indexRequestBuilder).setSource(
+                serializer.getContentBuilder(event).bytes());
+        verify(bulkRequestBuilder).add(indexRequestBuilder);
+    }
 
-  @Test
-  public void shouldAddNewEventWithTTL() throws Exception {
-    fixture.addEvent(event, nameBuilder, "bar_type", 10);
-    verify(indexRequestBuilder).setTTL(10);
-    verify(indexRequestBuilder).setSource(
-        serializer.getContentBuilder(event).bytes());
-  }
+    @Test
+    public void shouldAddNewEventWithTTL() throws Exception {
+        fixture.addEvent(event, nameBuilder, "bar_type", 10);
+        verify(indexRequestBuilder).setTTL(10);
+        verify(indexRequestBuilder).setSource(
+                serializer.getContentBuilder(event).bytes());
+    }
 
-  @Test
-  public void shouldExecuteBulkRequestBuilder() throws Exception {
-    ListenableActionFuture<BulkResponse> action =
-        (ListenableActionFuture<BulkResponse>) mock(ListenableActionFuture.class);
-    BulkResponse response = mock(BulkResponse.class);
-    when(bulkRequestBuilder.execute()).thenReturn(action);
-    when(action.actionGet()).thenReturn(response);
-    when(response.hasFailures()).thenReturn(false);
+    @Test
+    public void shouldExecuteBulkRequestBuilder() throws Exception {
+        ListenableActionFuture<BulkResponse> action =
+                (ListenableActionFuture<BulkResponse>) mock(ListenableActionFuture.class);
+        BulkResponse response = mock(BulkResponse.class);
+        when(bulkRequestBuilder.execute()).thenReturn(action);
+        when(action.actionGet()).thenReturn(response);
+        when(response.hasFailures()).thenReturn(false);
 
-    fixture.addEvent(event, nameBuilder, "bar_type", 10);
-    fixture.execute();
-    verify(bulkRequestBuilder).execute();
-  }
+        fixture.addEvent(event, nameBuilder, "bar_type", 10);
+        fixture.execute();
+        verify(bulkRequestBuilder).execute();
+    }
 
-  @Test(expected = EventDeliveryException.class)
-  public void shouldThrowExceptionOnExecuteFailed() throws Exception {
-    ListenableActionFuture<BulkResponse> action =
-        (ListenableActionFuture<BulkResponse>) mock(ListenableActionFuture.class);
-    BulkResponse response = mock(BulkResponse.class);
-    when(bulkRequestBuilder.execute()).thenReturn(action);
-    when(action.actionGet()).thenReturn(response);
-    when(response.hasFailures()).thenReturn(true);
+    @Test(expected = EventDeliveryException.class)
+    public void shouldThrowExceptionOnExecuteFailed() throws Exception {
+        ListenableActionFuture<BulkResponse> action =
+                (ListenableActionFuture<BulkResponse>) mock(ListenableActionFuture.class);
+        BulkResponse response = mock(BulkResponse.class);
+        when(bulkRequestBuilder.execute()).thenReturn(action);
+        when(action.actionGet()).thenReturn(response);
+        when(response.hasFailures()).thenReturn(true);
 
-    fixture.addEvent(event, nameBuilder, "bar_type", 10);
-    fixture.execute();
-  }
+        fixture.addEvent(event, nameBuilder, "bar_type", 10);
+        fixture.execute();
+    }
 }

@@ -24,6 +24,7 @@ import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.ConfigurableComponent;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.client.transport.TransportClient;
 
 import java.io.IOException;
 import java.util.TimeZone;
@@ -34,27 +35,21 @@ import java.util.TimeZone;
  * required should be taken through this.
  */
 public interface ElasticSearchIndexRequestBuilderFactory extends Configurable,
-    ConfigurableComponent {
+        ConfigurableComponent {
 
-  static final FastDateFormat df = FastDateFormat.getInstance("yyyy-MM-dd",
-      TimeZone.getTimeZone("Etc/UTC"));
+    static final FastDateFormat df = FastDateFormat.getInstance("yyyy-MM-dd",
+            TimeZone.getTimeZone("Etc/UTC"));
 
-  /**
-   * @param client
-   *          ElasticSearch {@link Client} to prepare index from
-   * @param indexPrefix
-   *          Prefix of index name to use -- as configured on the sink
-   * @param indexType
-   *          Index type to use -- as configured on the sink
-   * @param event
-   *          Flume event to serialize and add to index request
-   * @return prepared ElasticSearch {@link IndexRequestBuilder} instance
-   * @throws IOException
-   *           If an error occurs e.g. during serialization
-   */
-  IndexRequestBuilder createIndexRequest(Client client, String indexPrefix,
-      String indexType, Event event) throws IOException;
-
+    /**
+     * @param client      ElasticSearch {@link TransportClient} to prepare index from
+     * @param indexPrefix Prefix of index name to use -- as configured on the sink
+     * @param indexType   Index type to use -- as configured on the sink
+     * @param event       Flume event to serialize and add to index request
+     * @return prepared ElasticSearch {@link IndexRequestBuilder} instance
+     * @throws IOException If an error occurs e.g. during serialization
+     */
+    IndexRequestBuilder createIndexRequest(Client client, String indexPrefix,
+                                           String indexType, Event event) throws IOException;
 
 
 }
