@@ -31,30 +31,30 @@ import static org.junit.Assert.assertEquals;
 
 public class TimeBasedIndexNameBuilderTest {
 
-    private TimeBasedIndexNameBuilder indexNameBuilder;
+  private TimeBasedIndexNameBuilder indexNameBuilder;
 
-    @Before
-    public void setUp() throws Exception {
-        Context context = new Context();
-        context.put(ElasticSearchSinkConstants.INDEX_NAME, "prefix");
-        indexNameBuilder = new TimeBasedIndexNameBuilder();
-        indexNameBuilder.configure(context);
-    }
+  @Before
+  public void setUp() throws Exception {
+    Context context = new Context();
+    context.put(ElasticSearchSinkConstants.INDEX_NAME, "prefix");
+    indexNameBuilder = new TimeBasedIndexNameBuilder();
+    indexNameBuilder.configure(context);
+  }
 
-    @Test
-    public void shouldUseUtcAsBasisForDateFormat() {
-        assertEquals("Temps universel coordonné",
-                indexNameBuilder.getFastDateFormat().getTimeZone().getDisplayName());
-    }
+  @Test
+  public void shouldUseUtcAsBasisForDateFormat() {
+    assertEquals("Temps universel coordonné",
+        indexNameBuilder.getFastDateFormat().getTimeZone().getDisplayName());
+  }
 
-    @Test
-    public void indexNameShouldBePrefixDashFormattedTimestamp() {
-        long time = 987654321L;
-        Event event = new SimpleEvent();
-        Map<String, String> headers = new HashMap<String, String>();
-        headers.put("timestamp", Long.toString(time));
-        event.setHeaders(headers);
-        assertEquals("prefix-" + indexNameBuilder.getFastDateFormat().format(time),
-                indexNameBuilder.getIndexName(event));
-    }
+  @Test
+  public void indexNameShouldBePrefixDashFormattedTimestamp() {
+    long time = 987654321L;
+    Event event = new SimpleEvent();
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put("timestamp", Long.toString(time));
+    event.setHeaders(headers);
+    assertEquals("prefix-" + indexNameBuilder.getFastDateFormat().format(time),
+        indexNameBuilder.getIndexName(event));
+  }
 }

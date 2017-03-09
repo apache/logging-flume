@@ -57,124 +57,124 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 public class TestElasticSearchRestClient {
 
-    private ElasticSearchRestClient fixture;
+  private ElasticSearchRestClient fixture;
 
-    @Mock
-    private ElasticSearchEventSerializer serializer;
+  @Mock
+  private ElasticSearchEventSerializer serializer;
 
-    @Mock
-    private IndexNameBuilder nameBuilder;
+  @Mock
+  private IndexNameBuilder nameBuilder;
 
-    @Mock
-    private Event event;
+  @Mock
+  private Event event;
 
-    @Mock
-    private HttpClient httpClient;
+  @Mock
+  private HttpClient httpClient;
 
-    @Mock
-    private HttpResponse httpResponse;
+  @Mock
+  private HttpResponse httpResponse;
 
-    @Mock
-    private StatusLine httpStatus;
+  @Mock
+  private StatusLine httpStatus;
 
-    @Mock
-    private HttpEntity httpEntity;
+  @Mock
+  private HttpEntity httpEntity;
 
-    private static final String INDEX_NAME = "foo_index";
-    private static final String MESSAGE_CONTENT = "{\"body\":\"test\"}";
-    private static final String[] HOSTS = {"host1", "host2"};
+  private static final String INDEX_NAME = "foo_index";
+  private static final String MESSAGE_CONTENT = "{\"body\":\"test\"}";
+  private static final String[] HOSTS = {"host1", "host2"};
 
-    @Before
-    public void setUp() throws IOException {
-        initMocks(this);
-        BytesReference bytesReference = mock(BytesReference.class);
-        BytesStream bytesStream = mock(BytesStream.class);
+  @Before
+  public void setUp() throws IOException {
+    initMocks(this);
+    BytesReference bytesReference = mock(BytesReference.class);
+    BytesStream bytesStream = mock(BytesStream.class);
 
-        when(nameBuilder.getIndexName(any(Event.class))).thenReturn(INDEX_NAME);
-        when(bytesReference.toBytesRef()).thenReturn(new BytesRef(MESSAGE_CONTENT));
-        when(bytesStream.bytes()).thenReturn(bytesReference);
-        when(serializer.getContentBuilder(any(Event.class))).thenReturn(bytesStream);
-        fixture = new ElasticSearchRestClient(HOSTS, serializer, httpClient);
+    when(nameBuilder.getIndexName(any(Event.class))).thenReturn(INDEX_NAME);
+    when(bytesReference.toBytesRef()).thenReturn(new BytesRef(MESSAGE_CONTENT));
+    when(bytesStream.bytes()).thenReturn(bytesReference);
+    when(serializer.getContentBuilder(any(Event.class))).thenReturn(bytesStream);
+    fixture = new ElasticSearchRestClient(HOSTS, serializer, httpClient);
+  }
+
+  @Test
+  public void shouldAddNewEventWithoutTTL() throws Exception {
+    ArgumentCaptor<HttpPost> argument = ArgumentCaptor.forClass(HttpPost.class);
+
+    when(httpStatus.getStatusCode()).thenReturn(HttpStatus.SC_OK);
+    when(httpResponse.getStatusLine()).thenReturn(httpStatus);
+    when(httpClient.execute(any(HttpUriRequest.class))).thenReturn(httpResponse);
+
+    fixture.addEvent(event, nameBuilder, "bar_type", -1);
+    fixture.execute();
+
+    verify(httpClient).execute(isA(HttpUriRequest.class));
+    verify(httpClient).execute(argument.capture());
+
+    assertEquals("http://host1/_bulk", argument.getValue().getURI().toString());
+    assertTrue(verifyJsonEvents("{\"index\":{\"_type\":\"bar_type\", \"_index\":\"foo_index\"}}\n",
+        MESSAGE_CONTENT, EntityUtils.toString(argument.getValue().getEntity())));
+  }
+
+  @Test
+  public void shouldAddNewEventWithTTL() throws Exception {
+    ArgumentCaptor<HttpPost> argument = ArgumentCaptor.forClass(HttpPost.class);
+
+    when(httpStatus.getStatusCode()).thenReturn(HttpStatus.SC_OK);
+    when(httpResponse.getStatusLine()).thenReturn(httpStatus);
+    when(httpClient.execute(any(HttpUriRequest.class))).thenReturn(httpResponse);
+
+    fixture.addEvent(event, nameBuilder, "bar_type", 123);
+    fixture.execute();
+
+    verify(httpClient).execute(isA(HttpUriRequest.class));
+    verify(httpClient).execute(argument.capture());
+
+    assertEquals("http://host1/_bulk", argument.getValue().getURI().toString());
+    assertTrue(verifyJsonEvents(
+        "{\"index\":{\"_type\":\"bar_type\",\"_index\":\"foo_index\",\"_ttl\":\"123\"}}\n",
+        MESSAGE_CONTENT, EntityUtils.toString(argument.getValue().getEntity())));
+  }
+
+  private boolean verifyJsonEvents(String expectedIndex, String expectedBody, String actual) {
+    Iterator<String> it = Splitter.on("\n").split(actual).iterator();
+    JsonParser parser = new JsonParser();
+    JsonObject[] arr = new JsonObject[2];
+    for (int i = 0; i < 2; i++) {
+      arr[i] = (JsonObject) parser.parse(it.next());
     }
+    return arr[0].equals(parser.parse(expectedIndex)) && arr[1].equals(parser.parse(expectedBody));
+  }
 
-    @Test
-    public void shouldAddNewEventWithoutTTL() throws Exception {
-        ArgumentCaptor<HttpPost> argument = ArgumentCaptor.forClass(HttpPost.class);
+  @Test(expected = EventDeliveryException.class)
+  public void shouldThrowEventDeliveryException() throws Exception {
+    ArgumentCaptor<HttpPost> argument = ArgumentCaptor.forClass(HttpPost.class);
 
-        when(httpStatus.getStatusCode()).thenReturn(HttpStatus.SC_OK);
-        when(httpResponse.getStatusLine()).thenReturn(httpStatus);
-        when(httpClient.execute(any(HttpUriRequest.class))).thenReturn(httpResponse);
+    when(httpStatus.getStatusCode()).thenReturn(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+    when(httpResponse.getStatusLine()).thenReturn(httpStatus);
+    when(httpClient.execute(any(HttpUriRequest.class))).thenReturn(httpResponse);
 
-        fixture.addEvent(event, nameBuilder, "bar_type", -1);
-        fixture.execute();
+    fixture.addEvent(event, nameBuilder, "bar_type", 123);
+    fixture.execute();
+  }
 
-        verify(httpClient).execute(isA(HttpUriRequest.class));
-        verify(httpClient).execute(argument.capture());
+  @Test()
+  public void shouldRetryBulkOperation() throws Exception {
+    ArgumentCaptor<HttpPost> argument = ArgumentCaptor.forClass(HttpPost.class);
 
-        assertEquals("http://host1/_bulk", argument.getValue().getURI().toString());
-        assertTrue(verifyJsonEvents("{\"index\":{\"_type\":\"bar_type\", \"_index\":\"foo_index\"}}\n",
-                MESSAGE_CONTENT, EntityUtils.toString(argument.getValue().getEntity())));
-    }
+    when(httpStatus.getStatusCode()).thenReturn(HttpStatus.SC_INTERNAL_SERVER_ERROR,
+        HttpStatus.SC_OK);
+    when(httpResponse.getStatusLine()).thenReturn(httpStatus);
+    when(httpClient.execute(any(HttpUriRequest.class))).thenReturn(httpResponse);
 
-    @Test
-    public void shouldAddNewEventWithTTL() throws Exception {
-        ArgumentCaptor<HttpPost> argument = ArgumentCaptor.forClass(HttpPost.class);
+    fixture.addEvent(event, nameBuilder, "bar_type", 123);
+    fixture.execute();
 
-        when(httpStatus.getStatusCode()).thenReturn(HttpStatus.SC_OK);
-        when(httpResponse.getStatusLine()).thenReturn(httpStatus);
-        when(httpClient.execute(any(HttpUriRequest.class))).thenReturn(httpResponse);
+    verify(httpClient, times(2)).execute(isA(HttpUriRequest.class));
+    verify(httpClient, times(2)).execute(argument.capture());
 
-        fixture.addEvent(event, nameBuilder, "bar_type", 123);
-        fixture.execute();
-
-        verify(httpClient).execute(isA(HttpUriRequest.class));
-        verify(httpClient).execute(argument.capture());
-
-        assertEquals("http://host1/_bulk", argument.getValue().getURI().toString());
-        assertTrue(verifyJsonEvents(
-                "{\"index\":{\"_type\":\"bar_type\",\"_index\":\"foo_index\",\"_ttl\":\"123\"}}\n",
-                MESSAGE_CONTENT, EntityUtils.toString(argument.getValue().getEntity())));
-    }
-
-    private boolean verifyJsonEvents(String expectedIndex, String expectedBody, String actual) {
-        Iterator<String> it = Splitter.on("\n").split(actual).iterator();
-        JsonParser parser = new JsonParser();
-        JsonObject[] arr = new JsonObject[2];
-        for (int i = 0; i < 2; i++) {
-            arr[i] = (JsonObject) parser.parse(it.next());
-        }
-        return arr[0].equals(parser.parse(expectedIndex)) && arr[1].equals(parser.parse(expectedBody));
-    }
-
-    @Test(expected = EventDeliveryException.class)
-    public void shouldThrowEventDeliveryException() throws Exception {
-        ArgumentCaptor<HttpPost> argument = ArgumentCaptor.forClass(HttpPost.class);
-
-        when(httpStatus.getStatusCode()).thenReturn(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-        when(httpResponse.getStatusLine()).thenReturn(httpStatus);
-        when(httpClient.execute(any(HttpUriRequest.class))).thenReturn(httpResponse);
-
-        fixture.addEvent(event, nameBuilder, "bar_type", 123);
-        fixture.execute();
-    }
-
-    @Test()
-    public void shouldRetryBulkOperation() throws Exception {
-        ArgumentCaptor<HttpPost> argument = ArgumentCaptor.forClass(HttpPost.class);
-
-        when(httpStatus.getStatusCode()).thenReturn(HttpStatus.SC_INTERNAL_SERVER_ERROR,
-                HttpStatus.SC_OK);
-        when(httpResponse.getStatusLine()).thenReturn(httpStatus);
-        when(httpClient.execute(any(HttpUriRequest.class))).thenReturn(httpResponse);
-
-        fixture.addEvent(event, nameBuilder, "bar_type", 123);
-        fixture.execute();
-
-        verify(httpClient, times(2)).execute(isA(HttpUriRequest.class));
-        verify(httpClient, times(2)).execute(argument.capture());
-
-        List<HttpPost> allValues = argument.getAllValues();
-        assertEquals("http://host1/_bulk", allValues.get(0).getURI().toString());
-        assertEquals("http://host2/_bulk", allValues.get(1).getURI().toString());
-    }
+    List<HttpPost> allValues = argument.getAllValues();
+    assertEquals("http://host1/_bulk", allValues.get(0).getURI().toString());
+    assertEquals("http://host2/_bulk", allValues.get(1).getURI().toString());
+  }
 }

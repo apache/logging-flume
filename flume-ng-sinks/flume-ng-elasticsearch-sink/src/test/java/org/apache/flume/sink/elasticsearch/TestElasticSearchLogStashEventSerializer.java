@@ -35,93 +35,93 @@ import static org.junit.Assert.assertEquals;
 
 public class TestElasticSearchLogStashEventSerializer {
 
-    @Test
-    public void testRoundTrip() throws Exception {
-        ElasticSearchLogStashEventSerializer fixture = new ElasticSearchLogStashEventSerializer();
-        Context context = new Context();
-        fixture.configure(context);
+  @Test
+  public void testRoundTrip() throws Exception {
+    ElasticSearchLogStashEventSerializer fixture = new ElasticSearchLogStashEventSerializer();
+    Context context = new Context();
+    fixture.configure(context);
 
-        String message = "test body";
-        Map<String, String> headers = Maps.newHashMap();
-        long timestamp = System.currentTimeMillis();
-        headers.put("timestamp", String.valueOf(timestamp));
-        headers.put("source", "flume_tail_src");
-        headers.put("host", "test@localhost");
-        headers.put("src_path", "/tmp/test");
-        headers.put("headerNameOne", "headerValueOne");
-        headers.put("headerNameTwo", "headerValueTwo");
-        headers.put("type", "sometype");
-        Event event = EventBuilder.withBody(message.getBytes(charset));
-        event.setHeaders(headers);
+    String message = "test body";
+    Map<String, String> headers = Maps.newHashMap();
+    long timestamp = System.currentTimeMillis();
+    headers.put("timestamp", String.valueOf(timestamp));
+    headers.put("source", "flume_tail_src");
+    headers.put("host", "test@localhost");
+    headers.put("src_path", "/tmp/test");
+    headers.put("headerNameOne", "headerValueOne");
+    headers.put("headerNameTwo", "headerValueTwo");
+    headers.put("type", "sometype");
+    Event event = EventBuilder.withBody(message.getBytes(charset));
+    event.setHeaders(headers);
 
-        XContentBuilder expected = jsonBuilder().startObject();
-        expected.field("@message", new String(message.getBytes(), charset));
-        expected.field("@timestamp", new Date(timestamp));
-        expected.field("@source", "flume_tail_src");
-        expected.field("@type", "sometype");
-        expected.field("@source_host", "test@localhost");
-        expected.field("@source_path", "/tmp/test");
+    XContentBuilder expected = jsonBuilder().startObject();
+    expected.field("@message", new String(message.getBytes(), charset));
+    expected.field("@timestamp", new Date(timestamp));
+    expected.field("@source", "flume_tail_src");
+    expected.field("@type", "sometype");
+    expected.field("@source_host", "test@localhost");
+    expected.field("@source_path", "/tmp/test");
 
-        expected.startObject("@fields");
-        expected.field("timestamp", String.valueOf(timestamp));
-        expected.field("src_path", "/tmp/test");
-        expected.field("host", "test@localhost");
-        expected.field("headerNameTwo", "headerValueTwo");
-        expected.field("source", "flume_tail_src");
-        expected.field("headerNameOne", "headerValueOne");
-        expected.field("type", "sometype");
-        expected.endObject();
+    expected.startObject("@fields");
+    expected.field("timestamp", String.valueOf(timestamp));
+    expected.field("src_path", "/tmp/test");
+    expected.field("host", "test@localhost");
+    expected.field("headerNameTwo", "headerValueTwo");
+    expected.field("source", "flume_tail_src");
+    expected.field("headerNameOne", "headerValueOne");
+    expected.field("type", "sometype");
+    expected.endObject();
 
-        expected.endObject();
+    expected.endObject();
 
-        XContentBuilder actual = fixture.getContentBuilder(event);
+    XContentBuilder actual = fixture.getContentBuilder(event);
 
-        JsonParser parser = new JsonParser();
-        assertEquals(parser.parse(expected.string()), parser.parse(actual.string()));
-    }
+    JsonParser parser = new JsonParser();
+    assertEquals(parser.parse(expected.string()), parser.parse(actual.string()));
+  }
 
-    @Test
-    public void shouldHandleInvalidJSONDuringComplexParsing() throws Exception {
-        ElasticSearchLogStashEventSerializer fixture = new ElasticSearchLogStashEventSerializer();
-        Context context = new Context();
-        fixture.configure(context);
+  @Test
+  public void shouldHandleInvalidJSONDuringComplexParsing() throws Exception {
+    ElasticSearchLogStashEventSerializer fixture = new ElasticSearchLogStashEventSerializer();
+    Context context = new Context();
+    fixture.configure(context);
 
-        String message = "{flume: somethingnotvalid}";
-        Map<String, String> headers = Maps.newHashMap();
-        long timestamp = System.currentTimeMillis();
-        headers.put("timestamp", String.valueOf(timestamp));
-        headers.put("source", "flume_tail_src");
-        headers.put("host", "test@localhost");
-        headers.put("src_path", "/tmp/test");
-        headers.put("headerNameOne", "headerValueOne");
-        headers.put("headerNameTwo", "headerValueTwo");
-        headers.put("type", "sometype");
-        Event event = EventBuilder.withBody(message.getBytes(charset));
-        event.setHeaders(headers);
+    String message = "{flume: somethingnotvalid}";
+    Map<String, String> headers = Maps.newHashMap();
+    long timestamp = System.currentTimeMillis();
+    headers.put("timestamp", String.valueOf(timestamp));
+    headers.put("source", "flume_tail_src");
+    headers.put("host", "test@localhost");
+    headers.put("src_path", "/tmp/test");
+    headers.put("headerNameOne", "headerValueOne");
+    headers.put("headerNameTwo", "headerValueTwo");
+    headers.put("type", "sometype");
+    Event event = EventBuilder.withBody(message.getBytes(charset));
+    event.setHeaders(headers);
 
-        XContentBuilder expected = jsonBuilder().startObject();
-        expected.field("@message", new String(message.getBytes(), charset));
-        expected.field("@timestamp", new Date(timestamp));
-        expected.field("@source", "flume_tail_src");
-        expected.field("@type", "sometype");
-        expected.field("@source_host", "test@localhost");
-        expected.field("@source_path", "/tmp/test");
+    XContentBuilder expected = jsonBuilder().startObject();
+    expected.field("@message", new String(message.getBytes(), charset));
+    expected.field("@timestamp", new Date(timestamp));
+    expected.field("@source", "flume_tail_src");
+    expected.field("@type", "sometype");
+    expected.field("@source_host", "test@localhost");
+    expected.field("@source_path", "/tmp/test");
 
-        expected.startObject("@fields");
-        expected.field("timestamp", String.valueOf(timestamp));
-        expected.field("src_path", "/tmp/test");
-        expected.field("host", "test@localhost");
-        expected.field("headerNameTwo", "headerValueTwo");
-        expected.field("source", "flume_tail_src");
-        expected.field("headerNameOne", "headerValueOne");
-        expected.field("type", "sometype");
-        expected.endObject();
+    expected.startObject("@fields");
+    expected.field("timestamp", String.valueOf(timestamp));
+    expected.field("src_path", "/tmp/test");
+    expected.field("host", "test@localhost");
+    expected.field("headerNameTwo", "headerValueTwo");
+    expected.field("source", "flume_tail_src");
+    expected.field("headerNameOne", "headerValueOne");
+    expected.field("type", "sometype");
+    expected.endObject();
 
-        expected.endObject();
+    expected.endObject();
 
-        XContentBuilder actual = fixture.getContentBuilder(event);
+    XContentBuilder actual = fixture.getContentBuilder(event);
 
-        JsonParser parser = new JsonParser();
-        assertEquals(parser.parse(expected.string()), parser.parse(actual.string()));
-    }
+    JsonParser parser = new JsonParser();
+    assertEquals(parser.parse(expected.string()), parser.parse(actual.string()));
+  }
 }

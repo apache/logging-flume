@@ -121,7 +121,7 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
     assertMinSearch(1, performSearch(QueryBuilders.matchQuery("@message", "TEST2")), null, event2);
     assertMinSearch(1, performSearch(QueryBuilders.matchQuery("@message", "TEST3")), null, event3);
   }
-  
+
   @Test
   public void shouldIndexComplexJsonEvent() throws Exception {
     Configurables.configure(fixture, new Context(parameters));
@@ -138,7 +138,7 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
     fixture.process();
     fixture.stop();
     client.admin().indices()
-            .refresh(Requests.refreshRequest(timestampedIndexName)).actionGet();
+        .refresh(Requests.refreshRequest(timestampedIndexName)).actionGet();
 
     Map<String, Object> expectedBody = new HashMap<String, Object>();
     expectedBody.put("event", "json content");
@@ -225,7 +225,7 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
     fixture = new ElasticSearchSink();
     fixture.configure(new Context(parameters));
 
-    String[] expected = { "10.5.5.27" };
+    String[] expected = {"10.5.5.27"};
 
     assertEquals("testing-cluster-name", fixture.getClusterName());
     assertEquals("testing-index-name", fixture.getIndexName());
@@ -244,7 +244,7 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
     fixture = new ElasticSearchSink();
     fixture.configure(new Context(parameters));
 
-    String[] expected = { "10.5.5.27" };
+    String[] expected = {"10.5.5.27"};
 
     assertEquals(DEFAULT_INDEX_NAME, fixture.getIndexName());
     assertEquals(DEFAULT_INDEX_TYPE, fixture.getIndexType());
@@ -259,7 +259,7 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
     fixture = new ElasticSearchSink();
     fixture.configure(new Context(parameters));
 
-    String[] expected = { "10.5.5.27", "10.5.5.28", "10.5.5.29" };
+    String[] expected = {"10.5.5.27", "10.5.5.28", "10.5.5.29"};
 
     assertArrayEquals(expected, fixture.getServerAddresses());
   }
@@ -271,7 +271,7 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
     fixture = new ElasticSearchSink();
     fixture.configure(new Context(parameters));
 
-    String[] expected = { "10.5.5.27", "10.5.5.28", "10.5.5.29" };
+    String[] expected = {"10.5.5.27", "10.5.5.28", "10.5.5.29"};
 
     assertArrayEquals(expected, fixture.getServerAddresses());
   }
@@ -283,7 +283,7 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
     fixture = new ElasticSearchSink();
     fixture.configure(new Context(parameters));
 
-    String[] expected = { "10.5.5.27:9300", "10.5.5.28:9301", "10.5.5.29:9302" };
+    String[] expected = {"10.5.5.27:9300", "10.5.5.28:9301", "10.5.5.29:9302"};
 
     assertArrayEquals(expected, fixture.getServerAddresses());
   }
@@ -296,7 +296,7 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
     fixture = new ElasticSearchSink();
     fixture.configure(new Context(parameters));
 
-    String[] expected = { "10.5.5.27:9300", "10.5.5.28:9301", "10.5.5.29:9302" };
+    String[] expected = {"10.5.5.27:9300", "10.5.5.28:9301", "10.5.5.29:9302"};
 
     assertArrayEquals(expected, fixture.getServerAddresses());
   }
@@ -351,7 +351,7 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
       fixture = new ElasticSearchSink();
       fixture.configure(new Context(parameters));
 
-      String[] expected = { "10.5.5.27" };
+      String[] expected = {"10.5.5.27"};
       assertEquals("testing-cluster-name", fixture.getClusterName());
       assertEquals("testing-index-name", fixture.getIndexName());
       assertEquals("testing-index-type", fixture.getIndexType());
@@ -445,7 +445,7 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
  */
 class FakeEventSerializer implements ElasticSearchEventSerializer {
 
-  static final byte[] FAKE_BYTES = new byte[] { 9, 8, 7, 6 };
+  static final byte[] FAKE_BYTES = new byte[] {9, 8, 7, 6};
   boolean configuredWithContext;
   boolean configuredWithComponentConfiguration;
 
@@ -453,7 +453,7 @@ class FakeEventSerializer implements ElasticSearchEventSerializer {
   public BytesStream getContentBuilder(Event event) throws IOException {
     FastByteArrayOutputStream fbaos = new FastByteArrayOutputStream(4);
     fbaos.write(FAKE_BYTES);
-    return (BytesStream)fbaos;
+    return (BytesStream) fbaos;
 
     //return null;
   }

@@ -54,143 +54,143 @@ import static org.junit.Assert.assertTrue;
 
 public abstract class AbstractElasticSearchSinkTest {
 
-    static final String DEFAULT_INDEX_NAME = "flume";
-    static final String DEFAULT_INDEX_TYPE = "log";
-    static final String DEFAULT_CLUSTER_NAME = "elasticsearch";
-    static final long FIXED_TIME_MILLIS = 123456789L;
+  static final String DEFAULT_INDEX_NAME = "flume";
+  static final String DEFAULT_INDEX_TYPE = "log";
+  static final String DEFAULT_CLUSTER_NAME = "elasticsearch";
+  static final long FIXED_TIME_MILLIS = 123456789L;
 
-    Node node;
-    Client client;
-    String timestampedIndexName;
-    Map<String, String> parameters;
+  Node node;
+  Client client;
+  String timestampedIndexName;
+  Map<String, String> parameters;
 
-    void initDefaults() {
-        parameters = Maps.newHashMap();
-        parameters.put(INDEX_NAME, DEFAULT_INDEX_NAME);
-        parameters.put(INDEX_TYPE, DEFAULT_INDEX_TYPE);
-        parameters.put(CLUSTER_NAME, DEFAULT_CLUSTER_NAME);
-        parameters.put(BATCH_SIZE, "1");
-        parameters.put(TTL, "5");
+  void initDefaults() {
+    parameters = Maps.newHashMap();
+    parameters.put(INDEX_NAME, DEFAULT_INDEX_NAME);
+    parameters.put(INDEX_TYPE, DEFAULT_INDEX_TYPE);
+    parameters.put(CLUSTER_NAME, DEFAULT_CLUSTER_NAME);
+    parameters.put(BATCH_SIZE, "1");
+    parameters.put(TTL, "5");
 
-        timestampedIndexName = DEFAULT_INDEX_NAME + '-'
-                + ElasticSearchIndexRequestBuilderFactory.df.format(FIXED_TIME_MILLIS);
+    timestampedIndexName = DEFAULT_INDEX_NAME + '-'
+        + ElasticSearchIndexRequestBuilderFactory.df.format(FIXED_TIME_MILLIS);
+  }
+
+  void createNodes() {
+
+    try {
+      Settings settings = Settings.builder()
+          //.put("number_of_shards", 1)
+          //.put("number_of_replicas", 0)
+          //.put("routing.hash.type", "simple")
+          //.put("gateway.type", "none")
+          .put("path.data", "target/es-test")
+          .put("path.home", "D:\\dev\\elasticsearch\\elasticsearch-5.2.1")
+          .build();
+
+      //client = new PreBuiltTransportClient(settings);
+      client = new PreBuiltTransportClient(settings).addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName("localhost"), 9300));
+    } catch (UnknownHostException e) {
+      e.printStackTrace();
     }
+  }
 
-    void createNodes() {
+  void shutdownNodes() throws Exception {
 
-        try {
-            Settings settings = Settings.builder()
-                    //.put("number_of_shards", 1)
-                    //.put("number_of_replicas", 0)
-                    //.put("routing.hash.type", "simple")
-                    //.put("gateway.type", "none")
-                    .put("path.data", "target/es-test")
-                    .put("path.home", "D:\\dev\\elasticsearch\\elasticsearch-5.2.1")
-                    .build();
+    //shutdown api removed in 5.X
+    //((InternalNode) node).injector().getInstance(Gateway.class).reset();
 
-            //client = new PreBuiltTransportClient(settings);
-            client = new PreBuiltTransportClient(settings).addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName("localhost"), 9300));
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
+
+    client.close();
+    //node.close();
+  }
+
+  @Before
+  public void setFixedJodaTime() {
+    DateTimeUtils.setCurrentMillisFixed(FIXED_TIME_MILLIS);
+  }
+
+  @After
+  public void resetJodaTime() {
+    DateTimeUtils.setCurrentMillisSystem();
+  }
+
+  Channel bindAndStartChannel(ElasticSearchSink fixture) {
+    // Configure the channel
+    Channel channel = new MemoryChannel();
+    Configurables.configure(channel, new Context());
+
+    // Wire them together
+    fixture.setChannel(channel);
+    fixture.start();
+    return channel;
+  }
+
+  void assertMatchAllQuery(int expectedHits, Event... events) {
+    assertSearch(expectedHits, performSearch(QueryBuilders.matchAllQuery()),
+        null, events);
+  }
+
+  void assertMinMatchAllQuery(int expectedMinHits, Event... events) {
+    assertMinSearch(expectedMinHits, performSearch(QueryBuilders.matchAllQuery()),
+        null, events);
+  }
+
+  void assertBodyQuery(int expectedHits, Event... events) {
+
+    // Perform Multi Field Match
+    assertSearch(expectedHits, performSearch(QueryBuilders.matchQuery("@message", "event")), null, events);
+  }
+
+  void assertMinBodyQuery(int expectedMinHits, Event... events) {
+
+    // Perform Multi Field Match
+    assertMinSearch(expectedMinHits, performSearch(QueryBuilders.matchQuery("@message", "event")), null, events);
+  }
+
+  SearchResponse performSearch(QueryBuilder query) {
+    return client.prepareSearch(timestampedIndexName)
+        .setTypes(DEFAULT_INDEX_TYPE).setQuery(query).execute().actionGet();
+  }
+
+  void assertSearch(int expectedHits, SearchResponse response, Map<String, Object> expectedBody,
+                    Event... events) {
+    SearchHits hitResponse = response.getHits();
+    assertEquals(expectedHits, hitResponse.getTotalHits());
+
+    SearchHit[] hits = hitResponse.getHits();
+    Arrays.sort(hits, new Comparator<SearchHit>() {
+      @Override
+      public int compare(SearchHit o1, SearchHit o2) {
+        return o1.getSourceAsString().compareTo(o2.getSourceAsString());
+      }
+    });
+
+    for (int i = 0; i < events.length; i++) {
+      Event event = events[i];
+      SearchHit hit = hits[i];
+      Map<String, Object> source = hit.getSource();
+      if (expectedBody == null) {
+        assertEquals(new String(event.getBody()), source.get("@message"));
+      } else {
+        assertEquals(expectedBody, source.get("@message"));
+      }
     }
+  }
 
-    void shutdownNodes() throws Exception {
+  void assertMinSearch(int expectedMinHits, SearchResponse response, Map<String, Object> expectedBody,
+                       Event... events) {
+    SearchHits hitResponse = response.getHits();
+    //assertEquals(expectedMinHits, hitResponse.getTotalHits());
+    assertTrue(expectedMinHits <= hitResponse.getTotalHits());
 
-        //shutdown api removed in 5.X
-        //((InternalNode) node).injector().getInstance(Gateway.class).reset();
-
-
-        client.close();
-        //node.close();
-    }
-
-    @Before
-    public void setFixedJodaTime() {
-        DateTimeUtils.setCurrentMillisFixed(FIXED_TIME_MILLIS);
-    }
-
-    @After
-    public void resetJodaTime() {
-        DateTimeUtils.setCurrentMillisSystem();
-    }
-
-    Channel bindAndStartChannel(ElasticSearchSink fixture) {
-        // Configure the channel
-        Channel channel = new MemoryChannel();
-        Configurables.configure(channel, new Context());
-
-        // Wire them together
-        fixture.setChannel(channel);
-        fixture.start();
-        return channel;
-    }
-
-    void assertMatchAllQuery(int expectedHits, Event... events) {
-        assertSearch(expectedHits, performSearch(QueryBuilders.matchAllQuery()),
-                null, events);
-    }
-
-    void assertMinMatchAllQuery(int expectedMinHits, Event... events) {
-        assertMinSearch(expectedMinHits, performSearch(QueryBuilders.matchAllQuery()),
-                null, events);
-    }
-
-    void assertBodyQuery(int expectedHits, Event... events) {
-
-        // Perform Multi Field Match
-        assertSearch(expectedHits, performSearch(QueryBuilders.matchQuery("@message", "event")), null, events);
-    }
-
-    void assertMinBodyQuery(int expectedMinHits, Event... events) {
-
-        // Perform Multi Field Match
-        assertMinSearch(expectedMinHits, performSearch(QueryBuilders.matchQuery("@message", "event")), null, events);
-    }
-
-    SearchResponse performSearch(QueryBuilder query) {
-        return client.prepareSearch(timestampedIndexName)
-                .setTypes(DEFAULT_INDEX_TYPE).setQuery(query).execute().actionGet();
-    }
-
-    void assertSearch(int expectedHits, SearchResponse response, Map<String, Object> expectedBody,
-                      Event... events) {
-        SearchHits hitResponse = response.getHits();
-        assertEquals(expectedHits, hitResponse.getTotalHits());
-
-        SearchHit[] hits = hitResponse.getHits();
-        Arrays.sort(hits, new Comparator<SearchHit>() {
-            @Override
-            public int compare(SearchHit o1, SearchHit o2) {
-                return o1.getSourceAsString().compareTo(o2.getSourceAsString());
-            }
-        });
-
-        for (int i = 0; i < events.length; i++) {
-            Event event = events[i];
-            SearchHit hit = hits[i];
-            Map<String, Object> source = hit.getSource();
-            if (expectedBody == null) {
-                assertEquals(new String(event.getBody()), source.get("@message"));
-            } else {
-                assertEquals(expectedBody, source.get("@message"));
-            }
-        }
-    }
-
-    void assertMinSearch(int expectedMinHits, SearchResponse response, Map<String, Object> expectedBody,
-                         Event... events) {
-        SearchHits hitResponse = response.getHits();
-        //assertEquals(expectedMinHits, hitResponse.getTotalHits());
-        assertTrue(expectedMinHits <= hitResponse.getTotalHits());
-
-        SearchHit[] hits = hitResponse.getHits();
-        Arrays.sort(hits, new Comparator<SearchHit>() {
-            @Override
-            public int compare(SearchHit o1, SearchHit o2) {
-                return o1.getSourceAsString().compareTo(o2.getSourceAsString());
-            }
-        });
+    SearchHit[] hits = hitResponse.getHits();
+    Arrays.sort(hits, new Comparator<SearchHit>() {
+      @Override
+      public int compare(SearchHit o1, SearchHit o2) {
+        return o1.getSourceAsString().compareTo(o2.getSourceAsString());
+      }
+    });
 
     /*for (int i = 0; i < events.length; i++) {
       Event event = events[i];
@@ -202,6 +202,6 @@ public abstract class AbstractElasticSearchSinkTest {
         assertEquals(expectedBody, source.get("@message"));
       }
     }*/
-    }
+  }
 
 }

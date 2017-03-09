@@ -36,39 +36,39 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
  * determined fields will be indexed as Strings
  */
 public class ElasticSearchDynamicSerializer implements
-        ElasticSearchEventSerializer {
+    ElasticSearchEventSerializer {
 
-    @Override
-    public void configure(Context context) {
-        // NO-OP...
-    }
+  @Override
+  public void configure(Context context) {
+    // NO-OP...
+  }
 
-    @Override
-    public void configure(ComponentConfiguration conf) {
-        // NO-OP...
-    }
+  @Override
+  public void configure(ComponentConfiguration conf) {
+    // NO-OP...
+  }
 
-    @Override
-    public XContentBuilder getContentBuilder(Event event) throws IOException {
-        XContentBuilder builder = jsonBuilder().startObject();
-        appendBody(builder, event);
-        appendHeaders(builder, event);
-        builder.endObject();
-        return builder;
-    }
+  @Override
+  public XContentBuilder getContentBuilder(Event event) throws IOException {
+    XContentBuilder builder = jsonBuilder().startObject();
+    appendBody(builder, event);
+    appendHeaders(builder, event);
+    builder.endObject();
+    return builder;
+  }
 
-    private void appendBody(XContentBuilder builder, Event event)
-            throws IOException {
-        ContentBuilderUtil.appendField(builder, "body", event.getBody());
-    }
+  private void appendBody(XContentBuilder builder, Event event)
+      throws IOException {
+    ContentBuilderUtil.appendField(builder, "body", event.getBody());
+  }
 
-    private void appendHeaders(XContentBuilder builder, Event event)
-            throws IOException {
-        Map<String, String> headers = event.getHeaders();
-        for (String key : headers.keySet()) {
-            ContentBuilderUtil.appendField(builder, key,
-                    headers.get(key).getBytes(charset));
-        }
+  private void appendHeaders(XContentBuilder builder, Event event)
+      throws IOException {
+    Map<String, String> headers = event.getHeaders();
+    for (String key : headers.keySet()) {
+      ContentBuilderUtil.appendField(builder, key,
+          headers.get(key).getBytes(charset));
     }
+  }
 
 }

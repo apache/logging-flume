@@ -31,58 +31,58 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 public class TimestampedEventTest {
-    static final long FIXED_TIME_MILLIS = 123456789L;
+  static final long FIXED_TIME_MILLIS = 123456789L;
 
-    @Before
-    public void setFixedJodaTime() {
-        DateTimeUtils.setCurrentMillisFixed(FIXED_TIME_MILLIS);
-    }
+  @Before
+  public void setFixedJodaTime() {
+    DateTimeUtils.setCurrentMillisFixed(FIXED_TIME_MILLIS);
+  }
 
-    @Test
-    public void shouldEnsureTimestampHeaderPresentInTimestampedEvent() {
-        SimpleEvent base = new SimpleEvent();
+  @Test
+  public void shouldEnsureTimestampHeaderPresentInTimestampedEvent() {
+    SimpleEvent base = new SimpleEvent();
 
-        TimestampedEvent timestampedEvent = new TimestampedEvent(base);
-        assertEquals(FIXED_TIME_MILLIS, timestampedEvent.getTimestamp());
-        assertEquals(String.valueOf(FIXED_TIME_MILLIS),
-                timestampedEvent.getHeaders().get("timestamp"));
-    }
+    TimestampedEvent timestampedEvent = new TimestampedEvent(base);
+    assertEquals(FIXED_TIME_MILLIS, timestampedEvent.getTimestamp());
+    assertEquals(String.valueOf(FIXED_TIME_MILLIS),
+        timestampedEvent.getHeaders().get("timestamp"));
+  }
 
-    @Test
-    public void shouldUseExistingTimestampHeaderInTimestampedEvent() {
-        SimpleEvent base = new SimpleEvent();
-        Map<String, String> headersWithTimestamp = Maps.newHashMap();
-        headersWithTimestamp.put("timestamp", "-321");
-        base.setHeaders(headersWithTimestamp);
+  @Test
+  public void shouldUseExistingTimestampHeaderInTimestampedEvent() {
+    SimpleEvent base = new SimpleEvent();
+    Map<String, String> headersWithTimestamp = Maps.newHashMap();
+    headersWithTimestamp.put("timestamp", "-321");
+    base.setHeaders(headersWithTimestamp);
 
-        TimestampedEvent timestampedEvent = new TimestampedEvent(base);
-        assertEquals(-321L, timestampedEvent.getTimestamp());
-        assertEquals("-321", timestampedEvent.getHeaders().get("timestamp"));
-    }
+    TimestampedEvent timestampedEvent = new TimestampedEvent(base);
+    assertEquals(-321L, timestampedEvent.getTimestamp());
+    assertEquals("-321", timestampedEvent.getHeaders().get("timestamp"));
+  }
 
-    @Test
-    public void shouldUseExistingAtTimestampHeaderInTimestampedEvent() {
-        SimpleEvent base = new SimpleEvent();
-        Map<String, String> headersWithTimestamp = Maps.newHashMap();
-        headersWithTimestamp.put("@timestamp", "-999");
-        base.setHeaders(headersWithTimestamp);
+  @Test
+  public void shouldUseExistingAtTimestampHeaderInTimestampedEvent() {
+    SimpleEvent base = new SimpleEvent();
+    Map<String, String> headersWithTimestamp = Maps.newHashMap();
+    headersWithTimestamp.put("@timestamp", "-999");
+    base.setHeaders(headersWithTimestamp);
 
-        TimestampedEvent timestampedEvent = new TimestampedEvent(base);
-        assertEquals(-999L, timestampedEvent.getTimestamp());
-        assertEquals("-999", timestampedEvent.getHeaders().get("@timestamp"));
-        assertNull(timestampedEvent.getHeaders().get("timestamp"));
-    }
+    TimestampedEvent timestampedEvent = new TimestampedEvent(base);
+    assertEquals(-999L, timestampedEvent.getTimestamp());
+    assertEquals("-999", timestampedEvent.getHeaders().get("@timestamp"));
+    assertNull(timestampedEvent.getHeaders().get("timestamp"));
+  }
 
-    @Test
-    public void shouldPreserveBodyAndNonTimestampHeadersInTimestampedEvent() {
-        SimpleEvent base = new SimpleEvent();
-        base.setBody(new byte[]{1, 2, 3, 4});
-        Map<String, String> headersWithTimestamp = Maps.newHashMap();
-        headersWithTimestamp.put("foo", "bar");
-        base.setHeaders(headersWithTimestamp);
+  @Test
+  public void shouldPreserveBodyAndNonTimestampHeadersInTimestampedEvent() {
+    SimpleEvent base = new SimpleEvent();
+    base.setBody(new byte[] {1, 2, 3, 4});
+    Map<String, String> headersWithTimestamp = Maps.newHashMap();
+    headersWithTimestamp.put("foo", "bar");
+    base.setHeaders(headersWithTimestamp);
 
-        TimestampedEvent timestampedEvent = new TimestampedEvent(base);
-        assertEquals("bar", timestampedEvent.getHeaders().get("foo"));
-        assertArrayEquals(base.getBody(), timestampedEvent.getBody());
-    }
+    TimestampedEvent timestampedEvent = new TimestampedEvent(base);
+    assertEquals("bar", timestampedEvent.getHeaders().get("foo"));
+    assertArrayEquals(base.getBody(), timestampedEvent.getBody());
+  }
 }

@@ -35,21 +35,21 @@ import java.util.TimeZone;
  * required should be taken through this.
  */
 public interface ElasticSearchIndexRequestBuilderFactory extends Configurable,
-        ConfigurableComponent {
+    ConfigurableComponent {
 
-    static final FastDateFormat df = FastDateFormat.getInstance("yyyy-MM-dd",
-            TimeZone.getTimeZone("Etc/UTC"));
+  static final FastDateFormat df = FastDateFormat.getInstance("yyyy-MM-dd",
+      TimeZone.getTimeZone("Etc/UTC"));
 
-    /**
-     * @param client      ElasticSearch {@link TransportClient} to prepare index from
-     * @param indexPrefix Prefix of index name to use -- as configured on the sink
-     * @param indexType   Index type to use -- as configured on the sink
-     * @param event       Flume event to serialize and add to index request
-     * @return prepared ElasticSearch {@link IndexRequestBuilder} instance
-     * @throws IOException If an error occurs e.g. during serialization
-     */
-    IndexRequestBuilder createIndexRequest(Client client, String indexPrefix,
-                                           String indexType, Event event) throws IOException;
+  /**
+   * @param client      ElasticSearch {@link TransportClient} to prepare index from
+   * @param indexPrefix Prefix of index name to use -- as configured on the sink
+   * @param indexType   Index type to use -- as configured on the sink
+   * @param event       Flume event to serialize and add to index request
+   * @return prepared ElasticSearch {@link IndexRequestBuilder} instance
+   * @throws IOException If an error occurs e.g. during serialization
+   */
+  IndexRequestBuilder createIndexRequest(Client client, String indexPrefix,
+                                         String indexType, Event event) throws IOException;
 
 
 }

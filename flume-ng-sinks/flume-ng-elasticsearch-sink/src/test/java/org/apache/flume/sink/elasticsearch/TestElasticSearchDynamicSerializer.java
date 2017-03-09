@@ -33,30 +33,30 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 public class TestElasticSearchDynamicSerializer {
 
-    @Test
-    public void testRoundTrip() throws Exception {
-        ElasticSearchDynamicSerializer fixture = new ElasticSearchDynamicSerializer();
-        Context context = new Context();
-        fixture.configure(context);
+  @Test
+  public void testRoundTrip() throws Exception {
+    ElasticSearchDynamicSerializer fixture = new ElasticSearchDynamicSerializer();
+    Context context = new Context();
+    fixture.configure(context);
 
-        String message = "test body";
-        Map<String, String> headers = Maps.newHashMap();
-        headers.put("headerNameOne", "headerValueOne");
-        headers.put("headerNameTwo", "headerValueTwo");
-        headers.put("headerNameThree", "headerValueThree");
-        Event event = EventBuilder.withBody(message.getBytes(charset));
-        event.setHeaders(headers);
+    String message = "test body";
+    Map<String, String> headers = Maps.newHashMap();
+    headers.put("headerNameOne", "headerValueOne");
+    headers.put("headerNameTwo", "headerValueTwo");
+    headers.put("headerNameThree", "headerValueThree");
+    Event event = EventBuilder.withBody(message.getBytes(charset));
+    event.setHeaders(headers);
 
-        XContentBuilder expected = jsonBuilder().startObject();
-        expected.field("body", new String(message.getBytes(), charset));
-        for (String headerName : headers.keySet()) {
-            expected.field(headerName, new String(headers.get(headerName).getBytes(),
-                    charset));
-        }
-        expected.endObject();
-
-        XContentBuilder actual = fixture.getContentBuilder(event);
-
-        assertEquals(new String(expected.bytes().utf8ToString()), new String(actual.bytes().utf8ToString()));
+    XContentBuilder expected = jsonBuilder().startObject();
+    expected.field("body", new String(message.getBytes(), charset));
+    for (String headerName : headers.keySet()) {
+      expected.field(headerName, new String(headers.get(headerName).getBytes(),
+          charset));
     }
+    expected.endObject();
+
+    XContentBuilder actual = fixture.getContentBuilder(event);
+
+    assertEquals(new String(expected.bytes().utf8ToString()), new String(actual.bytes().utf8ToString()));
+  }
 }

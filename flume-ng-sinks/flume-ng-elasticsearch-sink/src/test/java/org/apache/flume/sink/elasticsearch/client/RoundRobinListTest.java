@@ -25,19 +25,19 @@ import static org.junit.Assert.assertEquals;
 
 public class RoundRobinListTest {
 
-    private RoundRobinList<String> fixture;
+  private RoundRobinList<String> fixture;
 
-    @Before
-    public void setUp() {
-        fixture = new RoundRobinList<String>(Arrays.asList("test1", "test2"));
-    }
+  @Before
+  public void setUp() {
+    fixture = new RoundRobinList<String>(Arrays.asList("test1", "test2"));
+  }
 
-    @Test
-    public void shouldReturnNextElement() {
-        assertEquals("test1", fixture.get());
-        assertEquals("test2", fixture.get());
-        assertEquals("test1", fixture.get());
-        assertEquals("test2", fixture.get());
-        assertEquals("test1", fixture.get());
-    }
+  @Test
+  public void shouldReturnNextElement() {
+    assertEquals("test1", fixture.get());
+    assertEquals("test2", fixture.get());
+    assertEquals("test1", fixture.get());
+    assertEquals("test2", fixture.get());
+    assertEquals("test1", fixture.get());
+  }
 }
