@@ -60,7 +60,7 @@ limitations under the License.
   </properties>
 
   <modules>
-    <!--<module>flume-checkstyle</module>-->
+    <module>flume-checkstyle</module>
     <module>flume-ng-core</module>
     <module>flume-ng-configuration</module>
     <module>flume-ng-embedded-agent</module>
@@ -617,7 +617,7 @@ limitations under the License.
       <name>Geoffroy Vergne</name>
       <id>gvergne</id>
       <email>geoffroy.vergne@gmail.com</email>
-      <organization>Ritmx</organization>
+      <organization>geoffroyvergne</organization>
     </developer>
   </developers>
 
@@ -648,7 +648,46 @@ limitations under the License.
         <artifactId>apache-rat-plugin</artifactId>
       </plugin>
 
-
+      <!-- Run checkstyle as part of the "verify" phase. See
+                 https://maven.apache.org/plugins/maven-checkstyle-plugin/examples/multi-module-config.html
+                 for how to configure plugin for a multi-module project. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>${checkstyle.plugin.version}</version>
+        <dependencies>
+          <!-- The flume-checkstyle module adds the checkstyle config files to the classpath. -->
+          <dependency>
+            <groupId>org.apache.flume</groupId>
+            <artifactId>flume-checkstyle</artifactId>
+            <version>${project.version}</version>
+          </dependency>
+          <!-- Newer versions of puppycrawl checkstyle have more features. Pull in a more recent
+               version than is specified in the maven-checkstyle-plugin pom file. -->
+          <dependency>
+            <groupId>com.puppycrawl.tools</groupId>
+            <artifactId>checkstyle</artifactId>
+            <version>${checkstyle.tool.version}</version>
+          </dependency>
+        </dependencies>
+        <executions>
+          <execution>
+            <id>verify</id>
+            <phase>verify</phase>
+            <configuration>
+              <configLocation>flume/checkstyle.xml</configLocation>
+              <suppressionsLocation>flume/checkstyle-suppressions.xml</suppressionsLocation>
+              <suppressionsFileExpression>checkstyle.suppressions.file</suppressionsFileExpression>
+              <encoding>UTF-8</encoding>
+              <includeTestSourceDirectory>true</includeTestSourceDirectory>
+              <linkXRef>false</linkXRef>
+            </configuration>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
 
     </plugins>
 
