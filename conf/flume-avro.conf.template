@@ -1,0 +1,43 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+
+# The configuration file needs to define the sources,
+# the channels and the sinks.
+# Sources, channels and sinks are defined per agent,
+# in this case called 'agent'
+
+# Define a memory channel called ch1 on agent1
+agent1.channels.ch1.type = memory
+
+# Define an Avro source called avro-source1 on agent1 and tell it
+# to bind to 0.0.0.0:41414. Connect it to channel ch1.
+agent1.sources.avro-source1.channels = ch1
+agent1.sources.avro-source1.type = avro
+agent1.sources.avro-source1.bind = 0.0.0.0
+agent1.sources.avro-source1.port = 41414
+ 
+# Define a logger sink that simply logs all events it receives
+# and connect it to the other end of the same channel.
+agent1.sinks.log-sink1.channel = ch1
+agent1.sinks.log-sink1.type = logger
+ 
+# Finally, now that we've defined all of our components, tell
+# agent1 which ones we want to activate.
+agent1.channels = ch1
+agent1.sources = avro-source1
+agent1.sinks = log-sink1
