@@ -93,6 +93,9 @@ public class TaildirMatcher {
   // cached content, files which matched the pattern within the parent directory
   private List<File> lastMatchedFiles = Lists.newArrayList();
 
+  //flag from configuration to ignore hidden files
+  private boolean ignoreHiddenFile;
+
   /**
    * Package accessible constructor. From configuration context it represents a single
    * <code>filegroup</code> and encapsulates the corresponding <code>filePattern</code>.
@@ -112,11 +115,13 @@ public class TaildirMatcher {
    *                             for stamping mtime (eg: remote filesystems)
    * @see TaildirSourceConfigurationConstants
    */
-  TaildirMatcher(String fileGroup, String filePattern, boolean cachePatternMatching) {
+  TaildirMatcher(String fileGroup, String filePattern,
+      boolean cachePatternMatching, boolean ignoreHiddenFile) {
     // store whatever came from configuration
     this.fileGroup = fileGroup;
     this.filePattern = filePattern;
     this.cachePatternMatching = cachePatternMatching;
+    this.ignoreHiddenFile = ignoreHiddenFile;
 
     // calculate final members
     File f = new File(filePattern);
@@ -126,8 +131,7 @@ public class TaildirMatcher {
     this.fileFilter = new DirectoryStream.Filter<Path>() {
       @Override
       public boolean accept(Path entry) throws IOException {
-        return matcher.matches(entry.getFileName())
-                 && !Files.isDirectory(entry) && !Files.isHidden(entry);
+        return matcher.matches(entry.getFileName()) && !Files.isDirectory(entry);
       }
     };
 
@@ -223,6 +227,9 @@ public class TaildirMatcher {
     List<File> result = Lists.newArrayList();
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(parentDir.toPath(), fileFilter)) {
       for (Path entry : stream) {
+        if ( ignoreHiddenFile && Files.isHidden(entry)) {
+          continue;
+        }
         result.add(entry.toFile());
       }
     } catch (IOException e) {

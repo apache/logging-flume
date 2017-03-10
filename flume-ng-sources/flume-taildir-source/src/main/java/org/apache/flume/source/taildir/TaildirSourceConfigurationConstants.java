@@ -63,4 +63,8 @@ public class TaildirSourceConfigurationConstants {
   /** Whether to include absolute path filename in a header. */
   public static final String FILENAME_HEADER = "fileHeader";
   public static final boolean DEFAULT_FILE_HEADER = false;
+
+  /** Whether to ingore the hidden file. */
+  public static final String IGNORE_HIDDEN_FILE = "ignoreHiddenFile";
+  public static final boolean DEFAULT_IGNORE_HIDDEN_FILE = false;
 }

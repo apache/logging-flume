@@ -86,6 +86,7 @@ public class TaildirSource extends AbstractSource implements
   private Long maxBackOffSleepInterval;
   private boolean fileHeader;
   private String fileHeaderKey;
+  private boolean ignoreHiddenFile;
 
   @Override
   public synchronized void start() {
@@ -100,6 +101,7 @@ public class TaildirSource extends AbstractSource implements
           .cachePatternMatching(cachePatternMatching)
           .annotateFileName(fileHeader)
           .fileNameHeader(fileHeaderKey)
+          .ignoreHiddenFile(ignoreHiddenFile)
           .build();
     } catch (IOException e) {
       throw new FlumeException("Error instantiating ReliableTaildirEventReader", e);
@@ -184,6 +186,8 @@ public class TaildirSource extends AbstractSource implements
             DEFAULT_FILE_HEADER);
     fileHeaderKey = context.getString(FILENAME_HEADER_KEY,
             DEFAULT_FILENAME_HEADER_KEY);
+    ignoreHiddenFile = context.getBoolean(IGNORE_HIDDEN_FILE,
+            DEFAULT_IGNORE_HIDDEN_FILE);
 
     if (sourceCounter == null) {
       sourceCounter = new SourceCounter(getName());
