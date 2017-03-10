@@ -87,8 +87,8 @@ public class TaildirSource extends AbstractSource implements
   private Long maxBackOffSleepInterval;
   private boolean fileHeader;
   private String fileHeaderKey;
-  private boolean ignoreHiddenFile;
   private Long maxBatchCount;
+  private boolean ignoreHiddenFile;
 
   @Override
   public synchronized void start() {
@@ -188,14 +188,14 @@ public class TaildirSource extends AbstractSource implements
             DEFAULT_FILE_HEADER);
     fileHeaderKey = context.getString(FILENAME_HEADER_KEY,
             DEFAULT_FILENAME_HEADER_KEY);
-    ignoreHiddenFile = context.getBoolean(IGNORE_HIDDEN_FILE,
-            DEFAULT_IGNORE_HIDDEN_FILE);
     maxBatchCount = context.getLong(MAX_BATCH_COUNT, DEFAULT_MAX_BATCH_COUNT);
     if (maxBatchCount <= 0) {
       maxBatchCount = DEFAULT_MAX_BATCH_COUNT;
       logger.warn("Invalid maxBatchCount specified, initializing source "
           + "default maxBatchCount of {}", maxBatchCount);
     }
+    ignoreHiddenFile = context.getBoolean(IGNORE_HIDDEN_FILE,
+            DEFAULT_IGNORE_HIDDEN_FILE);
 
     if (sourceCounter == null) {
       sourceCounter = new SourceCounter(getName());
