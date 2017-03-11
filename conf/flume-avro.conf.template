@@ -41,3 +41,4 @@ agent1.sinks.log-sink1.type = logger
 agent1.channels = ch1
 agent1.sources = avro-source1
 agent1.sinks = log-sink1
+
