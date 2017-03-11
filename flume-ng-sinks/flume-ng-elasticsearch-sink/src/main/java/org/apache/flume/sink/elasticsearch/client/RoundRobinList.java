@@ -18,7 +18,6 @@ import java.util.Iterator;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 public class RoundRobinList<T> {
 
   private Iterator<T> iterator;

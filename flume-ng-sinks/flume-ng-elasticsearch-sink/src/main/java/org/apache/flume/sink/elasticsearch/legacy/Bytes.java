@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 package org.apache.flume.sink.elasticsearch.legacy;
 
 public class Bytes {
@@ -148,40 +147,6 @@ public class Bytes {
       '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
   };
 
-  static void getChars(int i, int index, byte[] buf) {
-    int q, r;
-    int charPos = index;
-    byte sign = 0;
-
-    if (i < 0) {
-      sign = '-';
-      i = -i;
-    }
-
-    // Generate two digits per iteration
-    while (i >= 65536) {
-      q = i / 100;
-      // really: r = i - (q * 100);
-      r = i - ((q << 6) + (q << 5) + (q << 2));
-      i = q;
-      buf[--charPos] = DigitOnes[r];
-      buf[--charPos] = DigitTens[r];
-    }
-
-    // Fall thru to fast mode for smaller numbers
-    // assert(i <= 65536, i);
-    for (; ; ) {
-      q = (i * 52429) >>> (16 + 3);
-      r = i - ((q << 3) + (q << 1));  // r = i-(q*10) ...
-      buf[--charPos] = digits[r];
-      i = q;
-      if (i == 0) break;
-    }
-    if (sign != 0) {
-      buf[--charPos] = sign;
-    }
-  }
-
   /**
    * Places characters representing the integer i into the
    * character array buf. The characters are placed into
@@ -191,7 +156,7 @@ public class Bytes {
    * <p/>
    * Will fail if i == Long.MIN_VALUE
    */
-  static void getChars(long i, int index, byte[ ] buf) {
+  static void getChars(long i, int index, byte[] buf) {
     long q;
     int r;
     int charPos = index;
@@ -292,51 +257,5 @@ public class Bytes {
     byte[] buf = new byte[size];
     getChars(i, size, buf);
     return buf;
-  }
-
-  public static long atol(byte[] s)
-      throws NumberFormatException {
-    long result = 0;
-    boolean negative = false;
-    int i = 0, len = s.length;
-    long limit = -Long.MAX_VALUE;
-    long multmin;
-    int digit;
-
-    if (len > 0) {
-      byte firstChar = s[0];
-      if (firstChar < '0') { // Possible leading "-"
-        if (firstChar == '-') {
-          negative = true;
-          limit = Long.MIN_VALUE;
-        } else {
-          throw new NumberFormatException();
-        }
-
-        if (len == 1) { // Cannot have lone "-"
-          throw new NumberFormatException();
-        }
-        i++;
-      }
-      multmin = limit / 10;
-      while (i < len) {
-        // Accumulating negatively avoids surprises near MAX_VALUE
-        digit = Character.digit(s[i++], 10);
-        if (digit < 0) {
-          throw new NumberFormatException();
-        }
-        if (result < multmin) {
-          throw new NumberFormatException();
-        }
-        result *= 10;
-        if (result < limit + digit) {
-          throw new NumberFormatException();
-        }
-        result -= digit;
-      }
-    } else {
-      throw new NumberFormatException();
-    }
-    return negative ? result : -result;
   }
 }

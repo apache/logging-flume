@@ -26,9 +26,7 @@ import org.junit.Test;
 
 import java.util.Map;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 public class TimestampedEventTest {
   static final long FIXED_TIME_MILLIS = 123456789L;

@@ -19,13 +19,11 @@
 package org.apache.flume.sink.elasticsearch.client;
 
 import com.google.common.annotations.VisibleForTesting;
-
-import java.io.IOException;
-
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.sink.elasticsearch.ElasticSearchEventSerializer;
+import org.apache.flume.sink.elasticsearch.ElasticSearchIndexRequestBuilderFactory;
 import org.apache.flume.sink.elasticsearch.IndexNameBuilder;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -34,16 +32,14 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
-import org.elasticsearch.node.Node;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
-
-import org.apache.flume.sink.elasticsearch.ElasticSearchIndexRequestBuilderFactory;
 
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.DEFAULT_PORT;
 
@@ -222,18 +218,10 @@ public class ElasticSearchTransportClient implements ElasticSearchClient {
   private void openLocalDiscoveryClient() {
     logger.info("Using ElasticSearch AutoDiscovery mode");
 
-    //Node node = NodeBuilder.nodeBuilder().client(true).local(true).node();
-    //Node node = new Node(Settings.builder().build());
-
     Settings settings = Settings.builder()
         .put("path.data", "target/es-test")
         .put("path.home", "D:\\dev\\elasticsearch\\elasticsearch-5.2.1")
         .build();
-
-    /*if (client != null) {
-      client.close();
-    }
-    client = node.client();*/
 
     try {
       client = new PreBuiltTransportClient(settings)

@@ -18,13 +18,13 @@
  */
 package org.apache.flume.sink.elasticsearch;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
-
 import org.apache.flume.Event;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.ConfigurableComponent;
 import org.elasticsearch.common.io.BytesStream;
+
+import java.io.IOException;
+import java.nio.charset.Charset;
 
 /**
  * Interface for an event serializer which serializes the headers and body of an

@@ -16,10 +16,10 @@
 
 package org.apache.flume.sink.elasticsearch.client;
 
-import java.util.Arrays;
-
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 

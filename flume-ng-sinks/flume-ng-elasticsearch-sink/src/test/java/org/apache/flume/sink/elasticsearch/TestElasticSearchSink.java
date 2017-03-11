@@ -44,17 +44,8 @@ import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.BATCH_SIZE;
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.CLUSTER_NAME;
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.HOSTNAMES;
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.INDEX_NAME;
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.INDEX_TYPE;
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.SERIALIZER;
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.TTL;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.*;
+import static org.junit.Assert.*;
 
 public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
 
@@ -129,7 +120,6 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
 
     Transaction tx = channel.getTransaction();
     tx.begin();
-    //Event event = EventBuilder.withBody("{\"event\":\"json content\", \"num\":1}".getBytes());
     Event event = EventBuilder.withBody("{\"test\":{ TEST {test} }}".getBytes());
     channel.put(event);
     tx.commit();
@@ -457,8 +447,6 @@ class FakeEventSerializer implements ElasticSearchEventSerializer {
     FastByteArrayOutputStream fbaos = new FastByteArrayOutputStream(4);
     fbaos.write(FAKE_BYTES);
     return (BytesStream) fbaos;
-
-    //return null;
   }
 
   @Override

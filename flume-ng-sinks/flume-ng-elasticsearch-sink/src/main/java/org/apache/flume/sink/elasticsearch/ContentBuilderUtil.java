@@ -19,11 +19,7 @@
 package org.apache.flume.sink.elasticsearch;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.common.xcontent.NamedXContentRegistry;
+import org.elasticsearch.common.xcontent.*;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -64,8 +60,6 @@ public class ContentBuilderUtil {
       // elasticsearch.
       // If validation fails then the incoming event is submitted to
       // elasticsearch as plain text.
-
-      //parser = XContentFactory.xContent(contentType).createParser(data);
 
       parser = XContentFactory.xContent(contentType)
           .createParser(NamedXContentRegistry.EMPTY, data);

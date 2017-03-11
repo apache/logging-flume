@@ -44,11 +44,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map;
 
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.BATCH_SIZE;
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.CLUSTER_NAME;
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.INDEX_NAME;
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.INDEX_TYPE;
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.TTL;
+import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -93,12 +89,8 @@ public abstract class AbstractElasticSearchSinkTest {
   }
 
   void shutdownNodes() throws Exception {
-
     //shutdown api removed in 5.X
-    //((InternalNode) node).injector().getInstance(Gateway.class).reset();
-
     client.close();
-    //node.close();
   }
 
   @Before

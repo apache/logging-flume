@@ -117,5 +117,4 @@ public abstract class AbstractElasticSearchIndexRequestBuilderFactory
   protected abstract void prepareIndexRequest(
       IndexRequestBuilder indexRequest, String indexName,
       String indexType, Event event) throws IOException;
-
 }

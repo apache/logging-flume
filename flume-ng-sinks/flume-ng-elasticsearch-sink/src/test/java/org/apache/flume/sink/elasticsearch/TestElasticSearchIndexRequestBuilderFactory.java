@@ -184,10 +184,6 @@ public class TestElasticSearchIndexRequestBuilderFactory
     event.getHeaders().put("index-type", typeValue);
 
     Settings settings = Settings.builder()
-        //.put("number_of_shards", 1)
-        //.put("number_of_replicas", 0)
-        //.put("routing.hash.type", "simple")
-        //.put("gateway.type", "none")
         .put("path.data", "target/es-test")
         .put("path.home", "D:\\dev\\elasticsearch\\elasticsearch-5.2.1")
         .build();
@@ -233,8 +229,6 @@ public class TestElasticSearchIndexRequestBuilderFactory
       FastByteArrayOutputStream fbaos = new FastByteArrayOutputStream(4);
       fbaos.write(FAKE_BYTES);
       return fbaos;
-
-      //return null;
     }
 
     @Override
