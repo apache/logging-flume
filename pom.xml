@@ -1496,7 +1496,7 @@ limitations under the License.
         </configuration>
       </plugin>
 
-      <!--<plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
         <version>${checkstyle.plugin.version}</version>
@@ -1508,7 +1508,7 @@ limitations under the License.
           <includeTestSourceDirectory>true</includeTestSourceDirectory>
           <linkXRef>false</linkXRef>
         </configuration>
-      </plugin>-->
+      </plugin>
 
     </plugins>
   </reporting>
