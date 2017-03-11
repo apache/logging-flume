@@ -38,6 +38,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Locale;
 import java.util.Map;
 
 import static org.junit.Assert.*;
@@ -78,9 +79,8 @@ public class TestElasticSearchIndexRequestBuilderFactory
 
   @Test
   public void shouldUseUtcAsBasisForDateFormat() {
-    String timeZone = factory.fastDateFormat.getTimeZone().getDisplayName();
-    assertTrue("Temps universel coordonné".equals(timeZone) ||
-        "Coordinated Universal Time".equals(timeZone));
+    assertEquals("Coordinated Universal Time",
+        factory.fastDateFormat.getTimeZone().getDisplayName(Locale.ENGLISH));
   }
 
   @Test
