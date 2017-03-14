@@ -52,7 +52,6 @@ import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Application {
@@ -67,7 +66,7 @@ public class Application {
   private final LifecycleSupervisor supervisor;
   private MaterializedConfiguration materializedConfiguration;
   private MonitorService monitorServer;
-  private final Lock lifecycleLock = new ReentrantLock();
+  private final ReentrantLock lifecycleLock = new ReentrantLock();
 
   public Application() {
     this(new ArrayList<LifecycleAware>(0));
@@ -94,15 +93,16 @@ public class Application {
   public void handleConfigurationEvent(MaterializedConfiguration conf) {
     try {
       lifecycleLock.lockInterruptibly();
+      stopAllComponents();
+      startAllComponents(conf);
     } catch (InterruptedException e) {
       logger.info("Interrupted while trying to handle configuration event");
       return;
-    }
-    try {
-      stopAllComponents();
-      startAllComponents(conf);
     } finally {
-      lifecycleLock.unlock();
+      // If interrupted while trying to lock, we don't own the lock, so must not attempt to unlock
+      if (lifecycleLock.isHeldByCurrentThread()) {
+        lifecycleLock.unlock();
+      }
     }
   }
 
