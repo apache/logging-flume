@@ -954,6 +954,12 @@ batchSize                   100          Number of messages to consume in one ba
 converter.type              DEFAULT      Class to use to convert messages to flume events. See below.
 converter.*                 --           Converter properties.
 converter.charset           UTF-8        Default converter only. Charset to use when converting JMS TextMessages to byte arrays.
+createDurableSubscription   false        Whether to create durable subscription. Durable subscription can only be used with
+                                         destinationType topic. If true, "clientId" and "durableSubscriptionName"
+                                         have to be specified.
+clientId                    --           JMS client identifier set on Connection right after it is created.
+                                         Required for durable subscriptions.
+durableSubscriptionName     --           Name used to identify the durable subscription. Required for durable subscriptions.
 =========================   ===========  ==============================================================
 
 

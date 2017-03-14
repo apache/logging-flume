@@ -27,6 +27,8 @@ import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Session;
+import javax.jms.Topic;
+import javax.jms.TopicSubscriber;
 
 import org.apache.flume.Event;
 import org.apache.flume.FlumeException;
@@ -157,4 +159,20 @@ public class TestJMSMessageConsumer extends JMSMessageConsumerTestBase {
     verify(session, times(1)).close();
     verify(connection, times(1)).close();
   }
+
+  @Test
+  public void testCreateDurableSubscription() throws Exception {
+    String name = "SUBSCRIPTION_NAME";
+    String clientID = "CLIENT_ID";
+    TopicSubscriber mockTopicSubscriber = mock(TopicSubscriber.class);
+    when(session.createDurableSubscriber(any(Topic.class), anyString(), anyString(), anyBoolean()))
+      .thenReturn(mockTopicSubscriber );
+    when(session.createTopic(destinationName)).thenReturn(topic);
+    new JMSMessageConsumer(WONT_USE, connectionFactory, destinationName, destinationLocator,
+        JMSDestinationType.TOPIC, messageSelector, batchSize, pollTimeout, converter, userName,
+        password, Optional.of(clientID), true, name);
+    verify(connection, times(1)).setClientID(clientID);
+    verify(session, times(1)).createDurableSubscriber(topic, name, messageSelector, true);
+  }
+
 }
