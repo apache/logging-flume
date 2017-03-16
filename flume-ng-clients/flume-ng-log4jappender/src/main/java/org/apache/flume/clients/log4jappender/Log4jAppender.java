@@ -80,7 +80,7 @@ public class Log4jAppender extends AppenderSkeleton {
   private long timeout = RpcClientConfigurationConstants.DEFAULT_REQUEST_TIMEOUT_MILLIS;
   private boolean avroReflectionEnabled;
   private String avroSchemaUrl;
-  private String clientAddress;
+  private String clientAddress = "";
 
   RpcClient rpcClient = null;
 
