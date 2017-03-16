@@ -225,17 +225,8 @@ public class TestEmbeddedAgent {
   }
 
   private static int findFreePort() throws IOException {
-    ServerSocket socket = null;
-    try {
-      socket = new ServerSocket(0);
+    try (ServerSocket socket = new ServerSocket(0);) {
       return socket.getLocalPort();
-    } finally {
-      if (socket != null) {
-        try {
-          socket.close();
-        } catch (IOException e) {
-        }
-      }
     }
   }
 }

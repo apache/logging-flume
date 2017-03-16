@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.security.cert.X509Certificate;
@@ -93,27 +94,16 @@ public class TestAvroSource {
   }
 
   @Test
-  public void testLifecycle() throws InterruptedException {
-    boolean bound = false;
+  public void testLifecycle() throws InterruptedException, IOException {
 
-    for (int i = 0; i < 100 && !bound; i++) {
-      try {
-        Context context = new Context();
+    Context context = new Context();
 
-        context.put("port", String.valueOf(selectedPort = 41414 + i));
-        context.put("bind", "0.0.0.0");
+    context.put("port", String.valueOf(selectedPort = getFreePort()));
+    context.put("bind", "0.0.0.0");
 
-        Configurables.configure(source, context);
+    Configurables.configure(source, context);
 
-        source.start();
-        bound = true;
-      } catch (ChannelException e) {
-        /*
-         * NB: This assume we're using the Netty server under the hood and the
-         * failure is to bind. Yucky.
-         */
-      }
-    }
+    source.start();
 
     Assert
         .assertTrue("Reached start or error", LifecycleController.waitForOneOf(
@@ -176,31 +166,20 @@ public class TestAvroSource {
 
   private void doRequest(boolean serverEnableCompression, boolean clientEnableCompression,
                          int compressionLevel) throws InterruptedException, IOException {
-    boolean bound = false;
 
-    for (int i = 0; i < 100 && !bound; i++) {
-      try {
-        Context context = new Context();
-        context.put("port", String.valueOf(selectedPort = 41414 + i));
-        context.put("bind", "0.0.0.0");
-        context.put("threads", "50");
-        if (serverEnableCompression) {
-          context.put("compression-type", "deflate");
-        } else {
-          context.put("compression-type", "none");
-        }
-
-        Configurables.configure(source, context);
-
-        source.start();
-        bound = true;
-      } catch (ChannelException e) {
-        /*
-         * NB: This assume we're using the Netty server under the hood and the
-         * failure is to bind. Yucky.
-         */
-      }
+    Context context = new Context();
+    context.put("port", String.valueOf(selectedPort = getFreePort()));
+    context.put("bind", "0.0.0.0");
+    context.put("threads", "50");
+    if (serverEnableCompression) {
+      context.put("compression-type", "deflate");
+    } else {
+      context.put("compression-type", "none");
     }
+
+    Configurables.configure(source, context);
+
+    source.start();
 
     Assert
         .assertTrue("Reached start or error", LifecycleController.waitForOneOf(
@@ -252,6 +231,12 @@ public class TestAvroSource {
         LifecycleController.waitForOneOf(source, LifecycleState.STOP_OR_ERROR));
     Assert.assertEquals("Server is stopped", LifecycleState.STOP,
         source.getLifecycleState());
+  }
+
+  private static int getFreePort() throws IOException {
+    try (ServerSocket socket = new ServerSocket(0)) {
+      return socket.getLocalPort();
+    }
   }
 
   private static class CompressionChannelFactory extends

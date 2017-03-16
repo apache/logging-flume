@@ -26,7 +26,6 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.EventDrivenSource;
-import org.apache.flume.FlumeException;
 import org.apache.flume.Transaction;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
@@ -46,6 +45,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Writer;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.nio.channels.Channels;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
@@ -70,9 +70,17 @@ public class TestNetcatSource {
   }
 
   @Parameters
-  public static Collection data() {
+  public static Collection<?> data() {
     Object[][] data = new Object[][] { { true }, { false } };
     return Arrays.asList(data);
+  }
+
+  private static int getFreePort() {
+    try (ServerSocket socket = new ServerSocket(0)) {
+      return socket.getLocalPort();
+    } catch (IOException e) {
+      throw new AssertionError("Can not open socket", e);
+    }
   }
 
   @Before
@@ -96,24 +104,18 @@ public class TestNetcatSource {
   public void testLifecycle() throws InterruptedException, LifecycleException,
       EventDeliveryException {
 
+    final int port = getFreePort();
+
     ExecutorService executor = Executors.newFixedThreadPool(3);
-    boolean bound = false;
 
-    for (int i = 0; i < 100 && !bound; i++) {
-      try {
-        Context context = new Context();
-        context.put("bind", "0.0.0.0");
-        context.put("port", "41414");
-        context.put("ack-every-event", String.valueOf(ackEveryEvent));
+    Context context = new Context();
+    context.put("bind", "0.0.0.0");
+    context.put("port", String.valueOf(port));
+    context.put("ack-every-event", String.valueOf(ackEveryEvent));
 
-        Configurables.configure(source, context);
+    Configurables.configure(source, context);
 
-        source.start();
-        bound = true;
-      } catch (FlumeException e) {
-        // assume port in use, try another one
-      }
-    }
+    source.start();
 
     Runnable clientRequestRunnable = new Runnable() {
 
@@ -121,7 +123,7 @@ public class TestNetcatSource {
       public void run() {
         try {
           SocketChannel clientChannel = SocketChannel
-              .open(new InetSocketAddress(41414));
+              .open(new InetSocketAddress(port));
 
           Writer writer = Channels.newWriter(clientChannel, "utf-8");
           BufferedReader reader = new BufferedReader(

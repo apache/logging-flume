@@ -30,6 +30,7 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -41,8 +42,16 @@ public class KafkaSourceEmbeddedKafka {
   KafkaServerStartable kafkaServer;
   KafkaSourceEmbeddedZookeeper zookeeper;
 
-  int zkPort = 21818; // none-standard
-  int serverPort = 18922;
+  private static int findFreePort() {
+    try (ServerSocket socket = new ServerSocket(0)) {
+      return socket.getLocalPort();
+    } catch (IOException e) {
+      throw new AssertionError("Can not find free port.", e);
+    }
+  }
+
+  int zkPort = findFreePort(); // none-standard
+  int serverPort = findFreePort();
 
   KafkaProducer<String, byte[]> producer;
   File dir;

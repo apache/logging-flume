@@ -32,7 +32,6 @@ import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleState;
-import org.jboss.netty.channel.ChannelException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
@@ -52,6 +52,14 @@ public class TestNetcatSource {
   private static final Logger logger =
       LoggerFactory.getLogger(TestAvroSource.class);
 
+
+  private static final int getFreePort() {
+    try (ServerSocket socket = new ServerSocket(0)) {
+      return socket.getLocalPort();
+    } catch (IOException e) {
+      throw new AssertionError("Can not find free port.", e);
+    }
+  }
   /**
    * Five first sentences of the Fables "The Crow and the Fox"
    * written by Jean de La Fontaine, French poet.
@@ -307,30 +315,18 @@ public class TestNetcatSource {
 
   private void startSource(String encoding, String ack, String batchSize, String maxLineLength)
       throws InterruptedException {
-    boolean bound = false;
 
-    for (int i = 0; i < 100 && !bound; i++) {
-      try {
-        Context context = new Context();
-        context.put("port", String.valueOf(selectedPort = 10500 + i));
-        context.put("bind", "0.0.0.0");
-        context.put("ack-every-event", ack);
-        context.put("encoding", encoding);
-        context.put("batch-size", batchSize);
-        context.put("max-line-length", maxLineLength);
+    Context context = new Context();
+    context.put("port", String.valueOf(selectedPort = getFreePort()));
+    context.put("bind", "0.0.0.0");
+    context.put("ack-every-event", ack);
+    context.put("encoding", encoding);
+    context.put("batch-size", batchSize);
+    context.put("max-line-length", maxLineLength);
 
-        Configurables.configure(source, context);
+    Configurables.configure(source, context);
 
-        source.start();
-        bound = true;
-      } catch (ChannelException e) {
-        /*
-         * NB: This assume we're using the Netty server under the hood and the
-         * failure is to bind. Yucky.
-         */
-      }
-    }
-
+    source.start();
     Assert.assertTrue("Reached start or error",
         LifecycleController.waitForOneOf(source, LifecycleState.START_OR_ERROR));
     Assert.assertEquals("Server is started", LifecycleState.START,

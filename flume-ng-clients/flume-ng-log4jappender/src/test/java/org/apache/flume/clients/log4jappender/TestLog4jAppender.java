@@ -21,6 +21,7 @@ package org.apache.flume.clients.log4jappender;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -54,9 +55,15 @@ public class TestLog4jAppender {
   private Channel ch;
   private Properties props;
 
+  private static int getFreePort() throws Exception {
+    try (ServerSocket socket = new ServerSocket(0)) {
+      return socket.getLocalPort();
+    }
+  }
+
   @Before
   public void initiate() throws Exception {
-    int port = 25430;
+    int port = getFreePort();
     source = new AvroSource();
     ch = new MemoryChannel();
     Configurables.configure(ch, new Context());
@@ -72,6 +79,7 @@ public class TestLog4jAppender {
     FileReader reader = new FileReader(TESTFILE);
     props = new Properties();
     props.load(reader);
+    props.put("log4j.appender.out2.Port", String.valueOf(port));
     reader.close();
   }
 
