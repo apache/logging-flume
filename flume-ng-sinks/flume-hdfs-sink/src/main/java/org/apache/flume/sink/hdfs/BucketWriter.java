@@ -30,6 +30,7 @@ import org.apache.flume.sink.hdfs.HDFSEventSink.WriterCallback;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.slf4j.Logger;
@@ -359,6 +360,22 @@ class BucketWriter {
   }
 
   /**
+   * Tries to start the lease recovery process for the current bucketPath
+   * if the fileSystem is DistributedFileSystem.
+   * Catches and logs the IOException.
+   */
+  private synchronized void recoverLease() {
+    if (bucketPath != null && fileSystem instanceof DistributedFileSystem) {
+      try {
+        LOG.debug("Starting lease recovery for {}", bucketPath);
+        ((DistributedFileSystem) fileSystem).recoverLease(new Path(bucketPath));
+      } catch (IOException ex) {
+        LOG.warn("Lease recovery failed for {}", bucketPath, ex);
+      }
+    }
+  }
+
+  /**
    * Close the file handle and rename the temp file to the permanent filename.
    * Safe to call multiple times. Logs HDFSWriter.close() exceptions.
    * @throws IOException On failure to rename if temp file exists.
@@ -372,7 +389,7 @@ class BucketWriter {
     } catch (IOException e) {
       LOG.warn("pre-close flush failed", e);
     }
-    boolean failedToClose = false;
+
     LOG.info("Closing {}", bucketPath);
     CallRunner<Void> closeCallRunner = createCloseCallRunner();
     if (isOpen) {
@@ -383,7 +400,8 @@ class BucketWriter {
         LOG.warn("failed to close() HDFSWriter for file (" + bucketPath +
                  "). Exception follows.", e);
         sinkCounter.incrementConnectionFailedCount();
-        failedToClose = true;
+        // starting lease recovery process, see FLUME-3080
+        recoverLease();
       }
       isOpen = false;
     } else {
