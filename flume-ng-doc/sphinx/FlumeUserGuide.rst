@@ -1186,6 +1186,7 @@ cachePatternMatching                true                           Listing direc
                                                                    Requires that the file system keeps track of modification times with at least a 1-second granularity.
 fileHeader                          false                          Whether to add a header storing the absolute path filename.
 fileHeaderKey                       file                           Header key to use when appending absolute path filename to event header.
+ignoreHiddenFile                    false                          Whether to ignore hidden files.
 =================================== ============================== ===================================================
 
 Example for agent named a1:

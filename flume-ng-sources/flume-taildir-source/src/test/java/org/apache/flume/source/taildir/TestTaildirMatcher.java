@@ -247,4 +247,24 @@ public class TestTaildirMatcher {
                files2.contains("c.log.yyyy.MM-02"));
   }
 
+  @Test
+  public void testHiddenFile() throws Exception {
+    String fileName = ".hiddenFile";
+
+    append(fileName);
+
+    TaildirMatcher tm1 = new TaildirMatcher("ignoreHiddenFile",
+                                           tmpDir.getAbsolutePath() + File.separator + ".*",
+                                           isCachingNeeded, true);
+    TaildirMatcher tm2 = new TaildirMatcher("trackHiddenFile",
+                                           tmpDir.getAbsolutePath() + File.separator + ".*",
+                                           isCachingNeeded, false);
+
+    List<String> files1 = filesToNames(tm1.getMatchingFiles());
+    List<String> files2 = filesToNames(tm2.getMatchingFiles());
+    assertFalse("A hidden file will be ignored when the option is true",
+                files1.contains(fileName));
+    assertTrue("A hidden file can be tracked when the option is false",
+               files2.contains(fileName));
+  }
 }
