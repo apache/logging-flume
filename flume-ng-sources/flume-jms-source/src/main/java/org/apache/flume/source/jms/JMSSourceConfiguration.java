@@ -61,6 +61,9 @@ public class JMSSourceConfiguration {
   public static final String CONVERTER_CHARSET_DEFAULT = "UTF-8";
 
   public static final String CREATE_DURABLE_SUBSCRIPTION = "createDurableSubscription";
+  public static final boolean DEFAULT_CREATE_DURABLE_SUBSCRIPTION = false;
+
   public static final String DURABLE_SUBSCRIPTION_NAME = "durableSubscriptionName";
+  public static final String DEFAULT_DURABLE_SUBSCRIPTION_NAME = "";
 
 }

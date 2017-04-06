@@ -124,9 +124,11 @@ public class JMSSource extends AbstractPollableSource {
     clientId = Optional.fromNullable(context.getString(JMSSourceConfiguration.CLIENT_ID));
 
     createDurableSubscription = context.getBoolean(
-        JMSSourceConfiguration.CREATE_DURABLE_SUBSCRIPTION, false);
+        JMSSourceConfiguration.CREATE_DURABLE_SUBSCRIPTION, 
+        JMSSourceConfiguration.DEFAULT_CREATE_DURABLE_SUBSCRIPTION);
     durableSubscriptionName = context.getString(
-        JMSSourceConfiguration.DURABLE_SUBSCRIPTION_NAME, "");
+        JMSSourceConfiguration.DURABLE_SUBSCRIPTION_NAME, 
+        JMSSourceConfiguration.DEFAULT_DURABLE_SUBSCRIPTION_NAME);
 
     String passwordFile = context.getString(JMSSourceConfiguration.PASSWORD_FILE, "").trim();
 
