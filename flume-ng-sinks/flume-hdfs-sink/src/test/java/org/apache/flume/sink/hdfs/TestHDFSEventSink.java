@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericData;
@@ -67,6 +68,9 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1544,5 +1548,62 @@ public class TestHDFSEventSink {
     sink.stop();
     Assert.assertEquals(6, totalRenameAttempts);
 
+  }
+
+  /**
+   * BucketWriter.append() can throw a BucketClosedException when called from
+   * HDFSEventSink.process() due to a race condition between HDFSEventSink.process() and the
+   * BucketWriter's close threads.
+   * This test case tests whether if this happens the newly created BucketWriter will be flushed.
+   * For more details see FLUME-3085
+   */
+  @Test
+  public void testFlushedIfAppendFailedWithBucketClosedException() throws Exception {
+    sink = new HDFSEventSink() {
+      @Override
+      BucketWriter initializeBucketWriter(String realPath, String realName, String lookupPath,
+                                          HDFSWriter hdfsWriter, WriterCallback closeCallback) {
+        BucketWriter bw = Mockito.spy(super.initializeBucketWriter(realPath, realName, lookupPath,
+            hdfsWriter, closeCallback));
+        try {
+          // create mock BucketWriters where the first append() succeeds but the
+          // the second call throws a BucketClosedException
+          Mockito.doCallRealMethod()
+              .doThrow(BucketClosedException.class)
+              .when(bw).append(Mockito.any(Event.class));
+        } catch (IOException | InterruptedException e) {
+          Assert.fail("This shouldn't happen, as append() is called during mocking.");
+        }
+        return bw;
+      }
+    };
+
+    Context context = new Context(ImmutableMap.of("hdfs.path", testPath));
+    Configurables.configure(sink, context);
+
+    MemoryChannel channel = new MemoryChannel();
+    Configurables.configure(channel, new Context());
+
+    sink.setChannel(channel);
+    sink.start();
+
+    Transaction txn = channel.getTransaction();
+    txn.begin();
+    channel.put(EventBuilder.withBody("test".getBytes()));
+    channel.put(EventBuilder.withBody("test".getBytes()));
+    txn.commit();
+    txn.close();
+
+    sink.process();
+
+    // After processing the events the only BucketWriter in the sfWriters map is
+    // the one which was created after the first one threw the BucketClosedException.
+    // It is expected that its flush() method was called exactly once.
+    Map<String, BucketWriter> bucketWriterMap = sink.getSfWriters();
+    Assert.assertEquals(1, bucketWriterMap.size());
+    BucketWriter bw = bucketWriterMap.values().iterator().next();
+    Mockito.verify(bw, Mockito.times(1)).flush();
+
+    sink.stop();
   }
 }
