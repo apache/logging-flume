@@ -19,12 +19,14 @@
 package org.apache.flume.sink.hdfs;
 
 import com.google.common.base.Charsets;
+
 import org.apache.flume.Clock;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.auth.FlumeAuthenticationUtil;
 import org.apache.flume.auth.PrivilegedExecutor;
 import org.apache.flume.event.EventBuilder;
+import org.apache.flume.formatter.output.BucketPath;
 import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -373,6 +375,7 @@ public class TestBucketWriter {
     Assert.assertTrue("Incorrect in use suffix", hdfsWriter.getOpenedFilePath().contains(SUFFIX));
   }
 
+  
   @Test
   public void testCallbackOnClose() throws IOException, InterruptedException {
     final int ROLL_INTERVAL = 1000; // seconds. Make sure it doesn't change in course of test
