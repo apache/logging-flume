@@ -28,6 +28,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,6 +36,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericData;
@@ -1585,18 +1587,20 @@ public class TestHDFSEventSink {
     Context context = new Context(ImmutableMap.of("hdfs.path", testPath));
     Configurables.configure(sink, context);
 
-    MemoryChannel channel = new MemoryChannel();
+    Channel channel = Mockito.spy(new MemoryChannel());
     Configurables.configure(channel, new Context());
+
+    final Iterator<Event> events = Iterators.forArray(
+        EventBuilder.withBody("test1".getBytes()), EventBuilder.withBody("test2".getBytes()));
+    Mockito.doAnswer(new Answer() {
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        return events.hasNext() ? events.next() : null;
+      }
+    }).when(channel).take();
 
     sink.setChannel(channel);
     sink.start();
-
-    Transaction txn = channel.getTransaction();
-    txn.begin();
-    channel.put(EventBuilder.withBody("test".getBytes()));
-    channel.put(EventBuilder.withBody("test".getBytes()));
-    txn.commit();
-    txn.close();
 
     sink.process();
 
