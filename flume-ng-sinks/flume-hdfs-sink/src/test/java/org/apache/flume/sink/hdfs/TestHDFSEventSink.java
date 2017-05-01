@@ -27,8 +27,10 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -1559,6 +1561,7 @@ public class TestHDFSEventSink {
    */
   @Test
   public void testFlushedIfAppendFailedWithBucketClosedException() throws Exception {
+    final Set<BucketWriter> bucketWriters = new HashSet<>();
     sink = new HDFSEventSink() {
       @Override
       BucketWriter initializeBucketWriter(String realPath, String realName, String lookupPath,
@@ -1574,6 +1577,7 @@ public class TestHDFSEventSink {
         } catch (IOException | InterruptedException e) {
           Assert.fail("This shouldn't happen, as append() is called during mocking.");
         }
+        bucketWriters.add(bw);
         return bw;
       }
     };
@@ -1596,13 +1600,10 @@ public class TestHDFSEventSink {
 
     sink.process();
 
-    // After processing the events the only BucketWriter in the sfWriters map is
-    // the one which was created after the first one threw the BucketClosedException.
-    // It is expected that its flush() method was called exactly once.
-    Map<String, BucketWriter> bucketWriterMap = sink.getSfWriters();
-    Assert.assertEquals(1, bucketWriterMap.size());
-    BucketWriter bw = bucketWriterMap.values().iterator().next();
-    Mockito.verify(bw, Mockito.times(1)).flush();
+    // It is expected that flush() method was called exactly once for every BucketWriter
+    for (BucketWriter bw : bucketWriters) {
+      Mockito.verify(bw, Mockito.times(1)).flush();
+    }
 
     sink.stop();
   }
