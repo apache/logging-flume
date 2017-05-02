@@ -40,7 +40,6 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
-import org.apache.hadoop.hdfs.server.namenode.LeaseManager;
 import org.apache.hadoop.hdfs.server.namenode.NameNodeAdapter;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -570,13 +569,12 @@ public class TestHDFSEventSinkOnMiniCluster {
     Assert.assertEquals(1, statuses.length);
 
     String filePath = statuses[0].getPath().toUri().getPath();
-    LeaseManager lm = NameNodeAdapter.getLeaseManager(cluster.getNamesystem());
 
-    Object lease = lm.getLeaseByPath(filePath);
+    Object lease = NameNodeAdapter.getLeaseForPath(cluster.getNameNode(), filePath);
     // wait until the NameNode recovers the lease
     for (int i = 0; i < 10 && lease != null; i++) {
       TimeUnit.SECONDS.sleep(1);
-      lease = lm.getLeaseByPath(filePath);
+      lease = NameNodeAdapter.getLeaseForPath(cluster.getNameNode(), filePath);
     }
 
     // There should be no lease for the given path even if close failed as the BucketWriter
