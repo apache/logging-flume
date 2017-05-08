@@ -412,7 +412,9 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
         }
 
         // track the buckets getting written in this transaction
-        writers.add(bucketWriter);
+        if (!writers.contains(bucketWriter)) {
+          writers.add(bucketWriter);
+        }
       }
 
       if (txnEventCount == 0) {

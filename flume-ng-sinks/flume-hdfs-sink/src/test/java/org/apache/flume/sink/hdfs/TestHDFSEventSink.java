@@ -63,7 +63,9 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
+import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.SequenceFile;
@@ -1604,6 +1606,18 @@ public class TestHDFSEventSink {
 
     sink.process();
 
+    // channel.take() should have called 3 times (2 events + 1 null)
+    Mockito.verify(channel, Mockito.times(3)).take();
+
+    FileSystem fs = FileSystem.get(new Configuration());
+    int fileCount = 0;
+    for (RemoteIterator<LocatedFileStatus> i = fs.listFiles(new Path(testPath), false);
+         i.hasNext(); i.next()) {
+      fileCount++;
+    }
+    Assert.assertEquals(2, fileCount);
+
+    Assert.assertEquals(2, bucketWriters.size());
     // It is expected that flush() method was called exactly once for every BucketWriter
     for (BucketWriter bw : bucketWriters) {
       Mockito.verify(bw, Mockito.times(1)).flush();
