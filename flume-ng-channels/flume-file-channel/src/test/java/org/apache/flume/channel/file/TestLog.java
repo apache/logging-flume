@@ -21,6 +21,7 @@ package org.apache.flume.channel.file;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import org.apache.commons.io.FileUtils;
+import org.apache.flume.channel.file.instrumentation.FileChannelCounter;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -63,6 +64,7 @@ public class TestLog {
                            .setLogDirs(dataDirs)
                            .setCheckpointOnClose(false)
                            .setChannelName("testlog")
+                           .setChannelCounter(new FileChannelCounter("testlog"))
                            .build();
     log.replay();
   }
@@ -141,6 +143,7 @@ public class TestLog {
                            .setCheckpointDir(checkpointDir)
                            .setLogDirs(dataDirs)
                            .setChannelName("testlog")
+                           .setChannelCounter(new FileChannelCounter("testlog"))
                            .build();
     log.replay();
     takeAndVerify(eventPointerIn, eventIn);
@@ -163,6 +166,7 @@ public class TestLog {
                            .setCheckpointDir(checkpointDir)
                            .setLogDirs(dataDirs)
                            .setChannelName("testlog")
+                           .setChannelCounter(new FileChannelCounter("testlog"))
                            .build();
     log.replay();
     FlumeEventQueue queue = log.getFlumeEventQueue();
@@ -180,6 +184,7 @@ public class TestLog {
                            .setLogDirs(dataDirs)
                            .setChannelName("testlog")
                            .setMinimumRequiredSpace(Long.MAX_VALUE)
+                           .setChannelCounter(new FileChannelCounter("testlog"))
                            .build();
     try {
       log.replay();
@@ -219,6 +224,7 @@ public class TestLog {
                            .setChannelName("testlog")
                            .setMinimumRequiredSpace(minimumRequiredSpace)
                            .setUsableSpaceRefreshInterval(1L)
+                           .setChannelCounter(new FileChannelCounter("testlog"))
                            .build();
     log.replay();
     File filler = new File(checkpointDir, "filler");
@@ -259,6 +265,7 @@ public class TestLog {
                      .setCheckpointDir(checkpointDir)
                      .setLogDirs(dataDirs)
                      .setChannelName("testlog")
+                     .setChannelCounter(new FileChannelCounter("testlog"))
                      .build();
     log.replay();
     FlumeEventQueue queue = log.getFlumeEventQueue();
@@ -298,6 +305,7 @@ public class TestLog {
                      .setLogDirs(dataDirs)
                      .setChannelName("testlog")
                      .setUseLogReplayV1(useLogReplayV1)
+                     .setChannelCounter(new FileChannelCounter("testlog"))
                      .build();
     log.replay();
     takeAndVerify(eventPointerIn, eventIn);
@@ -314,6 +322,7 @@ public class TestLog {
                      .setCheckpointDir(checkpointDir)
                      .setLogDirs(dataDirs)
                      .setChannelName("testlog")
+                     .setChannelCounter(new FileChannelCounter("testlog"))
                      .build();
     log.replay();
     FlumeEventQueue queue = log.getFlumeEventQueue();
@@ -332,6 +341,7 @@ public class TestLog {
                      .setCheckpointDir(checkpointDir)
                      .setLogDirs(dataDirs)
                      .setChannelName("testlog")
+                     .setChannelCounter(new FileChannelCounter("testlog"))
                      .build();
     log.replay();
     FlumeEventQueue queue = log.getFlumeEventQueue();
@@ -350,6 +360,7 @@ public class TestLog {
                      .setCheckpointDir(checkpointDir)
                      .setLogDirs(dataDirs)
                      .setChannelName("testlog")
+                     .setChannelCounter(new FileChannelCounter("testlog"))
                      .build();
     log.replay();
     FlumeEventQueue queue = log.getFlumeEventQueue();
@@ -402,6 +413,7 @@ public class TestLog {
                            .setLogDirs(dataDirs)
                            .setChannelName("testlog")
                            .setUseFastReplay(useFastReplay)
+                           .setChannelCounter(new FileChannelCounter("testlog"))
                            .build();
     log.replay();
     FlumeEvent eventIn = TestUtils.newPersistableEvent();
@@ -430,6 +442,7 @@ public class TestLog {
                            .setLogDirs(dataDirs)
                            .setChannelName("testlog")
                            .setUseFastReplay(useFastReplay)
+                           .setChannelCounter(new FileChannelCounter("testlog"))
                            .build();
     try {
       log.replay();
@@ -455,6 +468,7 @@ public class TestLog {
                            .setCheckpointDir(checkpointDir)
                            .setLogDirs(dataDirs)
                            .setChannelName("testlog")
+                           .setChannelCounter(new FileChannelCounter("testlog"))
                            .build();
     doTestReplaySucceedsWithUnusedEmptyLogMetaData(eventIn, eventPointer);
   }
@@ -477,6 +491,7 @@ public class TestLog {
                            .setLogDirs(dataDirs)
                            .setChannelName("testlog")
                            .setUseFastReplay(true)
+                           .setChannelCounter(new FileChannelCounter("testlog"))
                            .build();
     doTestReplaySucceedsWithUnusedEmptyLogMetaData(eventIn, eventPointer);
   }
@@ -529,6 +544,7 @@ public class TestLog {
                            .setLogDirs(dataDirs)
                            .setCheckpointOnClose(true)
                            .setChannelName("testLog")
+                           .setChannelCounter(new FileChannelCounter("testlog"))
                            .build();
     log.replay();
 

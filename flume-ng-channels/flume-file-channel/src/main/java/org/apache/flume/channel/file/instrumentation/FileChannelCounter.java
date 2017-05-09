@@ -23,9 +23,15 @@ import org.apache.flume.instrumentation.ChannelCounter;
 public class FileChannelCounter extends ChannelCounter implements FileChannelCounterMBean {
 
   private boolean open;
+  private int unhealthy;
+
+  private static final String EVENT_PUT_ERROR_COUNT = "channel.file.event.put.error";
+  private static final String EVENT_TAKE_ERROR_COUNT = "channel.file.event.take.error";
+  private static final String CHECKPOINT_WRITE_ERROR_COUNT = "channel.file.checkpoint.write.error";
 
   public FileChannelCounter(String name) {
-    super(name);
+    super(name, new String[] {
+        EVENT_PUT_ERROR_COUNT, EVENT_TAKE_ERROR_COUNT, CHECKPOINT_WRITE_ERROR_COUNT });
   }
 
   @Override
@@ -35,5 +41,46 @@ public class FileChannelCounter extends ChannelCounter implements FileChannelCou
 
   public void setOpen(boolean open) {
     this.open = open;
+  }
+
+  @Override
+  public int getClosed() {
+    return open ? 0 : 1;
+  }
+
+  @Override
+  public int getUnhealthy() {
+    return unhealthy;
+  }
+
+  public void setUnhealthy(int unhealthy) {
+    this.unhealthy = unhealthy;
+  }
+
+  @Override
+  public long getEventPutErrorCount() {
+    return get(EVENT_PUT_ERROR_COUNT);
+  }
+
+  public void incrementEventPutErrorCount() {
+    increment(EVENT_PUT_ERROR_COUNT);
+  }
+
+  @Override
+  public long getEventTakeErrorCount() {
+    return get(EVENT_TAKE_ERROR_COUNT);
+  }
+
+  public void incrementEventTakeErrorCount() {
+    increment(EVENT_TAKE_ERROR_COUNT);
+  }
+
+  @Override
+  public long getCheckpointWriteErrorCount() {
+    return get(CHECKPOINT_WRITE_ERROR_COUNT);
+  }
+
+  public void incrementCheckpointWriteErrorCount() {
+    increment(CHECKPOINT_WRITE_ERROR_COUNT);
   }
 }
