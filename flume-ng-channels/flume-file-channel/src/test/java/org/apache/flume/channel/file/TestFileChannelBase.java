@@ -32,6 +32,7 @@ import com.google.common.io.Files;
 
 public class TestFileChannelBase {
 
+  private final int dataDirCount;
   protected FileChannel channel;
   protected File baseDir;
   protected File checkpointDir;
@@ -40,6 +41,14 @@ public class TestFileChannelBase {
   protected File backupDir;
   protected File uncompressedBackupCheckpoint;
   protected File compressedBackupCheckpoint;
+
+  public TestFileChannelBase() {
+    this(3);
+  }
+
+  public TestFileChannelBase(int dataDirCount) {
+    this.dataDirCount = dataDirCount;
+  }
 
   @Before
   public void setup() throws Exception {
@@ -51,7 +60,7 @@ public class TestFileChannelBase {
       "checkpoint.snappy");
     Assert.assertTrue(checkpointDir.mkdirs() || checkpointDir.isDirectory());
     Assert.assertTrue(backupDir.mkdirs() || backupDir.isDirectory());
-    dataDirs = new File[3];
+    dataDirs = new File[dataDirCount];
     dataDir = "";
     for (int i = 0; i < dataDirs.length; i++) {
       dataDirs[i] = new File(baseDir, "data" + (i + 1));

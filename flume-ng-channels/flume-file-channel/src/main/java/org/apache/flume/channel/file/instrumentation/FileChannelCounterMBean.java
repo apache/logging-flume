@@ -23,4 +23,14 @@ import org.apache.flume.instrumentation.ChannelCounterMBean;
 public interface FileChannelCounterMBean extends ChannelCounterMBean {
 
   boolean isOpen();
+
+  int getClosed();
+
+  int getUnhealthy();
+
+  long getEventPutErrorCount();
+
+  long getEventTakeErrorCount();
+
+  long getCheckpointWriteErrorCount();
 }
