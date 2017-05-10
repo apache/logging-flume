@@ -21,7 +21,11 @@ package org.apache.flume.source.taildir;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
-import com.google.common.collect.*;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.google.common.collect.Table;
 import com.google.common.io.Files;
 import org.apache.flume.Event;
 import org.junit.After;
@@ -34,8 +38,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.BYTE_OFFSET_HEADER_KEY;
-import static org.junit.Assert.*;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants
+        .BYTE_OFFSET_HEADER_KEY;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotSame;
 
 public class TestTaildirEventReader {
   private File tmpDir;
