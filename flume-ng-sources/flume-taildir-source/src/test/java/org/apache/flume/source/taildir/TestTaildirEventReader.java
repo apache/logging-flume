@@ -525,11 +525,7 @@ public class TestTaildirEventReader {
     ReliableTaildirEventReader reader = getReader();
     reader.updateTailFiles();
     for (TailFile tf : reader.getTailFiles().values()) {
-      List<Event> events = reader.readEvents(tf, 10);
-      for(Event event : events){
-        String s1 = new String(event.getBody());
-        System.out.println(s1);
-      }
+      reader.readEvents(tf, 10);
       reader.commit();
     }
     reader.updateTailFiles();
