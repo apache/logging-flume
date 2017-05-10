@@ -21,11 +21,7 @@ package org.apache.flume.source.taildir;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.google.common.collect.Table;
+import com.google.common.collect.*;
 import com.google.common.io.Files;
 import org.apache.flume.Event;
 import org.junit.After;
@@ -38,11 +34,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants
-                  .BYTE_OFFSET_HEADER_KEY;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.BYTE_OFFSET_HEADER_KEY;
+import static org.junit.Assert.*;
 
 public class TestTaildirEventReader {
   private File tmpDir;
@@ -516,6 +509,38 @@ public class TestTaildirEventReader {
     reader.updateTailFiles();
     for (TailFile tf : reader.getTailFiles().values()) {
       assertEquals(true, tf.needTail());
+    }
+  }
+
+  @Test
+  // when the file is rename, it's pos becomes to 0,and it will be send to channel Repeatedly.
+  // Both when agent is running, or restart.
+  // It is a BUG!
+  public void testReadEventRepeatedlyWhenRenameFile() throws IOException {
+    File file1 = new File(tmpDir, "file1");
+    Files.append("line1\n", file1, Charsets.UTF_8);
+    Files.append("line2\n", file1, Charsets.UTF_8);
+    Files.append("line3\n", file1, Charsets.UTF_8);
+
+    ReliableTaildirEventReader reader = getReader();
+    reader.updateTailFiles();
+    for (TailFile tf : reader.getTailFiles().values()) {
+      List<Event> events = reader.readEvents(tf, 10);
+      for(Event event : events){
+        String s1 = new String(event.getBody());
+        System.out.println(s1);
+      }
+      reader.commit();
+    }
+    reader.updateTailFiles();
+
+    File file2 = new File(tmpDir, "file2");
+    file1.renameTo(file2);
+    reader.updateTailFiles();
+
+    for (TailFile tf : reader.getTailFiles().values()) {
+      assertEquals(false, tf.needTail());
+      assertNotSame(0, tf.getPos());
     }
   }
 }
