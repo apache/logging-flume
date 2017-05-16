@@ -269,7 +269,7 @@ public class FileChannel extends BasicChannelSemantics {
     if (channelCounter == null) {
       channelCounter = new FileChannelCounter(getName());
     }
-    channelCounter.setUnhealthy(false);
+    channelCounter.setUnhealthy(0);
   }
 
   @Override
@@ -289,7 +289,7 @@ public class FileChannel extends BasicChannelSemantics {
           + channelNameDescriptor);
     } catch (Throwable t) {
       setOpen(false);
-      channelCounter.setUnhealthy(true);
+      channelCounter.setUnhealthy(1);
       startupError = t;
       LOG.error("Failed to start the file channel " + channelNameDescriptor, t);
       if (t instanceof Error) {

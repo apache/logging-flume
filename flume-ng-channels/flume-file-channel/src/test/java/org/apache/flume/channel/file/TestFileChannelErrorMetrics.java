@@ -41,6 +41,8 @@ import static junit.framework.Assert.assertTrue;
 public class TestFileChannelErrorMetrics extends TestFileChannelBase {
 
   public TestFileChannelErrorMetrics() {
+    // use only 1 data directory in order to make it simpler to edit the data files
+    // in testCorruptEventTaken() and testUnhealthy() methods
     super(1);
   }
 
@@ -102,7 +104,7 @@ public class TestFileChannelErrorMetrics extends TestFileChannelBase {
 
     ChannelException takeException = null;
     try {
-      channel.take();
+      channel.take(); // This is guaranteed to throw an error if the above put() threw an error.
     } catch (ChannelException ex) {
       takeException = ex;
     }
@@ -159,8 +161,8 @@ public class TestFileChannelErrorMetrics extends TestFileChannelBase {
 
   @Test
   public void testCheckpointWriteErrorCount() throws Exception {
-    int checkpointInterval = 1000;
-    FileChannel channel = createFileChannel(Collections.singletonMap(
+    int checkpointInterval = 1500;
+    final FileChannel channel = createFileChannel(Collections.singletonMap(
         FileChannelConfiguration.CHECKPOINT_INTERVAL, String.valueOf(checkpointInterval)));
     channel.start();
 
@@ -170,18 +172,26 @@ public class TestFileChannelErrorMetrics extends TestFileChannelBase {
     tx.commit();
     tx.close();
 
-    long beforeCheckpointWrite = System.currentTimeMillis();
+    final long beforeCheckpointWrite = System.currentTimeMillis();
 
     // first checkpoint should be written successfully -> the counter should remain 0
-    Thread.sleep(checkpointInterval + 100);
+    assertEventuallyTrue("checkpoint should have been written", new BooleanPredicate() {
+      @Override
+      public boolean get() {
+        return new File(checkpointDir, "checkpoint").lastModified() > beforeCheckpointWrite;
+      }
+    }, checkpointInterval * 3);
     assertEquals(0, channel.getChannelCounter().getCheckpointWriteErrorCount());
-    assertTrue(new File(checkpointDir, "checkpoint").lastModified() > beforeCheckpointWrite);
 
     FileUtils.deleteDirectory(baseDir);
-    Thread.sleep(checkpointInterval + 100);
 
     // the channel's directory has been deleted so the checkpoint write should have been failed
-    assertEquals(1, channel.getChannelCounter().getCheckpointWriteErrorCount());
+    assertEventuallyTrue("checkpointWriterErrorCount should be 1", new BooleanPredicate() {
+      @Override
+      public boolean get() {
+        return channel.getChannelCounter().getCheckpointWriteErrorCount() == 1;
+      }
+    }, checkpointInterval * 3);
   }
 
   /**
@@ -218,5 +228,20 @@ public class TestFileChannelErrorMetrics extends TestFileChannelBase {
     assertEquals(1, channel.getChannelCounter().getUnhealthy());
     assertEquals(1, channel.getChannelCounter().getClosed());
     assertFalse(channel.getChannelCounter().isOpen());
+  }
+
+  private interface BooleanPredicate {
+    boolean get();
+  }
+
+  private static void assertEventuallyTrue(String description, BooleanPredicate expression,
+                                           long timeoutMillis)
+      throws InterruptedException {
+    long start = System.currentTimeMillis();
+    while (System.currentTimeMillis() < start + timeoutMillis) {
+      if (expression.get()) break;
+      Thread.sleep(timeoutMillis / 10);
+    }
+    assertTrue(description, expression.get());
   }
 }

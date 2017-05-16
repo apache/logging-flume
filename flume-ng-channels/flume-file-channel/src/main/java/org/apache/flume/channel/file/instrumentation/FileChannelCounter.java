@@ -23,7 +23,7 @@ import org.apache.flume.instrumentation.ChannelCounter;
 public class FileChannelCounter extends ChannelCounter implements FileChannelCounterMBean {
 
   private boolean open;
-  private boolean unhealthy;
+  private int unhealthy;
 
   private static final String EVENT_PUT_ERROR_COUNT = "channel.file.event.put.error";
   private static final String EVENT_TAKE_ERROR_COUNT = "channel.file.event.take.error";
@@ -50,10 +50,10 @@ public class FileChannelCounter extends ChannelCounter implements FileChannelCou
 
   @Override
   public int getUnhealthy() {
-    return unhealthy ? 1 : 0;
+    return unhealthy;
   }
 
-  public void setUnhealthy(boolean unhealthy) {
+  public void setUnhealthy(int unhealthy) {
     this.unhealthy = unhealthy;
   }
 

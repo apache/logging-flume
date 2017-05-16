@@ -22,6 +22,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.google.common.base.Preconditions;
 import org.apache.commons.io.FileUtils;
 import org.apache.flume.Context;
 import org.junit.After;
@@ -43,10 +44,11 @@ public class TestFileChannelBase {
   protected File compressedBackupCheckpoint;
 
   public TestFileChannelBase() {
-    this(3);
+    this(3); // By default the tests run with multiple data directories
   }
 
   public TestFileChannelBase(int dataDirCount) {
+    Preconditions.checkArgument(dataDirCount > 0, "Invalid dataDirCount");
     this.dataDirCount = dataDirCount;
   }
 
