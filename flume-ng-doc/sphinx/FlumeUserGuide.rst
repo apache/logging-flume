@@ -827,6 +827,7 @@ Property Name        Default      Description
 **bind**             --           hostname or IP address to listen on
 **port**             --           Port # to bind to
 threads              --           Maximum number of worker threads to spawn
+maxReadBufferBytes   16384000     Thrift Default FrameBuffer Size
 selector.type
 selector.*
 interceptors         --           Space separated list of interceptors
