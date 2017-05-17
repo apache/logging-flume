@@ -45,7 +45,7 @@ public class TimestampedEventTest {
     TimestampedEvent timestampedEvent = new TimestampedEvent(base);
     assertEquals(FIXED_TIME_MILLIS, timestampedEvent.getTimestamp());
     assertEquals(String.valueOf(FIXED_TIME_MILLIS),
-            timestampedEvent.getHeaders().get("timestamp"));
+        timestampedEvent.getHeaders().get("timestamp"));
   }
 
   @Test
@@ -53,7 +53,7 @@ public class TimestampedEventTest {
     SimpleEvent base = new SimpleEvent();
     Map<String, String> headersWithTimestamp = Maps.newHashMap();
     headersWithTimestamp.put("timestamp", "-321");
-    base.setHeaders(headersWithTimestamp );
+    base.setHeaders(headersWithTimestamp);
 
     TimestampedEvent timestampedEvent = new TimestampedEvent(base);
     assertEquals(-321L, timestampedEvent.getTimestamp());
@@ -65,7 +65,7 @@ public class TimestampedEventTest {
     SimpleEvent base = new SimpleEvent();
     Map<String, String> headersWithTimestamp = Maps.newHashMap();
     headersWithTimestamp.put("@timestamp", "-999");
-    base.setHeaders(headersWithTimestamp );
+    base.setHeaders(headersWithTimestamp);
 
     TimestampedEvent timestampedEvent = new TimestampedEvent(base);
     assertEquals(-999L, timestampedEvent.getTimestamp());
@@ -76,10 +76,10 @@ public class TimestampedEventTest {
   @Test
   public void shouldPreserveBodyAndNonTimestampHeadersInTimestampedEvent() {
     SimpleEvent base = new SimpleEvent();
-    base.setBody(new byte[] {1,2,3,4});
+    base.setBody(new byte[] {1, 2, 3, 4});
     Map<String, String> headersWithTimestamp = Maps.newHashMap();
     headersWithTimestamp.put("foo", "bar");
-    base.setHeaders(headersWithTimestamp );
+    base.setHeaders(headersWithTimestamp);
 
     TimestampedEvent timestampedEvent = new TimestampedEvent(base);
     assertEquals("bar", timestampedEvent.getHeaders().get("foo"));

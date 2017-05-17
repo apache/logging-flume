@@ -33,7 +33,7 @@ import java.util.TimeZone;
  * prefix and current timestamp. Default format of name is prefix-yyyy-MM-dd".
  */
 public class TimeBasedIndexNameBuilder implements
-        IndexNameBuilder {
+    IndexNameBuilder {
 
   public static final String DATE_FORMAT = "dateFormat";
   public static final String TIME_ZONE = "timeZone";
@@ -53,8 +53,8 @@ public class TimeBasedIndexNameBuilder implements
 
   /**
    * Gets the name of the index to use for an index request
-   * @param event
-   *          Event for which the name of index has to be prepared
+   *
+   * @param event Event for which the name of index has to be prepared
    * @return index name of the form 'indexPrefix-formattedTimestamp'
    */
   @Override
@@ -63,9 +63,9 @@ public class TimeBasedIndexNameBuilder implements
     long timestamp = timestampedEvent.getTimestamp();
     String realIndexPrefix = BucketPath.escapeString(indexPrefix, event.getHeaders());
     return new StringBuilder(realIndexPrefix).append('-')
-      .append(fastDateFormat.format(timestamp)).toString();
+        .append(fastDateFormat.format(timestamp)).toString();
   }
-  
+
   @Override
   public String getIndexPrefix(Event event) {
     return BucketPath.escapeString(indexPrefix, event.getHeaders());

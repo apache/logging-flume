@@ -45,7 +45,7 @@ import java.util.Map;
  * ElasticSearch using ElasticSearch HTTP API. This is configurable, so any
  * config params required should be taken through this.
  */
-public class  ElasticSearchRestClient implements ElasticSearchClient {
+public class ElasticSearchRestClient implements ElasticSearchClient {
 
   private static final String INDEX_OPERATION_NAME = "index";
   private static final String INDEX_PARAM = "_index";
@@ -57,12 +57,12 @@ public class  ElasticSearchRestClient implements ElasticSearchClient {
 
   private final ElasticSearchEventSerializer serializer;
   private final RoundRobinList<String> serversList;
-  
+
   private StringBuilder bulkBuilder;
   private HttpClient httpClient;
-  
+
   public ElasticSearchRestClient(String[] hostNames,
-      ElasticSearchEventSerializer serializer) {
+                                 ElasticSearchEventSerializer serializer) {
 
     for (int i = 0; i < hostNames.length; ++i) {
       if (!hostNames[i].contains("http://") && !hostNames[i].contains("https://")) {
@@ -78,7 +78,7 @@ public class  ElasticSearchRestClient implements ElasticSearchClient {
 
   @VisibleForTesting
   public ElasticSearchRestClient(String[] hostNames,
-          ElasticSearchEventSerializer serializer, HttpClient client) {
+                                 ElasticSearchEventSerializer serializer, HttpClient client) {
     this(hostNames, serializer);
     httpClient = client;
   }
@@ -108,7 +108,8 @@ public class  ElasticSearchRestClient implements ElasticSearchClient {
     synchronized (bulkBuilder) {
       bulkBuilder.append(gson.toJson(parameters));
       bulkBuilder.append("\n");
-      bulkBuilder.append(content.toBytesArray().toUtf8());
+      //bulkBuilder.append(content.toBytesArray().toUtf8());
+      bulkBuilder.append(content.toBytesRef().utf8ToString());
       bulkBuilder.append("\n");
     }
   }
@@ -134,7 +135,7 @@ public class  ElasticSearchRestClient implements ElasticSearchClient {
       logger.info("Status code from elasticsearch: " + statusCode);
       if (response.getEntity() != null) {
         logger.debug("Status message from elasticsearch: " +
-                     EntityUtils.toString(response.getEntity(), "UTF-8"));
+            EntityUtils.toString(response.getEntity(), "UTF-8"));
       }
     }
 

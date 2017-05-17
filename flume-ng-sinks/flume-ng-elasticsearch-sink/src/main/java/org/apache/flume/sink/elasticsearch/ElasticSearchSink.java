@@ -31,6 +31,7 @@ import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.SER
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.SERIALIZER_PREFIX;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.TTL;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.TTL_REGEX;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
@@ -66,22 +67,18 @@ import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.IND
 /**
  * A sink which reads events from a channel and writes them to ElasticSearch
  * based on the work done by https://github.com/Aconex/elasticflume.git.</p>
- * 
+ * <p>
  * This sink supports batch reading of events from the channel and writing them
  * to ElasticSearch.</p>
- * 
+ * <p>
  * Indexes will be rolled daily using the format 'indexname-YYYY-MM-dd' to allow
  * easier management of the index</p>
- * 
+ * <p>
  * This sink must be configured with with mandatory parameters detailed in
  * {@link ElasticSearchSinkConstants}</p> It is recommended as a secondary step
  * the ElasticSearch indexes are optimized for the specified serializer. This is
  * not handled by the sink but is typically done by deploying a config template
  * alongside the ElasticSearch deploy</p>
- * 
- * @see http
- *      ://www.elasticsearch.org/guide/reference/api/admin-indices-templates.
- *      html
  */
 public class ElasticSearchSink extends AbstractSink implements Configurable {
 
@@ -124,12 +121,10 @@ public class ElasticSearchSink extends AbstractSink implements Configurable {
 
   /**
    * Create an {@link ElasticSearchSink}</p>
-   * 
-   * @param isLocal
-   *          If <tt>true</tt> sink will be configured to only talk to an
-   *          ElasticSearch instance hosted in the same JVM, should always be
-   *          false is production
-   * 
+   *
+   * @param isLocal If <tt>true</tt> sink will be configured to only talk to an
+   *                ElasticSearch instance hosted in the same JVM, should always be
+   *                false is production
    */
   @VisibleForTesting
   ElasticSearchSink(boolean isLocal) {
@@ -315,13 +310,13 @@ public class ElasticSearchSink extends AbstractSink implements Configurable {
 
     Context indexnameBuilderContext = new Context();
     serializerContext.putAll(
-            context.getSubProperties(INDEX_NAME_BUILDER_PREFIX));
+        context.getSubProperties(INDEX_NAME_BUILDER_PREFIX));
 
     try {
       @SuppressWarnings("unchecked")
       Class<? extends IndexNameBuilder> clazz
-              = (Class<? extends IndexNameBuilder>) Class
-              .forName(indexNameBuilderClass);
+          = (Class<? extends IndexNameBuilder>) Class
+          .forName(indexNameBuilderClass);
       indexNameBuilder = clazz.newInstance();
       indexnameBuilderContext.put(INDEX_NAME, indexName);
       indexNameBuilder.configure(indexnameBuilderContext);
@@ -393,10 +388,10 @@ public class ElasticSearchSink extends AbstractSink implements Configurable {
    * (minutes), h (hours), ms (milliseconds) or w (weeks), milliseconds is used
    * as default unit.
    * http://www.elasticsearch.org/guide/reference/mapping/ttl-field/.
-   * 
+   *
    * @param ttl TTL value provided by user in flume configuration file for the
    * sink
-   * 
+   *
    * @return the ttl value in milliseconds
    */
   private long parseTTL(String ttl) {

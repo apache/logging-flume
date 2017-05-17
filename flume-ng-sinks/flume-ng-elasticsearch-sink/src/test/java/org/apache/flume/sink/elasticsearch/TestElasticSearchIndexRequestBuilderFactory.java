@@ -24,46 +24,63 @@ import org.apache.flume.Event;
 import org.apache.flume.conf.ComponentConfiguration;
 import org.apache.flume.conf.sink.SinkConfiguration;
 import org.apache.flume.event.SimpleEvent;
+import org.apache.flume.sink.elasticsearch.legacy.FastByteArrayOutputStream;
+import org.elasticsearch.action.index.IndexAction;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.io.BytesStream;
-import org.elasticsearch.common.io.FastByteArrayOutputStream;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Map;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class TestElasticSearchIndexRequestBuilderFactory
     extends AbstractElasticSearchSinkTest {
 
-  private static final Client FAKE_CLIENT = null;
-
+  private static Client FAKE_CLIENT = null;
   private EventSerializerIndexRequestBuilderFactory factory;
 
   private FakeEventSerializer serializer;
 
   @Before
   public void setupFactory() throws Exception {
+
     serializer = new FakeEventSerializer();
     factory = new EventSerializerIndexRequestBuilderFactory(serializer) {
       @Override
       IndexRequestBuilder prepareIndex(Client client) {
-        return new IndexRequestBuilder(FAKE_CLIENT);
+        Settings settings = Settings.builder()
+            .put("path.data", "target/es-test")
+            .put("path.home", "D:\\dev\\elasticsearch\\elasticsearch-5.2.1")
+            .build();
+
+        try {
+          FAKE_CLIENT = new PreBuiltTransportClient(settings)
+              .addTransportAddress(
+                  new InetSocketTransportAddress(InetAddress.getByName("localhost"), 9300));
+          ;
+        } catch (UnknownHostException e) {
+          e.printStackTrace();
+        }
+
+        return new IndexRequestBuilder(FAKE_CLIENT, IndexAction.INSTANCE);
       }
     };
   }
 
   @Test
   public void shouldUseUtcAsBasisForDateFormat() {
-    assertEquals("Coordinated Universal Time",
-        factory.fastDateFormat.getTimeZone().getDisplayName());
+    String timeZone = factory.fastDateFormat.getTimeZone().getDisplayName();
+    assertTrue("Temps universel coordonné".equals(timeZone) ||
+        "Coordinated Universal Time".equals(timeZone));
   }
 
   @Test
@@ -88,7 +105,7 @@ public class TestElasticSearchIndexRequestBuilderFactory
     SimpleEvent base = new SimpleEvent();
     Map<String, String> headersWithTimestamp = Maps.newHashMap();
     headersWithTimestamp.put("timestamp", "-321");
-    base.setHeaders(headersWithTimestamp );
+    base.setHeaders(headersWithTimestamp);
 
     TimestampedEvent timestampedEvent = new TimestampedEvent(base);
     assertEquals(-321L, timestampedEvent.getTimestamp());
@@ -100,7 +117,7 @@ public class TestElasticSearchIndexRequestBuilderFactory
     SimpleEvent base = new SimpleEvent();
     Map<String, String> headersWithTimestamp = Maps.newHashMap();
     headersWithTimestamp.put("@timestamp", "-999");
-    base.setHeaders(headersWithTimestamp );
+    base.setHeaders(headersWithTimestamp);
 
     TimestampedEvent timestampedEvent = new TimestampedEvent(base);
     assertEquals(-999L, timestampedEvent.getTimestamp());
@@ -111,10 +128,10 @@ public class TestElasticSearchIndexRequestBuilderFactory
   @Test
   public void shouldPreserveBodyAndNonTimestampHeadersInTimestampedEvent() {
     SimpleEvent base = new SimpleEvent();
-    base.setBody(new byte[] {1,2,3,4});
+    base.setBody(new byte[] {1, 2, 3, 4});
     Map<String, String> headersWithTimestamp = Maps.newHashMap();
     headersWithTimestamp.put("foo", "bar");
-    base.setHeaders(headersWithTimestamp );
+    base.setHeaders(headersWithTimestamp);
 
     TimestampedEvent timestampedEvent = new TimestampedEvent(base);
     assertEquals("bar", timestampedEvent.getHeaders().get("foo"));
@@ -122,27 +139,26 @@ public class TestElasticSearchIndexRequestBuilderFactory
   }
 
   @Test
-  public void shouldSetIndexNameTypeAndSerializedEventIntoIndexRequest()
-      throws Exception {
+  public void shouldSetIndexNameTypeAndSerializedEventIntoIndexRequest() throws Exception {
 
     String indexPrefix = "qwerty";
     String indexType = "uiop";
     Event event = new SimpleEvent();
 
-    IndexRequestBuilder indexRequestBuilder = factory.createIndexRequest(
-        FAKE_CLIENT, indexPrefix, indexType, event);
+    IndexRequestBuilder indexRequestBuilder =
+        factory.createIndexRequest(FAKE_CLIENT, indexPrefix, indexType, event);
 
     assertEquals(indexPrefix + '-'
-        + ElasticSearchIndexRequestBuilderFactory.df.format(FIXED_TIME_MILLIS),
+            + ElasticSearchIndexRequestBuilderFactory.df.format(FIXED_TIME_MILLIS),
         indexRequestBuilder.request().index());
     assertEquals(indexType, indexRequestBuilder.request().type());
+
     assertArrayEquals(FakeEventSerializer.FAKE_BYTES,
-        indexRequestBuilder.request().source().array());
+        indexRequestBuilder.request().source().toBytesRef().bytes);
   }
 
   @Test
-  public void shouldSetIndexNameFromTimestampHeaderWhenPresent()
-      throws Exception {
+  public void shouldSetIndexNameFromTimestampHeaderWhenPresent() throws Exception {
     String indexPrefix = "qwerty";
     String indexType = "uiop";
     Event event = new SimpleEvent();
@@ -152,13 +168,12 @@ public class TestElasticSearchIndexRequestBuilderFactory
         null, indexPrefix, indexType, event);
 
     assertEquals(indexPrefix + '-'
-        + ElasticSearchIndexRequestBuilderFactory.df.format(1213141516L),
+            + ElasticSearchIndexRequestBuilderFactory.df.format(1213141516L),
         indexRequestBuilder.request().index());
   }
 
   @Test
-  public void shouldSetIndexNameTypeFromHeaderWhenPresent()
-      throws Exception {
+  public void shouldSetIndexNameTypeFromHeaderWhenPresent() throws Exception {
     String indexPrefix = "%{index-name}";
     String indexType = "%{index-type}";
     String indexValue = "testing-index-name-from-headers";
@@ -168,13 +183,32 @@ public class TestElasticSearchIndexRequestBuilderFactory
     event.getHeaders().put("index-name", indexValue);
     event.getHeaders().put("index-type", typeValue);
 
-    IndexRequestBuilder indexRequestBuilder = factory.createIndexRequest(
-        null, indexPrefix, indexType, event);
+    Settings settings = Settings.builder()
+        //.put("number_of_shards", 1)
+        //.put("number_of_replicas", 0)
+        //.put("routing.hash.type", "simple")
+        //.put("gateway.type", "none")
+        .put("path.data", "target/es-test")
+        .put("path.home", "D:\\dev\\elasticsearch\\elasticsearch-5.2.1")
+        .build();
 
-    assertEquals(indexValue + '-'
-        + ElasticSearchIndexRequestBuilderFactory.df.format(FIXED_TIME_MILLIS),
-        indexRequestBuilder.request().index());
-    assertEquals(typeValue, indexRequestBuilder.request().type());
+    try {
+      FAKE_CLIENT = new PreBuiltTransportClient(settings)
+          .addTransportAddress(
+              new InetSocketTransportAddress(InetAddress.getByName("localhost"), 9300));
+
+      IndexRequestBuilder indexRequestBuilder =
+          factory.createIndexRequest(FAKE_CLIENT, indexPrefix, indexType, event);
+
+      assertEquals(indexValue + '-'
+              + ElasticSearchIndexRequestBuilderFactory.df.format(FIXED_TIME_MILLIS),
+          indexRequestBuilder.request().index());
+      assertEquals(typeValue, indexRequestBuilder.request().type());
+    } catch (UnknownHostException e) {
+      e.printStackTrace();
+    }
+
+
   }
 
   @Test
@@ -190,7 +224,7 @@ public class TestElasticSearchIndexRequestBuilderFactory
 
   static class FakeEventSerializer implements ElasticSearchEventSerializer {
 
-    static final byte[] FAKE_BYTES = new byte[]{9, 8, 7, 6};
+    static final byte[] FAKE_BYTES = new byte[] {9, 8, 7, 6};
     boolean configuredWithContext;
     boolean configuredWithComponentConfiguration;
 
@@ -199,6 +233,8 @@ public class TestElasticSearchIndexRequestBuilderFactory
       FastByteArrayOutputStream fbaos = new FastByteArrayOutputStream(4);
       fbaos.write(FAKE_BYTES);
       return fbaos;
+
+      //return null;
     }
 
     @Override
@@ -211,5 +247,4 @@ public class TestElasticSearchIndexRequestBuilderFactory
       configuredWithComponentConfiguration = true;
     }
   }
-
 }

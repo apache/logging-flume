@@ -30,7 +30,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 public class TestElasticSearchClientFactory {
 
   ElasticSearchClientFactory factory;
-  
+
   @Mock
   ElasticSearchEventSerializer serializer;
 
@@ -42,23 +42,23 @@ public class TestElasticSearchClientFactory {
 
   @Test
   public void shouldReturnTransportClient() throws Exception {
-    String[] hostNames = { "127.0.0.1" };
-    Object o = factory.getClient(ElasticSearchClientFactory.TransportClient,
-                                 hostNames, "test", serializer, null);
+    String[] hostNames = {"127.0.0.1"};
+    Object o = factory.getClient(ElasticSearchClientFactory.Client,
+        hostNames, "test", serializer, null);
     assertThat(o, instanceOf(ElasticSearchTransportClient.class));
   }
 
   @Test
   public void shouldReturnRestClient() throws NoSuchClientTypeException {
-    String[] hostNames = { "127.0.0.1" };
+    String[] hostNames = {"127.0.0.1"};
     Object o = factory.getClient(ElasticSearchClientFactory.RestClient,
-                                 hostNames, "test", serializer, null);
+        hostNames, "test", serializer, null);
     assertThat(o, instanceOf(ElasticSearchRestClient.class));
   }
 
   @Test(expected = NoSuchClientTypeException.class)
   public void shouldThrowNoSuchClientTypeException() throws NoSuchClientTypeException {
-    String[] hostNames = { "127.0.0.1" };
+    String[] hostNames = {"127.0.0.1"};
     factory.getClient("not_existing_client", hostNames, "test", null, null);
   }
 }
