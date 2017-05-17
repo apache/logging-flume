@@ -38,11 +38,10 @@ public interface ElasticSearchEventSerializer extends Configurable,
 
   /**
    * Return an {@link BytesStream} made up of the serialized flume event
-   * @param event
-   *          The flume event to serialize
+   *
+   * @param event The flume event to serialize
    * @return A {@link BytesStream} used to write to ElasticSearch
-   * @throws IOException
-   *           If an error occurs during serialization
+   * @throws IOException If an error occurs during serialization
    */
   abstract BytesStream getContentBuilder(Event event) throws IOException;
 }

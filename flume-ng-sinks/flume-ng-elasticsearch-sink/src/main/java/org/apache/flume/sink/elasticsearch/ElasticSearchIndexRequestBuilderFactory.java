@@ -24,6 +24,7 @@ import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.ConfigurableComponent;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.client.transport.TransportClient;
 
 import java.io.IOException;
 import java.util.TimeZone;
@@ -40,21 +41,15 @@ public interface ElasticSearchIndexRequestBuilderFactory extends Configurable,
       TimeZone.getTimeZone("Etc/UTC"));
 
   /**
-   * @param client
-   *          ElasticSearch {@link Client} to prepare index from
-   * @param indexPrefix
-   *          Prefix of index name to use -- as configured on the sink
-   * @param indexType
-   *          Index type to use -- as configured on the sink
-   * @param event
-   *          Flume event to serialize and add to index request
+   * @param client      ElasticSearch {@link TransportClient} to prepare index from
+   * @param indexPrefix Prefix of index name to use -- as configured on the sink
+   * @param indexType   Index type to use -- as configured on the sink
+   * @param event       Flume event to serialize and add to index request
    * @return prepared ElasticSearch {@link IndexRequestBuilder} instance
-   * @throws IOException
-   *           If an error occurs e.g. during serialization
+   * @throws IOException If an error occurs e.g. during serialization
    */
   IndexRequestBuilder createIndexRequest(Client client, String indexPrefix,
-      String indexType, Event event) throws IOException;
-
+                                         String indexType, Event event) throws IOException;
 
 
 }

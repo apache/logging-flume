@@ -26,7 +26,7 @@ import org.elasticsearch.action.ListenableActionFuture;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequestBuilder;
-import org.elasticsearch.client.Client;
+import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.io.BytesStream;
 import org.junit.Before;
@@ -51,7 +51,7 @@ public class TestElasticSearchTransportClient {
   private IndexNameBuilder nameBuilder;
 
   @Mock
-  private Client elasticSearchClient;
+  private TransportClient elasticSearchClient;
 
   @Mock
   private BulkRequestBuilder bulkRequestBuilder;
@@ -69,7 +69,7 @@ public class TestElasticSearchTransportClient {
     BytesStream bytesStream = mock(BytesStream.class);
 
     when(nameBuilder.getIndexName(any(Event.class))).thenReturn("foo_index");
-    when(bytesReference.toBytes()).thenReturn("{\"body\":\"test\"}".getBytes());
+    when(bytesReference.utf8ToString()).thenReturn("{\"body\":\"test\"}");
     when(bytesStream.bytes()).thenReturn(bytesReference);
     when(serializer.getContentBuilder(any(Event.class)))
         .thenReturn(bytesStream);

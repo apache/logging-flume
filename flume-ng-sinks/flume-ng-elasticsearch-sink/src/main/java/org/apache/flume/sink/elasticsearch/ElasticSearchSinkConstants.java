@@ -80,7 +80,7 @@ public class ElasticSearchSinkConstants {
    * should use to determine name of index where the event should be sent.
    */
   public static final String INDEX_NAME_BUILDER_PREFIX
-          = INDEX_NAME_BUILDER + ".";
+      = INDEX_NAME_BUILDER + ".";
 
   /**
    * The client type used for sending bulks to ElasticSearch
@@ -105,7 +105,7 @@ public class ElasticSearchSinkConstants {
   public static final String DEFAULT_CLIENT_TYPE = "transport";
   public static final String TTL_REGEX = "^(\\d+)(\\D*)";
   public static final String DEFAULT_SERIALIZER_CLASS = "org.apache.flume." +
-          "sink.elasticsearch.ElasticSearchLogStashEventSerializer";
+      "sink.elasticsearch.ElasticSearchLogStashEventSerializer";
   public static final String DEFAULT_INDEX_NAME_BUILDER_CLASS =
-          "org.apache.flume.sink.elasticsearch.TimeBasedIndexNameBuilder";
+      "org.apache.flume.sink.elasticsearch.TimeBasedIndexNameBuilder";
 }
