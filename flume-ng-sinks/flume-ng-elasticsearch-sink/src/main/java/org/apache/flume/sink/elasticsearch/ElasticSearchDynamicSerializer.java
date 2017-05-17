@@ -18,8 +18,6 @@
  */
 package org.apache.flume.sink.elasticsearch;
 
-import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
-
 import java.io.IOException;
 import java.util.Map;
 
@@ -28,10 +26,12 @@ import org.apache.flume.Event;
 import org.apache.flume.conf.ComponentConfiguration;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
+
 /**
  * Basic serializer that serializes the event body and header fields into
  * individual fields</p>
- *
+ * <p>
  * A best effort will be used to determine the content-type, if it cannot be
  * determined fields will be indexed as Strings
  */
@@ -53,6 +53,7 @@ public class ElasticSearchDynamicSerializer implements
     XContentBuilder builder = jsonBuilder().startObject();
     appendBody(builder, event);
     appendHeaders(builder, event);
+    builder.endObject();
     return builder;
   }
 

@@ -36,7 +36,7 @@ public class TestElasticSearchSinkCreation {
   }
 
   private void verifySinkCreation(String name, String type,
-      Class<?> typeClass) throws FlumeException {
+                                  Class<?> typeClass) throws FlumeException {
     Sink sink = sinkFactory.create(name, type);
     Assert.assertNotNull(sink);
     Assert.assertTrue(typeClass.isInstance(sink));

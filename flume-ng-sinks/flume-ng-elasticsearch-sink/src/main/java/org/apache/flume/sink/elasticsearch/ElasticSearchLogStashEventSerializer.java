@@ -18,26 +18,26 @@
  */
 package org.apache.flume.sink.elasticsearch;
 
-import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
-
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.Map;
 
+import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.conf.ComponentConfiguration;
-import org.elasticsearch.common.collect.Maps;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 /**
  * Serialize flume events into the same format LogStash uses</p>
- *
+ * <p>
  * This can be used to send events to ElasticSearch and use clients such as
  * Kabana which expect Logstash formated indexes
- *
+ * <p>
  * <pre>
  * {
  *    "@timestamp": "2010-12-21T21:48:33.309258Z",
@@ -54,10 +54,10 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
  *     "@message": "the original plain-text message"
  *   }
  * </pre>
- *
+ * <p>
  * If the following headers are present, they will map to the above logstash
  * output as long as the logstash fields are not already present.</p>
- *
+ * <p>
  * <pre>
  *  timestamp: long -> @timestamp:Date
  *  host: String -> @source_host: String
@@ -65,10 +65,6 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
  *  type: String -> @type: String
  *  source: String -> @source: String
  * </pre>
- *
- * @see https
- *      ://github.com/logstash/logstash/wiki/logstash%27s-internal-message-
- *      format
  */
 public class ElasticSearchLogStashEventSerializer implements
     ElasticSearchEventSerializer {
@@ -78,6 +74,7 @@ public class ElasticSearchLogStashEventSerializer implements
     XContentBuilder builder = jsonBuilder().startObject();
     appendBody(builder, event);
     appendHeaders(builder, event);
+    builder.endObject();
     return builder;
   }
 

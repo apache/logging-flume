@@ -17,6 +17,7 @@
 package org.apache.flume.sink.elasticsearch.client;
 
 import java.util.Arrays;
+
 import org.junit.Before;
 import org.junit.Test;
 
