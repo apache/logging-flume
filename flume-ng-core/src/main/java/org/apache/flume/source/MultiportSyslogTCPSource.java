@@ -93,7 +93,7 @@ public class MultiportSyslogTCPSource extends AbstractSource implements
     numProcessors = context.getInteger(
             SyslogSourceConfigurationConstants.CONFIG_NUMPROCESSORS);
 
-    maxEventSize = context.getInteger(
+    maxEventSize = context.getByteInteger(
         SyslogSourceConfigurationConstants.CONFIG_EVENTSIZE,
         SyslogUtils.DEFAULT_SIZE);
 

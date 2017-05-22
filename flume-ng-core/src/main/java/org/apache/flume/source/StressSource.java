@@ -87,7 +87,7 @@ public class StressSource extends AbstractPollableSource implements Configurable
     /* Set max events in a batch submission */
     batchSize = context.getInteger("batchSize", 1);
     /* Size of events to be generated. */
-    int size = context.getInteger("size", 500);
+    int size = context.getByteInteger("size", 500);
 
     prepEventData(size);
   }

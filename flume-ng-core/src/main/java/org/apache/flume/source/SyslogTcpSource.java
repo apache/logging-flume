@@ -160,7 +160,7 @@ public class SyslogTcpSource extends AbstractSource
         SyslogSourceConfigurationConstants.CONFIG_PORT);
     port = context.getInteger(SyslogSourceConfigurationConstants.CONFIG_PORT);
     host = context.getString(SyslogSourceConfigurationConstants.CONFIG_HOST);
-    eventSize = context.getInteger("eventSize", SyslogUtils.DEFAULT_SIZE);
+    eventSize = context.getByteInteger("eventSize", SyslogUtils.DEFAULT_SIZE);
     formaterProp = context.getSubProperties(
         SyslogSourceConfigurationConstants.CONFIG_FORMAT_PREFIX);
     keepFields = SyslogUtils.chooseFieldsToKeep(
