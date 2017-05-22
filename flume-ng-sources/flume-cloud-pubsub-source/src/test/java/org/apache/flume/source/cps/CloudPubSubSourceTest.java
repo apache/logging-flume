@@ -45,7 +45,8 @@ public class CloudPubSubSourceTest {
     String accessKeyFilePath = System.getProperty("cps.serviceAccountKeyFile");
     Assume.assumeNotNull(accessKeyFilePath);
     // ignore Test if Access Key File is not found.
-    Assume.assumeNotNull(CloudPubSubSourceTest.class.getClassLoader().getResource(accessKeyFilePath));
+    Assume
+        .assumeNotNull(CloudPubSubSourceTest.class.getClassLoader().getResource(accessKeyFilePath));
 
     Context context = new Context();
     context.put("subscription", subscription);

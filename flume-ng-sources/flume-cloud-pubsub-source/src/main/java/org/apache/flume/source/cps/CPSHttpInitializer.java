@@ -30,7 +30,8 @@ public class CPSHttpInitializer implements HttpRequestInitializer {
   private int readTimeout;
   private Credential credential;
 
-  public CPSHttpInitializer(final Credential credential, final int connectTimeout, final int readTimeout) {
+  public CPSHttpInitializer(final Credential credential, final int connectTimeout,
+      final int readTimeout) {
     this.credential = credential;
     this.connectTimeout = connectTimeout;
     this.readTimeout = readTimeout;
@@ -42,8 +43,8 @@ public class CPSHttpInitializer implements HttpRequestInitializer {
     request.setInterceptor(credential);
     request.setUnsuccessfulResponseHandler(new HttpUnsuccessfulResponseHandler() {
       @Override
-      public boolean handleResponse(final HttpRequest request, final HttpResponse response, final boolean supportsRetry)
-          throws IOException {
+      public boolean handleResponse(final HttpRequest request, final HttpResponse response,
+          final boolean supportsRetry) throws IOException {
         if (credential.handleResponse(request, response, supportsRetry)) {
           return true;
         } else {

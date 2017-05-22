@@ -82,9 +82,11 @@ public class CloudPubSubSource extends AbstractSource implements PollableSource,
     logger.info("subscrptionName : {}", subscriptionName);
     String serviceAccountKeyPath = context.getString(SERVICE_ACCOUNT_KEY_PATH);
     logger.info(SERVICE_ACCOUNT_KEY_PATH + ": {}", serviceAccountKeyPath);
-    Preconditions.checkState(serviceAccountKeyPath != null, SERVICE_ACCOUNT_KEY_PATH + " is empty.");
+    Preconditions.checkState(serviceAccountKeyPath != null,
+        SERVICE_ACCOUNT_KEY_PATH + " is empty.");
     int connectTimeout = context.getInteger(CONNECT_TIMEOUT, DEFAULT_CONNECT_TIMEOUT);
-    Preconditions.checkState(0 <= connectTimeout, "You must set Positive number to " + CONNECT_TIMEOUT);
+    Preconditions.checkState(0 <= connectTimeout,
+        "You must set Positive number to " + CONNECT_TIMEOUT);
     int readTimeout = context.getInteger(READ_TIMEOUT, DEFAULT_READ_TIMEOUT);
     Preconditions.checkState(0 <= readTimeout, "You must set Positive number to " + READ_TIMEOUT);
 
@@ -136,8 +138,9 @@ public class CloudPubSubSource extends AbstractSource implements PollableSource,
   private void fetchCPSEvent() throws IOException, InterruptedException {
     while (true) {
       int fetchCount = pullEvent();
-      if (fetchCount < batchSize)
+      if (fetchCount < batchSize) {
         break;
+      }
     }
   }
 
@@ -145,7 +148,8 @@ public class CloudPubSubSource extends AbstractSource implements PollableSource,
     List<Event> events = new ArrayList<>(batchSize);
     List<ReceivedMessage> receivedMessages = null;
     try {
-      PullResponse pullResponse = pubsub.projects().subscriptions().pull(subscriptionName, pullRequest).execute();
+      PullResponse pullResponse = pubsub.projects().subscriptions()
+          .pull(subscriptionName, pullRequest).execute();
       receivedMessages = pullResponse.getReceivedMessages();
     } catch (SocketTimeoutException e) {
       logger.info("Read timeout, subscription = {}", subscriptionName);
@@ -165,8 +169,9 @@ public class CloudPubSubSource extends AbstractSource implements PollableSource,
         ackIds.add(receivedMessage.getAckId());
       }
     }
-    if (ackIds.size() == 0)
+    if (ackIds.size() == 0) {
       return 0;
+    }
     sourceCounter.addToEventReceivedCount(ackIds.size());
     sourceCounter.incrementAppendBatchReceivedCount();
     try {
@@ -184,8 +189,8 @@ public class CloudPubSubSource extends AbstractSource implements PollableSource,
     return events.size();
   }
 
-  private static Pubsub createPubsubClient(String privateKeyPath, int connectTimeout, int readTimeout)
-      throws IOException, GeneralSecurityException, URISyntaxException {
+  private static Pubsub createPubsubClient(String privateKeyPath, int connectTimeout,
+      int readTimeout) throws IOException, GeneralSecurityException, URISyntaxException {
     ClassLoader classLoader = CloudPubSubSource.class.getClassLoader();
 
     GoogleCredential credential;
@@ -193,8 +198,10 @@ public class CloudPubSubSource extends AbstractSource implements PollableSource,
     if (credential.createScopedRequired()) {
       credential = credential.createScoped(PubsubScopes.all());
     }
-    HttpRequestInitializer initializer = new CPSHttpInitializer(credential, connectTimeout, readTimeout);
-    return new Pubsub.Builder(Utils.getDefaultTransport(), Utils.getDefaultJsonFactory(), initializer).build();
+    HttpRequestInitializer initializer = new CPSHttpInitializer(credential, connectTimeout,
+        readTimeout);
+    return new Pubsub.Builder(Utils.getDefaultTransport(), Utils.getDefaultJsonFactory(),
+        initializer).build();
   }
 
   @Override
