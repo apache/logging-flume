@@ -23,6 +23,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.flume.conf.UnitUtils;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -207,6 +209,69 @@ public class Context {
    */
   public Long getLong(String key) {
     return getLong(key, null);
+  }
+  /**
+   * Gets capatity value mapped to key, returning null if unmapped.
+   * @param key to be found
+   * @return value associated with key or null if unmapped
+   */
+  public Long getByteLong(String key){
+    return getByteLong(key,null);
+  }
+  /**
+   * Gets capatity value mapped to key, returning defaultValue if unmapped.
+   * @param key to be found
+   * @param defaultValue returned if key is unmapped
+   * @return value associated with key
+   */
+  public Long getByteLong(String key,Long defaultValue){
+    String value = get(key);
+    if (value != null) {
+      return UnitUtils.parseBytes(value.trim());
+    }
+    return defaultValue;
+  }
+  /**
+   * Gets capatity value mapped to key, returning null if unmapped.
+   * @param key to be found
+   * @return value associated with key or null if unmapped
+   */
+  public Integer getByteInteger(String key){
+    return getByteInteger(key,null);
+  }
+  /**
+   * Gets capatity value mapped to key, returning defaultValue if unmapped.
+   * @param key to be found
+   * @param defaultValue returned if key is unmapped
+   * @return value associated with key
+   */
+  public Integer getByteInteger(String key,Integer defaultValue){
+    String value = get(key);
+    if (value != null) {
+      return UnitUtils.parseBytes(value.trim()).intValue();
+    }
+    return defaultValue;
+  }
+  /**
+   * Gets time value mapped to key, returning null if unmapped.
+   * @param key to be found
+   * @return value associated with key or null if unmapped
+   */
+  public Long getMilliseconds(String key){
+    return getMilliseconds(key,null);
+  }
+  /**
+   * Gets time value mapped to key, returning defaultValue if unmapped.
+   * @param key to be found
+   * @param defaultValue returned if key is unmapped
+   * @return value associated with key
+   */
+  public Long getMilliseconds(String key,Long defaultValue){
+    String value = get(key);
+    if (value != null) {
+      return UnitUtils.parseMillisecond(value.trim());
+    }
+    return defaultValue;
   }
   /**
    * Gets value mapped to key, returning defaultValue if unmapped.

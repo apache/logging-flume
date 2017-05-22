@@ -140,7 +140,7 @@ public class NetcatSource extends AbstractSource implements Configurable,
     hostName = context.getString(hostKey);
     port = context.getInteger(portKey);
     ackEveryEvent = context.getBoolean(ackEventKey, true);
-    maxLineLength = context.getInteger(
+    maxLineLength = context.getByteInteger(
         NetcatSourceConfigurationConstants.CONFIG_MAX_LINE_LENGTH,
         NetcatSourceConfigurationConstants.DEFAULT_MAX_LINE_LENGTH);
     sourceEncoding = context.getString(

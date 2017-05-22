@@ -73,7 +73,7 @@ public class ScribeSource extends AbstractSource implements
   @Override
   public void configure(Context context) {
     port = context.getInteger("port", DEFAULT_PORT);
-    maxReadBufferBytes = context.getInteger("maxReadBufferBytes", DEFAULT_MAX_READ_BUFFER_BYTES);
+    maxReadBufferBytes = context.getByteInteger("maxReadBufferBytes", DEFAULT_MAX_READ_BUFFER_BYTES);
     if(maxReadBufferBytes <= 0){
       maxReadBufferBytes = DEFAULT_MAX_READ_BUFFER_BYTES;
     }
