@@ -14,14 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume.source.cps;
+package org.apache.flume.source.pubsub;
 
 public class CloudPubSubSourceContstants {
   public static final String SUBSCRIPTION = "subscription";
   public static final String SERVICE_ACCOUNT_KEY_PATH = "serviceAccountKeyFile";
   public static final String ACCOUNT_ID = "accountId";
-  public static final String BASE_RETRY_INTERVAL = "baseRetryInterval";
-  public static final String HEADERS_PREFIX = "headers.";
   public static final String BATCH_SIZE = "batchSize";
   public static final String CONNECT_TIMEOUT = "connectTimeout";
   public static final String READ_TIMEOUT = "readTimeout";

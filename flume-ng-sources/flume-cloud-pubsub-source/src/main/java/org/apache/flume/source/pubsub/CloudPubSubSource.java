@@ -14,19 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume.source.cps;
+package org.apache.flume.source.pubsub;
 
-import static org.apache.flume.source.cps.CloudPubSubSourceContstants.BATCH_SIZE;
-import static org.apache.flume.source.cps.CloudPubSubSourceContstants.CONNECT_TIMEOUT;
-import static org.apache.flume.source.cps.CloudPubSubSourceContstants.DEFAULT_BATCH_SIZE;
-import static org.apache.flume.source.cps.CloudPubSubSourceContstants.DEFAULT_CONNECT_TIMEOUT;
-import static org.apache.flume.source.cps.CloudPubSubSourceContstants.DEFAULT_READ_TIMEOUT;
-import static org.apache.flume.source.cps.CloudPubSubSourceContstants.DEFAULT_RETRY_INTERVAL;
-import static org.apache.flume.source.cps.CloudPubSubSourceContstants.HEADERS_PREFIX;
-import static org.apache.flume.source.cps.CloudPubSubSourceContstants.MAX_SLEEP_INTERVAL;
-import static org.apache.flume.source.cps.CloudPubSubSourceContstants.READ_TIMEOUT;
-import static org.apache.flume.source.cps.CloudPubSubSourceContstants.SERVICE_ACCOUNT_KEY_PATH;
-import static org.apache.flume.source.cps.CloudPubSubSourceContstants.SUBSCRIPTION;
+import static org.apache.flume.source.pubsub.CloudPubSubSourceContstants.BATCH_SIZE;
+import static org.apache.flume.source.pubsub.CloudPubSubSourceContstants.CONNECT_TIMEOUT;
+import static org.apache.flume.source.pubsub.CloudPubSubSourceContstants.DEFAULT_BATCH_SIZE;
+import static org.apache.flume.source.pubsub.CloudPubSubSourceContstants.DEFAULT_CONNECT_TIMEOUT;
+import static org.apache.flume.source.pubsub.CloudPubSubSourceContstants.DEFAULT_READ_TIMEOUT;
+import static org.apache.flume.source.pubsub.CloudPubSubSourceContstants.DEFAULT_RETRY_INTERVAL;
+import static org.apache.flume.source.pubsub.CloudPubSubSourceContstants.MAX_SLEEP_INTERVAL;
+import static org.apache.flume.source.pubsub.CloudPubSubSourceContstants.READ_TIMEOUT;
+import static org.apache.flume.source.pubsub.CloudPubSubSourceContstants.SERVICE_ACCOUNT_KEY_PATH;
+import static org.apache.flume.source.pubsub.CloudPubSubSourceContstants.SUBSCRIPTION;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
@@ -34,7 +33,6 @@ import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.flume.ChannelException;
@@ -68,7 +66,6 @@ public class CloudPubSubSource extends AbstractSource implements PollableSource,
 
   private int batchSize;
   private String subscriptionName;
-  private Map<String, String> headersMap;
   private SourceCounter sourceCounter;
   private PullRequest pullRequest;
   private Pubsub pubsub;
@@ -93,8 +90,6 @@ public class CloudPubSubSource extends AbstractSource implements PollableSource,
     batchSize = context.getInteger(BATCH_SIZE, DEFAULT_BATCH_SIZE);
     Preconditions.checkState(0 <= batchSize, "You must set Positive number to " + batchSize);
 
-    headersMap = context.getSubProperties(HEADERS_PREFIX);
-    logger.info("headersMap : {}", headersMap);
     pullRequest = new PullRequest().setReturnImmediately(false).setMaxMessages(batchSize);
     this.backoffSleepIncrement = context.getLong(PollableSourceConstants.BACKOFF_SLEEP_INCREMENT,
         PollableSourceConstants.DEFAULT_BACKOFF_SLEEP_INCREMENT);
@@ -159,11 +154,11 @@ public class CloudPubSubSource extends AbstractSource implements PollableSource,
     }
     List<String> ackIds = new ArrayList<>(receivedMessages.size());
     for (ReceivedMessage receivedMessage : receivedMessages) {
-      if (receivedMessage.getMessage() != null) {
+      if (receivedMessage.getMessage() != null && receivedMessage.getAckId() != null) {
         PubsubMessage pubsubMessage = receivedMessage.getMessage();
         byte[] body = pubsubMessage.decodeData();
         if (body != null) {
-          Event event = EventBuilder.withBody(body, headersMap);
+          Event event = EventBuilder.withBody(body);
           events.add(event);
         }
         ackIds.add(receivedMessage.getAckId());
@@ -213,10 +208,9 @@ public class CloudPubSubSource extends AbstractSource implements PollableSource,
   public long getMaxBackOffSleepInterval() {
     return maxBackoffSleep;
   }
-
+  
   @VisibleForTesting
-  public Map<String, String> getHeadersMap() {
-    return headersMap;
+  void setMockPubSub(Pubsub mockPubsub) {
+    this.pubsub = mockPubsub;
   }
-
 }

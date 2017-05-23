@@ -1480,7 +1480,7 @@ Required properties are in **bold**.
 Property Name               Default    Description
 ==========================  =========  =======================================================================================================================
 **channels**                --
-**type**                    --         The component type name, needs to be ``org.apache.flume.source.cps.CloudPubSubSource``
+**type**                    --         The component type name, needs to be ``org.apache.flume.source.pubsub.CloudPubSubSource``
 **subscription**            --         The subsctiption name
 **serviceAccountKeyFile**   --         The path of the json-formatted private key file.
 batchSize                   100        Max line length per event body
@@ -1488,7 +1488,6 @@ connectTimeout              20000      The timeout (ms) to establish a connectio
 readTimeout                 20000      The timeout (ms) to read data from an established connection or 0 for an infinite timeout.
 backoffSleepIncrement	    1000       The increment for time delay before reattempting to poll for new data, when the last attempt did not find any new data.
 maxBackoffSleep	            5000       The max time (ms) delay between each reattempt to poll for new data, when the last attempt did not find any new data.
-headers.<headerKey>         –-         Header value which is the set with header key.
 ==========================  =========  =======================================================================================================================
 
 Example for agent named a1:
@@ -1497,10 +1496,9 @@ Example for agent named a1:
 
   a1.sources = r1
   a1.channels = c1
-  a1.sources.r1.type = org.apache.flume.source.cps.CloudPubSubPullSource
+  a1.sources.r1.type = org.apache.flume.source.pubsub.CloudPubSubPullSource
   a1.sources.r1.subscription = projects/YOUR_PROJECT/subscriptions/YOUR_SUBSCRIPTION
   a1.sources.r1.serviceAccountKeyFile = access-key.json
-  a1.sources.r1.headers.key = value
   a1.sources.r1.channels = c1
 
 NetCat Source
