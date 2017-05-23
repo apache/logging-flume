@@ -2983,6 +2983,73 @@ Example for agent named a1:
   a1.sinks.k1.rollback.200 = false
   a1.sinks.k1.incrementMetrics.200 = true
 
+Amazon Kinesis Stream Sink
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This sink send events to Amazon Kinesis Stream. 
+
+How to authenticate to AWS can be selected from several choices.
+
+- None: No credential
+- Basic: Using access key and secret key
+- Session: Using session credentials
+
+.. note::   Amazon Kinesis Stream Sink uses the ``key`` properties from the FlumeEvent headers as Kafka Sink does.
+            If ``key`` exists in the headers, the key will used to assign the message to shards of the stream.
+            Events with same key will be sent to the same shard. If the key is null, events will be sent to random shards.
+
+
+None
+''''
+
+Required properties are in **bold**.
+
+==============================  =======  =========================================================================================
+Property Name                   Default  Description
+==============================  =======  =========================================================================================
+**channel**                     --
+**type**                        --       The component type name, needs to be ``org.apache.flume.sink.kinesis.KinesisStreamSink``
+**streamName**                  --       The stream name.
+**region**                      --       The region name.
+**credentialType**              none     The credential type, needs to be `none`.
+==============================  =======  =========================================================================================
+
+
+Basic
+'''''
+
+Required properties are in **bold**.
+
+==============================  =======  =========================================================================================
+Property Name                   Default  Description
+==============================  =======  =========================================================================================
+**channel**                     --
+**type**                        --       The component type name, needs to be ``org.apache.flume.sink.kinesis.KinesisStreamSink``
+**streamName**                  --       The stream name.
+**region**                      --       The region name.
+**credentialType**              basic    The credential type, needs to be `basic`.
+**accessKey**                   --       AWS access key.
+**secretKey**                   --       AWS secret key.
+==============================  =======  =========================================================================================
+
+Session
+'''''''
+An IAM user or an AWS Account can request temporary security credentials.
+These credentials expire after the session duration.
+
+Required properties are in **bold**.
+
+========================  =========  =========================================================================================
+Property Name             Default    Description
+========================  =========  =========================================================================================
+**channel**               --
+**type**                  --         The component type name, needs to be ``org.apache.flume.sink.kinesis.KinesisStreamSink``
+**streamName**            --         The stream name.
+**region**                --         The region name.
+**credentialType**        session    The credential type, needs to be `session`.
+durationSeconds           3600       The durations (sec) that the credentials should remain valid.     
+                                     This must be set between 900 and 129600.
+========================  =========  =========================================================================================
 
 Custom Sink
 ~~~~~~~~~~~

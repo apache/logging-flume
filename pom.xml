@@ -968,6 +968,13 @@ limitations under the License.
       </dependency>
 
       <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpcore</artifactId>
+        <version>4.2.1</version>
+      </dependency>
+
+
+      <dependency>
         <groupId>org.mapdb</groupId>
         <artifactId>mapdb</artifactId>
         <version>0.9.9</version>
@@ -1196,6 +1203,12 @@ limitations under the License.
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-ng-kafka-sink</artifactId>
+        <version>1.8.0-SNAPSHOT</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.flume.flume-ng-sinks</groupId>
+        <artifactId>flume-ng-kinesis-stream-sink</artifactId>
         <version>1.8.0-SNAPSHOT</version>
       </dependency>
 
