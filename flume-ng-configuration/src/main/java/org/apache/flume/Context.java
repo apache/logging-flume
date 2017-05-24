@@ -213,18 +213,18 @@ public class Context {
   /**
    * Gets capatity value mapped to key, returning null if unmapped.
    * @param key to be found
-   * @return value associated with key or null if unmapped
+   * @return long value associated with key or null if unmapped
    */
-  public Long getByteLong(String key){
+  public Long getByteLong(String key) {
     return getByteLong(key,null);
   }
   /**
    * Gets capatity value mapped to key, returning defaultValue if unmapped.
    * @param key to be found
    * @param defaultValue returned if key is unmapped
-   * @return value associated with key
+   * @return long value associated with key
    */
-  public Long getByteLong(String key,Long defaultValue){
+  public Long getByteLong(String key,Long defaultValue) {
     String value = get(key);
     if (value != null) {
       return UnitUtils.parseBytes(value.trim());
@@ -234,18 +234,18 @@ public class Context {
   /**
    * Gets capatity value mapped to key, returning null if unmapped.
    * @param key to be found
-   * @return value associated with key or null if unmapped
+   * @return integer value associated with key or null if unmapped
    */
-  public Integer getByteInteger(String key){
+  public Integer getByteInteger(String key) {
     return getByteInteger(key,null);
   }
   /**
    * Gets capatity value mapped to key, returning defaultValue if unmapped.
    * @param key to be found
    * @param defaultValue returned if key is unmapped
-   * @return value associated with key
+   * @return integer value associated with key
    */
-  public Integer getByteInteger(String key,Integer defaultValue){
+  public Integer getByteInteger(String key,Integer defaultValue) {
     String value = get(key);
     if (value != null) {
       return UnitUtils.parseBytes(value.trim()).intValue();
@@ -257,7 +257,7 @@ public class Context {
    * @param key to be found
    * @return value associated with key or null if unmapped
    */
-  public Long getMilliseconds(String key){
+  public Long getMilliseconds(String key) {
     return getMilliseconds(key,null);
   }
   /**
@@ -266,7 +266,7 @@ public class Context {
    * @param defaultValue returned if key is unmapped
    * @return value associated with key
    */
-  public Long getMilliseconds(String key,Long defaultValue){
+  public Long getMilliseconds(String key,Long defaultValue) {
     String value = get(key);
     if (value != null) {
       return UnitUtils.parseMillisecond(value.trim());
