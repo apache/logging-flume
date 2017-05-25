@@ -20,6 +20,7 @@ package org.apache.flume.sink.kafka;
 
 public class TestConstants {
   public static final String STATIC_TOPIC = "static-topic";
+  public static final String HEADER_TOPIC = "%{header1}-topic";
   public static final String CUSTOM_KEY = "custom-key";
   public static final String CUSTOM_TOPIC = "custom-topic";
   public static final String HEADER_1_VALUE = "test-avro-header";

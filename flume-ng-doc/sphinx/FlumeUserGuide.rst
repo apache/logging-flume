@@ -2727,6 +2727,8 @@ kafka.topic                         default-flume-topic  The topic in Kafka to w
                                                          messages will be published to this topic.
                                                          If the event header contains a "topic" field, the event will be published to that topic
                                                          overriding the topic configured here.
+                                                         Arbitrary header substitution is supported, eg. %{header} is replaced with value of event header named "header".
+                                                         (If using the substitution, it is recommended to set "auto.create.topics.enable" property of Kafka broker to true.)
 flumeBatchSize                      100                  How many messages to process in one batch. Larger batches improve throughput while adding latency.
 kafka.producer.acks                 1                    How many replicas must acknowledge a message before its considered successfully written.
                                                          Accepted values are 0 (Never wait for acknowledgement), 1 (wait for leader only), -1 (wait for all replicas)
