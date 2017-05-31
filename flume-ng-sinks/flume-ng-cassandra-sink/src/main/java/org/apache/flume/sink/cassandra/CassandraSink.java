@@ -18,25 +18,40 @@
  */
 package org.apache.flume.sink.cassandra;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.ColumnMetadata;
+import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.TableMetadata;
+import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Update;
 import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import org.apache.flume.*;
+import org.apache.flume.Channel;
+import org.apache.flume.Context;
+import org.apache.flume.Event;
+import org.apache.flume.EventDeliveryException;
+import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.sink.AbstractSink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * The sink which read data from channel and write to cassandra.</p>
- * There are 2 event serialization options: JsonCassandraEventSerializer and RegexCassandraEventSerializer.</p>
+ * There are 2 event serialization options: JsonCassandraEventSerializer
+ * and RegexCassandraEventSerializer.</p>
  * For the property configuration, should be specified in flume conf file.</p>
  * e.g.</p>
  * <pre>
@@ -84,7 +99,7 @@ public class CassandraSink extends AbstractSink implements Configurable {
     try {
       String serializerType = context.getString(CONFIG_SERIALIZER);
       Class<? extends CassandraEventSerializer> serializerClass
-        = (Class<? extends CassandraEventSerializer>) Class.forName(serializerType);
+          = (Class<? extends CassandraEventSerializer>) Class.forName(serializerType);
       serializer = serializerClass.newInstance();
       serializer.configure(context);
 
@@ -92,7 +107,8 @@ public class CassandraSink extends AbstractSink implements Configurable {
       table = context.getString(CASSANDRA_TABLE);
       cluster = Cluster.builder()
         .addContactPoints(context.getString(CASSANDRA_CONTACT_POINTS).split(","))
-        .withCredentials(context.getString(CASSANDRA_USERNAME), context.getString(CASSANDRA_PASSWORD))
+        .withCredentials(context.getString(CASSANDRA_USERNAME),
+          context.getString(CASSANDRA_PASSWORD))
         .build();
       session = cluster.connect(keyspace);
       codecRegistry = cluster.getConfiguration().getCodecRegistry();
@@ -155,7 +171,8 @@ public class CassandraSink extends AbstractSink implements Configurable {
               DataType dataType = tableMetadata.getColumn(entry.getKey()).getType();
               TypeCodec<Object> typeCodec = codecRegistry.codecFor(dataType);
               if (typeCodec.accepts(Date.class)) {
-                SimpleDateFormat parsedFormat = new SimpleDateFormat(datetimeFormat, Locale.US);
+                SimpleDateFormat parsedFormat =
+                    new SimpleDateFormat(datetimeFormat, Locale.US);
                 Date parsed = parsedFormat.parse(entry.getValue().toString());
                 entry.setValue(parsed);
               }

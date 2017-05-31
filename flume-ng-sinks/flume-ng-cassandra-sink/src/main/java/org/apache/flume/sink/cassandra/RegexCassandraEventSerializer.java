@@ -85,7 +85,8 @@ public class RegexCassandraEventSerializer implements CassandraEventSerializer {
     regexIgnoreCase = context.getBoolean(CONFIG_IGNORE_CASE, DEFAULT_INGORE_CASE);
     charset = Charset.forName(context.getString(CONFIG_CHARSET, DEFAULT_CHARSET));
     String regex = context.getString(CONFIG_REGEX, DEFAULT_REGEX);
-    inputPattern = Pattern.compile(regex, Pattern.DOTALL + (regexIgnoreCase ? Pattern.CASE_INSENSITIVE : 0));
+    inputPattern = Pattern.compile(regex,
+        Pattern.DOTALL + (regexIgnoreCase ? Pattern.CASE_INSENSITIVE : 0));
 
     colNames = context.getString(CONFIG_COL_NAMES).split(",");
 
