@@ -2983,6 +2983,43 @@ Example for agent named a1:
   a1.sinks.k1.rollback.200 = false
   a1.sinks.k1.incrementMetrics.200 = true
 
+Cassandra Sink
+~~~~~~~~~
+
+The cassandra sink, which read data from channel and write to cassandra.
+There are 2 event serialization options: JsonCassandraEventSerializer and RegexCassandraEventSerializer.
+Fields collected from input data are mapped to cassandra columns, and update(insert) on the target table.
+The cassandra authenticator is PasswordAuthenticator.
+
+Required properties are in **bold**.
+
+===========================  ==================== ============================================================================================================
+Property Name                Default              Description
+===========================  ==================== ============================================================================================================
+**type**                     --                   The component type name, needs to be ``cassandra``.
+**serializer**               --                   The serialization option.
+**cassandra.contactPoints**  --                   The end points of cassandra cluster.
+**cassandra.username**       --                   Cassandra authentication.
+**cassandra.password**       --                   Cassandra authentication.
+**cassandra.keyspace**       --                   The target cassandra keyspace.
+**cassandra.table**          --                   The target cassandra table.
+charset                      UTF_8                The charset of serialization.
+datetime.format              yyyy-MM-dd HH:mm:ssZ Customized date format.
+regex                        (.*)                 Regex pattern, required in RegexCassandraEventSerializer.
+colNames                     --                   Columns separated with "," which are mapped with regex selection, required in RegexCassandraEventSerializer.
+regexIgnoreCase              false                Is regex case sensitive, required in RegexCassandraEventSerializer.
+===========================  ==================== ============================================================================================================
+
+Take the example of JsonCassandraEventSerializer as follows:
+.. code-block:: properties
+  a1.sinks.k1.type = cassandra
+  a1.sinks.k1.serializer = org.apache.flume.sink.cassandra.JsonCassandraEventSerializer
+  a1.sinks.k1.cassandra.contactPoints = 172.30.10.241
+  a1.sinks.k1.cassandra.username = test
+  a1.sinks.k1.cassandra.password = test
+  a1.sinks.k1.cassandra.keyspace = test_keyspace
+  a1.sinks.k1.cassandra.table = test_table
+  a1.sinks.k1.datetime.format = yyyy/MM/dd HH:mm:ss
 
 Custom Sink
 ~~~~~~~~~~~

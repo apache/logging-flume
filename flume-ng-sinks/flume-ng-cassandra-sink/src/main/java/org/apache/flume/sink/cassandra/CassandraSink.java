@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package org.apache.flume.sink.cassandra;
 
 import com.datastax.driver.core.*;
@@ -17,7 +35,20 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
- * Created by roger.lu on 17/4/24.
+ * The sink which read data from channel and write to cassandra.</p>
+ * There are 2 event serialization options: JsonCassandraEventSerializer and RegexCassandraEventSerializer.</p>
+ * For the property configuration, should be specified in flume conf file.</p>
+ * e.g.</p>
+ * <pre>
+ * a1.sinks.k1.type = cassandra
+ * a1.sinks.k1.serializer = org.apache.flume.sink.cassandra.JsonCassandraEventSerializer
+ * a1.sinks.k1.cassandra.contactPoints = 172.30.10.241
+ * a1.sinks.k1.cassandra.username = test
+ * a1.sinks.k1.cassandra.password = test
+ * a1.sinks.k1.cassandra.keyspace = test_keyspace
+ * a1.sinks.k1.cassandra.table = test_table
+ * a1.sinks.k1.datetime.format = yyyy/MM/dd HH:mm:ss
+ * </pre>
  */
 public class CassandraSink extends AbstractSink implements Configurable {
 
