@@ -16,5 +16,7 @@ patchprocess
 derby.log
 .idea
 *.iml
+*.ipr
+*.iws
 nb-configuration.xml
 .DS_Store
