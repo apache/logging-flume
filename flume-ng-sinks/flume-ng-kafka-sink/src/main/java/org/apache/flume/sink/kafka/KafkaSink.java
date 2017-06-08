@@ -32,6 +32,7 @@ import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.conf.LogPrivacyUtil;
+import org.apache.flume.formatter.output.BucketPath;
 import org.apache.flume.instrumentation.kafka.KafkaSinkCounter;
 import org.apache.flume.sink.AbstractSink;
 import org.apache.flume.source.avro.AvroFlumeEvent;
@@ -173,7 +174,7 @@ public class KafkaSink extends AbstractSink implements Configurable {
 
         eventTopic = headers.get(TOPIC_HEADER);
         if (eventTopic == null) {
-          eventTopic = topic;
+          eventTopic = BucketPath.escapeString(topic, event.getHeaders());
         }
         eventKey = headers.get(KEY_HEADER);
         if (logger.isTraceEnabled()) {
