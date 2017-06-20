@@ -135,7 +135,7 @@ public class LoadBalancingLog4jAppender extends Log4jAppender {
       }
       throw new FlumeException(e);
     }
-
+    initializeClientAddress();
   }
 
   private Properties getProperties(String hosts, String selector,

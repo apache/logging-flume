@@ -115,6 +115,7 @@ public class TestLog4jAppender {
           Level.toLevel(Integer.valueOf(hdrs.get(Log4jAvroHeaders.LOG_LEVEL
               .toString()))
           ));
+      Assert.assertNotNull(hdrs.get(Log4jAvroHeaders.ADDRESS.toString()));
 
       Assert.assertEquals(logger.getName(),
           hdrs.get(Log4jAvroHeaders.LOGGER_NAME.toString()));

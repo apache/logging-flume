@@ -254,6 +254,8 @@ public class TestLoadBalancingLog4jAppender {
 
       Assert.assertNotNull(hdrs.get(Log4jAvroHeaders.TIMESTAMP.toString()));
 
+      Assert.assertNotNull(hdrs.get(Log4jAvroHeaders.ADDRESS.toString()));
+
       Assert.assertEquals(Level.toLevel(level),
           Level.toLevel(hdrs.get(Log4jAvroHeaders.LOG_LEVEL.toString())));
 
