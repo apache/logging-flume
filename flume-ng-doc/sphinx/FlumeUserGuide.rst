@@ -50,7 +50,7 @@ in the latest architecture.
 System Requirements
 -------------------
 
-#. Java Runtime Environment - Java 1.7 or later
+#. Java Runtime Environment - Java 1.8 or later
 #. Memory - Sufficient memory for configurations used by sources, channels or sinks
 #. Disk Space - Sufficient disk space for configurations used by channels or sinks
 #. Directory Permissions - Read/Write permissions for directories used by agent
