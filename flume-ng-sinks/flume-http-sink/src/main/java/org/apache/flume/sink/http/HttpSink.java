@@ -218,7 +218,12 @@ public class HttpSink extends AbstractSink implements Configurable {
           int httpStatusCode = connection.getResponseCode();
           LOG.debug("Got status code : " + httpStatusCode);
 
-          connection.getInputStream().close();
+          if (httpStatusCode < HttpURLConnection.HTTP_BAD_REQUEST) {
+            connection.getInputStream().close();
+          } else {
+            LOG.debug("bad request");
+            connection.getErrorStream().close();
+          }
           LOG.debug("Response processed and closed");
 
           if (httpStatusCode >= HTTP_STATUS_CONTINUE) {
