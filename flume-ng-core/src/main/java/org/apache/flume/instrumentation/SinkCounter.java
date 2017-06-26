@@ -44,7 +44,7 @@ public class SinkCounter extends MonitoredCounterGroup implements
       "sink.event.drain.attempt";
 
   private static final String COUNTER_EVENT_DRAIN_SUCCESS =
-      "sink.event.drain.sucess";
+      "sink.event.drain.success";
 
   private static final String[] ATTRIBUTES = {
     COUNTER_CONNECTION_CREATED, COUNTER_CONNECTION_CLOSED,
