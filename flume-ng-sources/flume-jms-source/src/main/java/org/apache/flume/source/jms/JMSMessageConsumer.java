@@ -32,6 +32,7 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.Session;
+import javax.jms.Topic;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import java.util.ArrayList;
@@ -54,7 +55,9 @@ class JMSMessageConsumer {
                      String destinationName, JMSDestinationLocator destinationLocator,
                      JMSDestinationType destinationType, String messageSelector, int batchSize,
                      long pollTimeout, JMSMessageConverter messageConverter,
-                     Optional<String> userName, Optional<String> password) {
+                     Optional<String> userName, Optional<String> password,
+                     Optional<String> clientId, boolean createDurableSubscription,
+                     String durableSubscriptionName) {
     this.batchSize = batchSize;
     this.pollTimeout = pollTimeout;
     this.messageConverter = messageConverter;
@@ -68,6 +71,9 @@ class JMSMessageConsumer {
             password.get());
       } else {
         connection = connectionFactory.createConnection();
+      }
+      if (clientId.isPresent()) {
+        connection.setClientID(clientId.get());
       }
       connection.start();
     } catch (JMSException e) {
@@ -102,8 +108,14 @@ class JMSMessageConsumer {
     }
 
     try {
-      messageConsumer = session.createConsumer(destination,
-          messageSelector.isEmpty() ? null : messageSelector);
+      if (createDurableSubscription) {
+        messageConsumer = session.createDurableSubscriber(
+            (Topic) destination, durableSubscriptionName,
+            messageSelector.isEmpty() ? null : messageSelector, true);
+      } else {
+        messageConsumer = session.createConsumer(destination,
+            messageSelector.isEmpty() ? null : messageSelector);
+      }
     } catch (JMSException e) {
       throw new FlumeException("Could not create consumer", e);
     }

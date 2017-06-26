@@ -30,19 +30,6 @@ limitations under the License.
   <artifactId>flume-taildir-source</artifactId>
   <name>Flume Taildir Source</name>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>${mvn-compiler-plugin.version}</version>
-        <configuration>
-          <source>1.7</source>
-          <target>1.7</target>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
 
   <dependencies>
     <dependency>
