@@ -32,6 +32,7 @@ import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.conf.LogPrivacyUtil;
+import org.apache.flume.formatter.output.BucketPath;
 import org.apache.flume.instrumentation.kafka.KafkaSinkCounter;
 import org.apache.flume.sink.AbstractSink;
 import org.apache.flume.source.avro.AvroFlumeEvent;
@@ -176,10 +177,11 @@ public class KafkaSink extends AbstractSink implements Configurable {
         if (allowTopicOverride) {
           eventTopic = headers.get(topicHeader);
           if (eventTopic == null) {
+            eventTopic = BucketPath.escapeString(topic, event.getHeaders());
             logger.debug("{} was set to true but header {} was null. Producing to {}" + 
-                         " topic instead.",
-                new Object[]{KafkaSinkConstants.ALLOW_TOPIC_OVERRIDE_HEADER, topicHeader, topic});
-            eventTopic = topic;
+                " topic instead.",
+                new Object[]{KafkaSinkConstants.ALLOW_TOPIC_OVERRIDE_HEADER, 
+                    topicHeader, eventTopic});
           }
         } else {
           eventTopic = topic;
@@ -469,7 +471,10 @@ class SinkCallback implements Callback {
 
     if (logger.isDebugEnabled()) {
       long eventElapsedTime = System.currentTimeMillis() - startTime;
-      logger.debug("Acked message partition:{} ofset:{}",  metadata.partition(), metadata.offset());
+      if (metadata != null) {
+        logger.debug("Acked message partition:{} ofset:{}", metadata.partition(),
+                metadata.offset());
+      }
       logger.debug("Elapsed time for send: {}", eventElapsedTime);
     }
   }
