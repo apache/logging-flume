@@ -30,6 +30,7 @@ import org.apache.flume.Event;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.channel.file.encryption.KeyProvider;
+import org.apache.flume.channel.file.instrumentation.FileChannelCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -138,6 +139,8 @@ public class Log {
 
   private final List<File> pendingDeletes = Lists.newArrayList();
 
+  private final FileChannelCounter channelCounter;
+
   static class Builder {
     private long bCheckpointInterval;
     private long bMinimumRequiredSpace;
@@ -160,6 +163,8 @@ public class Log {
     private int fsyncInterval;
 
     private boolean checkpointOnClose = true;
+
+    private FileChannelCounter channelCounter;
 
     boolean isFsyncPerTransaction() {
       return fsyncPerTransaction;
@@ -262,13 +267,18 @@ public class Log {
       return this;
     }
 
+    Builder setChannelCounter(FileChannelCounter channelCounter) {
+      this.channelCounter = channelCounter;
+      return this;
+    }
+
     Log build() throws IOException {
       return new Log(bCheckpointInterval, bMaxFileSize, bQueueCapacity,
           bUseDualCheckpoints, bCompressBackupCheckpoint, bCheckpointDir,
           bBackupCheckpointDir, bName, useLogReplayV1, useFastReplay,
           bMinimumRequiredSpace, bEncryptionKeyProvider, bEncryptionKeyAlias,
           bEncryptionCipherProvider, bUsableSpaceRefreshInterval,
-          fsyncPerTransaction, fsyncInterval, checkpointOnClose, bLogDirs);
+          fsyncPerTransaction, fsyncInterval, checkpointOnClose, channelCounter, bLogDirs);
     }
   }
 
@@ -280,7 +290,8 @@ public class Log {
               @Nullable String encryptionKeyAlias,
               @Nullable String encryptionCipherProvider,
               long usableSpaceRefreshInterval, boolean fsyncPerTransaction,
-              int fsyncInterval, boolean checkpointOnClose, File... logDirs)
+              int fsyncInterval, boolean checkpointOnClose, FileChannelCounter channelCounter,
+              File... logDirs)
       throws IOException {
     Preconditions.checkArgument(checkpointInterval > 0,
         "checkpointInterval <= 0");
@@ -304,6 +315,7 @@ public class Log {
     Preconditions.checkArgument(logDirs.length > 0, "logDirs empty");
     Preconditions.checkArgument(name != null && !name.trim().isEmpty(),
         "channel name should be specified");
+    Preconditions.checkNotNull(channelCounter, "ChannelCounter must be not null");
 
     this.channelNameDescriptor = "[channel=" + name + "]";
     this.useLogReplayV1 = useLogReplayV1;
@@ -361,6 +373,7 @@ public class Log {
     this.fsyncPerTransaction = fsyncPerTransaction;
     this.fsyncInterval = fsyncInterval;
     this.checkpointOnClose = checkpointOnClose;
+    this.channelCounter = channelCounter;
 
     logFiles = new AtomicReferenceArray<LogFile.Writer>(this.logDirs.length);
     workerExecutor = Executors.newSingleThreadScheduledExecutor(new
@@ -1221,8 +1234,10 @@ public class Log {
           log.writeCheckpoint();
         }
       } catch (IOException e) {
+        log.channelCounter.incrementCheckpointWriteErrorCount();
         LOG.error("Error doing checkpoint", e);
       } catch (Throwable e) {
+        log.channelCounter.incrementCheckpointWriteErrorCount();
         LOG.error("General error in checkpoint worker", e);
       }
     }

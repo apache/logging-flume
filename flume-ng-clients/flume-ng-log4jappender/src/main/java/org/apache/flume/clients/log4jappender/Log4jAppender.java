@@ -20,6 +20,8 @@ package org.apache.flume.clients.log4jappender;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
@@ -78,6 +80,7 @@ public class Log4jAppender extends AppenderSkeleton {
   private long timeout = RpcClientConfigurationConstants.DEFAULT_REQUEST_TIMEOUT_MILLIS;
   private boolean avroReflectionEnabled;
   private String avroSchemaUrl;
+  private String clientAddress = "";
 
   RpcClient rpcClient = null;
 
@@ -135,7 +138,7 @@ public class Log4jAppender extends AppenderSkeleton {
     hdrs.put(Log4jAvroHeaders.LOGGER_NAME.toString(), event.getLoggerName());
     hdrs.put(Log4jAvroHeaders.TIMESTAMP.toString(),
         String.valueOf(event.timeStamp));
-
+    hdrs.put(Log4jAvroHeaders.ADDRESS.toString(), clientAddress);
     //To get the level back simply use
     //LoggerEvent.toLevel(hdrs.get(Integer.parseInt(
     //Log4jAvroHeaders.LOG_LEVEL.toString()))
@@ -315,6 +318,24 @@ public class Log4jAppender extends AppenderSkeleton {
         return;
       }
       throw e;
+    }
+    initializeClientAddress();
+  }
+
+  /**
+   * Resolves local host address so it can be included in event headers.
+   * @throws FlumeException if local host address can not be resolved.
+   */
+  protected void initializeClientAddress() throws FlumeException {
+    try {
+      clientAddress = InetAddress.getLocalHost().getHostAddress();
+    } catch (UnknownHostException e) {
+      String errormsg = "Failed to resolve local host address! " + e.getMessage();
+      LogLog.error(errormsg);
+      if (unsafeMode) {
+        return;
+      }
+      throw new FlumeException(e);
     }
   }
 
