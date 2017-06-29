@@ -16,6 +16,8 @@
 # under the License.
 
 language: java
+jdk:
+  - oraclejdk8
 before_install:
   - export MAVEN_SKIP_RC="true" # Travis has settings in /etc/mavenrc. We want to override them. See https://github.com/travis-ci/travis-ci/issues/4613
 install:
