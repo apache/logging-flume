@@ -30,7 +30,6 @@ limitations under the License.
   <artifactId>flume-taildir-source</artifactId>
   <name>Flume Taildir Source</name>
 
-
   <dependencies>
     <dependency>
       <groupId>org.apache.flume</groupId>
