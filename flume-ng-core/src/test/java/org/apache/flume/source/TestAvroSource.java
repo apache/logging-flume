@@ -30,6 +30,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
+
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManager;
@@ -479,11 +481,20 @@ public class TestAvroSource {
     doIpFilterTest(localhost, "deny:ip:" +
         localhost.getHostAddress().substring(0, 3) + "*,allow:ip:*",
         false, false);
+
+    // Private lambda expression to check the received FlumeException within this test
+    Consumer<Exception> exceptionChecker = (Exception ex) -> {
+      logger.info("Received an expected exception", ex);
+      //covers all ipFilter related exceptions
+      Assert.assertTrue("Expected an ipFilterRules related exception",
+          ex.getMessage().contains("ipFilter"));
+    };
+
     try {
       doIpFilterTest(localhost, null, false, false);
       Assert.fail("The null ipFilterRules config should have thrown an exception.");
     } catch (FlumeException e) {
-      //Do nothing
+      exceptionChecker.accept(e);
     }
 
     try {
@@ -491,20 +502,21 @@ public class TestAvroSource {
       Assert.fail("The empty string ipFilterRules config should have thrown "
           + "an exception");
     } catch (FlumeException e) {
-      //Do nothing
+      exceptionChecker.accept(e);
     }
 
     try {
       doIpFilterTest(localhost, "homer:ip:45.4.23.1", true, false);
       Assert.fail("Bad ipFilterRules config should have thrown an exception.");
     } catch (FlumeException e) {
-      //Do nothing
+      exceptionChecker.accept(e);
     }
+
     try {
       doIpFilterTest(localhost, "allow:sleeps:45.4.23.1", true, false);
       Assert.fail("Bad ipFilterRules config should have thrown an exception.");
     } catch (FlumeException e) {
-      //Do nothing
+      exceptionChecker.accept(e);
     }
   }
 
