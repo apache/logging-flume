@@ -20,12 +20,12 @@
 package org.apache.flume.source;
 
 import java.io.IOException;
-import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.security.cert.X509Certificate;
+import java.nio.channels.ServerSocketChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -124,6 +124,64 @@ public class TestAvroSource {
     source.stop();
     Assert.assertTrue("Reached stop or error",
         LifecycleController.waitForOneOf(source, LifecycleState.STOP_OR_ERROR));
+    Assert.assertEquals("Server is stopped", LifecycleState.STOP,
+        source.getLifecycleState());
+  }
+
+  @Test
+  public void testSourceStoppedOnFlumeExceptionIfPortUsed()
+      throws InterruptedException, IOException {
+    final String loopbackIPv4 = "127.0.0.1";
+    final int port = 10500;
+
+    // create a dummy socket bound to a known port.
+    try (ServerSocketChannel dummyServerSocket = ServerSocketChannel.open()) {
+      dummyServerSocket.socket().setReuseAddress(true);
+      dummyServerSocket.socket().bind(new InetSocketAddress(loopbackIPv4, port));
+
+      Context context = new Context();
+      context.put("port", String.valueOf(port));
+      context.put("bind", loopbackIPv4);
+      // Invalid configuration may throw a FlumeException which has to be expected in the callers
+      Configurables.configure(source, context);
+      try {
+        source.start();
+        Assert.fail("Expected an exception during startup caused by binding on a used port");
+      } catch (FlumeException e) {
+        logger.info("Received an expected exception.", e);
+        Assert.assertTrue("Expected a bind related root cause",
+            e.getMessage().contains("Failed to bind to"));
+      }
+    }
+    // As port is already in use, an exception is thrown and the source is stopped
+    // cleaning up the opened sockets during source.start().
+    Assert.assertEquals("Server is stopped", LifecycleState.STOP,
+            source.getLifecycleState());
+  }
+
+  @Test
+  public void testInvalidAddress()
+      throws InterruptedException, IOException {
+    final String invalidHost = "invalid.host";
+    final int port = 10501;
+
+    Context context = new Context();
+    context.put("port", String.valueOf(port));
+    context.put("bind", invalidHost);
+    // Invalid configuration may throw a FlumeException which has to be expected in the callers
+    Configurables.configure(source, context);
+
+    try {
+      source.start();
+      Assert.fail("Expected an exception during startup caused by binding on a invalid host");
+    } catch (FlumeException e) {
+      logger.info("Received an expected exception.", e);
+      Assert.assertTrue("Expected a bind related root cause",
+          e.getMessage().contains("Failed to bind to"));
+    }
+
+    // As port is already in use, an exception is thrown and the source is stopped
+    // cleaning up the opened sockets during source.start().
     Assert.assertEquals("Server is stopped", LifecycleState.STOP,
         source.getLifecycleState());
   }
