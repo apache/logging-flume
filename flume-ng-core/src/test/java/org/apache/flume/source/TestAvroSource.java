@@ -52,7 +52,6 @@ import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
-import org.jboss.netty.channel.ChannelException;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.socket.SocketChannel;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
@@ -97,7 +96,6 @@ public class TestAvroSource {
     boolean bound = false;
 
     for (int i = 0; i < 100 && !bound; i++) {
-      try {
         Context context = new Context();
 
         context.put("port", String.valueOf(selectedPort = 41414 + i));
@@ -105,12 +103,12 @@ public class TestAvroSource {
 
         Configurables.configure(source, context);
 
+      try {
         source.start();
         bound = true;
-      } catch (ChannelException e) {
+      } catch (FlumeException e) {
         /*
-         * NB: This assume we're using the Netty server under the hood and the
-         * failure is to bind. Yucky.
+         * NB: This assume the failure is to bind.
          */
       }
     }
@@ -237,7 +235,6 @@ public class TestAvroSource {
     boolean bound = false;
 
     for (int i = 0; i < 100 && !bound; i++) {
-      try {
         Context context = new Context();
         context.put("port", String.valueOf(selectedPort = 41414 + i));
         context.put("bind", "0.0.0.0");
@@ -250,12 +247,12 @@ public class TestAvroSource {
 
         Configurables.configure(source, context);
 
+      try {
         source.start();
         bound = true;
-      } catch (ChannelException e) {
+      } catch (FlumeException e) {
         /*
-         * NB: This assume we're using the Netty server under the hood and the
-         * failure is to bind. Yucky.
+         * NB: This assume the failure is to bind.
          */
       }
     }
@@ -340,7 +337,6 @@ public class TestAvroSource {
     boolean bound = false;
 
     for (int i = 0; i < 10 && !bound; i++) {
-      try {
         Context context = new Context();
 
         context.put("port", String.valueOf(selectedPort = 41414 + i));
@@ -352,12 +348,12 @@ public class TestAvroSource {
 
         Configurables.configure(source, context);
 
+      try {
         source.start();
         bound = true;
-      } catch (ChannelException e) {
+      } catch (FlumeException e) {
         /*
-         * NB: This assume we're using the Netty server under the hood and the
-         * failure is to bind. Yucky.
+         * NB: This assume the failure is to bind.
          */
         Thread.sleep(100);
       }
@@ -524,7 +520,6 @@ public class TestAvroSource {
     boolean bound = false;
 
     for (int i = 0; i < 100 && !bound; i++) {
-      try {
         Context context = new Context();
         context.put("port", String.valueOf(selectedPort = 41414 + i));
         context.put("bind", "0.0.0.0");
@@ -542,12 +537,12 @@ public class TestAvroSource {
 
         Configurables.configure(source, context);
 
+      try {
         source.start();
         bound = true;
-      } catch (ChannelException e) {
+      } catch (FlumeException e) {
         /*
-         * NB: This assume we're using the Netty server under the hood and the
-         * failure is to bind. Yucky.
+         * NB: This assume the failure is to bind.
          */
         Thread.sleep(100);
       }
