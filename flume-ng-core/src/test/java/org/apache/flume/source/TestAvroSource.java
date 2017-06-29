@@ -96,13 +96,13 @@ public class TestAvroSource {
     boolean bound = false;
 
     for (int i = 0; i < 100 && !bound; i++) {
-        Context context = new Context();
 
-        context.put("port", String.valueOf(selectedPort = 41414 + i));
-        context.put("bind", "0.0.0.0");
+      Context context = new Context();
 
-        Configurables.configure(source, context);
-
+      context.put("port", String.valueOf(selectedPort = 41414 + i));
+      context.put("bind", "0.0.0.0");
+      // Invalid configuration may throw a FlumeException which has to be expected in the callers
+      Configurables.configure(source, context);
       try {
         source.start();
         bound = true;
@@ -235,18 +235,17 @@ public class TestAvroSource {
     boolean bound = false;
 
     for (int i = 0; i < 100 && !bound; i++) {
-        Context context = new Context();
-        context.put("port", String.valueOf(selectedPort = 41414 + i));
-        context.put("bind", "0.0.0.0");
-        context.put("threads", "50");
-        if (serverEnableCompression) {
-          context.put("compression-type", "deflate");
-        } else {
-          context.put("compression-type", "none");
-        }
-
-        Configurables.configure(source, context);
-
+      Context context = new Context();
+      context.put("port", String.valueOf(selectedPort = 41414 + i));
+      context.put("bind", "0.0.0.0");
+      context.put("threads", "50");
+      if (serverEnableCompression) {
+        context.put("compression-type", "deflate");
+      } else {
+        context.put("compression-type", "none");
+      }
+      // Invalid configuration may throw a FlumeException which has to be expected in the callers
+      Configurables.configure(source, context);
       try {
         source.start();
         bound = true;
@@ -337,17 +336,16 @@ public class TestAvroSource {
     boolean bound = false;
 
     for (int i = 0; i < 10 && !bound; i++) {
-        Context context = new Context();
+      Context context = new Context();
 
-        context.put("port", String.valueOf(selectedPort = 41414 + i));
-        context.put("bind", "0.0.0.0");
-        context.put("ssl", "true");
-        context.put("keystore", "src/test/resources/server.p12");
-        context.put("keystore-password", "password");
-        context.put("keystore-type", "PKCS12");
-
-        Configurables.configure(source, context);
-
+      context.put("port", String.valueOf(selectedPort = 41414 + i));
+      context.put("bind", "0.0.0.0");
+      context.put("ssl", "true");
+      context.put("keystore", "src/test/resources/server.p12");
+      context.put("keystore-password", "password");
+      context.put("keystore-type", "PKCS12");
+      // Invalid configuration may throw a FlumeException which has to be expected in the callers
+      Configurables.configure(source, context);
       try {
         source.start();
         bound = true;
@@ -520,22 +518,23 @@ public class TestAvroSource {
     boolean bound = false;
 
     for (int i = 0; i < 100 && !bound; i++) {
-        Context context = new Context();
-        context.put("port", String.valueOf(selectedPort = 41414 + i));
-        context.put("bind", "0.0.0.0");
-        context.put("ipFilter", "true");
-        if (ruleDefinition != null) {
-          context.put("ipFilterRules", ruleDefinition);
-        }
-        if (testWithSSL) {
-          logger.info("Client testWithSSL" + testWithSSL);
-          context.put("ssl", "true");
-          context.put("keystore", "src/test/resources/server.p12");
-          context.put("keystore-password", "password");
-          context.put("keystore-type", "PKCS12");
-        }
 
-        Configurables.configure(source, context);
+      Context context = new Context();
+      context.put("port", String.valueOf(selectedPort = 41414 + i));
+      context.put("bind", "0.0.0.0");
+      context.put("ipFilter", "true");
+      if (ruleDefinition != null) {
+        context.put("ipFilterRules", ruleDefinition);
+      }
+      if (testWithSSL) {
+        logger.info("Client testWithSSL" + testWithSSL);
+        context.put("ssl", "true");
+        context.put("keystore", "src/test/resources/server.p12");
+        context.put("keystore-password", "password");
+        context.put("keystore-type", "PKCS12");
+      }
+      // Invalid configuration may throw a FlumeException which has to be expected in the callers
+      Configurables.configure(source, context);
 
       try {
         source.start();
