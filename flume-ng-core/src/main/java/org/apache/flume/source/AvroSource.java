@@ -245,7 +245,7 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
     } catch (org.jboss.netty.channel.ChannelException nce) {
       logger.error("Avro source {} startup failed. Cannot initialize Netty server", getName(), nce);
       stop();
-      throw new FlumeException(nce);
+      throw new FlumeException("Failed to set up server socket", nce);
     }
 
     connectionCountUpdater = Executors.newSingleThreadScheduledExecutor();
@@ -314,6 +314,7 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
       } catch (InterruptedException e) {
         logger.info("Avro source " + getName() + ": Interrupted while waiting " +
                 "for Avro server to stop. Exiting. Exception follows.", e);
+        Thread.currentThread().interrupt();
       }
     }
 

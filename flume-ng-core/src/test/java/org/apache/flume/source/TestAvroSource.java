@@ -140,15 +140,14 @@ public class TestAvroSource {
       Context context = new Context();
       context.put("port", String.valueOf(port));
       context.put("bind", loopbackIPv4);
-      // Invalid configuration may throw a FlumeException which has to be expected in the callers
       Configurables.configure(source, context);
       try {
         source.start();
         Assert.fail("Expected an exception during startup caused by binding on a used port");
       } catch (FlumeException e) {
         logger.info("Received an expected exception.", e);
-        Assert.assertTrue("Expected a bind related root cause",
-            e.getMessage().contains("Failed to bind to"));
+        Assert.assertTrue("Expected a server socket setup related root cause",
+            e.getMessage().contains("server socket"));
       }
     }
     // As port is already in use, an exception is thrown and the source is stopped
@@ -166,7 +165,6 @@ public class TestAvroSource {
     Context context = new Context();
     context.put("port", String.valueOf(port));
     context.put("bind", invalidHost);
-    // Invalid configuration may throw a FlumeException which has to be expected in the callers
     Configurables.configure(source, context);
 
     try {
@@ -174,8 +172,8 @@ public class TestAvroSource {
       Assert.fail("Expected an exception during startup caused by binding on a invalid host");
     } catch (FlumeException e) {
       logger.info("Received an expected exception.", e);
-      Assert.assertTrue("Expected a bind related root cause",
-          e.getMessage().contains("Failed to bind to"));
+      Assert.assertTrue("Expected a server socket setup related root cause",
+          e.getMessage().contains("server socket"));
     }
 
     // As port is already in use, an exception is thrown and the source is stopped
@@ -244,7 +242,6 @@ public class TestAvroSource {
       } else {
         context.put("compression-type", "none");
       }
-      // Invalid configuration may throw a FlumeException which has to be expected in the callers
       Configurables.configure(source, context);
       try {
         source.start();
@@ -344,7 +341,6 @@ public class TestAvroSource {
       context.put("keystore", "src/test/resources/server.p12");
       context.put("keystore-password", "password");
       context.put("keystore-type", "PKCS12");
-      // Invalid configuration may throw a FlumeException which has to be expected in the callers
       Configurables.configure(source, context);
       try {
         source.start();
@@ -533,7 +529,7 @@ public class TestAvroSource {
         context.put("keystore-password", "password");
         context.put("keystore-type", "PKCS12");
       }
-      // Invalid configuration may throw a FlumeException which has to be expected in the callers
+      // Invalid configuration may result in a FlumeException
       Configurables.configure(source, context);
 
       try {
