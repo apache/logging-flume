@@ -20,7 +20,6 @@
 package org.apache.flume.source;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.NettyTransceiver;
@@ -156,6 +155,7 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
   private boolean enableIpFilter;
   private String patternRuleConfigDefinition;
 
+  private NioServerSocketChannelFactory socketChannelFactory;
   private Server server;
   private SourceCounter sourceCounter;
 
@@ -233,14 +233,20 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
   public void start() {
     logger.info("Starting {}...", this);
 
-    Responder responder = new SpecificResponder(AvroSourceProtocol.class, this);
+    try {
+      Responder responder = new SpecificResponder(AvroSourceProtocol.class, this);
 
-    NioServerSocketChannelFactory socketChannelFactory = initSocketChannelFactory();
+      socketChannelFactory = initSocketChannelFactory();
 
-    ChannelPipelineFactory pipelineFactory = initChannelPipelineFactory();
+      ChannelPipelineFactory pipelineFactory = initChannelPipelineFactory();
 
-    server = new NettyServer(responder, new InetSocketAddress(bindAddress, port),
-          socketChannelFactory, pipelineFactory, null);
+      server = new NettyServer(responder, new InetSocketAddress(bindAddress, port),
+              socketChannelFactory, pipelineFactory, null);
+    } catch (org.jboss.netty.channel.ChannelException nce) {
+      logger.error("Avro source {} startup failed. Cannot initialize Netty server", getName(), nce);
+      stop();
+      throw new FlumeException("Failed to set up server socket", nce);
+    }
 
     connectionCountUpdater = Executors.newSingleThreadScheduledExecutor();
     server.start();
@@ -300,28 +306,31 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
   public void stop() {
     logger.info("Avro source {} stopping: {}", getName(), this);
 
-    server.close();
-
-    try {
-      server.join();
-    } catch (InterruptedException e) {
-      logger.info("Avro source " + getName() + ": Interrupted while waiting " +
-          "for Avro server to stop. Exiting. Exception follows.", e);
-    }
-    sourceCounter.stop();
-    connectionCountUpdater.shutdown();
-    while (!connectionCountUpdater.isTerminated()) {
+    if (server != null) {
+      server.close();
       try {
-        Thread.sleep(100);
-      } catch (InterruptedException ex) {
-        logger.error("Interrupted while waiting for connection count executor "
-                + "to terminate", ex);
-        Throwables.propagate(ex);
+        server.join();
+        server = null;
+      } catch (InterruptedException e) {
+        logger.info("Avro source " + getName() + ": Interrupted while waiting " +
+                "for Avro server to stop. Exiting. Exception follows.", e);
+        Thread.currentThread().interrupt();
       }
     }
+
+    if (socketChannelFactory != null) {
+      socketChannelFactory.releaseExternalResources();
+      socketChannelFactory = null;
+    }
+
+    sourceCounter.stop();
+    if (connectionCountUpdater != null) {
+      connectionCountUpdater.shutdownNow();
+      connectionCountUpdater = null;
+    }
+
     super.stop();
-    logger.info("Avro source {} stopped. Metrics: {}", getName(),
-        sourceCounter);
+    logger.info("Avro source {} stopped. Metrics: {}", getName(), sourceCounter);
   }
 
   @Override
