@@ -23,6 +23,7 @@ import org.apache.flume.Transaction;
 import org.apache.flume.event.EventBuilder;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.junit.Assert;
 import org.junit.Test;
@@ -37,40 +38,37 @@ import java.util.concurrent.Executors;
 
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.KEY_HEADER;
 
-public class TestParseAsFlumeEvent extends TestKafkaChannelBase {
+public class TestUseKafkaHeader extends TestKafkaChannelBase {
 
   @Test
-  public void testParseAsFlumeEventFalse() throws Exception {
-    doParseAsFlumeEventFalse(false);
+  public void testUseKafkaHeaderFalse() throws Exception {
+    doUseKafkaHeaderFalse(false);
   }
 
   @Test
-  public void testParseAsFlumeEventFalseCheckHeader() throws Exception {
-    doParseAsFlumeEventFalse(true);
+  public void testUseKafkaHeaderFalseCheckHeader() throws Exception {
+    doUseKafkaHeaderFalse(true);
   }
 
   @Test
-  public void testParseAsFlumeEventFalseAsSource() throws Exception {
-    doParseAsFlumeEventFalseAsSource(false);
+  public void tesUserKafkaHeaderFalseAsSource() throws Exception {
+    doUseKafkaHeaderFalseAsSource(false);
   }
 
   @Test
-  public void testParseAsFlumeEventFalseAsSourceCheckHeader() throws Exception {
-    doParseAsFlumeEventFalseAsSource(true);
+  public void testUseKafkaHeaderFalseAsSourceCheckHeader() throws Exception {
+    doUseKafkaHeaderFalseAsSource(true);
   }
 
-  private void doParseAsFlumeEventFalse(Boolean checkHeaders) throws Exception {
-    final KafkaChannel channel = startChannel(false);
+  private void doUseKafkaHeaderFalse(Boolean checkHeaders) throws Exception {
+    final KafkaChannel channel = startChannel(false, true);
     Properties props = channel.getProducerProps();
     KafkaProducer<String, byte[]> producer = new KafkaProducer<>(props);
 
     for (int i = 0; i < 50; i++) {
-      RecordHeaders headers = new RecordHeaders();
-      headers.add(KEY_HEADER, (String.valueOf(i) + "-header").getBytes());
       ProducerRecord<String, byte[]> data =
-          new ProducerRecord<>(topic, null, String.valueOf(i) + "-header",
-              String.valueOf(i).getBytes(), headers);
-
+          new ProducerRecord<>(topic, String.valueOf(i) + "-header",
+              String.valueOf(i).getBytes());
       producer.send(data).get();
     }
     ExecutorCompletionService<Void> submitterSvc = new
@@ -99,7 +97,7 @@ public class TestParseAsFlumeEvent extends TestKafkaChannelBase {
    *
    * @throws Exception
    */
-  private void doParseAsFlumeEventFalseAsSource(Boolean checkHeaders) throws Exception {
+  private void doUseKafkaHeaderFalseAsSource(Boolean checkHeaders) throws Exception {
     final KafkaChannel channel = startChannel(false);
 
     List<String> msgs = new ArrayList<>();

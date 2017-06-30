@@ -43,6 +43,8 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +55,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.Future;
 
@@ -71,7 +74,6 @@ import static org.apache.flume.sink.kafka.KafkaSinkConstants.REQUIRED_ACKS_FLUME
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.TOPIC_CONFIG;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.KEY_SERIALIZER_KEY;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.MESSAGE_SERIALIZER_KEY;
-
 
 /**
  * A Flume Sink that can publish messages to Kafka.
@@ -116,6 +118,7 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
   private List<Future<RecordMetadata>> kafkaFutures;
   private KafkaSinkCounter counter;
   private boolean useAvroEventFormat;
+  private boolean useKafkaHeader;
   private String partitionHeader = null;
   private Integer staticPartitionId = null;
   private boolean allowTopicOverride;
@@ -203,7 +206,6 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
 
         // create a message and add to buffer
         long startTime = System.currentTimeMillis();
-
         Integer partitionId = null;
         try {
           ProducerRecord<String, byte[]> record;
@@ -217,7 +219,10 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
               partitionId = Integer.parseInt(headerVal);
             }
           }
-          if (partitionId != null) {
+          if (useKafkaHeader) {
+            record = new ProducerRecord<String, byte[]>(eventTopic, partitionId, eventKey,
+                serializeEvent(event, useAvroEventFormat), toKafkaHeaders(headers));
+          } else if (partitionId != null) {
             record = new ProducerRecord<String, byte[]>(eventTopic, partitionId, eventKey,
                 serializeEvent(event, useAvroEventFormat));
           } else {
@@ -329,6 +334,9 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
     useAvroEventFormat = context.getBoolean(KafkaSinkConstants.AVRO_EVENT,
                                             KafkaSinkConstants.DEFAULT_AVRO_EVENT);
 
+    useKafkaHeader = context.getBoolean(KafkaSinkConstants.KAFKA_HEADER,
+                                            KafkaSinkConstants.DEFAULT_KAFKA_HEADER);
+
     partitionHeader = context.getString(KafkaSinkConstants.PARTITION_HEADER_NAME);
     staticPartitionId = context.getInteger(KafkaSinkConstants.STATIC_PARTITION_CONF);
 
@@ -425,7 +433,15 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
 
     KafkaSSLUtil.addGlobalSSLParameters(kafkaProps);
   }
-
+  
+  private Headers toKafkaHeaders(Map<String, String> headers) {
+    Headers kafkaHeaders = new RecordHeaders();
+    for (Entry<String, String> header : headers.entrySet()) {
+      kafkaHeaders.add(header.getKey(), header.getValue().getBytes());
+    }
+    return kafkaHeaders;
+  }
+ 
   protected Properties getKafkaProps() {
     return kafkaProps;
   }

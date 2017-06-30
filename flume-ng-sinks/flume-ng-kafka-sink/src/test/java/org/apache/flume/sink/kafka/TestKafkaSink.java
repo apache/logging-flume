@@ -19,6 +19,11 @@
 package org.apache.flume.sink.kafka;
 
 import com.google.common.base.Charsets;
+
+import kafka.admin.AdminUtils;
+import kafka.admin.RackAwareMode;
+import kafka.utils.ZkUtils;
+
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.specific.SpecificDatumReader;
@@ -43,6 +48,10 @@ import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.header.internals.RecordHeader;
+import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -51,6 +60,7 @@ import org.mockito.internal.util.reflection.Whitebox;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -66,6 +76,7 @@ import static org.apache.flume.sink.kafka.KafkaSinkConstants.BOOTSTRAP_SERVERS_C
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.BROKER_LIST_FLUME_KEY;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_KEY_SERIALIZER;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_TOPIC;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.KAFKA_HEADER;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.KAFKA_PREFIX;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.KAFKA_PRODUCER_PREFIX;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.OLD_BATCH_SIZE;
@@ -87,11 +98,12 @@ public class TestKafkaSink {
   @BeforeClass
   public static void setup() {
     testUtil.prepare();
-    List<String> topics = new ArrayList<String>(3);
+    List<String> topics = new ArrayList<String>(5);
     topics.add(DEFAULT_TOPIC);
     topics.add(TestConstants.STATIC_TOPIC);
     topics.add(TestConstants.CUSTOM_TOPIC);
     topics.add(TestConstants.HEADER_1_VALUE + "-topic");
+    topics.add(TestConstants.KAFKA_HEADER_TOPIC);
     testUtil.initTopicList(topics);
   }
 
@@ -185,6 +197,15 @@ public class TestKafkaSink {
     assertTrue(recs.count() > 0);
     ConsumerRecord consumerRecord = (ConsumerRecord) recs.iterator().next();
     assertEquals(msg, consumerRecord.value());
+  }
+
+  private void checkMessageAndHeaderArrived(String msg, String topic, Headers headers) {
+    ConsumerRecords recs = pollConsumerRecords(topic);
+    assertNotNull(recs);
+    assertTrue(recs.count() > 0);
+    ConsumerRecord consumerRecord = (ConsumerRecord) recs.iterator().next();
+    assertEquals(msg, consumerRecord.value());
+    assertEquals(headers, consumerRecord.headers());
   }
 
   @Test
@@ -330,7 +351,7 @@ public class TestKafkaSink {
     kafkaSink.start();
 
     String msg = "test-replace-substring-of-topic-with-headers";
-    Map<String, String> headers = new HashMap<>();
+    Map<String, String> headers = new HashMap<String, String>();
     headers.put(TestConstants.HEADER_1_KEY, TestConstants.HEADER_1_VALUE);
     Transaction tx = memoryChannel.getTransaction();
     tx.begin();
@@ -424,6 +445,42 @@ public class TestKafkaSink {
       }
     }
     return recs;
+  }
+
+  @Test
+  public void testKafkaHeaders() {
+    Sink kafkaSink = new KafkaSink();
+    Context context = prepareDefaultContext();
+    context.put(TOPIC_CONFIG, TestConstants.KAFKA_HEADER_TOPIC);
+    context.put(KAFKA_HEADER, "true");
+    Configurables.configure(kafkaSink, context);
+    Channel memoryChannel = new MemoryChannel();
+    Configurables.configure(memoryChannel, context);
+    kafkaSink.setChannel(memoryChannel);
+    kafkaSink.start();
+
+    String msg = "test-kafka-headers";
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put(TestConstants.HEADER_1_KEY, TestConstants.HEADER_1_VALUE);
+    Transaction tx = memoryChannel.getTransaction();
+    tx.begin();
+    Event event = EventBuilder.withBody(msg.getBytes(), headers);
+    memoryChannel.put(event);
+    tx.commit();
+    tx.close();
+
+    try {
+      Sink.Status status = kafkaSink.process();
+      if (status == Sink.Status.BACKOFF) {
+        fail("Error Occurred");
+      }
+    } catch (EventDeliveryException ex) {
+      // ignore
+    }
+
+    checkMessageAndHeaderArrived(msg, TestConstants.KAFKA_HEADER_TOPIC, new RecordHeaders(new Header[]{
+        new RecordHeader(TestConstants.HEADER_1_KEY, TestConstants.HEADER_1_VALUE.getBytes())}));
+
   }
 
   @Test

@@ -53,6 +53,9 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
+import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.apache.kafka.common.security.JaasUtils;
 import org.apache.kafka.common.utils.Time;
 import org.slf4j.Logger;
@@ -72,6 +75,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.Future;
@@ -97,6 +101,7 @@ public class KafkaChannel extends BasicChannelSemantics {
 
   private AtomicReference<String> topic = new AtomicReference<String>();
   private boolean parseAsFlumeEvent = DEFAULT_PARSE_AS_FLUME_EVENT;
+  private boolean useKafkaHeader = DEFAULT_USE_KAFKA_HEADER;
   private String zookeeperConnect = null;
   private String topicStr = DEFAULT_TOPIC;
   private String groupId = DEFAULT_GROUP_ID;
@@ -193,6 +198,7 @@ public class KafkaChannel extends BasicChannelSemantics {
     setConsumerProps(ctx, bootStrapServers);
 
     parseAsFlumeEvent = ctx.getBoolean(PARSE_AS_FLUME_EVENT, DEFAULT_PARSE_AS_FLUME_EVENT);
+    useKafkaHeader = ctx.getBoolean(USE_KAFKA_HEADER, DEFAULT_USE_KAFKA_HEADER);
     pollTimeout = ctx.getLong(POLL_TIMEOUT, DEFAULT_POLL_TIMEOUT);
 
     staticPartitionId = ctx.getInteger(STATIC_PARTITION_CONF);
@@ -453,7 +459,11 @@ public class KafkaChannel extends BasicChannelSemantics {
             partitionId = Integer.parseInt(headerVal);
           }
         }
-        if (partitionId != null) {
+        if (useKafkaHeader) {
+          producerRecords.get().add(
+              new ProducerRecord<String, byte[]>(topic.get(), partitionId, key,
+                                                 serializeValue(event, parseAsFlumeEvent), toKafkaHeaders(event.getHeaders())));
+        } else if (partitionId != null) {
           producerRecords.get().add(
               new ProducerRecord<String, byte[]>(topic.get(), partitionId, key,
                                                  serializeValue(event, parseAsFlumeEvent)));
@@ -507,7 +517,7 @@ public class KafkaChannel extends BasicChannelSemantics {
           }
           if (consumerAndRecords.get().recordIterator.hasNext()) {
             ConsumerRecord<String, byte[]> record = consumerAndRecords.get().recordIterator.next();
-            e = deserializeValue(record.value(), parseAsFlumeEvent);
+            e = deserializeEvent(record, parseAsFlumeEvent, useKafkaHeader);
             TopicPartition tp = new TopicPartition(record.topic(), record.partition());
             OffsetAndMetadata oam = new OffsetAndMetadata(record.offset() + 1, batchUUID);
             consumerAndRecords.get().saveOffsets(tp,oam);
@@ -636,23 +646,26 @@ public class KafkaChannel extends BasicChannelSemantics {
       return bytes;
     }
 
-    private Event deserializeValue(byte[] value, boolean parseAsFlumeEvent) throws IOException {
-      Event e;
-      if (parseAsFlumeEvent) {
+    private Event deserializeEvent(ConsumerRecord<String, byte[]> record, boolean parseAsFlumeEvent, boolean useKafkaHeader) throws IOException {
+      byte[] body;
+      if(parseAsFlumeEvent) {
         ByteArrayInputStream in =
-                new ByteArrayInputStream(value);
+                new ByteArrayInputStream(record.value());
         decoder = DecoderFactory.get().directBinaryDecoder(in, decoder);
         if (!reader.isPresent()) {
           reader = Optional.of(
                   new SpecificDatumReader<AvroFlumeEvent>(AvroFlumeEvent.class));
         }
         AvroFlumeEvent event = reader.get().read(null, decoder);
-        e = EventBuilder.withBody(event.getBody().array(),
-                toStringMap(event.getHeaders()));
+        body = event.getBody();
       } else {
-        e = EventBuilder.withBody(value, Collections.EMPTY_MAP);
+        body = record.value();
       }
-      return e;
+      if(useKafkaHeader) {
+        return EventBuilder.withBody(body, toStringMap(record.headers()));
+      } else {
+        return EventBuilder.withBody(body);
+      }
     }
   }
 
@@ -675,6 +688,21 @@ public class KafkaChannel extends BasicChannelSemantics {
     Map<String, String> stringMap = new HashMap<String, String>();
     for (Map.Entry<CharSequence, CharSequence> entry : charSeqMap.entrySet()) {
       stringMap.put(entry.getKey().toString(), entry.getValue().toString());
+    }
+    return stringMap;
+  }
+  private static Headers toKafkaHeaders(Map<String, String> headers) {
+    Headers kafkaHeaders = new RecordHeaders();
+    for (Entry<String, String> header : headers.entrySet()) {
+      kafkaHeaders.add(header.getKey(), header.getValue().getBytes());
+    }
+    return kafkaHeaders;
+  }
+
+  private static Map<String, String> toStringMap(Headers headers) {
+    Map<String, String> stringMap = new HashMap<String, String>();
+    for (Header header : headers) {
+      stringMap.put(header.key(), new String(header.value()));
     }
     return stringMap;
   }

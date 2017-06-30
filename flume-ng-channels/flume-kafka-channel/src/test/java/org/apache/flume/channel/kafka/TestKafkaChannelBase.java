@@ -47,6 +47,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.BOOTSTRAP_SERVERS_CONFIG;
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.KAFKA_CONSUMER_PREFIX;
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.PARSE_AS_FLUME_EVENT;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.USE_KAFKA_HEADER;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_USE_KAFKA_HEADER;
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.TOPIC_CONFIG;
 
 public class TestKafkaChannelBase {
@@ -96,22 +98,32 @@ public class TestKafkaChannelBase {
     testUtil.deleteTopic(topicName);
   }
 
-  KafkaChannel startChannel(boolean parseAsFlume) throws Exception {
-    Context context = prepareDefaultContext(parseAsFlume);
+  KafkaChannel startChannel(boolean parseAsFlume, boolean useKafkaHeader) throws Exception {
+    Context context = prepareDefaultContext(parseAsFlume, useKafkaHeader);
     KafkaChannel channel = createChannel(context);
     channel.start();
     return channel;
   }
 
-  Context prepareDefaultContext(boolean parseAsFlume) {
+  KafkaChannel startChannel(boolean parseAsFlume) throws Exception {
+    return startChannel(parseAsFlume, DEFAULT_USE_KAFKA_HEADER);
+  }
+
+
+  Context prepareDefaultContext(boolean parseAsFlume, boolean useKafkaHeader) {
     // Prepares a default context with Kafka Server Properties
     Context context = new Context();
     context.put(BOOTSTRAP_SERVERS_CONFIG, testUtil.getKafkaServerUrl());
     context.put(PARSE_AS_FLUME_EVENT, String.valueOf(parseAsFlume));
+    context.put(USE_KAFKA_HEADER, String.valueOf(useKafkaHeader));
     context.put(TOPIC_CONFIG, topic);
     context.put(KAFKA_CONSUMER_PREFIX + "max.poll.interval.ms", "10000");
 
     return context;
+  }
+  
+  Context prepareDefaultContext(boolean parseAsFlume) {
+    return prepareDefaultContext(parseAsFlume, DEFAULT_USE_KAFKA_HEADER);
   }
 
   KafkaChannel createChannel(Context context) throws Exception {

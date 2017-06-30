@@ -70,4 +70,7 @@ public class KafkaChannelConfiguration {
 
   public static final String READ_SMALLEST_OFFSET = "readSmallestOffset";
   public static final boolean DEFAULT_READ_SMALLEST_OFFSET = false;
+
+  public static final String USE_KAFKA_HEADER = "useKafkaHeader";
+  public static final boolean DEFAULT_USE_KAFKA_HEADER = false;
 }
