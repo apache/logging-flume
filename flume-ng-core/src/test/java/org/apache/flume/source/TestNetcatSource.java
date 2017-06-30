@@ -25,6 +25,7 @@ import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
+import org.apache.flume.FlumeException;
 import org.apache.flume.Transaction;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
@@ -42,8 +43,10 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.nio.channels.ServerSocketChannel;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -303,6 +306,37 @@ public class TestNetcatSource {
       netcatSocket.close();
       stopSource();
     }
+  }
+
+  /**
+   * Tests that the source is stopped when an exception is thrown
+   * on port bind attempt due to port already being in use.
+   *
+   * @throws InterruptedException
+   */
+  @Test
+  public void testSourceStoppedOnFlumeException() throws InterruptedException, IOException {
+    boolean isFlumeExceptionThrown = false;
+    // create a dummy socket bound to a known port.
+    try (ServerSocketChannel dummyServerSocket = ServerSocketChannel.open()) {
+      dummyServerSocket.socket().setReuseAddress(true);
+      dummyServerSocket.socket().bind(new InetSocketAddress("0.0.0.0", 10500));
+
+      Context context = new Context();
+      context.put("port", String.valueOf(10500));
+      context.put("bind", "0.0.0.0");
+      context.put("ack-every-event", "false");
+      Configurables.configure(source, context);
+
+      source.start();
+    } catch (FlumeException fe) {
+      isFlumeExceptionThrown = true;
+    }
+    // As port is already in use, an exception is thrown and the source is stopped
+    // cleaning up the opened sockets during source.start().
+    Assert.assertTrue("Flume exception is thrown as port already in use", isFlumeExceptionThrown);
+    Assert.assertEquals("Server is stopped", LifecycleState.STOP,
+        source.getLifecycleState());
   }
 
   private void startSource(String encoding, String ack, String batchSize, String maxLineLength)
