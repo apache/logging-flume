@@ -287,7 +287,7 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
         keystorePassword, keystoreType, enableIpFilter,
         patternRuleConfigDefinition);
     } else {
-      pipelineFactory = () -> Channels.pipeline();
+      pipelineFactory = Channels::pipeline;
     }
     return pipelineFactory;
   }
