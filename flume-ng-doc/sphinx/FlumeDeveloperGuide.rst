@@ -114,6 +114,18 @@ Please note that Flume builds requires that the Google Protocol Buffers compiler
 be in the path. You can download and install it by following the instructions
 `here <https://developers.google.com/protocol-buffers/>`_.
 
+Updating Protocol Buffer Version
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+File channel has a dependency on Protocol Buffer. When updating the version of Protocol Buffer
+used by Flume, it is necessary to regenerate the data access classes using the protoc compiler
+that is part of Protocol Buffer as follows.
+
+#. Install the desired version of Protocol Buffer on your local machine
+#. Update version of Protocol Buffer in pom.xml
+#. Generate new Protocol Buffer data access classes in Flume: ``cd flume-ng-channels/flume-file-channel; mvn -P compile-proto clean package -DskipTests``
+#. Add Apache license header to any of the generated files that are missing it
+#. Rebuild and test Flume:  ``cd ../..; mvn clean install``
+
 Developing custom components
 ----------------------------
 
