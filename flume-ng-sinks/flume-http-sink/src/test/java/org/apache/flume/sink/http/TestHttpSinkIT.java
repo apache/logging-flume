@@ -135,10 +135,12 @@ public class TestHttpSinkIT {
 
   @Test
   public void ensureEventsNotResentOn401Failure() throws Exception {
+    String errorScenario = "Error skip scenario";
 
     service.stubFor(post(urlEqualTo("/endpoint"))
             .inScenario(errorScenario)
             .whenScenarioStateIs(STARTED)
+            .withRequestBody(equalToJson(event("UNAUTHORIZED REQUEST")))
             .willReturn(aResponse().withStatus(401)
                     .withHeader("Content-Type", "text/plain")
                     .withBody("Not allowed!"))
@@ -146,12 +148,16 @@ public class TestHttpSinkIT {
 
     service.stubFor(post(urlEqualTo("/endpoint"))
             .inScenario(errorScenario)
+            .whenScenarioStateIs("Error Sent")
             .withRequestBody(equalToJson(event("NEXT EVENT")))
             .willReturn(aResponse().withStatus(200))
+            );
 
+    addEventToChannel(event("UNAUTHORIZED REQUEST"), Status.READY);
     addEventToChannel(event("NEXT EVENT"), Status.READY);
 
     service.verify(1, postRequestedFor(urlEqualTo("/endpoint"))
+            .withRequestBody(equalToJson(event("UNAUTHORIZED REQUEST"))));
 
     service.verify(1, postRequestedFor(urlEqualTo("/endpoint"))
             .withRequestBody(equalToJson(event("NEXT EVENT"))));
