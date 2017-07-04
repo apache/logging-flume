@@ -142,16 +142,15 @@ public class TestHttpSinkIT {
             .whenScenarioStateIs(STARTED)
             .withRequestBody(equalToJson(event("UNAUTHORIZED REQUEST")))
             .willReturn(aResponse().withStatus(401)
-                    .withHeader("Content-Type", "text/plain")
-                    .withBody("Not allowed!"))
+            .withHeader("Content-Type", "text/plain")
+            .withBody("Not allowed!"))
             .willSetStateTo("Error Sent"));
 
     service.stubFor(post(urlEqualTo("/endpoint"))
             .inScenario(errorScenario)
             .whenScenarioStateIs("Error Sent")
             .withRequestBody(equalToJson(event("NEXT EVENT")))
-            .willReturn(aResponse().withStatus(200))
-            );
+            .willReturn(aResponse().withStatus(200)));
 
     addEventToChannel(event("UNAUTHORIZED REQUEST"), Status.READY);
     addEventToChannel(event("NEXT EVENT"), Status.READY);
