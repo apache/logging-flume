@@ -216,6 +216,22 @@ public class TestHttpSink {
   }
 
   @Test
+  public void ensureSingleErrorStatusConfigurationCorrectlyUsed() throws Exception {
+    when(channel.take()).thenReturn(event);
+    when(event.getBody()).thenReturn("something".getBytes());
+
+    Context context = new Context();
+    context.put("defaultRollback", "true");
+    context.put("defaultBackoff", "true");
+    context.put("defaultIncrementMetrics", "false");
+    context.put("rollback.401", "false");
+    context.put("backoff.401", "false");
+    context.put("incrementMetrics.401", "false");
+
+    executeWithMocks(true, Status.READY, false, true, context, HttpURLConnection.HTTP_UNAUTHORIZED);
+  }
+
+  @Test
   public void ensureGroupConfigurationCorrectlyUsed() throws Exception {
     when(channel.take()).thenReturn(event);
     when(event.getBody()).thenReturn("something".getBytes());
@@ -278,6 +294,7 @@ public class TestHttpSink {
     when(channel.getTransaction()).thenReturn(transaction);
     when(httpURLConnection.getOutputStream()).thenReturn(outputStream);
     when(httpURLConnection.getInputStream()).thenReturn(inputStream);
+    when(httpURLConnection.getErrorStream()).thenReturn(inputStream);
     when(httpURLConnection.getResponseCode()).thenReturn(httpStatus);
 
     Status actualStatus = httpSink.process();
