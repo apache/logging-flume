@@ -6831,17 +6831,17 @@ public final class ProtosFactory {
     com.google.protobuf.ByteString
         getKeyBytes();
 
-    // required string value = 2;
+    // optional string value = 2;
     /**
-     * <code>required string value = 2;</code>
+     * <code>optional string value = 2;</code>
      */
     boolean hasValue();
     /**
-     * <code>required string value = 2;</code>
+     * <code>optional string value = 2;</code>
      */
     java.lang.String getValue();
     /**
-     * <code>required string value = 2;</code>
+     * <code>optional string value = 2;</code>
      */
     com.google.protobuf.ByteString
         getValueBytes();
@@ -6990,17 +6990,17 @@ public final class ProtosFactory {
       }
     }
 
-    // required string value = 2;
+    // optional string value = 2;
     public static final int VALUE_FIELD_NUMBER = 2;
     private java.lang.Object value_;
     /**
-     * <code>required string value = 2;</code>
+     * <code>optional string value = 2;</code>
      */
     public boolean hasValue() {
       return ((bitField0_ & 0x00000002) == 0x00000002);
     }
     /**
-     * <code>required string value = 2;</code>
+     * <code>optional string value = 2;</code>
      */
     public java.lang.String getValue() {
       java.lang.Object ref = value_;
@@ -7017,7 +7017,7 @@ public final class ProtosFactory {
       }
     }
     /**
-     * <code>required string value = 2;</code>
+     * <code>optional string value = 2;</code>
      */
     public com.google.protobuf.ByteString
         getValueBytes() {
@@ -7043,10 +7043,6 @@ public final class ProtosFactory {
       if (isInitialized != -1) return isInitialized == 1;
 
       if (!hasKey()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasValue()) {
         memoizedIsInitialized = 0;
         return false;
       }
@@ -7271,10 +7267,6 @@ public final class ProtosFactory {
           
           return false;
         }
-        if (!hasValue()) {
-          
-          return false;
-        }
         return true;
       }
 
@@ -7371,16 +7363,16 @@ public final class ProtosFactory {
         return this;
       }
 
-      // required string value = 2;
+      // optional string value = 2;
       private java.lang.Object value_ = "";
       /**
-       * <code>required string value = 2;</code>
+       * <code>optional string value = 2;</code>
        */
       public boolean hasValue() {
         return ((bitField0_ & 0x00000002) == 0x00000002);
       }
       /**
-       * <code>required string value = 2;</code>
+       * <code>optional string value = 2;</code>
        */
       public java.lang.String getValue() {
         java.lang.Object ref = value_;
@@ -7394,7 +7386,7 @@ public final class ProtosFactory {
         }
       }
       /**
-       * <code>required string value = 2;</code>
+       * <code>optional string value = 2;</code>
        */
       public com.google.protobuf.ByteString
           getValueBytes() {
@@ -7410,7 +7402,7 @@ public final class ProtosFactory {
         }
       }
       /**
-       * <code>required string value = 2;</code>
+       * <code>optional string value = 2;</code>
        */
       public Builder setValue(
           java.lang.String value) {
@@ -7423,7 +7415,7 @@ public final class ProtosFactory {
         return this;
       }
       /**
-       * <code>required string value = 2;</code>
+       * <code>optional string value = 2;</code>
        */
       public Builder clearValue() {
         bitField0_ = (bitField0_ & ~0x00000002);
@@ -7432,7 +7424,7 @@ public final class ProtosFactory {
         return this;
       }
       /**
-       * <code>required string value = 2;</code>
+       * <code>optional string value = 2;</code>
        */
       public Builder setValueBytes(
           com.google.protobuf.ByteString value) {
@@ -7546,7 +7538,7 @@ public final class ProtosFactory {
       "ansactionEventFooter\">\n\nFlumeEvent\022\"\n\007he" +
       "aders\030\001 \003(\0132\021.FlumeEventHeader\022\014\n\004body\030\002",
       " \002(\014\".\n\020FlumeEventHeader\022\013\n\003key\030\001 \002(\t\022\r\n" +
-      "\005value\030\002 \002(\tB4\n#org.apache.flume.channel" +
+      "\005value\030\002 \001(\tB4\n#org.apache.flume.channel" +
       ".file.protoB\rProtosFactory"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
