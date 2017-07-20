@@ -37,8 +37,10 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class TestSyslogTcpSource {
   private static final org.slf4j.Logger logger =
@@ -158,6 +160,75 @@ public class TestSyslogTcpSource {
     runKeepFieldsTest("all");
     Assert.assertEquals(10, source.getSourceCounter().getEventAcceptedCount());
     Assert.assertEquals(10, source.getSourceCounter().getEventReceivedCount());
+  }
+
+  @Test
+  public void testIpHeader() throws UnknownError,IOException {
+    final String TEST_IP_HEADER = "testIpHeader";
+    source = new SyslogTcpSource();
+    channel = new MemoryChannel();
+
+    Configurables.configure(channel, new Context());
+
+    List<Channel> channels = new ArrayList<>();
+    channels.add(channel);
+
+    ChannelSelector rcs = new ReplicatingChannelSelector();
+    rcs.setChannels(channels);
+
+    source.setChannelProcessor(new ChannelProcessor(rcs));
+    Context context = new Context();
+    context.put("port", String.valueOf(TEST_SYSLOG_PORT));
+    context.put(SyslogSourceConfigurationConstants.CONFIG_IP_HEADER,
+            TEST_IP_HEADER);
+
+    source.configure(context);
+
+    source.start();
+    // Write some message to the syslog port
+    InetSocketAddress addr = source.getBoundAddress();
+    Socket syslogSocket = new Socket(addr.getAddress(), addr.getPort());
+    syslogSocket.getOutputStream().write(bodyWithTandH.getBytes());
+
+    Transaction txn = channel.getTransaction();
+    txn.begin();
+    Event e = channel.take();
+    if (e == null) {
+      throw new NullPointerException("Event is null");
+    }
+
+    try {
+      txn.commit();
+    } catch (Throwable t) {
+      txn.rollback();
+    } finally {
+      txn.close();
+    }
+
+    source.stop();
+
+    Map<String, String> headers = e.getHeaders();
+    String ip1 = null;
+    if (headers.containsKey(TEST_IP_HEADER)) {
+      ip1 = headers.get(TEST_IP_HEADER);
+    }
+
+    Assert.assertEquals("Timestamps must match",
+            String.valueOf(time.getMillis()), headers.get("timestamp"));
+
+    String host2 = headers.get("host");
+    Assert.assertEquals(host1, host2);
+
+    String ip2 = "";
+    SocketAddress socket = syslogSocket.getLocalSocketAddress();
+    if (socket != null) {
+      String remoteAddress = socket.toString();
+      if (remoteAddress != null && !remoteAddress.isEmpty()) {
+        ip2 = remoteAddress.split(":")[0].substring(1);
+      }
+    }
+
+    Assert.assertEquals(ip1, ip2);
   }
 }
 

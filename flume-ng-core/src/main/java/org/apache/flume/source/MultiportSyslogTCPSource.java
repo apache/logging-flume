@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.util.List;
@@ -66,6 +67,7 @@ public class MultiportSyslogTCPSource extends AbstractSource implements
   private int batchSize;
   private int readBufferSize;
   private String portHeader;
+  private String ipHeader;
   private SourceCounter sourceCounter = null;
   private Charset defaultCharset;
   private ThreadSafeDecoder defaultDecoder;
@@ -137,6 +139,9 @@ public class MultiportSyslogTCPSource extends AbstractSource implements
     portHeader = context.getString(
             SyslogSourceConfigurationConstants.CONFIG_PORT_HEADER);
 
+    ipHeader = context.getString(
+            SyslogSourceConfigurationConstants.CONFIG_IP_HEADER);
+
     readBufferSize = context.getInteger(
         SyslogSourceConfigurationConstants.CONFIG_READBUF_SIZE,
         SyslogSourceConfigurationConstants.DEFAULT_READBUF_SIZE);
@@ -166,8 +171,8 @@ public class MultiportSyslogTCPSource extends AbstractSource implements
     acceptor.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, 10);
 
     acceptor.setHandler(new MultiportSyslogHandler(maxEventSize, batchSize,
-        getChannelProcessor(), sourceCounter, portHeader, defaultDecoder,
-        portCharsets, keepFields));
+        getChannelProcessor(), sourceCounter, portHeader, ipHeader,
+        defaultDecoder, portCharsets, keepFields));
 
     for (int port : ports) {
       InetSocketAddress addr;
@@ -217,6 +222,7 @@ public class MultiportSyslogTCPSource extends AbstractSource implements
     private final int batchSize;
     private final SourceCounter sourceCounter;
     private final String portHeader;
+    private final String ipHeader;
     private final SyslogParser syslogParser;
     private final LineSplitter lineSplitter;
     private final ThreadSafeDecoder defaultDecoder;
@@ -225,7 +231,7 @@ public class MultiportSyslogTCPSource extends AbstractSource implements
 
     public MultiportSyslogHandler(int maxEventSize, int batchSize,
         ChannelProcessor cp, SourceCounter ctr, String portHeader,
-        ThreadSafeDecoder defaultDecoder,
+        String ipHeader, ThreadSafeDecoder defaultDecoder,
         ConcurrentMap<Integer, ThreadSafeDecoder> portCharsets,
         Set<String> keepFields) {
       channelProcessor = cp;
@@ -233,6 +239,7 @@ public class MultiportSyslogTCPSource extends AbstractSource implements
       this.maxEventSize = maxEventSize;
       this.batchSize = batchSize;
       this.portHeader = portHeader;
+      this.ipHeader = ipHeader;
       this.defaultDecoder = defaultDecoder;
       this.portCharsets = portCharsets;
       this.keepFields = keepFields;
@@ -287,6 +294,16 @@ public class MultiportSyslogTCPSource extends AbstractSource implements
         decoder = portCharsets.get(port).get();
       }
 
+      //get ip from session
+      String ip = "";
+      SocketAddress socket = session.getRemoteAddress();
+      if (socket != null) {
+        String remoteAddress = socket.toString();
+        if (remoteAddress != null && !remoteAddress.isEmpty()) {
+          ip = remoteAddress.split(":")[0].substring(1);
+        }
+      }
+
       // while the buffer is not empty
       while (buf.hasRemaining()) {
         events.clear();
@@ -299,6 +316,11 @@ public class MultiportSyslogTCPSource extends AbstractSource implements
             if (portHeader != null) {
               event.getHeaders().put(portHeader, String.valueOf(port));
             }
+
+            if (ipHeader != null) {
+              event.getHeaders().put(ipHeader, ip);
+            }
+
             events.add(event);
           } else {
             logger.trace("Parsed null event");

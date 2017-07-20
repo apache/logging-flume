@@ -42,6 +42,7 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class TestSyslogUdpSource {
   private static final org.slf4j.Logger logger =
@@ -234,6 +235,60 @@ public class TestSyslogUdpSource {
       payload.append("x");
     }
     return payload.toString();
+  }
+
+  @Test
+  public void testIpHeader() throws IOException {
+    final String TEST_IP_HEADER = "testIpHeader";
+    source = new SyslogUDPSource();
+    channel = new MemoryChannel();
+
+    Configurables.configure(channel, new Context());
+
+    List<Channel> channels = new ArrayList<Channel>();
+    channels.add(channel);
+
+    ChannelSelector rcs = new ReplicatingChannelSelector();
+    rcs.setChannels(channels);
+
+    source.setChannelProcessor(new ChannelProcessor(rcs));
+    Context context = new Context();
+    context.put("host", InetAddress.getLoopbackAddress().getHostAddress());
+    context.put("port", String.valueOf(TEST_SYSLOG_PORT));
+    context.put(SyslogSourceConfigurationConstants.CONFIG_IP_HEADER,
+            TEST_IP_HEADER);
+
+    source.configure(context);
+
+    source.start();
+    // Write some message to the syslog port
+    DatagramPacket datagramPacket = createDatagramPacket(bodyWithTandH.getBytes());
+    sendDatagramPacket(datagramPacket);
+
+    List<Event> channelEvents = new ArrayList<>();
+    Transaction txn = channel.getTransaction();
+    txn.begin();
+    Event e = channel.take();
+    Assert.assertNotNull(e);
+    channelEvents.add(e);
+
+    commitAndCloseTransaction(txn);
+
+    source.stop();
+
+    Map<String, String> headers = e.getHeaders();
+    String ip1 = null;
+    if (headers.containsKey(TEST_IP_HEADER)) {
+      ip1 = headers.get(TEST_IP_HEADER);
+    }
+
+    Assert.assertEquals("Timestamps must match",
+            String.valueOf(time.getMillis()), headers.get("timestamp"));
+
+    String host2 = headers.get("host");
+    Assert.assertEquals(host1, host2);
+
+    Assert.assertEquals(ip1, "127.0.0.1");
   }
 }
 

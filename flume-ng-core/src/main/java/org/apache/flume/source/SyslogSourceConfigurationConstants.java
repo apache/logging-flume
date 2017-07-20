@@ -74,6 +74,9 @@ public final class SyslogSourceConfigurationConstants {
   public static final String CONFIG_KEEP_FIELDS_TIMESTAMP = "timestamp";
   public static final String CONFIG_KEEP_FIELDS_HOSTNAME = "hostname";
 
+  public static final String CONFIG_IP_HEADER = "ipHeader";
+  public static final String DEFAULT_IP_HEADER = "ip";
+
   private SyslogSourceConfigurationConstants() {
     // Disable explicit creation of objects.
   }

@@ -57,6 +57,7 @@ public class SyslogUDPSource extends AbstractSource
   private Channel nettyChannel;
   private Map<String, String> formaterProp;
   private Set<String> keepFields;
+  private String ipHeader;
 
   private static final Logger logger = LoggerFactory.getLogger(SyslogUDPSource.class);
 
@@ -68,6 +69,7 @@ public class SyslogUDPSource extends AbstractSource
 
   public class syslogHandler extends SimpleChannelHandler {
     private SyslogUtils syslogUtils = new SyslogUtils(DEFAULT_INITIAL_SIZE, null, true);
+    private String ipHeader;
 
     public void setFormater(Map<String, String> prop) {
       syslogUtils.addFormats(prop);
@@ -77,14 +79,35 @@ public class SyslogUDPSource extends AbstractSource
       syslogUtils.setKeepFields(keepFields);
     }
 
+    public void setIpHeader(String ipHeader) {
+      this.ipHeader = ipHeader;
+    }
+
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent mEvent) {
       try {
+
+
         syslogUtils.setEventSize(maxsize);
         Event e = syslogUtils.extractEvent((ChannelBuffer)mEvent.getMessage());
         if (e == null) {
           return;
         }
+
+        if (ipHeader != null) {
+          //get ip from message event
+          String ip = "";
+          SocketAddress socket = mEvent.getRemoteAddress();
+          if (socket != null) {
+            String remoteAddress = socket.toString();
+            if (remoteAddress != null && !remoteAddress.isEmpty()) {
+              ip = remoteAddress.split(":")[0].substring(1);
+            }
+          }
+
+          e.getHeaders().put(ipHeader, ip);
+        }
+
         sourceCounter.incrementEventReceivedCount();
 
         getChannelProcessor().processEvent(e);
@@ -107,6 +130,7 @@ public class SyslogUDPSource extends AbstractSource
     final syslogHandler handler = new syslogHandler();
     handler.setFormater(formaterProp);
     handler.setKeepFields(keepFields);
+    handler.setIpHeader(ipHeader);
     serverBootstrap.setOption("receiveBufferSizePredictorFactory",
         new AdaptiveReceiveBufferSizePredictorFactory(DEFAULT_MIN_SIZE,
             DEFAULT_INITIAL_SIZE, maxsize));
@@ -158,6 +182,7 @@ public class SyslogUDPSource extends AbstractSource
         context.getString(
             SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS,
             SyslogSourceConfigurationConstants.DEFAULT_KEEP_FIELDS));
+    ipHeader = context.getString(SyslogSourceConfigurationConstants.CONFIG_IP_HEADER);
 
     if (sourceCounter == null) {
       sourceCounter = new SourceCounter(getName());

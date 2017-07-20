@@ -62,10 +62,12 @@ public class SyslogTcpSource extends AbstractSource
   private Map<String, String> formaterProp;
   private SourceCounter sourceCounter;
   private Set<String> keepFields;
+  private String ipHeader;
 
   public class syslogTcpHandler extends SimpleChannelHandler {
 
     private SyslogUtils syslogUtils = new SyslogUtils();
+    private String ipHeader;
 
     public void setEventSize(int eventSize) {
       syslogUtils.setEventSize(eventSize);
@@ -79,9 +81,14 @@ public class SyslogTcpSource extends AbstractSource
       syslogUtils.addFormats(prop);
     }
 
+    public void setIpHeader(String ipHeader) {
+      this.ipHeader = ipHeader;
+    }
+
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent mEvent) {
       ChannelBuffer buff = (ChannelBuffer) mEvent.getMessage();
+
       while (buff.readable()) {
         Event e = syslogUtils.extractEvent(buff);
         if (e == null) {
@@ -89,6 +96,21 @@ public class SyslogTcpSource extends AbstractSource
               "rest of the event is received.");
           continue;
         }
+
+        if (ipHeader != null) {
+          //get ip from channel
+          String ip = "";
+          SocketAddress socket = ctx.getChannel().getRemoteAddress();
+          if (socket != null) {
+            String remoteAddress = socket.toString();
+            if (remoteAddress != null && !remoteAddress.isEmpty()) {
+              ip = remoteAddress.split(":")[0].substring(1);
+            }
+          }
+
+          e.getHeaders().put(ipHeader, ip);
+        }
+
         sourceCounter.incrementEventReceivedCount();
 
         try {
@@ -118,6 +140,7 @@ public class SyslogTcpSource extends AbstractSource
         handler.setEventSize(eventSize);
         handler.setFormater(formaterProp);
         handler.setKeepFields(keepFields);
+        handler.setIpHeader(ipHeader);
         return Channels.pipeline(handler);
       }
     });
@@ -167,6 +190,7 @@ public class SyslogTcpSource extends AbstractSource
         context.getString(
             SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS,
             SyslogSourceConfigurationConstants.DEFAULT_KEEP_FIELDS));
+    ipHeader = context.getString(SyslogSourceConfigurationConstants.CONFIG_IP_HEADER);
 
     if (sourceCounter == null) {
       sourceCounter = new SourceCounter(getName());
