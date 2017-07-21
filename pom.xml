@@ -867,6 +867,11 @@ limitations under the License.
             </filesets>
           </configuration>
         </plugin>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <version>${bundle-plugin.version}</version>
+      </plugin>
       </plugins>
 
     </pluginManagement>
@@ -894,6 +899,13 @@ limitations under the License.
         <groupId>org.easytesting</groupId>
         <artifactId>fest-reflect</artifactId>
         <version>${fest-reflect.version}</version>
+        <scope>test</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>com.github.stefanbirkner</groupId>
+        <artifactId>system-rules</artifactId>
+        <version>${system-rules.version}</version>
         <scope>test</scope>
       </dependency>
 
