@@ -72,7 +72,7 @@ import com.google.common.collect.Lists;
 public class RegexFilteringInterceptor implements Interceptor {
 
   private static final Logger logger = LoggerFactory
-      .getLogger(StaticInterceptor.class);
+      .getLogger(RegexFilteringInterceptor.class);
 
   private final Pattern regex;
   private final boolean excludeEvents;
