@@ -139,7 +139,7 @@ public class RegexFilteringInterceptor implements Interceptor {
   }
 
   /**
-   * Builder which builds new instance of the StaticInterceptor.
+   * Builder which builds new instance of the RegexFilteringInterceptor.
    */
   public static class Builder implements Interceptor.Builder {
 
