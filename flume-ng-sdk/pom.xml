@@ -100,7 +100,7 @@ limitations under the License.
         <plugin>
           <groupId>org.eclipse.m2e</groupId>
           <artifactId>lifecycle-mapping</artifactId>
-          <version>1.0.0</version>
+          <version>${lifecycle-mapping.version}</version>
           <configuration>
             <lifecycleMappingMetadata>
               <pluginExecutions>
@@ -121,7 +121,7 @@ limitations under the License.
                   <pluginExecutionFilter>
                     <groupId>com.thoughtworks.paranamer</groupId>
                     <artifactId>paranamer-maven-plugin</artifactId>
-                    <versionRange>[2.3,)</versionRange>
+                    <versionRange>[${mvn-paranamer-plugin.version},)</versionRange>
                     <goals>
                       <goal>generate</goal>
                     </goals>
