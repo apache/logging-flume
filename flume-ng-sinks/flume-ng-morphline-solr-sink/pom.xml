@@ -26,15 +26,13 @@ limitations under the License.
 
   <groupId>org.apache.flume.flume-ng-sinks</groupId>
   <artifactId>flume-ng-morphline-solr-sink</artifactId>
-  <version>1.8.0-SNAPSHOT</version>
   <name>Flume NG Morphline Solr Sink</name>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <solr.version>4.3.0</solr.version>
-    <solr.expected.version>4.3.0</solr.expected.version> <!-- sanity check to verify we actually run against the expected version rather than some outdated version -->
-    <slf4j.version>1.6.1</slf4j.version>
-    <surefire.version>2.12.4</surefire.version>
+    <solr.version>${solr-global.version}</solr.version>
+    <solr.expected.version>${solr-global.version}</solr.expected.version> <!-- sanity check to verify we actually run against the expected version rather than some outdated version -->
+    <surefire.version>${mvn-surefire-plugin-old-morphline.version}</surefire.version>
   </properties>
 
   <dependencies>

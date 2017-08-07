@@ -67,7 +67,7 @@ limitations under the License.
     <dependency>
       <groupId>org.easytesting</groupId>
       <artifactId>fest-reflect</artifactId>
-      <version>1.4</version>
+      <version>${fest-reflect.version}</version>
     </dependency>
 
   </dependencies>

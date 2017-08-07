@@ -46,17 +46,72 @@ limitations under the License.
     <siteUrlDeployment>file://people.apache.org/www/incubator.apache.org/flume</siteUrlDeployment>
     <stagingDirectory>${project.basedir}/target/docs</stagingDirectory>
 
+    <activemq.version>5.7.0</activemq.version>
+    <asynchbase.version>1.7.0</asynchbase.version>
     <avro.version>1.7.4</avro.version>
+    <bundle-plugin.version>2.3.7</bundle-plugin.version>
     <checkstyle.plugin.version>2.17</checkstyle.plugin.version>
     <checkstyle.tool.version>6.19</checkstyle.tool.version>
+    <commons-cli.version>1.2</commons-cli.version>
+    <commons-codec.version>1.8</commons-codec.version>
+    <commons-collections.version>3.2.2</commons-collections.version>
+    <commons-compress.version>1.4.1</commons-compress.version>
+    <commons-dbcp.version>1.4</commons-dbcp.version>
+    <commons-io.version>2.1</commons-io.version>
+    <commons-lang.version>2.5</commons-lang.version>
+    <curator.version>2.6.0</curator.version>
+    <derby.version>10.11.1.1</derby.version>
     <elasticsearch.version>0.90.1</elasticsearch.version>
+    <fest-reflect.version>1.4</fest-reflect.version>
+    <gson.version>2.2.2</gson.version>
+    <guava.version>18.0</guava.version>
+    <guava-old.version>11.0.2</guava-old.version>
     <hadoop2.version>2.4.0</hadoop2.version>
-    <thrift.version>0.7.0</thrift.version>
+    <httpclient.version>4.3.5</httpclient.version>
+    <httpclient-old.version>4.2.1</httpclient-old.version>
+    <irclib.version>1.10</irclib.version>
+    <jackson.version>1.9.3</jackson.version>
+    <javax-jms.version>1.1</javax-jms.version>
+    <jersey.version>1.8</jersey.version>
+    <jetty.version>6.1.26</jetty.version>
+    <joda-time.version>2.1</joda-time.version>
+    <junit.version>4.10</junit.version>
     <kafka.version>0.9.0.1</kafka.version>
     <kite.version>1.0.0</kite.version>
     <hive.version>1.0.0</hive.version>
-    <xalan.verion>2.7.1</xalan.verion>
+    <lifecycle-mapping.version>1.0.0</lifecycle-mapping.version>
+    <log4j-extras.version>1.1</log4j-extras.version>
+    <log4j-log4j.version>1.2.17</log4j-log4j.version>
+    <mapdb.version>0.9.9</mapdb.version>
+    <mina.version>2.0.4</mina.version>
+    <mockito.version>1.9.0</mockito.version>
+    <mortbay-jetty-servlet-api.version>2.5-20110124</mortbay-jetty-servlet-api.version>
+    <mvn-antrun-plugin.version>1.7</mvn-antrun-plugin.version>
+    <mvn-assembly-plugin.version>2.3</mvn-assembly-plugin.version>
+    <mvn-build-helper-plugin>1.7</mvn-build-helper-plugin>
+    <mvn-clean-plugin.version>2.4.1</mvn-clean-plugin.version>
+    <mvn-compiler-plugin.version>2.3.2</mvn-compiler-plugin.version>
+    <mvn-javadoc-plugin.version>2.9</mvn-javadoc-plugin.version>
+    <mvn-paranamer-plugin.version>2.3</mvn-paranamer-plugin.version>
+    <mvn-project-info-reports-plugin.version>2.4</mvn-project-info-reports-plugin.version>
+    <mvn-site-plugin.version>3.3</mvn-site-plugin.version>
+    <mvn-sphinx-plugin>1.0.2</mvn-sphinx-plugin>
+    <mvn-surefire-plugin.version>2.14.1</mvn-surefire-plugin.version>
+    <mvn-surefire-plugin-old.version>2.12.3</mvn-surefire-plugin-old.version>
+    <mvn-surefire-plugin-old-morphline.version>2.12.4</mvn-surefire-plugin-old-morphline.version>
+    <netty.version>3.9.4.Final</netty.version>
+    <protobuf.version>2.5.0</protobuf.version>
+    <rat.version>0.11</rat.version>
+    <snappy-java.version>1.1.0</snappy-java.version>
+    <solr-global.version>4.3.0</solr-global.version>
+    <slf4j.version>1.6.1</slf4j.version>
+    <system-rules.version>1.16.0</system-rules.version>
+    <thrift.version>0.7.0</thrift.version>
+    <twitter4j.version>3.0.3</twitter4j.version>
+    <xalan.version>2.7.2</xalan.version>
     <xerces.version>2.9.1</xerces.version>
+    <wiremock.version>1.53</wiremock.version>
+    <zookeeper.version>3.4.5</zookeeper.version>
   </properties>
 
   <modules>
@@ -122,7 +177,7 @@ limitations under the License.
           <dependency>
             <groupId>org.apache.zookeeper</groupId>
             <artifactId>zookeeper</artifactId>
-            <version>3.4.5</version>
+            <version>${zookeeper.version}</version>
             <scope>test</scope>
           </dependency>
         </dependencies>
@@ -198,7 +253,7 @@ limitations under the License.
           <dependency>
             <groupId>org.apache.zookeeper</groupId>
             <artifactId>zookeeper</artifactId>
-            <version>3.4.5</version>
+            <version>${zookeeper.version}</version>
             <scope>test</scope>
           </dependency>
 
@@ -206,7 +261,7 @@ limitations under the License.
           <dependency>
             <groupId>org.apache.flume.flume-ng-sinks</groupId>
             <artifactId>flume-dataset-sink</artifactId>
-            <version>1.8.0-SNAPSHOT</version>
+            <version>${project.version}</version>
           </dependency>
         </dependencies>
       </dependencyManagement>
@@ -319,7 +374,7 @@ limitations under the License.
           <dependency>
             <groupId>org.apache.zookeeper</groupId>
             <artifactId>zookeeper</artifactId>
-            <version>3.4.5</version>
+            <version>${zookeeper.version}</version>
             <scope>test</scope>
           </dependency>
 
@@ -691,7 +746,7 @@ limitations under the License.
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>2.3.2</version>
+          <version>${mvn-compiler-plugin.version}</version>
           <configuration>
             <source>${sourceJavaVersion}</source>
             <target>${targetJavaVersion}</target>
@@ -701,7 +756,7 @@ limitations under the License.
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.12.3</version>
+          <version>${mvn-surefire-plugin-old.version}</version>
           <configuration>
             <forkMode>always</forkMode>
             <forkedProcessTimeoutInSeconds>900</forkedProcessTimeoutInSeconds>
@@ -719,7 +774,7 @@ limitations under the License.
         <plugin>
           <groupId>org.apache.rat</groupId>
           <artifactId>apache-rat-plugin</artifactId>
-          <version>0.11</version>
+          <version>${rat.version}</version>
           <executions>
             <execution>
               <id>verify.rat</id>
@@ -758,7 +813,7 @@ limitations under the License.
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>2.9</version>
+          <version>${mvn-javadoc-plugin.version}</version>
           <configuration>
             <outputDirectory>${project.build.directory}/site/apidocs</outputDirectory>
             <!-- switch on dependency-driven aggregation -->
@@ -774,7 +829,7 @@ limitations under the License.
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-assembly-plugin</artifactId>
-          <version>2.3</version>
+          <version>${mvn-assembly-plugin.version}</version>
         </plugin>
 
         <plugin>
@@ -786,13 +841,13 @@ limitations under the License.
         <plugin>
           <groupId>com.thoughtworks.paranamer</groupId>
           <artifactId>paranamer-maven-plugin</artifactId>
-          <version>2.3</version>
+          <version>${mvn-paranamer-plugin.version}</version>
         </plugin>
 
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-site-plugin</artifactId>
-          <version>3.3</version>
+          <version>${mvn-site-plugin.version}</version>
           <configuration>
             <siteDirectory>${project.basedir}/flume-ng-doc</siteDirectory>
           </configuration>
@@ -800,7 +855,7 @@ limitations under the License.
 
         <plugin>
           <artifactId>maven-clean-plugin</artifactId>
-          <version>2.4.1</version>
+          <version>${mvn-clean-plugin.version}</version>
           <configuration>
             <filesets>
               <fileset>
@@ -812,6 +867,11 @@ limitations under the License.
             </filesets>
           </configuration>
         </plugin>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <version>${bundle-plugin.version}</version>
+      </plugin>
       </plugins>
 
     </pluginManagement>
@@ -825,20 +885,27 @@ limitations under the License.
       <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
-        <version>4.10</version>
+        <version>${junit.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-all</artifactId>
-        <version>1.9.0</version>
+        <version>${mockito.version}</version>
         <scope>test</scope>
       </dependency>
 
       <dependency>
         <groupId>org.easytesting</groupId>
         <artifactId>fest-reflect</artifactId>
-        <version>1.4</version>
+        <version>${fest-reflect.version}</version>
+        <scope>test</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>com.github.stefanbirkner</groupId>
+        <artifactId>system-rules</artifactId>
+        <version>${system-rules.version}</version>
         <scope>test</scope>
       </dependency>
 
@@ -847,25 +914,25 @@ limitations under the License.
       <dependency>
         <groupId>commons-cli</groupId>
         <artifactId>commons-cli</artifactId>
-        <version>1.2</version>
+        <version>${commons-cli.version}</version>
       </dependency>
 
       <dependency>
         <groupId>commons-lang</groupId>
         <artifactId>commons-lang</artifactId>
-        <version>2.5</version>
+        <version>${commons-lang.version}</version>
       </dependency>
 
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>11.0.2</version>
+        <version>${guava-old.version}</version>
       </dependency>
 
       <dependency>
         <groupId>log4j</groupId>
         <artifactId>log4j</artifactId>
-        <version>1.2.17</version>
+        <version>${log4j-log4j.version}</version>
         <exclusions>
           <exclusion>
             <groupId>com.sun.jdmk</groupId>
@@ -881,19 +948,19 @@ limitations under the License.
       <dependency>
         <groupId>log4j</groupId>
         <artifactId>apache-log4j-extras</artifactId>
-        <version>1.1</version>
+        <version>${log4j-extras.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
-        <version>1.6.1</version>
+        <version>${slf4j.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-log4j12</artifactId>
-        <version>1.6.1</version>
+        <version>${slf4j.version}</version>
       </dependency>
 
       <dependency>
@@ -940,44 +1007,44 @@ limitations under the License.
         <groupId>com.google.protobuf</groupId>
         <artifactId>protobuf-java</artifactId>
         <scope>compile</scope>
-        <version>2.5.0</version>
+        <version>${protobuf.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.mortbay.jetty</groupId>
         <artifactId>servlet-api</artifactId>
-        <version>2.5-20110124</version>
+        <version>${mortbay-jetty-servlet-api.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.mortbay.jetty</groupId>
         <artifactId>jetty-util</artifactId>
-        <version>6.1.26</version>
+        <version>${jetty.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.mortbay.jetty</groupId>
         <artifactId>jetty</artifactId>
-        <version>6.1.26</version>
+        <version>${jetty.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpclient</artifactId>
-        <version>4.2.1</version>
+        <version>${httpclient-old.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.mapdb</groupId>
         <artifactId>mapdb</artifactId>
-        <version>0.9.9</version>
+        <version>${mapdb.version}</version>
       </dependency>
 
       <!--  Gson: Java to Json conversion -->
       <dependency>
         <groupId>com.google.code.gson</groupId>
         <artifactId>gson</artifactId>
-        <version>2.2.2</version>
+        <version>${gson.version}</version>
       </dependency>
 
       <dependency>
@@ -990,55 +1057,55 @@ limitations under the License.
       <dependency>
         <groupId>commons-codec</groupId>
         <artifactId>commons-codec</artifactId>
-        <version>1.8</version>
+        <version>${commons-codec.version}</version>
       </dependency>
 
       <dependency>
         <groupId>commons-io</groupId>
         <artifactId>commons-io</artifactId>
-        <version>2.1</version>
+        <version>${commons-io.version}</version>
       </dependency>
 
       <dependency>
         <groupId>commons-dbcp</groupId>
         <artifactId>commons-dbcp</artifactId>
-        <version>1.4</version>
+        <version>${commons-dbcp.version}</version>
       </dependency>
 
       <dependency>
         <groupId>commons-collections</groupId>
         <artifactId>commons-collections</artifactId>
-        <version>3.2.2</version>
+        <version>${commons-collections.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.derby</groupId>
         <artifactId>derby</artifactId>
-        <version>10.11.1.1</version>
+        <version>${derby.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.codehaus.jackson</groupId>
         <artifactId>jackson-core-asl</artifactId>
-        <version>1.9.3</version>
+        <version>${jackson.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.codehaus.jackson</groupId>
         <artifactId>jackson-mapper-asl</artifactId>
-        <version>1.9.3</version>
+        <version>${jackson.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.schwering</groupId>
         <artifactId>irclib</artifactId>
-        <version>1.10</version>
+        <version>${irclib.version}</version>
       </dependency>
 
       <dependency>
         <groupId>joda-time</groupId>
         <artifactId>joda-time</artifactId>
-        <version>2.1</version>
+        <version>${joda-time.version}</version>
       </dependency>
       <!-- Adding zookeeper as dependency, beacuse it was
            pulling different version of zookeeper as transient
@@ -1074,13 +1141,13 @@ limitations under the License.
       <dependency>
         <groupId>javax.jms</groupId>
         <artifactId>jms</artifactId>
-        <version>1.1</version>
+        <version>${javax-jms.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.activemq</groupId>
         <artifactId>activemq-core</artifactId>
-        <version>5.7.0</version>
+        <version>${activemq.version}</version>
       </dependency>
 
       <!-- internal module dependencies -->
@@ -1088,169 +1155,169 @@ limitations under the License.
       <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-ng-configuration</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-ng-core</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-checkstyle</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-tools</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-ng-node</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-channels</groupId>
         <artifactId>flume-file-channel</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-channels</groupId>
         <artifactId>flume-jdbc-channel</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-channels</groupId>
         <artifactId>flume-kafka-channel</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-channels</groupId>
         <artifactId>flume-spillable-memory-channel</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
      <dependency>
        <groupId>org.apache.flume.flume-ng-channels</groupId>
        <artifactId>flume-recoverable-memory-channel</artifactId>
-       <version>1.8.0-SNAPSHOT</version>
+       <version>${project.version}</version>
      </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-shared</groupId>
         <artifactId>flume-shared-kafka-test</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
         <scope>test</scope>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-hdfs-sink</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-hive-sink</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-http-sink</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-irc-sink</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-ng-hbase-sink</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-ng-elasticsearch-sink</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-ng-morphline-solr-sink</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-ng-kafka-sink</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-sources</groupId>
         <artifactId>flume-scribe-source</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-sources</groupId>
         <artifactId>flume-jms-source</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-sources</groupId>
         <artifactId>flume-twitter-source</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-legacy-sources</groupId>
         <artifactId>flume-thrift-source</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-sources</groupId>
         <artifactId>flume-kafka-source</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-legacy-sources</groupId>
         <artifactId>flume-avro-source</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-ng-sdk</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-sources</groupId>
         <artifactId>flume-taildir-source</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-ng-sdk</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
         <classifier>tests</classifier>
         <scope>test</scope>
       </dependency>
@@ -1258,50 +1325,50 @@ limitations under the License.
       <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-ng-auth</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-clients</groupId>
         <artifactId>flume-ng-log4jappender</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-clients</groupId>
         <artifactId>flume-ng-log4jappender</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
         <classifier>jar-with-dependencies</classifier>
       </dependency>
 
       <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-ng-embedded-agent</artifactId>
-        <version>1.8.0-SNAPSHOT</version>
+        <version>${project.version}</version>
       </dependency>
 
       <dependency>
         <groupId>com.sun.jersey</groupId>
         <artifactId>jersey-core</artifactId>
-        <version>1.8</version>
+        <version>${jersey.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-compress</artifactId>
-        <version>1.4.1</version>
+        <version>${commons-compress.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.mina</groupId>
         <artifactId>mina-core</artifactId>
-        <version>2.0.4</version>
+        <version>${mina.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.hbase</groupId>
         <artifactId>asynchbase</artifactId>
-        <version>1.7.0</version>
+        <version>${asynchbase.version}</version>
         <exclusions>
           <exclusion>
             <groupId>org.slf4j</groupId>
@@ -1317,30 +1384,30 @@ limitations under the License.
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty</artifactId>
-        <version>3.9.4.Final</version>
+        <version>${netty.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.solr</groupId>
         <artifactId>solr-cell</artifactId>
-        <version>4.3.0</version>
+        <version>${solr-global.version}</version>
       </dependency>
 
       <!-- Dependencies of the Twitter source -->
       <dependency>
         <groupId>org.twitter4j</groupId>
         <artifactId>twitter4j-core</artifactId>
-        <version>3.0.3</version>
+        <version>${twitter4j.version}</version>
       </dependency>
       <dependency>
         <groupId>org.twitter4j</groupId>
         <artifactId>twitter4j-media-support</artifactId>
-        <version>3.0.3</version>
+        <version>${twitter4j.version}</version>
       </dependency>
       <dependency>
         <groupId>org.twitter4j</groupId>
         <artifactId>twitter4j-stream</artifactId>
-        <version>3.0.3</version>
+        <version>${twitter4j.version}</version>
       </dependency>
 
       <!-- Dependencies of Kafka source -->
@@ -1388,7 +1455,7 @@ limitations under the License.
       <dependency>
         <groupId>org.xerial.snappy</groupId>
         <artifactId>snappy-java</artifactId>
-        <version>1.1.0</version>
+        <version>${snappy-java.version}</version>
       </dependency>
 
       <dependency>
@@ -1407,19 +1474,19 @@ limitations under the License.
       <dependency>
         <groupId>org.apache.curator</groupId>
         <artifactId>curator-framework</artifactId>
-        <version>2.6.0</version>
+        <version>${curator.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.curator</groupId>
         <artifactId>curator-recipes</artifactId>
-        <version>2.6.0</version>
+        <version>${curator.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.curator</groupId>
         <artifactId>curator-test</artifactId>
-        <version>2.6.0</version>
+        <version>${curator.version}</version>
         <scope>test</scope>
       </dependency>
 
@@ -1427,7 +1494,7 @@ limitations under the License.
       <dependency>
         <groupId>xalan</groupId>
         <artifactId>serializer</artifactId>
-        <version>2.7.2</version>
+        <version>${xalan.version}</version>
         <scope>runtime</scope>
       </dependency>
 
@@ -1435,7 +1502,7 @@ limitations under the License.
         <groupId>xalan</groupId>
         <artifactId>xalan</artifactId>
         <scope>runtime</scope>
-        <version>2.7.2</version>
+        <version>${xalan.version}</version>
       </dependency>
 
     </dependencies>
@@ -1447,7 +1514,7 @@ limitations under the License.
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-project-info-reports-plugin</artifactId>
-        <version>2.4</version>
+        <version>${mvn-project-info-reports-plugin.version}</version>
         <reportSets>
           <reportSet>
             <reports>
@@ -1470,7 +1537,7 @@ limitations under the License.
       <plugin>
         <groupId>org.tomdz.maven</groupId>
         <artifactId>sphinx-maven-plugin</artifactId>
-        <version>1.0.2</version>
+        <version>${mvn-sphinx-plugin}</version>
         <inherited>false</inherited>
         <configuration>
           <sourceDirectory>${project.basedir}/flume-ng-doc/sphinx</sourceDirectory>
