@@ -25,6 +25,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -75,7 +76,7 @@ public class TestLog4jAppenderWithAvro {
     context.put("bind", "localhost");
     Configurables.configure(source, context);
 
-    List<Channel> channels = new ArrayList<Channel>();
+    List<Channel> channels = new ArrayList<>();
     channels.add(ch);
 
     ChannelSelector rcs = new ReplicatingChannelSelector();
@@ -87,8 +88,7 @@ public class TestLog4jAppenderWithAvro {
   }
 
   private void loadProperties(String file) throws IOException {
-    File TESTFILE = new File(
-        TestLog4jAppenderWithAvro.class.getClassLoader()
+    File TESTFILE = new File(TestLog4jAppenderWithAvro.class.getClassLoader()
             .getResource(file).getFile());
     FileReader reader = new FileReader(TESTFILE);
     props = new Properties();
@@ -115,7 +115,7 @@ public class TestLog4jAppenderWithAvro {
     Event event = ch.take();
     Assert.assertNotNull(event);
 
-    GenericDatumReader<GenericRecord> reader = new GenericDatumReader<GenericRecord>(schema);
+    GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>(schema);
     BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(event.getBody(), null);
     GenericRecord recordFromEvent = reader.read(null, decoder);
     Assert.assertEquals(msg, recordFromEvent.get("message").toString());
@@ -131,7 +131,6 @@ public class TestLog4jAppenderWithAvro {
 
     transaction.commit();
     transaction.close();
-
   }
 
   @Test
@@ -153,7 +152,7 @@ public class TestLog4jAppenderWithAvro {
 
     Schema schema = ReflectData.get().getSchema(appEvent.getClass());
 
-    ReflectDatumReader<AppEvent> reader = new ReflectDatumReader<AppEvent>(AppEvent.class);
+    ReflectDatumReader<AppEvent> reader = new ReflectDatumReader<>(AppEvent.class);
     BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(event.getBody(), null);
     AppEvent recordFromEvent = reader.read(null, decoder);
     Assert.assertEquals(msg, recordFromEvent.getMessage());
@@ -169,7 +168,77 @@ public class TestLog4jAppenderWithAvro {
 
     transaction.commit();
     transaction.close();
+  }
 
+  @Test
+  public void testDifferentEventTypesInBatchWithAvroReflect() throws IOException {
+    loadProperties("flume-log4jtest-avro-reflect.properties");
+    PropertyConfigurator.configure(props);
+    Logger logger = LogManager.getLogger(getClass());
+    List<Object> events = Arrays.asList("string", new AppEvent("appEvent"));
+    logger.info(events);
+
+    Transaction transaction = ch.getTransaction();
+    transaction.begin();
+
+    for (Object o : events) {
+      Event e = ch.take();
+      Assert.assertNotNull(e);
+      ReflectDatumReader<?> reader = new ReflectDatumReader<>(o.getClass());
+      BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(e.getBody(), null);
+      Object readObject = reader.read(null, decoder);
+      Assert.assertEquals(o, readObject);
+
+      Map<String, String> hdrs = e.getHeaders();
+      Assert.assertNull(hdrs.get(Log4jAvroHeaders.MESSAGE_ENCODING.toString()));
+      Assert.assertNull("Schema URL should not be set",
+          hdrs.get(Log4jAvroHeaders.AVRO_SCHEMA_URL.toString()));
+      Assert.assertEquals("Schema string should be set",
+          ReflectData.get().getSchema(readObject.getClass()).toString(),
+          hdrs.get(Log4jAvroHeaders.AVRO_SCHEMA_LITERAL.toString()));
+    }
+    Assert.assertNull("There should be no more events in the channel", ch.take());
+  }
+
+  @Test
+  public void testDifferentEventTypesInBatchWithAvroGeneric() throws IOException {
+    loadProperties("flume-log4jtest-avro-generic.properties");
+    PropertyConfigurator.configure(props);
+    Logger logger = LogManager.getLogger(getClass());
+    String msg = "Avro log message";
+
+    Schema schema = new Schema.Parser().parse(
+        getClass().getClassLoader().getResource("myrecord.avsc").openStream());
+    GenericRecordBuilder builder = new GenericRecordBuilder(schema);
+    GenericRecord record = builder.set("message", msg).build();
+
+    List<Object> events = Arrays.asList("string", record);
+    logger.info(events);
+
+    Transaction transaction = ch.getTransaction();
+    transaction.begin();
+
+    Event event = ch.take();
+    Assert.assertNotNull(event);
+    Assert.assertEquals("string", new String(event.getBody()));
+
+    event = ch.take();
+    Assert.assertNotNull(event);
+    GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>(schema);
+    BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(event.getBody(), null);
+    GenericRecord recordFromEvent = reader.read(null, decoder);
+    Assert.assertEquals(msg, recordFromEvent.get("message").toString());
+
+    Map<String, String> hdrs = event.getHeaders();
+    Assert.assertNull(hdrs.get(Log4jAvroHeaders.MESSAGE_ENCODING.toString()));
+
+    Assert.assertEquals("Schema URL should be set",
+        "file:///tmp/myrecord.avsc", hdrs.get(Log4jAvroHeaders.AVRO_SCHEMA_URL.toString()));
+    Assert.assertNull("Schema string should not be set",
+        hdrs.get(Log4jAvroHeaders.AVRO_SCHEMA_LITERAL.toString()));
+
+    transaction.commit();
+    transaction.close();
   }
 
   @After
@@ -182,12 +251,33 @@ public class TestLog4jAppenderWithAvro {
   public static class AppEvent {
     private String message;
 
+    public AppEvent() {
+    }
+
+    public AppEvent(String message) {
+      this.message = message;
+    }
+
     public String getMessage() {
       return message;
     }
 
     public void setMessage(String message) {
       this.message = message;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      AppEvent appEvent = (AppEvent) o;
+      return message != null ? message.equals(appEvent.message) : appEvent.message == null;
+    }
+
+    @Override
+    public int hashCode() {
+      return message != null ? message.hashCode() : 0;
     }
   }
 

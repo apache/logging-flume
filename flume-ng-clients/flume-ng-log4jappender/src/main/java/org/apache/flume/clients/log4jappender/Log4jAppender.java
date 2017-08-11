@@ -23,7 +23,11 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -90,7 +94,7 @@ public class Log4jAppender extends AppenderSkeleton {
    * you must set the <tt>port</tt> and <tt>hostname</tt> and then call
    * <tt>activateOptions()</tt> before calling <tt>append()</tt>.
    */
-  public Log4jAppender(){
+  public Log4jAppender() {
   }
 
   /**
@@ -133,36 +137,17 @@ public class Log4jAppender extends AppenderSkeleton {
       reconnect();
     }
 
-    //Client created first time append is called.
-    Map<String, String> hdrs = new HashMap<String, String>();
-    hdrs.put(Log4jAvroHeaders.LOGGER_NAME.toString(), event.getLoggerName());
-    hdrs.put(Log4jAvroHeaders.TIMESTAMP.toString(),
-        String.valueOf(event.timeStamp));
-    hdrs.put(Log4jAvroHeaders.ADDRESS.toString(), clientAddress);
-    //To get the level back simply use
-    //LoggerEvent.toLevel(hdrs.get(Integer.parseInt(
-    //Log4jAvroHeaders.LOG_LEVEL.toString()))
-    hdrs.put(Log4jAvroHeaders.LOG_LEVEL.toString(),
-        String.valueOf(event.getLevel().toInt()));
-
-    Event flumeEvent;
-    Object message = event.getMessage();
-    if (message instanceof GenericRecord) {
-      GenericRecord record = (GenericRecord) message;
-      populateAvroHeaders(hdrs, record.getSchema(), message);
-      flumeEvent = EventBuilder.withBody(serialize(record, record.getSchema()), hdrs);
-    } else if (message instanceof SpecificRecord || avroReflectionEnabled) {
-      Schema schema = ReflectData.get().getSchema(message.getClass());
-      populateAvroHeaders(hdrs, schema, message);
-      flumeEvent = EventBuilder.withBody(serialize(message, schema), hdrs);
-    } else {
-      hdrs.put(Log4jAvroHeaders.MESSAGE_ENCODING.toString(), "UTF8");
-      String msg = layout != null ? layout.format(event) : message.toString();
-      flumeEvent = EventBuilder.withBody(msg, Charset.forName("UTF8"), hdrs);
-    }
-
+    List<Event> flumeEvents = parseEvents(event);
     try {
-      rpcClient.append(flumeEvent);
+      switch (flumeEvents.size()) {
+        case 0:
+          break;
+        case 1:
+          rpcClient.append(flumeEvents.get(0));
+          break;
+        default:
+          rpcClient.appendBatch(flumeEvents);
+      }
     } catch (EventDeliveryException e) {
       String msg = "Flume append() failed.";
       LogLog.error(msg);
@@ -173,13 +158,69 @@ public class Log4jAppender extends AppenderSkeleton {
     }
   }
 
+  private List<Event> parseEvents(LoggingEvent loggingEvent) {
+    Map<String, String> headers = new HashMap<>();
+    headers.put(Log4jAvroHeaders.LOGGER_NAME.toString(), loggingEvent.getLoggerName());
+    headers.put(Log4jAvroHeaders.TIMESTAMP.toString(), String.valueOf(loggingEvent.timeStamp));
+    headers.put(Log4jAvroHeaders.ADDRESS.toString(), clientAddress);
+
+    //To get the level back simply use
+    //LoggerEvent.toLevel(hdrs.get(Integer.parseInt(
+    //Log4jAvroHeaders.LOG_LEVEL.toString()))
+    headers.put(Log4jAvroHeaders.LOG_LEVEL.toString(),
+        String.valueOf(loggingEvent.getLevel().toInt()));
+
+    Map<String, String> headersWithEncoding = null;
+
+    Collection<?> messages;
+    if (loggingEvent.getMessage() instanceof Collection) {
+      messages = (Collection) loggingEvent.getMessage();
+    } else {
+      messages = Collections.singleton(loggingEvent.getMessage());
+    }
+
+    List<Event> events = new LinkedList<>();
+    for (Object message : messages) {
+      if (message instanceof GenericRecord) {
+        GenericRecord record = (GenericRecord) message;
+        populateAvroHeaders(headers, record.getSchema());
+        events.add(EventBuilder.withBody(serialize(record, record.getSchema()), headers));
+
+      } else if (message instanceof SpecificRecord || avroReflectionEnabled) {
+        Schema schema = ReflectData.get().getSchema(message.getClass());
+        populateAvroHeaders(headers, schema);
+        events.add(EventBuilder.withBody(serialize(message, schema), headers));
+
+      } else {
+        String msg;
+        if (layout != null) {
+          LoggingEvent singleLoggingEvent = new LoggingEvent(loggingEvent.getFQNOfLoggerClass(),
+              loggingEvent.getLogger(), loggingEvent.getTimeStamp(), loggingEvent.getLevel(),
+              message, loggingEvent.getThreadName(), loggingEvent.getThrowableInformation(),
+              loggingEvent.getNDC(), loggingEvent.getLocationInformation(),
+              loggingEvent.getProperties());
+          msg = layout.format(singleLoggingEvent);
+        } else {
+          msg = message.toString();
+        }
+
+        if (headersWithEncoding == null) {
+          headersWithEncoding = new HashMap<>(headers);
+          headersWithEncoding.put(Log4jAvroHeaders.MESSAGE_ENCODING.toString(), "UTF8");
+        }
+        events.add(EventBuilder.withBody(msg, Charset.forName("UTF8"), headersWithEncoding));
+      }
+    }
+
+    return events;
+  }
+
   private Schema schema;
   private ByteArrayOutputStream out;
   private DatumWriter<Object> writer;
   private BinaryEncoder encoder;
 
-  protected void populateAvroHeaders(Map<String, String> hdrs, Schema schema,
-      Object message) {
+  protected void populateAvroHeaders(Map<String, String> hdrs, Schema schema) {
     if (avroSchemaUrl != null) {
       hdrs.put(Log4jAvroHeaders.AVRO_SCHEMA_URL.toString(), avroSchemaUrl);
       return;
@@ -193,7 +234,7 @@ public class Log4jAppender extends AppenderSkeleton {
     if (schema == null || !datumSchema.equals(schema)) {
       schema = datumSchema;
       out = new ByteArrayOutputStream();
-      writer = new ReflectDatumWriter<Object>(schema);
+      writer = new ReflectDatumWriter<>(schema);
       encoder = EncoderFactory.get().binaryEncoder(out, null);
     }
     out.reset();
