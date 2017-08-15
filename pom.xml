@@ -71,7 +71,7 @@ limitations under the License.
     <httpclient-old.version>4.2.1</httpclient-old.version>
     <irclib.version>1.10</irclib.version>
     <jackson.version>1.9.3</jackson.version>
-    <javax-jms.version>1.1</javax-jms.version>
+    <javax-jms.version>1.1-rev-1</javax-jms.version>
     <jersey.version>1.8</jersey.version>
     <jetty.version>6.1.26</jetty.version>
     <joda-time.version>2.1</joda-time.version>
@@ -1140,7 +1140,7 @@ limitations under the License.
 
       <dependency>
         <groupId>javax.jms</groupId>
-        <artifactId>jms</artifactId>
+        <artifactId>jms-api</artifactId>
         <version>${javax-jms.version}</version>
       </dependency>
 
