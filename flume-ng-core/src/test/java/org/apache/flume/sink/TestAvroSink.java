@@ -43,6 +43,7 @@ import org.apache.flume.source.AvroSource;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
+import org.apache.flume.test.util.TestPortProvider;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.Channels;
@@ -72,7 +73,7 @@ public class TestAvroSink {
   private static final Logger logger = LoggerFactory
       .getLogger(TestAvroSink.class);
   private static final String hostname = "127.0.0.1";
-  private static final Integer port = 41414;
+  private static final Integer port = TestPortProvider.getInstance().getFreePort();
 
   private AvroSink sink;
   private Channel channel;
@@ -451,11 +452,8 @@ public class TestAvroSink {
       EventDeliveryException, InstantiationException, IllegalAccessException {
     setUp("deflate", 6);
 
-    boolean bound = false;
-
     AvroSource source;
     Channel sourceChannel;
-    int selectedPort;
 
     source = new AvroSource();
     sourceChannel = new MemoryChannel();
@@ -696,11 +694,9 @@ public class TestAvroSink {
       setUp("none", compressionLevel);
     }
 
-    boolean bound = false;
 
     AvroSource source;
     Channel sourceChannel;
-    int selectedPort;
 
     source = new AvroSource();
     sourceChannel = new MemoryChannel();

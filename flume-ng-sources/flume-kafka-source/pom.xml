@@ -36,6 +36,14 @@
         <groupId>org.apache.rat</groupId>
         <artifactId>apache-rat-plugin</artifactId>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <forkCount>1</forkCount>
+          <reuseForks>false</reuseForks>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 
@@ -75,6 +83,11 @@
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka_2.10</artifactId>
       <classifier>test</classifier>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-test-common</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

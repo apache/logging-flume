@@ -18,9 +18,9 @@
  */
 package org.apache.flume.clients.log4jappender;
 
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import junit.framework.Assert;
 
@@ -46,6 +47,7 @@ import org.apache.flume.conf.Configurables;
 import org.apache.flume.source.AvroSource;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.Status;
+import org.apache.flume.test.util.TestPortProvider;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -63,12 +65,13 @@ public class TestLoadBalancingLog4jAppender {
   private ChannelSelector rcs;
   private Logger fixture;
   private boolean slowDown = false;
+  private TestPortProvider portProvider;
 
   @Before
   public void initiate() throws InterruptedException {
     ch = new MemoryChannel();
     configureChannel();
-
+    portProvider = TestPortProvider.getInstance();
   }
 
   private void configureChannel() {
@@ -92,10 +95,8 @@ public class TestLoadBalancingLog4jAppender {
   public void testLog4jAppenderRoundRobin() throws IOException {
     int numberOfMsgs = 1000;
     int expectedPerSource = 500;
-    File TESTFILE = new File(TestLoadBalancingLog4jAppender.class
-        .getClassLoader()
-        .getResource("flume-loadbalancinglog4jtest.properties").getFile());
-    startSources(TESTFILE, false, new int[] { 25430, 25431 });
+    String propertiesFile = "flume-loadbalancinglog4jtest.properties";
+    startSources(propertiesFile, false, portProvider.getListOfFreePorts(2));
 
     sendAndAssertMessages(numberOfMsgs);
 
@@ -107,12 +108,8 @@ public class TestLoadBalancingLog4jAppender {
   @Test
   public void testLog4jAppenderRandom() throws IOException {
     int numberOfMsgs = 1000;
-    File TESTFILE = new File(TestLoadBalancingLog4jAppender.class
-        .getClassLoader()
-        .getResource("flume-loadbalancing-rnd-log4jtest.properties").getFile());
-    startSources(TESTFILE, false, new int[] { 25430, 25431, 25432, 25433,
-                                              25434,
-        25435, 25436, 25437, 25438, 25439 });
+    String propertiesFile = "flume-loadbalancing-rnd-log4jtest.properties";
+    startSources(propertiesFile, false, portProvider.getListOfFreePorts(10));
 
     sendAndAssertMessages(numberOfMsgs);
 
@@ -129,11 +126,8 @@ public class TestLoadBalancingLog4jAppender {
 
   @Test
   public void testRandomBackoff() throws Exception {
-    File TESTFILE = new File(TestLoadBalancingLog4jAppender.class
-        .getClassLoader()
-        .getResource("flume-loadbalancing-backoff-log4jtest.properties")
-        .getFile());
-    startSources(TESTFILE, false, new int[] { 25430, 25431, 25432 });
+    String propertiesFile = "flume-loadbalancing-backoff-log4jtest.properties";
+    startSources(propertiesFile, false, portProvider.getListOfFreePorts(3));
 
     sources.get(0).setFail();
     sources.get(2).setFail();
@@ -163,11 +157,8 @@ public class TestLoadBalancingLog4jAppender {
 
   @Test
   public void testRandomBackoffUnsafeMode() throws Exception {
-    File TESTFILE = new File(TestLoadBalancingLog4jAppender.class
-        .getClassLoader()
-        .getResource("flume-loadbalancing-backoff-log4jtest.properties")
-        .getFile());
-    startSources(TESTFILE, true, new int[]{25430, 25431, 25432});
+    String propertiesFile = "flume-loadbalancing-backoff-log4jtest.properties";
+    startSources(propertiesFile, true, portProvider.getListOfFreePorts(3));
 
     sources.get(0).setFail();
     sources.get(1).setFail();
@@ -178,15 +169,12 @@ public class TestLoadBalancingLog4jAppender {
 
   @Test (expected = EventDeliveryException.class)
   public void testTimeout() throws Throwable {
-    File TESTFILE = new File(TestLoadBalancingLog4jAppender.class
-        .getClassLoader()
-        .getResource("flume-loadbalancinglog4jtest.properties")
-        .getFile());
+    String propertiesFile = "flume-loadbalancinglog4jtest.properties";
 
     ch = new TestLog4jAppender.SlowMemoryChannel(2000);
     configureChannel();
     slowDown = true;
-    startSources(TESTFILE, false, new int[]{25430, 25431, 25432});
+    startSources(propertiesFile, false, portProvider.getListOfFreePorts(3));
     int level = 20000;
     String msg = "This is log message number" + String.valueOf(level);
     try {
@@ -199,11 +187,8 @@ public class TestLoadBalancingLog4jAppender {
 
   @Test(expected = EventDeliveryException.class)
   public void testRandomBackoffNotUnsafeMode() throws Throwable {
-    File TESTFILE = new File(TestLoadBalancingLog4jAppender.class
-        .getClassLoader()
-        .getResource("flume-loadbalancing-backoff-log4jtest.properties")
-        .getFile());
-    startSources(TESTFILE, false, new int[]{25430, 25431, 25432});
+    String propertiesFile = "flume-loadbalancing-backoff-log4jtest.properties";
+    startSources(propertiesFile, false, portProvider.getListOfFreePorts(3));
 
     sources.get(0).setFail();
     sources.get(1).setFail();
@@ -272,7 +257,7 @@ public class TestLoadBalancingLog4jAppender {
 
   }
 
-  private void startSources(File log4jProps, boolean unsafeMode, int... ports)
+  private void startSources(String log4jProps, boolean unsafeMode, List<Integer> ports)
       throws IOException {
     for (int port : ports) {
       CountingAvroSource source = new CountingAvroSource(port);
@@ -294,9 +279,11 @@ public class TestLoadBalancingLog4jAppender {
     // log4j setup is completed before the @Before calls also.
     // This will cause the test to fail even before it starts!
 
-    FileReader reader = new FileReader(log4jProps);
     Properties props = new Properties();
+    Reader reader = new InputStreamReader(getClass().getResourceAsStream("/" + log4jProps));
     props.load(reader);
+
+    props.setProperty("log4j.appender.out2.Hosts", getHostList(ports));
     props.setProperty("log4j.appender.out2.UnsafeMode",
         String.valueOf(unsafeMode));
     if (slowDown) {
@@ -304,6 +291,10 @@ public class TestLoadBalancingLog4jAppender {
     }
     PropertyConfigurator.configure(props);
     fixture = LogManager.getLogger(TestLoadBalancingLog4jAppender.class);
+  }
+
+  private String getHostList(List<Integer> ports) {
+    return ports.stream().map(integer -> "localhost:" + integer).collect(Collectors.joining(" "));
   }
 
   static class CountingAvroSource extends AvroSource {

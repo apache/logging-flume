@@ -97,9 +97,7 @@ limitations under the License.
     <mvn-project-info-reports-plugin.version>2.4</mvn-project-info-reports-plugin.version>
     <mvn-site-plugin.version>3.3</mvn-site-plugin.version>
     <mvn-sphinx-plugin>1.0.2</mvn-sphinx-plugin>
-    <mvn-surefire-plugin.version>2.14.1</mvn-surefire-plugin.version>
-    <mvn-surefire-plugin-old.version>2.12.3</mvn-surefire-plugin-old.version>
-    <mvn-surefire-plugin-old-morphline.version>2.12.4</mvn-surefire-plugin-old-morphline.version>
+    <mvn-surefire-plugin.version>2.20</mvn-surefire-plugin.version>
     <netty.version>3.9.4.Final</netty.version>
     <protobuf.version>2.5.0</protobuf.version>
     <rat.version>0.11</rat.version>
@@ -817,10 +815,13 @@ limitations under the License.
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>${mvn-surefire-plugin-old.version}</version>
+          <version>${mvn-surefire-plugin.version}</version>
           <configuration>
-            <forkMode>always</forkMode>
-            <forkedProcessTimeoutInSeconds>900</forkedProcessTimeoutInSeconds>
+            <forkCount>0.75C</forkCount>
+            <reuseForks>true</reuseForks>
+            <argLine>-Xms1024m -Xmx1024m</argLine>
+            <rerunFailingTestsCount>10</rerunFailingTestsCount>
+            <forkedProcessTimeoutInSeconds>500</forkedProcessTimeoutInSeconds>
             <redirectTestOutputToFile>true</redirectTestOutputToFile>
             <includes>
               <include>${test.include.pattern}</include>
@@ -1433,6 +1434,13 @@ limitations under the License.
       <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-ng-embedded-agent</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.flume</groupId>
+        <artifactId>flume-test-common</artifactId>
+        <scope>test</scope>
         <version>${project.version}</version>
       </dependency>
 

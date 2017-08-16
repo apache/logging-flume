@@ -33,7 +33,7 @@ import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleState;
-import org.jboss.netty.channel.ChannelException;
+import org.apache.flume.test.util.TestPortProvider;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -74,7 +74,6 @@ public class TestNetcatSource {
       "The words, more or less, were these: " +
       "\"Hey, now, Sir Crow! Good day, good day!";
 
-  private int selectedPort;
   private NetcatSource source;
   private Channel channel;
   private InetAddress localhost;
@@ -111,7 +110,7 @@ public class TestNetcatSource {
   @Test
   public void testUTF16BEencoding() throws InterruptedException, IOException {
     String encoding = "UTF-16BE";
-    startSource(encoding, "false", "1", "512");
+    int selectedPort = startSource(encoding, "false", "1", "512");
     Socket netcatSocket = new Socket(localhost, selectedPort);
     try {
       // Test on english text snippet
@@ -141,7 +140,7 @@ public class TestNetcatSource {
   @Test
   public void testUTF16LEencoding() throws InterruptedException, IOException {
     String encoding = "UTF-16LE";
-    startSource(encoding, "false", "1", "512");
+    int selectedPort = startSource(encoding, "false", "1", "512");
     Socket netcatSocket = new Socket(localhost, selectedPort);
     try {
       // Test on english text snippet
@@ -171,7 +170,7 @@ public class TestNetcatSource {
   @Test
   public void testUTF8encoding() throws InterruptedException, IOException {
     String encoding = "UTF-8";
-    startSource(encoding, "false", "1", "512");
+    int selectedPort = startSource(encoding, "false", "1", "512");
     Socket netcatSocket = new Socket(localhost, selectedPort);
     try {
       // Test on english text snippet
@@ -201,7 +200,7 @@ public class TestNetcatSource {
   @Test
   public void testIS88591encoding() throws InterruptedException, IOException {
     String encoding = "ISO-8859-1";
-    startSource(encoding, "false", "1", "512");
+    int selectedPort = startSource(encoding, "false", "1", "512");
     Socket netcatSocket = new Socket(localhost, selectedPort);
     try {
       // Test on english text snippet
@@ -232,7 +231,7 @@ public class TestNetcatSource {
   public void testAck() throws InterruptedException, IOException {
     String encoding = "UTF-8";
     String ackEvent = "OK";
-    startSource(encoding, "true", "1", "512");
+    int selectedPort = startSource(encoding, "true", "1", "512");
     Socket netcatSocket = new Socket(localhost, selectedPort);
     LineIterator inputLineIterator = IOUtils.lineIterator(netcatSocket.getInputStream(), encoding);
     try {
@@ -265,7 +264,7 @@ public class TestNetcatSource {
   @Test
   public void testMaxLineLength() throws InterruptedException, IOException {
     String encoding = "UTF-8";
-    startSource(encoding, "false", "1", "10");
+    int selectedPort = startSource(encoding, "false", "1", "10");
     Socket netcatSocket = new Socket(localhost, selectedPort);
     try {
       sendEvent(netcatSocket, "123456789", encoding);
@@ -290,7 +289,7 @@ public class TestNetcatSource {
     String encoding = "UTF-8";
     String ackEvent = "OK";
     String ackErrorEvent = "FAILED: Event exceeds the maximum length (10 chars, including newline)";
-    startSource(encoding, "true", "1", "10");
+    int selectedPort = startSource(encoding, "true", "1", "10");
     Socket netcatSocket = new Socket(localhost, selectedPort);
     LineIterator inputLineIterator = IOUtils.lineIterator(netcatSocket.getInputStream(), encoding);
     try {
@@ -320,10 +319,11 @@ public class TestNetcatSource {
     // create a dummy socket bound to a known port.
     try (ServerSocketChannel dummyServerSocket = ServerSocketChannel.open()) {
       dummyServerSocket.socket().setReuseAddress(true);
-      dummyServerSocket.socket().bind(new InetSocketAddress("0.0.0.0", 10500));
+      int port = TestPortProvider.getInstance().getFreePort();
+      dummyServerSocket.socket().bind(new InetSocketAddress("0.0.0.0", port));
 
       Context context = new Context();
-      context.put("port", String.valueOf(10500));
+      context.put("port", String.valueOf(port));
       context.put("bind", "0.0.0.0");
       context.put("ack-every-event", "false");
       Configurables.configure(source, context);
@@ -339,36 +339,29 @@ public class TestNetcatSource {
         source.getLifecycleState());
   }
 
-  private void startSource(String encoding, String ack, String batchSize, String maxLineLength)
+  private int startSource(String encoding, String ack, String batchSize, String maxLineLength)
       throws InterruptedException {
-    boolean bound = false;
 
-    for (int i = 0; i < 100 && !bound; i++) {
-      try {
-        Context context = new Context();
-        context.put("port", String.valueOf(selectedPort = 10500 + i));
-        context.put("bind", "0.0.0.0");
-        context.put("ack-every-event", ack);
-        context.put("encoding", encoding);
-        context.put("batch-size", batchSize);
-        context.put("max-line-length", maxLineLength);
+    int selectedPort = TestPortProvider.getInstance().getFreePort();
 
-        Configurables.configure(source, context);
+    Context context = new Context();
+    context.put("port", String.valueOf(selectedPort));
+    context.put("bind", "0.0.0.0");
+    context.put("ack-every-event", ack);
+    context.put("encoding", encoding);
+    context.put("batch-size", batchSize);
+    context.put("max-line-length", maxLineLength);
 
-        source.start();
-        bound = true;
-      } catch (ChannelException e) {
-        /*
-         * NB: This assume we're using the Netty server under the hood and the
-         * failure is to bind. Yucky.
-         */
-      }
-    }
+    Configurables.configure(source, context);
+
+    source.start();
 
     Assert.assertTrue("Reached start or error",
         LifecycleController.waitForOneOf(source, LifecycleState.START_OR_ERROR));
     Assert.assertEquals("Server is started", LifecycleState.START,
         source.getLifecycleState());
+
+    return selectedPort;
   }
 
   private void sendEvent(Socket socket, String content, String encoding) throws IOException {

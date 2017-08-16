@@ -213,8 +213,7 @@ public class TestLog {
 
   public void doTestMinimumRequiredSpaceTooSmallForPut() throws IOException,
                                                                     InterruptedException {
-    long minimumRequiredSpace = checkpointDir.getUsableSpace() -
-                                    (10L * 1024L * 1024L);
+    long minimumRequiredSpace = checkpointDir.getUsableSpace() - (10L * 1024L * 1024L);
     log.close();
     log = new Log.Builder().setCheckpointInterval(Long.MAX_VALUE)
                            .setMaxFileSize(FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE)
@@ -228,9 +227,9 @@ public class TestLog {
                            .build();
     log.replay();
     File filler = new File(checkpointDir, "filler");
-    byte[] buffer = new byte[64 * 1024];
+    byte[] buffer = new byte[64 * 1024 * 1024];
     FileOutputStream out = new FileOutputStream(filler);
-    while (checkpointDir.getUsableSpace() > minimumRequiredSpace) {
+    while ((checkpointDir.getUsableSpace() + 1024 * 1024 * 1024) > minimumRequiredSpace) {
       out.write(buffer);
     }
     out.close();

@@ -32,6 +32,7 @@ import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.JSONEvent;
+import org.apache.flume.test.util.TestPortProvider;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPost;
@@ -57,7 +58,6 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URL;
 import java.net.UnknownHostException;
@@ -82,19 +82,14 @@ public class TestHTTPSource {
   private static Channel channel;
   private static int selectedPort;
   private static int sslPort;
+  private static TestPortProvider testPortProvider;
   DefaultHttpClient httpClient;
   HttpPost postRequest;
 
-  private static int findFreePort() throws IOException {
-    ServerSocket socket = new ServerSocket(0);
-    int port = socket.getLocalPort();
-    socket.close();
-    return port;
-  }
-
   @BeforeClass
   public static void setUpClass() throws Exception {
-    selectedPort = findFreePort();
+    testPortProvider = TestPortProvider.getInstance();
+    selectedPort = testPortProvider.getFreePort();
 
     source = new HTTPSource();
     channel = new MemoryChannel();
@@ -127,7 +122,7 @@ public class TestHTTPSource {
     // SSL context props
     Context sslContext = new Context();
     sslContext.put(HTTPSourceConfigurationConstants.SSL_ENABLED, "true");
-    sslPort = findFreePort();
+    sslPort = testPortProvider.getFreePort();
     sslContext.put(HTTPSourceConfigurationConstants.CONFIG_PORT,
                    String.valueOf(sslPort));
     sslContext.put(HTTPSourceConfigurationConstants.SSL_KEYSTORE_PASSWORD, "password");

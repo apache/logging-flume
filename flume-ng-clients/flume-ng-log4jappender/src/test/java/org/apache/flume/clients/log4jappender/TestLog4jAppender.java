@@ -43,6 +43,7 @@ import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.source.AvroSource;
+import org.apache.flume.test.util.TestPortProvider;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
@@ -60,7 +61,7 @@ public class TestLog4jAppender {
 
   @Before
   public void initiate() throws Exception {
-    int port = 25430;
+    int port = TestPortProvider.getInstance().getFreePort();
     source = Mockito.spy(new AvroSource());
     ch = new MemoryChannel();
     Configurables.configure(ch, new Context());
@@ -76,6 +77,8 @@ public class TestLog4jAppender {
     FileReader reader = new FileReader(TESTFILE);
     props = new Properties();
     props.load(reader);
+    props.put("log4j.appender.out2.Port", String.valueOf(port));
+
     reader.close();
   }
 

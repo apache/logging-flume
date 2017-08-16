@@ -22,6 +22,7 @@ import junit.framework.Assert;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.event.EventBuilder;
+import org.apache.flume.test.util.TestPortProvider;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,7 +50,7 @@ public class TestThriftRpcClient {
   @Before
   public void setUp() throws Exception {
     props.setProperty("hosts", "h1");
-    port = random.nextInt(40000) + 1024;
+    port = TestPortProvider.getInstance().getFreePort();
     props.setProperty(RpcClientConfigurationConstants.CONFIG_CLIENT_TYPE, "thrift");
     props.setProperty("hosts.h1", "0.0.0.0:" + String.valueOf(port));
     props.setProperty(RpcClientConfigurationConstants.CONFIG_BATCH_SIZE, "10");
@@ -147,7 +148,7 @@ public class TestThriftRpcClient {
     try {
       src = new ThriftTestingSource(ThriftTestingSource.HandlerType.ERROR.name(), port,
                                     ThriftRpcClient.COMPACT_PROTOCOL);
-      client = (ThriftRpcClient) RpcClientFactory.getThriftInstance("0.0.0" + ".0", port);
+      client = (ThriftRpcClient) RpcClientFactory.getThriftInstance("0.0.0.0", port);
       insertEvents(client, 2); //2 events
     } catch (EventDeliveryException ex) {
       Assert.assertEquals("Failed to send event. ", ex.getMessage());
@@ -170,7 +171,7 @@ public class TestThriftRpcClient {
   public void testMultipleThreads() throws Throwable {
     src = new ThriftTestingSource(ThriftTestingSource.HandlerType.OK.name(), port,
                                   ThriftRpcClient.COMPACT_PROTOCOL);
-    client = (ThriftRpcClient) RpcClientFactory.getThriftInstance("0.0.0" + ".0", port, 10);
+    client = (ThriftRpcClient) RpcClientFactory.getThriftInstance("0.0.0.0", port, 10);
     int threadCount = 100;
     ExecutorService submissionSvc = Executors.newFixedThreadPool(threadCount);
     ArrayList<Future<?>> futures = new ArrayList<Future<?>>(threadCount);

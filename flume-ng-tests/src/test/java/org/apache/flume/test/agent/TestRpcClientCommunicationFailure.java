@@ -30,7 +30,7 @@ import org.junit.Test;
 public class TestRpcClientCommunicationFailure {
 
   public static final String CONFIG_FILE_PRCCLIENT_TEST =
-      "rpc-client-test.properties";
+      "rpc-client-test-communication-failure.properties";
 
   @Test
   public void testFailure() throws Exception {
@@ -38,9 +38,9 @@ public class TestRpcClientCommunicationFailure {
 
       StagedInstall.getInstance().startAgent(
           "rpccagent", CONFIG_FILE_PRCCLIENT_TEST);
-      StagedInstall.waitUntilPortOpens("localhost", 12121, 20000);
+      StagedInstall.waitUntilPortOpens("localhost", 12122, 20000);
       RpcClient client = RpcClientFactory.getDefaultInstance(
-          "localhost", 12121);
+          "localhost", 12122);
       String[] text = {"foo", "bar", "xyz", "abc"};
       for (String str : text) {
         client.append(EventBuilder.withBody(str.getBytes()));

@@ -26,7 +26,6 @@ limitations under the License.
     <version>1.8.0-SNAPSHOT</version>
   </parent>
 
-  <groupId>org.apache.flume</groupId>
   <artifactId>flume-shared</artifactId>
   <name>Flume Shared Utils</name>
   <packaging>pom</packaging>
@@ -42,6 +41,7 @@ limitations under the License.
 
   <modules>
     <module>flume-shared-kafka-test</module>
+    <module>flume-test-common</module>
   </modules>
 
   <profiles>
