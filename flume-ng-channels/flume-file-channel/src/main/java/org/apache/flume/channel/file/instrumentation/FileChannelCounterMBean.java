@@ -62,4 +62,11 @@ public interface FileChannelCounterMBean extends ChannelCounterMBean {
    * @see org.apache.flume.channel.file.Log.BackgroundWorker#run()
    */
   long getCheckpointWriteErrorCount();
+
+  /**
+   * A count of the number of errors encountered while trying to write the backup checkpoints. This
+   * includes any Throwables.
+   * @see org.apache.flume.channel.file.EventQueueBackingStoreFile#startBackupThread()
+   */
+  long getCheckpointBackupWriteErrorCount();
 }

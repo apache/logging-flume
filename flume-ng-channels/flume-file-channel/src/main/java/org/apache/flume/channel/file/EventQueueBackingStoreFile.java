@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.SetMultimap;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.apache.flume.channel.file.instrumentation.FileChannelCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,6 +61,7 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
   protected final Map<Integer, AtomicInteger> logFileIDReferenceCounts = Maps.newHashMap();
   protected final MappedByteBuffer mappedBuffer;
   protected final RandomAccessFile checkpointFileHandle;
+  private final FileChannelCounter fileChannelCounter;
   protected final File checkpointFile;
   private final Semaphore backupCompletedSema = new Semaphore(1);
   protected final boolean shouldBackup;
@@ -67,17 +69,18 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
   private final File backupDir;
   private final ExecutorService checkpointBackUpExecutor;
 
-  protected EventQueueBackingStoreFile(int capacity, String name,
-                                       File checkpointFile) throws IOException,
-      BadCheckpointException {
-    this(capacity, name, checkpointFile, null, false, false);
+  protected EventQueueBackingStoreFile(
+      int capacity, String name, FileChannelCounter fileChannelCounter, File checkpointFile
+  ) throws IOException, BadCheckpointException {
+    this(capacity, name, fileChannelCounter, checkpointFile, null, false, false);
   }
 
-  protected EventQueueBackingStoreFile(int capacity, String name,
-                                       File checkpointFile, File checkpointBackupDir,
-                                       boolean backupCheckpoint, boolean compressBackup)
-      throws IOException, BadCheckpointException {
+  protected EventQueueBackingStoreFile(
+      int capacity, String name, FileChannelCounter fileChannelCounter, File checkpointFile,
+      File checkpointBackupDir, boolean backupCheckpoint, boolean compressBackup
+  ) throws IOException, BadCheckpointException {
     super(capacity, name);
+    this.fileChannelCounter = fileChannelCounter;
     this.checkpointFile = checkpointFile;
     this.shouldBackup = backupCheckpoint;
     this.compressBackup = compressBackup;
@@ -294,6 +297,7 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
         try {
           backupCheckpoint(backupDir);
         } catch (Throwable throwable) {
+          fileChannelCounter.incrementCheckpointBackupWriteErrorCount();
           error = true;
           LOG.error("Backing up of checkpoint directory failed.", throwable);
         } finally {
@@ -432,7 +436,9 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
     }
     int capacity = (int) ((file.length() - (HEADER_SIZE * 8L)) / 8L);
     EventQueueBackingStoreFile backingStore = (EventQueueBackingStoreFile)
-        EventQueueBackingStoreFactory.get(file, capacity, "debug", false);
+        EventQueueBackingStoreFactory.get(
+            file, capacity, "debug", new FileChannelCounter("Main"), false
+        );
     System.out.println("File Reference Counts"
         + backingStore.logFileIDReferenceCounts);
     System.out.println("Queue Capacity " + backingStore.getCapacity());
