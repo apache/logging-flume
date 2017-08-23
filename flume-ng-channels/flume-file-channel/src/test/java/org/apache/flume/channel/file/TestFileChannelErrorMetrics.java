@@ -31,7 +31,10 @@ import org.mockito.stubbing.Answer;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
@@ -228,6 +231,70 @@ public class TestFileChannelErrorMetrics extends TestFileChannelBase {
     assertEquals(1, channel.getChannelCounter().getUnhealthy());
     assertEquals(1, channel.getChannelCounter().getClosed());
     assertFalse(channel.getChannelCounter().isOpen());
+  }
+
+  @Test
+  public void testCheckpointBackupWriteErrorShouldIncreaseCounter()
+      throws IOException, InterruptedException {
+    FileChannelCounter fileChannelCounter = new FileChannelCounter("test");
+    File checkpointFile = File.createTempFile("checkpoint", ".tmp");
+    File backupDir = Files.createTempDirectory("checkpoint").toFile();
+    backupDir.deleteOnExit();
+    checkpointFile.deleteOnExit();
+    EventQueueBackingStoreFileV3 backingStoreFileV3 = new EventQueueBackingStoreFileV3(
+        checkpointFile, 1, "test", fileChannelCounter, backupDir,true, false
+    );
+
+    // Exception will be thrown by state check if beforeCheckpoint is not called
+    backingStoreFileV3.checkpoint();
+    // wait for other thread to reach the error state
+    assertEventuallyTrue("checkpoint backup write failure should increase counter to 1",
+        new BooleanPredicate() {
+          @Override
+          public boolean get() {
+            return fileChannelCounter.getCheckpointBackupWriteErrorCount() == 1;
+          }
+        },
+        100
+    );
+  }
+
+  @Test
+  public void testCheckpointBackupWriteErrorShouldIncreaseCounter2()
+      throws Exception {
+    int checkpointInterval = 1500;
+    Map config = new HashMap();
+    config.put(FileChannelConfiguration.CHECKPOINT_INTERVAL, String.valueOf(checkpointInterval));
+    config.put(FileChannelConfiguration.USE_DUAL_CHECKPOINTS, "true");
+    final FileChannel channel = createFileChannel(Collections.unmodifiableMap(config));
+    channel.start();
+    Transaction tx = channel.getTransaction();
+    tx.begin();
+    channel.put(EventBuilder.withBody("test".getBytes()));
+    tx.commit();
+    tx.close();
+    final long beforeCheckpointWrite = System.currentTimeMillis();
+    // first checkpoint should be written successfully -> the counter should remain 0
+    assertEventuallyTrue("checkpoint backup should have been written", new BooleanPredicate() {
+      @Override
+      public boolean get() {
+        return new File(backupDir, "checkpoint").lastModified() > beforeCheckpointWrite;
+      }
+    }, checkpointInterval * 3);
+    assertEquals(0, channel.getChannelCounter().getCheckpointBackupWriteErrorCount());
+    FileUtils.deleteDirectory(backupDir);
+    tx = channel.getTransaction();
+    tx.begin();
+    channel.put(EventBuilder.withBody("test2".getBytes()));
+    tx.commit();
+    tx.close();
+    // the backup directory has been deleted so the backup checkpoint write should have been failed
+    assertEventuallyTrue("checkpointBackupWriteErrorCount should be 1", new BooleanPredicate() {
+      @Override
+      public boolean get() {
+        return channel.getChannelCounter().getCheckpointBackupWriteErrorCount() >= 1;
+      }
+    }, checkpointInterval * 3);
   }
 
   private interface BooleanPredicate {
