@@ -102,7 +102,7 @@ limitations under the License.
     <netty.version>3.9.4.Final</netty.version>
     <protobuf.version>2.5.0</protobuf.version>
     <rat.version>0.11</rat.version>
-    <snappy-java.version>1.1.0</snappy-java.version>
+    <snappy-java.version>1.1.4</snappy-java.version>
     <solr-global.version>4.3.0</solr-global.version>
     <slf4j.version>1.6.1</slf4j.version>
     <system-rules.version>1.16.0</system-rules.version>
