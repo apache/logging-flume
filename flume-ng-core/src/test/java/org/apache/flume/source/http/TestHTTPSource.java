@@ -31,7 +31,6 @@ import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.JSONEvent;
-import org.apache.flume.tools.ImmutablePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPost;
@@ -55,7 +54,6 @@ import javax.management.QueryExp;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.TrustManager;
@@ -73,6 +71,7 @@ import java.net.UnknownHostException;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -102,42 +101,17 @@ public class TestHTTPSource {
     return port;
   }
 
-  private static ImmutablePair<HTTPSource, Channel> createAgent(int port, Context sourceContext) {
-    HTTPSource src = new HTTPSource();
-    Channel ch = new MemoryChannel();
-
-    Context channelCtx = new Context();
-    channelCtx.put("capacity", "100");
-    Configurables.configure(ch, channelCtx);
-
-    List<Channel> channels = new ArrayList<Channel>(1);
-    channels.add(ch);
-
-    ChannelSelector rcs = new ReplicatingChannelSelector();
-    rcs.setChannels(channels);
-
-    src.setChannelProcessor(new ChannelProcessor(rcs));
-
-    ch.start();
-
-    sourceContext.put(HTTPSourceConfigurationConstants.CONFIG_PORT, String.valueOf(port));
-
-    Configurables.configure(src, sourceContext);
-
-    src.start();
-
-    return new ImmutablePair<HTTPSource, Channel>(src, ch);
-  }
-
-  private static Context getDefaultNonSecureContext() {
+  private static Context getDefaultNonSecureContext(int selectedPort) throws IOException {
     Context ctx = new Context();
-    ctx.put("host", "0.0.0.0");
+    ctx.put(HTTPSourceConfigurationConstants.CONFIG_BIND, "0.0.0.0");
+    ctx.put(HTTPSourceConfigurationConstants.CONFIG_PORT, String.valueOf(selectedPort));
     ctx.put("QueuedThreadPool.MaxThreads", "100");
     return ctx;
   }
 
-  private static Context getDefaultSecureContext() {
+  private static Context getDefaultSecureContext(int sslPort) throws IOException {
     Context sslContext = new Context();
+    sslContext.put(HTTPSourceConfigurationConstants.CONFIG_PORT, String.valueOf(sslPort));
     sslContext.put(HTTPSourceConfigurationConstants.SSL_ENABLED, "true");
     sslContext.put(HTTPSourceConfigurationConstants.SSL_KEYSTORE_PASSWORD, "password");
     sslContext.put(HTTPSourceConfigurationConstants.SSL_KEYSTORE,
@@ -147,17 +121,33 @@ public class TestHTTPSource {
 
   @BeforeClass
   public static void setUpClass() throws Exception {
+    source = new HTTPSource();
+    channel = new MemoryChannel();
     selectedPort = findFreePort();
+    configureSourceAndChannel(source, channel, getDefaultNonSecureContext(selectedPort));
+    channel.start();
+    source.start();
+
+    httpsSource = new HTTPSource();
+    httpsChannel = new MemoryChannel();
     sslPort = findFreePort();
+    configureSourceAndChannel(httpsSource, httpsChannel, getDefaultSecureContext(sslPort));
+    httpsChannel.start();
+    httpsSource.start();
+  }
 
-    ImmutablePair<HTTPSource, Channel> agentPair = createAgent(selectedPort,
-        getDefaultNonSecureContext());
-    source = agentPair.left;
-    channel = agentPair.right;
+  private static void configureSourceAndChannel(
+      HTTPSource source, Channel channel, Context context
+  ) {
+    Context channelContext = new Context();
+    channelContext.put("capacity", "100");
+    Configurables.configure(channel, channelContext);
+    Configurables.configure(source, context);
 
-    agentPair = createAgent(sslPort, getDefaultSecureContext());
-    httpsSource = agentPair.left;
-    httpsChannel = agentPair.right;
+    ChannelSelector rcs1 = new ReplicatingChannelSelector();
+    rcs1.setChannels(Collections.singletonList(channel));
+
+    source.setChannelProcessor(new ChannelProcessor(rcs1));
   }
 
   @AfterClass
@@ -324,16 +314,19 @@ public class TestHTTPSource {
     Assert.assertTrue(findMBeans("org.eclipse.jetty.server:type=serverconnector,*",
         "acceptQueueSize", 22).size() == 0);
 
-    Context configuredSourceContext = getDefaultNonSecureContext();
+    int newPort = findFreePort();
+    Context configuredSourceContext = getDefaultNonSecureContext(newPort);
     configuredSourceContext.put("HttpConfiguration.SendServerVersion", "false");
     configuredSourceContext.put("HttpConfiguration.SendXPoweredBy", "true");
     configuredSourceContext.put("ServerConnector.AcceptQueueSize", "22");
     configuredSourceContext.put("QueuedThreadPool.MaxThreads", "123");
 
-    int newPort = findFreePort();
-    ImmutablePair<HTTPSource, Channel> agentPair = createAgent(newPort, configuredSourceContext);
-    Channel newChannel = agentPair.right;
-    HTTPSource newSource = agentPair.left;
+    HTTPSource newSource = new HTTPSource();
+    Channel newChannel = new MemoryChannel();
+    configureSourceAndChannel(newSource, newChannel, configuredSourceContext);
+    newChannel.start();
+    newSource.start();
+
     HttpPost newPostRequest = new HttpPost("http://0.0.0.0:" + newPort);
 
     resp = httpClient.execute(newPostRequest);
@@ -347,14 +340,18 @@ public class TestHTTPSource {
     newSource.stop();
     newChannel.stop();
 
-    configuredSourceContext = getDefaultSecureContext();
+    newPort = findFreePort();
+    configuredSourceContext = getDefaultSecureContext(newPort);
     configuredSourceContext.put("SslContextFactory.IncludeProtocols", "abc def");
 
-    newPort = findFreePort();
+    newSource = new HTTPSource();
+    newChannel = new MemoryChannel();
 
-    agentPair = createAgent(newPort, configuredSourceContext);
-    newChannel = agentPair.right;
-    newSource = agentPair.left;
+    configureSourceAndChannel(newSource, newChannel, configuredSourceContext);
+
+    newChannel.start();
+    newSource.start();
+
     newPostRequest = new HttpPost("http://0.0.0.0:" + newPort);
     try {
       doTestHttps(null, newPort);
