@@ -253,7 +253,7 @@ public class HTTPSource extends AbstractSource implements
     LOG.info("Http source {} stopped. Metrics: {}", getName(), sourceCounter);
   }
 
-    private class FlumeHTTPServlet extends HttpServlet {
+  private class FlumeHTTPServlet extends HttpServlet {
 
     private static final long serialVersionUID = 4891924863218790344L;
 
