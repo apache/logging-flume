@@ -27,6 +27,7 @@ public class HTTPSourceConfigurationConstants {
   public static final String CONFIG_HANDLER = "handler";
   public static final String CONFIG_HANDLER_PREFIX =
           CONFIG_HANDLER + ".";
+
   public static final String CONFIG_BIND = "bind";
 
   public static final String DEFAULT_BIND = "0.0.0.0";

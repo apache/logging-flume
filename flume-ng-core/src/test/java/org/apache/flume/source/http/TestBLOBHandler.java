@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.ReadListener;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 
@@ -163,6 +164,18 @@ public class TestBLOBHandler {
     public void close() throws IOException {
       super.close();
       this.sourceStream.close();
+    }
+
+    public boolean isFinished() {
+      throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public boolean isReady() {
+      throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public void setReadListener(ReadListener arg0) {
+      throw new UnsupportedOperationException("Not supported yet.");
     }
 
   }
