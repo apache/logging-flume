@@ -181,13 +181,11 @@ public class HTTPSource extends AbstractSource implements
             "Running HTTP Server found in source: " + getName()
             + " before I started one."
             + "Will not attempt to start.");
+    QueuedThreadPool threadPool = new QueuedThreadPool();
     if (sourceContext.getSubProperties("QueuedThreadPool.").size() > 0) {
-      QueuedThreadPool threadPool = new QueuedThreadPool();
       FlumeBeanConfigurator.setConfigurationFields(threadPool, sourceContext, LOG);
-      srv = new Server(threadPool);
-    } else {
-      srv = new Server();
     }
+    srv = new Server(threadPool);
 
     //Register with JMX for advanced monitoring
     MBeanContainer mbContainer = new MBeanContainer(ManagementFactory.getPlatformMBeanServer());
@@ -255,7 +253,7 @@ public class HTTPSource extends AbstractSource implements
     LOG.info("Http source {} stopped. Metrics: {}", getName(), sourceCounter);
   }
 
-  private class FlumeHTTPServlet extends HttpServlet {
+    private class FlumeHTTPServlet extends HttpServlet {
 
     private static final long serialVersionUID = 4891924863218790344L;
 
