@@ -153,7 +153,15 @@ public class SinkConfiguration extends ComponentConfiguration {
      * Hive Sink
      * @see org.apache.flume.sink.hive.HiveSink
      */
-    HIVE("org.apache.flume.sink.hive.HiveSinkConfiguration");
+    HIVE("org.apache.flume.sink.hive.HiveSinkConfiguration"),
+
+    /**
+     * HTTP Sink
+     * @see org.apache.flume.sink.http.HttpSink
+     */
+    HTTP("org.apache.flume.sink.http.HttpSinkConfiguration");
+
+
 
     private final String sinkConfigurationName;
 

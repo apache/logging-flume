@@ -229,52 +229,16 @@ If an rc2, rc3 etc is needed, simply create a new rc tag:
     git push origin release-X.Y.Z-rc2
 
 
-### Performing sanity check
-
-1\. Check out the candidate tag
-
-
-    git checkout release-X.Y.Z-rc1
-
-
-2\. Generate a tarball
-
-
-    mvn clean install -DskipTests
-
-
-3\. Unpack the source tarball
-
-
-    cd flume-ng-dist/target
-    rm -rf ./apache-flume-X.Y.Z-src/
-    tar xzvf apache-flume-X.Y.Z-src.tar.gz
-
-
-4\. Do another full build inside the source tarball. This time, allow all
-unit tests & integration tests to run and also include the docs
-
-
-    cd apache-flume-X.Y.Z-src
-    export LC_ALL=C.UTF-8 # Required to build the javadocs on some platforms and in some locales
-    mvn clean install -Psite -DskipTests
-
-
-5\. Verify that the HTML docs that should have been generated inside the
-binary artifact under /docs are there and do not have rendering errors.
-
-### Signatures and Checksums
+### Preparing to sign the artifacts
 
 All artifacts must be signed and checksummed. In order to sign a release
 you will need a PGP key. You should get your key signed by a few other
 people. You will also need to recv their keys from a public key server.
-See the [Apache release
-signing](https://www.apache.org/dev/release-signing)
+See the [Apache release signing](https://www.apache.org/dev/release-signing)
 page for more details.
 
 1\. Add your key to the
-[KEYS](https://dist.apache.org/repos/dist/release/flume/KEYS)
-file:
+[KEYS](https://dist.apache.org/repos/dist/release/flume/KEYS) file:
 
 
     (gpg --list-sigs <your-email> && gpg --armor --export <your-email>) >> KEYS
@@ -282,7 +246,53 @@ file:
 
 And commit the changes.
 
-2\. Create and sign the artifacts, including site docs. This pushes the
+
+### Generating and signing the source artifacts
+
+There is a script in the Flume source tree for generating and signing the Flume
+source artifacts. Once the release candidate is tagged, generate the source
+release with the following steps.
+
+1\. From the top of the Flume source tree, create a directory for the artifacts
+    and then generate them:
+
+
+    mkdir ./source-artifacts
+    ./dev-support/generate-source-release.sh X.Y.Z release-X.Y.Z-rc1 ./source-artifacts/
+
+
+The artifacts will be placed in the directory you specify (in this case,
+`./source-artifacts`)
+
+
+### Testing the source tarball
+
+1\. Unpack the source tarball
+
+
+    tar xzvf apache-flume-X.Y.Z-src.tar.gz
+
+
+2\. Do a full build inside the source tarball. Allow all unit tests &
+integration tests to run and also include the docs.
+
+
+    cd apache-flume-X.Y.Z-src
+    export LC_ALL=C.UTF-8 # Required to build the javadocs on some platforms and in some locales
+    mvn clean install -Psite -DskipTests
+
+
+3\. Verify that the HTML docs that should have been generated inside the
+binary artifact under /docs are there and do not have rendering errors.
+
+
+### Generating, signing, and deploying the binary artifacts
+
+Maven is configured to generate, sign, and deploy the binary artifacts
+automatically. Use the following steps to do that:
+
+
+1\. Create and sign the artifacts, including site docs. This pushes the
 signed artifacts to the ASF staging repository.
 
 In order to do this, you will need a settings.xml file with your
@@ -301,14 +311,14 @@ placed in \~/.m2/settings.xml and might look something like this:
     </settings>
 
 
-Once your settings.xml file is correct, you run the following from the
-flume root directory to generate and deploy the artifacts:
+2\. Once your settings.xml file is correct, run the following from the
+Flume source directory to generate and deploy the artifacts:
 
 
     mvn clean deploy -Psite -Psign -DskipTests
 
 
-This will sign, hash, and upload each artifact to Nexus.
+This will sign, checksum, and upload each artifact to Nexus.
 
 Note: the checksum files will not be mirrored; They should be downloaded
 from the main apache dist site.
@@ -329,16 +339,17 @@ OK, and then click Close using "Apache Flume X.Y.Z" as the description
 to allow others to see the repository. Note that the staging repository
 will have a numeric id associated with it that will be used later
 
-4\. Copy artifacts to people.apache.org
+4\. Copy the source artifacts you built locally to people.apache.org
 
-Copy the apache-flume-X.Y.Z-{bin,src}.tar.gz{,.{asc,md5,sha1}} files to
-people.apache.org.
+    $ rsync -e ssh -av source-artifacts/apache-flume-X.Y.Z-src.tar.gz* people.apache.org:public_html/apache-flume-X-Y.Z-rcN/
+
+5\. Copy the binary artifacts you deployed via Maven to people.apache.org
 
     $ ssh people.apache.org
     $ cd public_html
     $ mkdir apache-flume-X.Y.Z-rcN
     $ cd apache-flume-X.Y.Z-rcN
-    $ wget --no-check-certificate https://repository.apache.org/content/repositories/orgapacheflume-XXXX/org/apache/flume/flume-ng-dist/X.Y.Z/flume-ng-dist-X.Y.Z-{src,bin}.tar.gz{,.{asc,md5,sha1}}
+    $ wget --no-check-certificate https://repository.apache.org/content/repositories/orgapacheflume-XXXX/org/apache/flume/flume-ng-dist/X.Y.Z/flume-ng-dist-X.Y.Z-bin.tar.gz{,.{asc,md5,sha1}}
     $ for file in flume-ng-dist-*; do mv $file $(echo $file | sed -e "s/flume-ng-dist/apache-flume/g");done
 
 

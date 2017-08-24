@@ -756,8 +756,10 @@ class ChannelCallback implements Callback {
     }
     if (log.isDebugEnabled()) {
       long batchElapsedTime = System.currentTimeMillis() - startTime;
-      log.debug("Acked message_no " + index + ": " + metadata.topic() + "-" +
+      if (metadata != null) {
+        log.debug("Acked message_no " + index + ": " + metadata.topic() + "-" +
                 metadata.partition() + "-" + metadata.offset() + "-" + batchElapsedTime);
+      }
     }
   }
 }

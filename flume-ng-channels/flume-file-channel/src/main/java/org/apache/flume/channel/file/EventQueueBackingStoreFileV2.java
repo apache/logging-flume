@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.base.Preconditions;
+import org.apache.flume.channel.file.instrumentation.FileChannelCounter;
 
 final class EventQueueBackingStoreFileV2 extends EventQueueBackingStoreFile {
 
@@ -33,9 +34,10 @@ final class EventQueueBackingStoreFileV2 extends EventQueueBackingStoreFile {
   private static final int INDEX_ACTIVE_LOG = 5;
   private static final int MAX_ACTIVE_LOGS = 1024;
 
-  EventQueueBackingStoreFileV2(File checkpointFile, int capacity, String name)
-      throws IOException, BadCheckpointException {
-    super(capacity, name, checkpointFile);
+  EventQueueBackingStoreFileV2(
+      File checkpointFile, int capacity, String name, FileChannelCounter counter
+  ) throws IOException, BadCheckpointException {
+    super(capacity, name, counter, checkpointFile);
     Preconditions.checkArgument(capacity > 0,
         "capacity must be greater than 0 " + capacity);
 

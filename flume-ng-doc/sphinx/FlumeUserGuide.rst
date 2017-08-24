@@ -50,7 +50,7 @@ in the latest architecture.
 System Requirements
 -------------------
 
-#. Java Runtime Environment - Java 1.7 or later
+#. Java Runtime Environment - Java 1.8 or later
 #. Memory - Sufficient memory for configurations used by sources, channels or sinks
 #. Disk Space - Sufficient disk space for configurations used by channels or sinks
 #. Directory Permissions - Read/Write permissions for directories used by agent
@@ -595,9 +595,9 @@ Weblog agent config:
   agent_foo.sinks.avro-forward-sink.channel = file-channel
 
   # avro sink properties
-  agent_foo.sources.avro-forward-sink.type = avro
-  agent_foo.sources.avro-forward-sink.hostname = 10.1.1.100
-  agent_foo.sources.avro-forward-sink.port = 10000
+  agent_foo.sinks.avro-forward-sink.type = avro
+  agent_foo.sinks.avro-forward-sink.hostname = 10.1.1.100
+  agent_foo.sinks.avro-forward-sink.port = 10000
 
   # configure other pieces
   #...
@@ -616,7 +616,7 @@ HDFS agent config:
   agent_foo.sources.avro-collection-source.channels = mem-channel
   agent_foo.sinks.hdfs-sink.channel = mem-channel
 
-  # avro sink properties
+  # avro source properties
   agent_foo.sources.avro-collection-source.type = avro
   agent_foo.sources.avro-collection-source.bind = 10.1.1.100
   agent_foo.sources.avro-collection-source.port = 10000
@@ -954,6 +954,12 @@ batchSize                   100          Number of messages to consume in one ba
 converter.type              DEFAULT      Class to use to convert messages to flume events. See below.
 converter.*                 --           Converter properties.
 converter.charset           UTF-8        Default converter only. Charset to use when converting JMS TextMessages to byte arrays.
+createDurableSubscription   false        Whether to create durable subscription. Durable subscription can only be used with
+                                         destinationType topic. If true, "clientId" and "durableSubscriptionName"
+                                         have to be specified.
+clientId                    --           JMS client identifier set on Connection right after it is created.
+                                         Required for durable subscriptions.
+durableSubscriptionName     --           Name used to identify the durable subscription. Required for durable subscriptions.
 =========================   ===========  ==============================================================
 
 
@@ -1469,8 +1475,8 @@ Also please make sure that the operating system user of the Flume processes has 
     };
 
 
-NetCat Source
-~~~~~~~~~~~~~
+NetCat TCP Source
+~~~~~~~~~~~~~~~~~
 
 A netcat-like source that listens on a given port and turns each line of text
 into an event. Acts like ``nc -k -l [host] [port]``. In other words,
@@ -1502,6 +1508,40 @@ Example for agent named a1:
   a1.sources = r1
   a1.channels = c1
   a1.sources.r1.type = netcat
+  a1.sources.r1.bind = 0.0.0.0
+  a1.sources.r1.port = 6666
+  a1.sources.r1.channels = c1
+
+NetCat UDP Source
+~~~~~~~~~~~~~~~~~
+
+As per the original Netcat (TCP) source, this source that listens on a given
+port and turns each line of text into an event and sent via the connected channel.
+Acts like ``nc -u -k -l [host] [port]``.
+
+Required properties are in **bold**.
+
+==================  ===========  ===========================================
+Property Name       Default      Description
+==================  ===========  ===========================================
+**channels**        --
+**type**            --           The component type name, needs to be ``netcatudp``
+**bind**            --           Host name or IP address to bind to
+**port**            --           Port # to bind to
+remoteAddressHeader --
+selector.type       replicating  replicating or multiplexing
+selector.*                       Depends on the selector.type value
+interceptors        --           Space-separated list of interceptors
+interceptors.*
+==================  ===========  ===========================================
+
+Example for agent named a1:
+
+.. code-block:: properties
+
+  a1.sources = r1
+  a1.channels = c1
+  a1.sources.r1.type = netcatudp
   a1.sources.r1.bind = 0.0.0.0
   a1.sources.r1.port = 6666
   a1.sources.r1.channels = c1
@@ -2012,7 +2052,7 @@ hdfs.fileType           SequenceFile  File format: currently ``SequenceFile``, `
                                       (2)CompressedStream requires set hdfs.codeC with an available codeC
 hdfs.maxOpenFiles       5000          Allow only this number of open files. If this number is exceeded, the oldest file is closed.
 hdfs.minBlockReplicas   --            Specify minimum number of replicas per HDFS block. If not specified, it comes from the default Hadoop config in the classpath.
-hdfs.writeFormat        --            Format for sequence file records. One of "Text" or "Writable" (the default).
+hdfs.writeFormat        Writable      Format for sequence file records. One of ``Text`` or ``Writable``. Set to ``Text`` before creating data files with Flume, otherwise those files cannot be read by either Apache Impala (incubating) or Apache Hive.
 hdfs.callTimeout        10000         Number of milliseconds allowed for HDFS operations, such as open, write, flush, close.
                                       This number should be increased if many HDFS timeout operations are occurring.
 hdfs.threadsPoolSize    10            Number of threads per HDFS sink for HDFS IO ops (open, write, etc.)
@@ -2727,6 +2767,8 @@ kafka.topic                         default-flume-topic  The topic in Kafka to w
                                                          messages will be published to this topic.
                                                          If the event header contains a "topic" field, the event will be published to that topic
                                                          overriding the topic configured here.
+                                                         Arbitrary header substitution is supported, eg. %{header} is replaced with value of event header named "header".
+                                                         (If using the substitution, it is recommended to set "auto.create.topics.enable" property of Kafka broker to true.)
 flumeBatchSize                      100                  How many messages to process in one batch. Larger batches improve throughput while adding latency.
 kafka.producer.acks                 1                    How many replicas must acknowledge a message before its considered successfully written.
                                                          Accepted values are 0 (Never wait for acknowledgement), 1 (wait for leader only), -1 (wait for all replicas)
@@ -2914,6 +2956,74 @@ that the operating system user of the Flume processes has read privileges on the
       keyTab="/path/to/keytabs/flume.keytab"
       principal="flume/flumehost1.example.com@YOURKERBEROSREALM";
     };
+
+
+HTTP Sink
+~~~~~~~~~
+
+Behaviour of this sink is that it will take events from the channel, and
+send those events to a remote service using an HTTP POST request. The event
+content is sent as the POST body.
+
+Error handling behaviour of this sink depends on the HTTP response returned
+by the target server. The sink backoff/ready status is configurable, as is the
+transaction commit/rollback result and whether the event contributes to the
+successful event drain count.
+
+Any malformed HTTP response returned by the server where the status code is
+not readable will result in a backoff signal and the event is not consumed
+from the channel.
+
+Required properties are in **bold**.
+
+========================== ================= ===========================================================================================
+Property Name              Default           Description
+========================== ================= ===========================================================================================
+**channel**                --
+**type**                   --                The component type name, needs to be ``http``.
+**endpoint**               --                The fully qualified URL endpoint to POST to
+connectTimeout             5000              The socket connection timeout in milliseconds
+requestTimeout             5000              The maximum request processing time in milliseconds
+contentTypeHeader          text/plain        The HTTP Content-Type header
+acceptHeader               text/plain        The HTTP Accept header value
+defaultBackoff             true              Whether to backoff by default on receiving all HTTP status codes
+defaultRollback            true              Whether to rollback by default on receiving all HTTP status codes
+defaultIncrementMetrics    false             Whether to increment metrics by default on receiving all HTTP status codes
+backoff.CODE               --                Configures a specific backoff for an individual (i.e. 200) code or a group (i.e. 2XX) code
+rollback.CODE              --                Configures a specific rollback for an individual (i.e. 200) code or a group (i.e. 2XX) code
+incrementMetrics.CODE      --                Configures a specific metrics increment for an individual (i.e. 200) code or a group (i.e. 2XX) code
+========================== ================= ===========================================================================================
+
+Note that the most specific HTTP status code match is used for the backoff,
+rollback and incrementMetrics configuration options. If there are configuration
+values for both 2XX and 200 status codes, then 200 HTTP codes will use the 200
+value, and all other HTTP codes in the 201-299 range will use the 2XX value.
+
+Any empty or null events are consumed without any request being made to the
+HTTP endpoint.
+
+Example for agent named a1:
+
+.. code-block:: properties
+
+  a1.channels = c1
+  a1.sinks = k1
+  a1.sinks.k1.type = http
+  a1.sinks.k1.channel = c1
+  a1.sinks.k1.endpoint = http://localhost:8080/someuri
+  a1.sinks.k1.connectTimeout = 2000
+  a1.sinks.k1.requestTimeout = 2000
+  a1.sinks.k1.acceptHeader = application/json
+  a1.sinks.k1.contentTypeHeader = application/json
+  a1.sinks.k1.defaultBackoff = true
+  a1.sinks.k1.defaultRollback = true
+  a1.sinks.k1.defaultIncrementMetrics = false
+  a1.sinks.k1.backoff.4XX = false
+  a1.sinks.k1.rollback.4XX = false
+  a1.sinks.k1.incrementMetrics.4XX = true
+  a1.sinks.k1.backoff.200 = false
+  a1.sinks.k1.rollback.200 = false
+  a1.sinks.k1.incrementMetrics.200 = true
 
 
 Custom Sink

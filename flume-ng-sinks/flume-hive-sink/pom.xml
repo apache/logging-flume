@@ -167,7 +167,7 @@ limitations under the License.
       <groupId>xerces</groupId>
       <artifactId>xercesImpl</artifactId>
       <scope>runtime</scope>
-      <version>2.9.1</version>
+      <version>${xerces.version}</version>
     </dependency>
 
     <dependency>
