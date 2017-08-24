@@ -52,7 +52,6 @@ limitations under the License.
     <bundle-plugin.version>2.3.7</bundle-plugin.version>
     <checkstyle.plugin.version>2.17</checkstyle.plugin.version>
     <checkstyle.tool.version>6.19</checkstyle.tool.version>
-    <codehaus.jackson.version>1.9.3</codehaus.jackson.version>
     <commons-cli.version>1.2</commons-cli.version>
     <commons-codec.version>1.8</commons-codec.version>
     <commons-collections.version>3.2.2</commons-collections.version>
@@ -63,18 +62,18 @@ limitations under the License.
     <curator.version>2.6.0</curator.version>
     <derby.version>10.11.1.1</derby.version>
     <elasticsearch.version>0.90.1</elasticsearch.version>
-    <fasterxml.jackson.version>2.8.9</fasterxml.jackson.version>
     <fest-reflect.version>1.4</fest-reflect.version>
     <gson.version>2.2.2</gson.version>
     <guava.version>18.0</guava.version>
     <guava-old.version>11.0.2</guava-old.version>
     <hadoop2.version>2.4.0</hadoop2.version>
-    <httpclient.version>4.3.5</httpclient.version>
-    <httpclient-old.version>4.2.1</httpclient-old.version>
+    <httpcore.version>4.4.6</httpcore.version>
+    <httpclient.version>4.5.3</httpclient.version>
     <irclib.version>1.10</irclib.version>
-    <javax-jms.version>1.1-rev-1</javax-jms.version>
+    <jackson.version>1.9.3</jackson.version>
+    <javax-jms.version>1.1</javax-jms.version>
     <jersey.version>1.8</jersey.version>
-    <jetty.version>6.1.26</jetty.version>
+    <jetty.version>9.4.6.v20170531</jetty.version>
     <joda-time.version>2.1</joda-time.version>
     <junit.version>4.10</junit.version>
     <kafka.version>0.9.0.1</kafka.version>
@@ -86,7 +85,6 @@ limitations under the License.
     <mapdb.version>0.9.9</mapdb.version>
     <mina.version>2.0.4</mina.version>
     <mockito.version>1.9.0</mockito.version>
-    <mortbay-jetty-servlet-api.version>2.5-20110124</mortbay-jetty-servlet-api.version>
     <mvn-antrun-plugin.version>1.7</mvn-antrun-plugin.version>
     <mvn-assembly-plugin.version>2.3</mvn-assembly-plugin.version>
     <mvn-build-helper-plugin>1.7</mvn-build-helper-plugin>
@@ -103,7 +101,7 @@ limitations under the License.
     <netty.version>3.9.4.Final</netty.version>
     <protobuf.version>2.5.0</protobuf.version>
     <rat.version>0.11</rat.version>
-    <snappy-java.version>1.1.4</snappy-java.version>
+    <snappy-java.version>1.1.0</snappy-java.version>
     <solr-global.version>4.3.0</solr-global.version>
     <slf4j.version>1.6.1</slf4j.version>
     <system-rules.version>1.16.0</system-rules.version>
@@ -1072,27 +1070,39 @@ limitations under the License.
       </dependency>
 
       <dependency>
-        <groupId>org.mortbay.jetty</groupId>
-        <artifactId>servlet-api</artifactId>
-        <version>${mortbay-jetty-servlet-api.version}</version>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-servlet</artifactId>
+        <version>${jetty.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>org.mortbay.jetty</groupId>
+        <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-util</artifactId>
         <version>${jetty.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>org.mortbay.jetty</groupId>
-        <artifactId>jetty</artifactId>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-server</artifactId>
+        <version>${jetty.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-jmx</artifactId>
         <version>${jetty.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpclient</artifactId>
-        <version>${httpclient-old.version}</version>
+        <version>${httpclient.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpcore</artifactId>
+        <version>${httpcore.version}</version>
       </dependency>
 
       <dependency>
@@ -1158,31 +1168,13 @@ limitations under the License.
       <dependency>
         <groupId>org.codehaus.jackson</groupId>
         <artifactId>jackson-core-asl</artifactId>
-        <version>${codehaus.jackson.version}</version>
+        <version>${jackson.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.codehaus.jackson</groupId>
         <artifactId>jackson-mapper-asl</artifactId>
-        <version>${codehaus.jackson.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-annotations</artifactId>
-        <version>${fasterxml.jackson.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-core</artifactId>
-        <version>${fasterxml.jackson.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-databind</artifactId>
-        <version>${fasterxml.jackson.version}</version>
+        <version>${jackson.version}</version>
       </dependency>
 
       <dependency>
@@ -1229,7 +1221,7 @@ limitations under the License.
 
       <dependency>
         <groupId>javax.jms</groupId>
-        <artifactId>jms-api</artifactId>
+        <artifactId>jms</artifactId>
         <version>${javax-jms.version}</version>
       </dependency>
 

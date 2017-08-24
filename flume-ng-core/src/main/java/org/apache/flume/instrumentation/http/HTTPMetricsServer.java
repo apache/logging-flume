@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package org.apache.flume.instrumentation.http;
 
 import com.google.gson.Gson;
@@ -29,11 +30,12 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.flume.Context;
 import org.apache.flume.instrumentation.MonitorService;
 import org.apache.flume.instrumentation.util.JMXPollUtil;
-import org.mortbay.jetty.Connector;
-import org.mortbay.jetty.Request;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.handler.AbstractHandler;
-import org.mortbay.jetty.nio.SelectChannelConnector;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,10 +62,12 @@ public class HTTPMetricsServer implements MonitorService {
     jettyServer = new Server();
     //We can use Contexts etc if we have many urls to handle. For one url,
     //specifying a handler directly is the most efficient.
-    SelectChannelConnector connector = new SelectChannelConnector();
+    HttpConfiguration httpConfiguration = new HttpConfiguration();
+    ServerConnector connector = new ServerConnector(jettyServer,
+        new HttpConnectionFactory(httpConfiguration));
     connector.setReuseAddress(true);
     connector.setPort(port);
-    jettyServer.setConnectors(new Connector[] {connector});
+    jettyServer.addConnector(connector);
     jettyServer.setHandler(new HTTPMetricsHandler());
     try {
       jettyServer.start();
@@ -98,10 +102,9 @@ public class HTTPMetricsServer implements MonitorService {
     Gson gson = new Gson();
 
     @Override
-    public void handle(String target,
+    public void handle(String target, Request r1,
             HttpServletRequest request,
-            HttpServletResponse response,
-            int dispatch) throws IOException, ServletException {
+            HttpServletResponse response) throws IOException, ServletException {
       // /metrics is the only place to pull metrics.
       //If we want to use any other url for something else, we should make sure
       //that for metrics only /metrics is used to prevent backward
@@ -135,5 +138,6 @@ public class HTTPMetricsServer implements MonitorService {
       response.flushBuffer();
       //Not handling the request returns a Not found error page.
     }
+
   }
 }
