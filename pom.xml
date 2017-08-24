@@ -209,6 +209,16 @@ limitations under the License.
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-hdfs</artifactId>
             <version>${hadoop.version}</version>
+            <exclusions>
+              <exclusion>
+                <groupId>tomcat</groupId>
+                <artifactId>jasper-compiler</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>tomcat</groupId>
+                <artifactId>jasper-runtime</artifactId>
+              </exclusion>
+            </exclusions>
           </dependency>
           <dependency>
             <groupId>org.apache.hadoop</groupId>
@@ -219,6 +229,16 @@ limitations under the License.
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-minicluster</artifactId>
             <version>${hadoop.version}</version>
+            <exclusions>
+              <exclusion>
+                <groupId>tomcat</groupId>
+                <artifactId>jasper-compiler</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>tomcat</groupId>
+                <artifactId>jasper-runtime</artifactId>
+              </exclusion>
+            </exclusions>
           </dependency>
           <dependency>
             <groupId>org.apache.hadoop</groupId>
@@ -291,11 +311,31 @@ limitations under the License.
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-hdfs</artifactId>
             <version>${hadoop.version}</version>
+            <exclusions>
+              <exclusion>
+                <groupId>tomcat</groupId>
+                <artifactId>jasper-compiler</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>tomcat</groupId>
+                <artifactId>jasper-runtime</artifactId>
+              </exclusion>
+            </exclusions>
           </dependency>
           <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-minicluster</artifactId>
             <version>${hadoop.version}</version>
+            <exclusions>
+              <exclusion>
+                <groupId>tomcat</groupId>
+                <artifactId>jasper-compiler</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>tomcat</groupId>
+                <artifactId>jasper-runtime</artifactId>
+              </exclusion>
+            </exclusions>
           </dependency>
           <dependency>
             <groupId>org.apache.hadoop</groupId>
@@ -361,6 +401,16 @@ limitations under the License.
             <artifactId>hbase-server</artifactId>
             <version>${hbase.version}</version>
             <scope>test</scope>
+            <exclusions>
+              <exclusion>
+                <groupId>tomcat</groupId>
+                <artifactId>jasper-compiler</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>tomcat</groupId>
+                <artifactId>jasper-runtime</artifactId>
+              </exclusion>
+            </exclusions>
           </dependency>
 
           <dependency>
@@ -369,6 +419,16 @@ limitations under the License.
             <version>${hbase.version}</version>
             <classifier>tests</classifier>
             <scope>test</scope>
+            <exclusions>
+              <exclusion>
+                <groupId>tomcat</groupId>
+                <artifactId>jasper-compiler</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>tomcat</groupId>
+                <artifactId>jasper-runtime</artifactId>
+              </exclusion>
+            </exclusions>
           </dependency>
 
           <dependency>
@@ -1064,6 +1124,16 @@ limitations under the License.
         <artifactId>hadoop-common</artifactId>
         <version>${hadoop.version}</version>
         <optional>true</optional>
+        <exclusions>
+          <exclusion>
+            <groupId>tomcat</groupId>
+            <artifactId>jasper-compiler</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>tomcat</groupId>
+            <artifactId>jasper-runtime</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>
