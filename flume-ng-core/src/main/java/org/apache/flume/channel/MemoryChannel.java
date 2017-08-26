@@ -488,6 +488,8 @@ public class MemoryChannel extends BasicChannelSemantics {
             case "file":
               path = jr.nextString();
               break;
+            default:
+              break;
           }
         }
         jr.endObject();

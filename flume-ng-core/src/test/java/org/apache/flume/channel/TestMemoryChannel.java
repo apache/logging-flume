@@ -79,7 +79,8 @@ public class TestMemoryChannel {
   }
 
   @Test
-  public void testPutTakeWithWritePos() throws IOException, InterruptedException, EventDeliveryException {
+  public void testPutTakeWithWritePos() throws IOException, InterruptedException,
+      EventDeliveryException {
     Event event = EventBuilder.withBody("test event".getBytes());
     event.getHeaders().put("inode", "1");
     event.getHeaders().put("pos", "100");
