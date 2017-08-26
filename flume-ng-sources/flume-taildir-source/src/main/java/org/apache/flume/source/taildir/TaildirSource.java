@@ -78,6 +78,7 @@ public class TaildirSource extends AbstractSource implements
   private int checkIdleInterval = 5000;
   private int writePosInitDelay = 5000;
   private int writePosInterval;
+  private boolean writePos;
   private boolean cachePatternMatching;
 
   private List<Long> existingInodes = new CopyOnWriteArrayList<Long>();
@@ -86,6 +87,7 @@ public class TaildirSource extends AbstractSource implements
   private Long maxBackOffSleepInterval;
   private boolean fileHeader;
   private String fileHeaderKey;
+  private String existingInodeList;
 
   @Override
   public synchronized void start() {
@@ -98,6 +100,7 @@ public class TaildirSource extends AbstractSource implements
           .skipToEnd(skipToEnd)
           .addByteOffset(byteOffsetHeader)
           .cachePatternMatching(cachePatternMatching)
+          .writePos(writePos)
           .annotateFileName(fileHeader)
           .fileNameHeader(fileHeaderKey)
           .build();
@@ -111,8 +114,10 @@ public class TaildirSource extends AbstractSource implements
 
     positionWriter = Executors.newSingleThreadScheduledExecutor(
         new ThreadFactoryBuilder().setNameFormat("positionWriter").build());
-    positionWriter.scheduleWithFixedDelay(new PositionWriterRunnable(),
-        writePosInitDelay, writePosInterval, TimeUnit.MILLISECONDS);
+    if (writePos) {
+      positionWriter.scheduleWithFixedDelay(new PositionWriterRunnable(),
+          writePosInitDelay, writePosInterval, TimeUnit.MILLISECONDS);
+    }
 
     super.start();
     logger.debug("TaildirSource started");
@@ -130,8 +135,10 @@ public class TaildirSource extends AbstractSource implements
           service.shutdownNow();
         }
       }
-      // write the last position
-      writePosition();
+      if (writePos) {
+        // write the last position
+        writePosition();
+      }
       reader.close();
     } catch (InterruptedException e) {
       logger.info("Interrupted while awaiting termination", e);
@@ -173,6 +180,7 @@ public class TaildirSource extends AbstractSource implements
     byteOffsetHeader = context.getBoolean(BYTE_OFFSET_HEADER, DEFAULT_BYTE_OFFSET_HEADER);
     idleTimeout = context.getInteger(IDLE_TIMEOUT, DEFAULT_IDLE_TIMEOUT);
     writePosInterval = context.getInteger(WRITE_POS_INTERVAL, DEFAULT_WRITE_POS_INTERVAL);
+    writePos = context.getBoolean(WRITE_POS, DEFAULT_WRITE_POS);
     cachePatternMatching = context.getBoolean(CACHE_PATTERN_MATCHING,
         DEFAULT_CACHE_PATTERN_MATCHING);
 
@@ -220,6 +228,14 @@ public class TaildirSource extends AbstractSource implements
     try {
       existingInodes.clear();
       existingInodes.addAll(reader.updateTailFiles());
+      StringBuilder inodes = new StringBuilder();
+      for (int i = 0; i < existingInodes.size(); i++) {
+        inodes.append(existingInodes.get(i));
+        if (i != existingInodes.size() - 1) {
+          inodes.append(",");
+        }
+      }
+      existingInodeList = inodes.toString();
       for (long inode : existingInodes) {
         TailFile tf = reader.getTailFiles().get(inode);
         if (tf.needTail()) {
@@ -257,6 +273,7 @@ public class TaildirSource extends AbstractSource implements
       if (events.isEmpty()) {
         break;
       }
+      events.get(0).getHeaders().put("existingInodes", existingInodeList);
       sourceCounter.addToEventReceivedCount(events.size());
       sourceCounter.incrementAppendBatchReceivedCount();
       try {

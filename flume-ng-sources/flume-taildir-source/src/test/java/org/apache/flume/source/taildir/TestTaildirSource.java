@@ -44,6 +44,7 @@ import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstant
 import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.FILE_GROUPS_PREFIX;
 import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.HEADERS_PREFIX;
 import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.POSITION_FILE;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.WRITE_POS;
 import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.FILENAME_HEADER;
 import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.FILENAME_HEADER_KEY;
 import static org.junit.Assert.assertArrayEquals;
@@ -312,6 +313,33 @@ public class TestTaildirSource {
     txn.commit();
     txn.close();
 
+    assertNotNull(e.getHeaders().get("path"));
+    assertEquals(f1.getAbsolutePath(),
+        e.getHeaders().get("path"));
+  }
+
+  @Test
+  public void testPutFilenameHeaderWithoutWritePos() throws IOException {
+    File f1 = new File(tmpDir, "file1");
+    Files.write("f1\n", f1, Charsets.UTF_8);
+
+    Context context = new Context();
+    context.put(POSITION_FILE, posFilePath);
+    context.put(FILE_GROUPS, "fg");
+    context.put(FILE_GROUPS_PREFIX + "fg", tmpDir.getAbsolutePath() + "/file.*");
+    context.put(WRITE_POS, "false");
+
+    Configurables.configure(source, context);
+    source.start();
+    source.process();
+    Transaction txn = channel.getTransaction();
+    txn.begin();
+    Event e = channel.take();
+    txn.commit();
+    txn.close();
+
+    assertNotNull(e.getHeaders().get("pos"));
+    assertNotNull(e.getHeaders().get("inode"));
     assertNotNull(e.getHeaders().get("path"));
     assertEquals(f1.getAbsolutePath(),
             e.getHeaders().get("path"));
