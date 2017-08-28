@@ -34,6 +34,7 @@ import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.auth.FlumeAuthenticationUtil;
 import org.apache.flume.auth.PrivilegedExecutor;
 import org.apache.flume.conf.Configurable;
+import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.sink.AbstractSink;
 import org.apache.hadoop.conf.Configuration;
@@ -197,6 +198,10 @@ public class HBaseSink extends AbstractSink implements Configurable {
   @SuppressWarnings("unchecked")
   @Override
   public void configure(Context context) {
+    if (!HBaseVersionCheck.hasVersionLessThan2(logger)) {
+      throw new ConfigurationException(
+          "HBase major version number must be less than 2 for hbase-sink.");
+    }
     tableName = context.getString(HBaseSinkConfigurationConstants.CONFIG_TABLE);
     String cf = context.getString(
         HBaseSinkConfigurationConstants.CONFIG_COLUMN_FAMILY);
