@@ -23,4 +23,4 @@ before_install:
 install:
   - # Skip mvn install. See https://docs.travis-ci.com/user/languages/java/
 script:
-  - MAVEN_OPTS="-Xms512m -Xmx1024m" mvn clean install -DskipTests
+  - MAVEN_OPTS="-Xms512m -Xmx1024m" mvn clean install -DskipTests -B
