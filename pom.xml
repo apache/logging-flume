@@ -107,7 +107,7 @@ limitations under the License.
     <solr-global.version>4.3.0</solr-global.version>
     <slf4j.version>1.6.1</slf4j.version>
     <system-rules.version>1.16.0</system-rules.version>
-    <thrift.version>0.7.0</thrift.version>
+    <thrift.version>0.9.3</thrift.version>
     <twitter4j.version>3.0.3</twitter4j.version>
     <xalan.version>2.7.2</xalan.version>
     <xerces.version>2.9.1</xerces.version>
@@ -197,7 +197,6 @@ limitations under the License.
         <hadoop.version>${hadoop2.version}</hadoop.version>
         <hbase.version>0.94.2</hbase.version>
         <hadoop.common.artifact.id>hadoop-common</hadoop.common.artifact.id>
-        <thrift.version>0.9.0</thrift.version>
       </properties>
       <dependencyManagement>
         <dependencies>
@@ -299,7 +298,6 @@ limitations under the License.
         <hadoop.version>${hadoop2.version}</hadoop.version>
         <hbase.version>1.0.0</hbase.version>
         <hadoop.common.artifact.id>hadoop-common</hadoop.common.artifact.id>
-        <thrift.version>0.9.0</thrift.version>
       </properties>
       <dependencyManagement>
         <dependencies>
