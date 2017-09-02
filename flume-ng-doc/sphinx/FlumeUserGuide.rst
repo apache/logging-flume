@@ -2830,7 +2830,7 @@ argument.
     a1.sinks.k1.kafka.flumeBatchSize = 20
     a1.sinks.k1.kafka.producer.acks = 1
     a1.sinks.k1.kafka.producer.linger.ms = 1
-    a1.sinks.ki.kafka.producer.compression.type = snappy
+    a1.sinks.k1.kafka.producer.compression.type = snappy
 
 
 **Security and Kafka Sink:**
