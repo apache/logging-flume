@@ -231,7 +231,7 @@ public class SourceConfiguration extends ComponentConfiguration {
     }
 
     public String getSourceConfigurationType() {
-      return this.getSourceConfigurationType();
+      return this.srcConfigurationName;
     }
 
     @SuppressWarnings("unchecked")
