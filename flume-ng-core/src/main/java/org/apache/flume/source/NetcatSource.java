@@ -114,6 +114,7 @@ public class NetcatSource extends AbstractSource implements Configurable,
   private int maxLineLength;
   private boolean ackEveryEvent;
   private String sourceEncoding;
+  private int endLineIdentifier;
 
   private CounterGroup counterGroup;
   private ServerSocketChannel serverSocket;
@@ -134,6 +135,7 @@ public class NetcatSource extends AbstractSource implements Configurable,
     String hostKey = NetcatSourceConfigurationConstants.CONFIG_HOSTNAME;
     String portKey = NetcatSourceConfigurationConstants.CONFIG_PORT;
     String ackEventKey = NetcatSourceConfigurationConstants.CONFIG_ACKEVENT;
+	
 
     Configurables.ensureRequiredNonNull(context, hostKey, portKey);
 
@@ -147,6 +149,10 @@ public class NetcatSource extends AbstractSource implements Configurable,
         NetcatSourceConfigurationConstants.CONFIG_SOURCE_ENCODING,
         NetcatSourceConfigurationConstants.DEFAULT_ENCODING
     );
+    endLineIdentifier = context.getInteger(
+        NetcatSourceConfigurationConstants.CONFIG_END_LINE_IDENTIFIER,
+        NetcatSourceConfigurationConstants.DEFAULT_CONFIG_END_LINE_IDENTIFIER
+    );
   }
 
   @Override
@@ -155,6 +161,9 @@ public class NetcatSource extends AbstractSource implements Configurable,
     logger.info("Source starting");
 
     counterGroup.incrementAndGet("open.attempts");
+
+    handlerService = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
+        .setNameFormat("netcat-handler-%d").build());
 
     try {
       SocketAddress bindPoint = new InetSocketAddress(hostName, port);
@@ -167,12 +176,8 @@ public class NetcatSource extends AbstractSource implements Configurable,
     } catch (IOException e) {
       counterGroup.incrementAndGet("open.errors");
       logger.error("Unable to bind to socket. Exception follows.", e);
-      stop();
       throw new FlumeException(e);
     }
-
-    handlerService = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
-        .setNameFormat("netcat-handler-%d").build());
 
     AcceptHandler acceptRunnable = new AcceptHandler(maxLineLength);
     acceptThreadShouldStop.set(false);
@@ -183,6 +188,7 @@ public class NetcatSource extends AbstractSource implements Configurable,
     acceptRunnable.source = this;
     acceptRunnable.serverSocket = serverSocket;
     acceptRunnable.sourceEncoding = sourceEncoding;
+    acceptRunnable.endLineIdentifier = endLineIdentifier;
 
     acceptThread = new Thread(acceptRunnable);
 
@@ -259,6 +265,7 @@ public class NetcatSource extends AbstractSource implements Configurable,
     private AtomicBoolean shouldStop;
     private boolean ackEveryEvent;
     private String sourceEncoding;
+    private int endLineIdentifier;
 
     private final int maxLineLength;
 
@@ -281,6 +288,7 @@ public class NetcatSource extends AbstractSource implements Configurable,
           request.source = source;
           request.ackEveryEvent = ackEveryEvent;
           request.sourceEncoding = sourceEncoding;
+	  request.endLineIdentifier = endLineIdentifier;
 
           handlerService.submit(request);
 
@@ -304,7 +312,8 @@ public class NetcatSource extends AbstractSource implements Configurable,
     private SocketChannel socketChannel;
     private boolean ackEveryEvent;
     private String sourceEncoding;
-
+    private int endLineIdentifier;
+	
     private final int maxLineLength;
 
     public NetcatSocketHandler(int maxLineLength) {
@@ -388,11 +397,14 @@ public class NetcatSource extends AbstractSource implements Configurable,
       boolean foundNewLine = true;
       while (foundNewLine) {
         foundNewLine = false;
-
+        
+        logger.info("get endLineIdentifier" + endLineIdentifier);
+        
         int limit = buffer.limit();
         for (int pos = buffer.position(); pos < limit; pos++) {
-          if (buffer.get(pos) == '\n') {
-
+          if (buffer.get(pos) == endLineIdentifier) {
+			 
+			
             // parse event body bytes out of CharBuffer
             buffer.limit(pos); // temporary limit
             ByteBuffer bytes = Charsets.UTF_8.encode(buffer);
@@ -473,3 +485,4 @@ public class NetcatSource extends AbstractSource implements Configurable,
 
   }
 }
+
