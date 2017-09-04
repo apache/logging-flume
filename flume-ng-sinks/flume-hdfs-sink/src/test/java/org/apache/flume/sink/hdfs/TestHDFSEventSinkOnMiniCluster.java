@@ -570,6 +570,7 @@ public class TestHDFSEventSinkOnMiniCluster {
 
     String filePath = statuses[0].getPath().toUri().getPath();
 
+    // -1 in case that the lease doesn't exist.
     long leaseRenewalTime = NameNodeAdapter.getLeaseRenewalTime(cluster.getNameNode(), filePath);
     // wait until the NameNode recovers the lease
     for (int i = 0; (i < 10) && (leaseRenewalTime != -1L); i++) {
