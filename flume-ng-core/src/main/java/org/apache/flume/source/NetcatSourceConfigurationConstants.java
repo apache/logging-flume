@@ -47,4 +47,12 @@ public class NetcatSourceConfigurationConstants {
    */
   public static final String CONFIG_SOURCE_ENCODING = "encoding";
   public static final String DEFAULT_ENCODING = "utf-8";
+
+  /**
+   * Customization of NewLine identifier
+   *    
+   */
+  public static final String CONFIG_END_LINE_IDENTIFIER = "end-line-identifier";
+  public static final int DEFAULT_CONFIG_END_LINE_IDENTIFIER = 0x0A ;
+
 }
