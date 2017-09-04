@@ -33,6 +33,7 @@ import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.lifecycle.LifecycleException;
+import org.apache.flume.test.util.TestPortProvider;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -97,23 +98,16 @@ public class TestNetcatSource {
       EventDeliveryException {
 
     ExecutorService executor = Executors.newFixedThreadPool(3);
-    boolean bound = false;
+    int port = TestPortProvider.getInstance().getFreePort();
 
-    for (int i = 0; i < 100 && !bound; i++) {
-      try {
-        Context context = new Context();
-        context.put("bind", "0.0.0.0");
-        context.put("port", "41414");
-        context.put("ack-every-event", String.valueOf(ackEveryEvent));
+    Context context = new Context();
+    context.put("bind", "0.0.0.0");
+    context.put("port", String.valueOf(port));
+    context.put("ack-every-event", String.valueOf(ackEveryEvent));
 
-        Configurables.configure(source, context);
+    Configurables.configure(source, context);
 
-        source.start();
-        bound = true;
-      } catch (FlumeException e) {
-        // assume port in use, try another one
-      }
-    }
+    source.start();
 
     Runnable clientRequestRunnable = new Runnable() {
 
@@ -121,7 +115,7 @@ public class TestNetcatSource {
       public void run() {
         try {
           SocketChannel clientChannel = SocketChannel
-              .open(new InetSocketAddress(41414));
+              .open(new InetSocketAddress(port));
 
           Writer writer = Channels.newWriter(clientChannel, "utf-8");
           BufferedReader reader = new BufferedReader(

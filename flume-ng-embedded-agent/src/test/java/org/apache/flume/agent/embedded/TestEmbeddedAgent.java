@@ -18,9 +18,7 @@
  */
 package org.apache.flume.agent.embedded;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +35,7 @@ import org.apache.flume.event.EventBuilder;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
+import org.apache.flume.test.util.TestPortProvider;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -67,7 +66,8 @@ public class TestEmbeddedAgent {
     headers.put("key1", "value1");
     body = "body".getBytes(Charsets.UTF_8);
 
-    int port = findFreePort();
+    int port = TestPortProvider.getInstance().getFreePort();
+
     eventCollector = new EventCollector();
     Responder responder = new SpecificResponder(AvroSourceProtocol.class,
         eventCollector);
@@ -222,20 +222,5 @@ public class TestEmbeddedAgent {
       stringMap.put(entry.getKey().toString(), entry.getValue().toString());
     }
     return stringMap;
-  }
-
-  private static int findFreePort() throws IOException {
-    ServerSocket socket = null;
-    try {
-      socket = new ServerSocket(0);
-      return socket.getLocalPort();
-    } finally {
-      if (socket != null) {
-        try {
-          socket.close();
-        } catch (IOException e) {
-        }
-      }
-    }
   }
 }

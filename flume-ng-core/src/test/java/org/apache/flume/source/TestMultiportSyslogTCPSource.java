@@ -36,6 +36,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
+
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
@@ -46,10 +48,12 @@ import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.instrumentation.SourceCounter;
+import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.source.MultiportSyslogTCPSource.LineSplitter;
 import org.apache.flume.source.MultiportSyslogTCPSource.MultiportSyslogHandler;
 import org.apache.flume.source.MultiportSyslogTCPSource.ParsedBuffer;
 import org.apache.flume.source.MultiportSyslogTCPSource.ThreadSafeDecoder;
+import org.apache.flume.test.util.TestPortProvider;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.DefaultIoSessionDataStructureFactory;
 import org.apache.mina.transport.socket.nio.NioSession;
@@ -66,7 +70,8 @@ public class TestMultiportSyslogTCPSource {
   private static final Logger logger =
       LoggerFactory.getLogger(TestMultiportSyslogTCPSource.class);
 
-  private static final int BASE_TEST_SYSLOG_PORT = 14455;
+  private static final TestPortProvider portProvider = TestPortProvider.getInstance();
+  private static final int BASE_TEST_SYSLOG_PORT = portProvider.getFreePort();
   private final DateTime time = new DateTime();
   private final String stamp1 = time.toString();
   private final String host1 = "localhost.localdomain";
@@ -105,19 +110,16 @@ public class TestMultiportSyslogTCPSource {
 
     source.setChannelProcessor(new ChannelProcessor(rcs));
     Context context = new Context();
-    StringBuilder ports = new StringBuilder();
-    for (int i = 0; i < 1000; i++) {
-      ports.append(String.valueOf(BASE_TEST_SYSLOG_PORT + i)).append(" ");
-    }
-    context.put(SyslogSourceConfigurationConstants.CONFIG_PORTS,
-        ports.toString().trim());
+    List<Integer> ports = portProvider.getListOfFreePorts(1000);
+    String portString = ports.stream().map(String::valueOf).collect(Collectors.joining(" "));
+    context.put(SyslogSourceConfigurationConstants.CONFIG_PORTS, portString);
     source.configure(context);
     source.start();
 
     Socket syslogSocket;
+    InetAddress localHost = InetAddress.getLocalHost();
     for (int i = 0; i < 1000 ; i++) {
-      syslogSocket = new Socket(
-              InetAddress.getLocalHost(), BASE_TEST_SYSLOG_PORT + i);
+      syslogSocket = new Socket(localHost, ports.get(i));
       syslogSocket.getOutputStream().write(getEvent(i));
       syslogSocket.close();
     }

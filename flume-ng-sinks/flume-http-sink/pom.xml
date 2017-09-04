@@ -126,6 +126,12 @@ limitations under the License.
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-test-common</artifactId>
+      <scope>test</scope>
+    </dependency>
+
   </dependencies>
 
 </project>

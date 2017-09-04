@@ -37,11 +37,10 @@ import org.junit.Test;
 
 public class TestHeaderAndBodyTextEventSerializer {
 
-  File testFile = new File("src/test/resources/events.txt");
-  File expectedFile = new File("src/test/resources/events.txt");
-
   @Test
   public void testWithNewline() throws FileNotFoundException, IOException {
+
+    File testFile = new File("src/test/resources/events1.txt");
 
     Map<String, String> headers = new HashMap<String, String>();
     headers.put("header1", "value1");
@@ -71,6 +70,8 @@ public class TestHeaderAndBodyTextEventSerializer {
 
   @Test
   public void testNoNewline() throws FileNotFoundException, IOException {
+
+    File testFile = new File("src/test/resources/events2.txt");
 
     Map<String, String> headers = new HashMap<String, String>();
     headers.put("header1", "value1");

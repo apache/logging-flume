@@ -36,7 +36,7 @@ import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleState;
-import org.jboss.netty.channel.ChannelException;
+import org.apache.flume.test.util.TestPortProvider;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -59,6 +59,7 @@ public class TestLegacyAvroSource {
   private int selectedPort;
   private AvroLegacySource source;
   private Channel channel;
+  private TestPortProvider portProvider = TestPortProvider.getInstance();
 
   @Before
   public void setUp() {
@@ -78,23 +79,13 @@ public class TestLegacyAvroSource {
 
   @Test
   public void testLifecycle() throws InterruptedException {
-    boolean bound = false;
 
-    for (int i = 0; i < 100 && !bound; i++) {
-      try {
-        Context context = new Context();
+    Context context = new Context();
+    context.put("port", String.valueOf(selectedPort = portProvider.getFreePort()));
+    context.put("host", "0.0.0.0");
 
-        context.put("port", String.valueOf(selectedPort = 41414 + i));
-        context.put("host", "0.0.0.0");
-
-        Configurables.configure(source, context);
-
-        source.start();
-        bound = true;
-      } catch (ChannelException e) {
-        // Assume port in use, try another one
-      }
-    }
+    Configurables.configure(source, context);
+    source.start();
 
     Assert
         .assertTrue("Reached start or error", LifecycleController.waitForOneOf(
@@ -111,24 +102,14 @@ public class TestLegacyAvroSource {
 
   @Test
   public void testRequest() throws InterruptedException, IOException {
-    boolean bound = false;
-    int i;
 
-    for (i = 0; i < 100 && !bound; i++) {
-      try {
-        Context context = new Context();
+    Context context = new Context();
+    context.put("port", String.valueOf(selectedPort = portProvider.getFreePort()));
+    context.put("host", "0.0.0.0");
 
-        context.put("port", String.valueOf(selectedPort = 41414 + i));
-        context.put("host", "0.0.0.0");
+    Configurables.configure(source, context);
 
-        Configurables.configure(source, context);
-
-        source.start();
-        bound = true;
-      } catch (ChannelException e) {
-        // Assume port in use, try another one
-      }
-    }
+    source.start();
 
     Assert
         .assertTrue("Reached start or error", LifecycleController.waitForOneOf(

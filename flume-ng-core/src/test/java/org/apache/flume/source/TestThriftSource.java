@@ -36,6 +36,7 @@ import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
 
+import org.apache.flume.test.util.TestPortProvider;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -64,7 +65,7 @@ public class TestThriftSource {
 
   @Before
   public void setUp() {
-    port = random.nextInt(50000) + 1024;
+    port = TestPortProvider.getInstance().getFreePort();
     props.clear();
     props.setProperty("hosts", "h1");
     props.setProperty("hosts.h1", "0.0.0.0:" + String.valueOf(port));

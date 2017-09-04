@@ -29,6 +29,7 @@ import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.instrumentation.MonitorService;
 import org.apache.flume.instrumentation.util.JMXTestUtils;
+import org.apache.flume.test.util.TestPortProvider;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -49,6 +50,7 @@ public class TestHTTPMetricsServer {
   Channel pmemChannel = new PseudoTxnMemoryChannel();
   Type mapType = new TypeToken<Map<String, Map<String, String>>>() {}.getType();
   Gson gson = new Gson();
+  TestPortProvider portProvider = TestPortProvider.getInstance();
 
   @Test
   public void testJSON() throws Exception {
@@ -86,10 +88,7 @@ public class TestHTTPMetricsServer {
     txn2.commit();
     txn2.close();
 
-    testWithPort(5467);
-    testWithPort(33434);
-    testWithPort(44343);
-    testWithPort(0);
+    testWithPort(portProvider.getFreePort());
     memChannel.stop();
     pmemChannel.stop();
   }
@@ -130,11 +129,11 @@ public class TestHTTPMetricsServer {
 
   @Test
   public void testTrace() throws Exception {
-    doTestForbiddenMethods(4543,"TRACE");
+    doTestForbiddenMethods(portProvider.getFreePort(),"TRACE");
   }
   @Test
   public void testOptions() throws Exception {
-    doTestForbiddenMethods(4432,"OPTIONS");
+    doTestForbiddenMethods(portProvider.getFreePort(),"OPTIONS");
   }
 
   public void doTestForbiddenMethods(int port, String method) throws Exception {

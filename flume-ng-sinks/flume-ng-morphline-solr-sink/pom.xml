@@ -32,7 +32,6 @@ limitations under the License.
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <solr.version>${solr-global.version}</solr.version>
     <solr.expected.version>${solr-global.version}</solr.expected.version> <!-- sanity check to verify we actually run against the expected version rather than some outdated version -->
-    <surefire.version>${mvn-surefire-plugin-old-morphline.version}</surefire.version>
   </properties>
 
   <dependencies>
@@ -103,13 +102,8 @@ limitations under the License.
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>${surefire.version}</version>
         <configuration>
           <argLine>-Dtests.locale=en_us</argLine>
-          <redirectTestOutputToFile>true</redirectTestOutputToFile>
-          <systemPropertyVariables>
-            <!--<solr.expected.version>${solr.expected.version}</solr.expected.version>-->
-          </systemPropertyVariables>
         </configuration>
       </plugin>
 

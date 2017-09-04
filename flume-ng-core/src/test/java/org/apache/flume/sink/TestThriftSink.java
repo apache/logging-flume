@@ -33,6 +33,7 @@ import org.apache.flume.event.EventBuilder;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleState;
 
+import org.apache.flume.test.util.TestPortProvider;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -51,14 +52,12 @@ public class TestThriftSink {
   private String hostname;
   private int port;
 
-  private final Random random = new Random();
-
   @Before
   public void setUp() throws Exception {
     sink = new ThriftSink();
     channel = new MemoryChannel();
     hostname = "0.0.0.0";
-    port = random.nextInt(50000) + 1024;
+    port = TestPortProvider.getInstance().getFreePort();
     Context context = new Context();
 
     context.put("hostname", hostname);

@@ -19,6 +19,7 @@
 package org.apache.flume.sink.kafka.util;
 
 import kafka.message.MessageAndMetadata;
+import org.apache.flume.test.util.TestPortProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +38,7 @@ public class TestUtil {
   private static final Logger logger = LoggerFactory.getLogger(TestUtil.class);
   private static TestUtil instance = new TestUtil();
 
-  private Random randPortGen = new Random(System.currentTimeMillis());
+  private TestPortProvider portProvider = TestPortProvider.getInstance();
   private KafkaLocal kafkaServer;
   private KafkaConsumer kafkaConsumer;
   private String hostname = "localhost";
@@ -162,7 +163,7 @@ public class TestUtil {
 
   private synchronized int getNextPort() {
     // generate a random port number between 49152 and 65535
-    return randPortGen.nextInt(65535 - 49152) + 49152;
+    return portProvider.getFreePort();
   }
 
   public String getZkUrl() {

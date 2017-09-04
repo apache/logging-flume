@@ -155,15 +155,21 @@
       <artifactId>curator-framework</artifactId>
     </dependency>
 
-  <dependency>
+    <dependency>
       <groupId>org.apache.curator</groupId>
       <artifactId>curator-recipes</artifactId>
-  </dependency>
+    </dependency>
 
-  <dependency>
+    <dependency>
       <groupId>org.apache.curator</groupId>
       <artifactId>curator-test</artifactId>
-  </dependency>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-test-common</artifactId>
+      <scope>test</scope>
+    </dependency>
 
   </dependencies>
 

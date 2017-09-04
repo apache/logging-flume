@@ -228,6 +228,11 @@ limitations under the License.
       <groupId>org.apache.thrift</groupId>
       <artifactId>libthrift</artifactId>
     </dependency>
+      <dependency>
+          <groupId>org.apache.flume</groupId>
+          <artifactId>flume-test-common</artifactId>
+          <version>1.8.0-SNAPSHOT</version>
+      </dependency>
 
   </dependencies>
 </project>

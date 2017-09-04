@@ -26,7 +26,6 @@ import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
-import org.apache.flume.FlumeException;
 import org.apache.flume.Transaction;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
@@ -34,6 +33,7 @@ import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleState;
+import org.apache.flume.test.util.TestPortProvider;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -60,7 +60,6 @@ public class TestThriftLegacySource {
   private static final Logger logger = LoggerFactory
       .getLogger(ThriftLegacySource.class);
 
-  private int selectedPort;
   private ThriftLegacySource source;
   private Channel channel;
 
@@ -106,30 +105,22 @@ public class TestThriftLegacySource {
     source.setChannelProcessor(new ChannelProcessor(rcs));
   }
 
-  private void bind() throws InterruptedException {
-    boolean bound = false;
+  private int bind() throws InterruptedException {
+    int selectedPort = TestPortProvider.getInstance().getFreePort();
+    Context context = new Context();
+    context.put("port", String.valueOf(selectedPort));
+    context.put("host", "0.0.0.0");
 
-    for (int i = 0; i < 100 && !bound; i++) {
-      try {
-        Context context = new Context();
-
-        context.put("port", String.valueOf(selectedPort = 41414 + i));
-        context.put("host", "0.0.0.0");
-
-        Configurables.configure(source, context);
-
-        source.start();
-        bound = true;
-      } catch (FlumeException e) {
-        // Assume port in use, try another one
-      }
-    }
+    Configurables.configure(source, context);
+    source.start();
 
     Assert
         .assertTrue("Reached start or error", LifecycleController.waitForOneOf(
             source, LifecycleState.START_OR_ERROR));
     Assert.assertEquals("Server is started", LifecycleState.START,
             source.getLifecycleState());
+
+    return selectedPort;
   }
 
   private void stop() throws InterruptedException {
@@ -148,7 +139,7 @@ public class TestThriftLegacySource {
 
   @Test
   public void testRequest() throws InterruptedException, IOException {
-    bind();
+    int selectedPort = bind();
 
     Map flumeMap = new HashMap<CharSequence, ByteBuffer>();
     ThriftFlumeEvent thriftEvent =  new ThriftFlumeEvent(
@@ -173,7 +164,7 @@ public class TestThriftLegacySource {
 
   @Test
   public void testHeaders() throws InterruptedException, IOException {
-    bind();
+    int selectedPort = bind();
 
     Map flumeHeaders = new HashMap<CharSequence, ByteBuffer>();
     flumeHeaders.put("hello", ByteBuffer.wrap("world".getBytes("UTF-8")));

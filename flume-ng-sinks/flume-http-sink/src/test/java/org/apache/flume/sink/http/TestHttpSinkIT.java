@@ -30,6 +30,7 @@ import org.apache.flume.Sink;
 import org.apache.flume.Transaction;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.event.SimpleEvent;
+import org.apache.flume.test.util.TestPortProvider;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -55,6 +56,7 @@ public class TestHttpSinkIT {
 
   private static final int RESPONSE_TIMEOUT = 4000;
   private static final int CONNECT_TIMEOUT = 2500;
+  public static final int PORT_NUMBER = TestPortProvider.getInstance().getFreePort();
 
   private MemoryChannel channel;
 
@@ -64,7 +66,7 @@ public class TestHttpSinkIT {
   public void setupSink() {
     if (httpSink == null) {
       Context httpSinkContext = new Context();
-      httpSinkContext.put("endpoint", "http://localhost:8080/endpoint");
+      httpSinkContext.put("endpoint", "http://localhost:" + PORT_NUMBER + "/endpoint");
       httpSinkContext.put("requestTimeout", "2000");
       httpSinkContext.put("connectTimeout", "1500");
       httpSinkContext.put("acceptHeader", "application/json");
@@ -91,11 +93,11 @@ public class TestHttpSinkIT {
   @After
   public void waitForShutdown() throws InterruptedException {
     httpSink.stop();
-    new CountDownLatch(1).await(500, TimeUnit.MILLISECONDS);
+    Thread.sleep(500);
   }
 
   @Rule
-  public WireMockRule service = new WireMockRule(wireMockConfig().port(8080));
+  public WireMockRule service = new WireMockRule(wireMockConfig().port(PORT_NUMBER));
 
   @Test
   public void ensureSuccessfulMessageDelivery() throws Exception {

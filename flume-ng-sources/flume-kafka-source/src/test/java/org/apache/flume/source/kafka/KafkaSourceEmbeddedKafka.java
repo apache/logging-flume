@@ -22,6 +22,7 @@ import kafka.server.KafkaServerStartable;
 import kafka.utils.ZkUtils;
 import org.I0Itec.zkclient.ZkClient;
 import org.apache.commons.io.FileUtils;
+import org.apache.flume.test.util.TestPortProvider;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
@@ -48,6 +49,9 @@ public class KafkaSourceEmbeddedKafka {
   File dir;
 
   public KafkaSourceEmbeddedKafka(Properties properties) {
+    TestPortProvider testPortProvider = TestPortProvider.getInstance();
+    zkPort = testPortProvider.getFreePort();
+    serverPort = testPortProvider.getFreePort();
     zookeeper = new KafkaSourceEmbeddedZookeeper(zkPort);
     dir = new File(System.getProperty("java.io.tmpdir"), "kafka_log-" + UUID.randomUUID());
     try {
@@ -97,9 +101,8 @@ public class KafkaSourceEmbeddedKafka {
   }
 
   public void produce(String topic, String k, byte[] v) {
-    ProducerRecord<String, byte[]> rec = new ProducerRecord<String, byte[]>(topic, k, v);
     try {
-      producer.send(rec).get();
+      producer.send(new ProducerRecord<String, byte[]>(topic, k, v)).get();
     } catch (InterruptedException e) {
       e.printStackTrace();
     } catch (ExecutionException e) {
@@ -112,9 +115,8 @@ public class KafkaSourceEmbeddedKafka {
   }
 
   public void produce(String topic, int partition, String k, byte[] v) {
-    ProducerRecord<String, byte[]> rec = new ProducerRecord<String, byte[]>(topic, partition, k, v);
     try {
-      producer.send(rec).get();
+      producer.send(new ProducerRecord<String, byte[]>(topic, partition, k, v)).get();
     } catch (InterruptedException e) {
       e.printStackTrace();
     } catch (ExecutionException e) {
