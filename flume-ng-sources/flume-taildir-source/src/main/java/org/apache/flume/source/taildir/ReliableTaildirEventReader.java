@@ -51,6 +51,7 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
   private final List<TaildirMatcher> taildirCache;
   private final Table<String, String, String> headerTable;
 
+  
   private TailFile currentFile = null;
   private Map<Long, TailFile> tailFiles = Maps.newHashMap();
   private long updateTime;
@@ -133,7 +134,9 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
               + "inode: " + inode + ", pos: " + pos + ", path: " + path);
         }
         TailFile tf = tailFiles.get(inode);
-        if (tf != null && tf.updatePos(path, inode, pos)) {
+        //if (tf != null && tf.updatePos(path, inode, pos)) {
+        if (tf != null && tf.updatePos(tf.getpath(), inode, pos)) {
+        	//Update the mapping between inode and TF
           tailFiles.put(inode, tf);
         } else {
           logger.info("Missing file: " + path + ", inode: " + inode + ", pos: " + pos);
@@ -244,7 +247,8 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
       for (File f : taildir.getMatchingFiles()) {
         long inode = getInode(f);
         TailFile tf = tailFiles.get(inode);
-        if (tf == null || !tf.getPath().equals(f.getAbsolutePath())) {
+       // if (tf == null || !tf.getPath().equals(f.getAbsolutePath())) {
+        if (tf == null ) {
           long startPos = skipToEnd ? f.length() : 0;
           tf = openFile(f, headers, inode, startPos);
         } else {
