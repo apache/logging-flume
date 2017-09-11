@@ -49,7 +49,7 @@ class FlumeHttpServletRequestWrapper implements HttpServletRequest {
 
   private ServletInputStream stream;
   private String charset;
-  
+
   public FlumeHttpServletRequestWrapper(final byte[] data) {
     stream = new ServletInputStream() {
       @Override

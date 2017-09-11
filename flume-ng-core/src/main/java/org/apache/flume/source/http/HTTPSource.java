@@ -200,11 +200,11 @@ public class HTTPSource extends AbstractSource implements
 
     if (sslEnabled) {
       SslContextFactory sslCtxFactory = new SslContextFactory();
+      FlumeBeanConfigurator.setConfigurationFields(sslCtxFactory, sourceContext, LOG);
       sslCtxFactory.setExcludeProtocols(excludedProtocols.toArray(new String[0]));
       sslCtxFactory.setKeyStorePath(keyStorePath);
       sslCtxFactory.setKeyStorePassword(keyStorePassword);
-      FlumeBeanConfigurator.setConfigurationFields(sslCtxFactory, sourceContext, LOG);
-
+      
       httpConfiguration.setSecurePort(port);
       httpConfiguration.setSecureScheme("https");
 

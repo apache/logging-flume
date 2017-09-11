@@ -19,7 +19,6 @@
 
 package org.apache.flume.tools;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Map;
 
@@ -58,6 +57,7 @@ public class FlumeBeanConfigurator {
 
         String value = properties.get(fieldName);
         if (value != null) {
+
           Class<?> fieldType = method.getParameterTypes()[0];;
           try {
             if (fieldType.equals(String.class)) {
@@ -77,7 +77,7 @@ public class FlumeBeanConfigurator {
             } else if (fieldType.equals(char.class)) {
               method.invoke(configurable, value.charAt(0));
             } else if (fieldType.equals(byte.class)) {
-              method.invoke(configurable, value.getBytes()[0]);
+              method.invoke(configurable, Byte.parseByte(value));
             } else if (fieldType.equals(String[].class)) {
               method.invoke(configurable, (Object)value.split("\\s+"));
             } else {
