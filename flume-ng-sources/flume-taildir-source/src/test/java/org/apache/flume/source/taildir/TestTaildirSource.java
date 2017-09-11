@@ -20,7 +20,6 @@ package org.apache.flume.source.taildir;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
-import java.util.logging.Logger;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
@@ -53,14 +52,12 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import org.slf4j.LoggerFactory;
 
 public class TestTaildirSource {
   static TaildirSource source;
   static MemoryChannel channel;
   private File tmpDir;
   private String posFilePath;
-  private static final org.slf4j.Logger logger = LoggerFactory.getLogger(TestTaildirSource.class);
 
   @Before
   public void setUp() {
