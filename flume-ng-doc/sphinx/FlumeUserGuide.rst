@@ -1751,6 +1751,8 @@ N.B. Jetty-specific settings are set using the setter-methods on the objects lis
  <http://www.eclipse.org/jetty/javadoc/9.4.6.v20170531/org/eclipse/jetty/server/HttpConfiguration.html>,
  <http://www.eclipse.org/jetty/javadoc/9.4.6.v20170531/org/eclipse/jetty/util/ssl/SslContextFactory.html> and
  <http://www.eclipse.org/jetty/javadoc/9.4.6.v20170531/org/eclipse/jetty/server/ServerConnector.html>).
+When using Jetty-specific setings, named properites above will take precedence (for example excludeProtocols will take
+prcedence over SslContextFactory.ExcludeProtocols).
 
 An example http source for agent named a1:
 
