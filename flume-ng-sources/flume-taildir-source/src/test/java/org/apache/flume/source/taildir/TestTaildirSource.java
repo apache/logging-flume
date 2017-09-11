@@ -342,6 +342,7 @@ public class TestTaildirSource {
 
     assertEquals(e.getHeaders().get("pos"), "3");
     assertEquals(source.getInodePositionMap().get(e.getHeaders().get("inode")), "3");
-    assertEquals(source.getInodePathMap().get(e.getHeaders().get("inode")), e.getHeaders().get("path"));
+    assertEquals(source.getInodePathMap().get(e.getHeaders().get("inode")),
+        e.getHeaders().get("path"));
   }
 }
