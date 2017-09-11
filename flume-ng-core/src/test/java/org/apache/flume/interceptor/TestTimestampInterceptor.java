@@ -35,17 +35,16 @@ public class TestTimestampInterceptor {
   public void testBasic() throws ClassNotFoundException, InstantiationException,
       IllegalAccessException {
 
-    InterceptorBuilderFactory factory = new InterceptorBuilderFactory();
     Interceptor.Builder builder = InterceptorBuilderFactory.newInstance(
         InterceptorType.TIMESTAMP.toString());
     Interceptor interceptor = builder.build();
 
     Event event = EventBuilder.withBody("test event", Charsets.UTF_8);
-    Assert.assertNull(event.getHeaders().get(Constants.TIMESTAMP));
+    Assert.assertNull(event.getHeaders().get(Constants.DEFAULT_HEADER_NAME));
 
     Long now = System.currentTimeMillis();
     event = interceptor.intercept(event);
-    String timestampStr = event.getHeaders().get(Constants.TIMESTAMP);
+    String timestampStr = event.getHeaders().get(Constants.DEFAULT_HEADER_NAME);
     Assert.assertNotNull(timestampStr);
     Assert.assertTrue(Long.parseLong(timestampStr) >= now);
   }
@@ -60,7 +59,6 @@ public class TestTimestampInterceptor {
     Context ctx = new Context();
     ctx.put("preserveExisting", "true");
 
-    InterceptorBuilderFactory factory = new InterceptorBuilderFactory();
     Interceptor.Builder builder = InterceptorBuilderFactory.newInstance(
         InterceptorType.TIMESTAMP.toString());
     builder.configure(ctx);
@@ -68,13 +66,12 @@ public class TestTimestampInterceptor {
 
     long originalTs = 1L;
     Event event = EventBuilder.withBody("test event", Charsets.UTF_8);
-    event.getHeaders().put(Constants.TIMESTAMP, Long.toString(originalTs));
+    event.getHeaders().put(Constants.DEFAULT_HEADER_NAME, Long.toString(originalTs));
     Assert.assertEquals(Long.toString(originalTs),
-        event.getHeaders().get(Constants.TIMESTAMP));
+        event.getHeaders().get(Constants.DEFAULT_HEADER_NAME));
 
-    Long now = System.currentTimeMillis();
     event = interceptor.intercept(event);
-    String timestampStr = event.getHeaders().get(Constants.TIMESTAMP);
+    String timestampStr = event.getHeaders().get(Constants.DEFAULT_HEADER_NAME);
     Assert.assertNotNull(timestampStr);
     Assert.assertTrue(Long.parseLong(timestampStr) == originalTs);
   }
@@ -89,7 +86,6 @@ public class TestTimestampInterceptor {
     Context ctx = new Context();
     ctx.put("preserveExisting", "false"); // DEFAULT BEHAVIOR
 
-    InterceptorBuilderFactory factory = new InterceptorBuilderFactory();
     Interceptor.Builder builder = InterceptorBuilderFactory.newInstance(
         InterceptorType.TIMESTAMP.toString());
     builder.configure(ctx);
@@ -97,15 +93,36 @@ public class TestTimestampInterceptor {
 
     long originalTs = 1L;
     Event event = EventBuilder.withBody("test event", Charsets.UTF_8);
-    event.getHeaders().put(Constants.TIMESTAMP, Long.toString(originalTs));
+    event.getHeaders().put(Constants.DEFAULT_HEADER_NAME, Long.toString(originalTs));
     Assert.assertEquals(Long.toString(originalTs),
-        event.getHeaders().get(Constants.TIMESTAMP));
+        event.getHeaders().get(Constants.DEFAULT_HEADER_NAME));
 
     Long now = System.currentTimeMillis();
     event = interceptor.intercept(event);
-    String timestampStr = event.getHeaders().get(Constants.TIMESTAMP);
+    String timestampStr = event.getHeaders().get(Constants.DEFAULT_HEADER_NAME);
     Assert.assertNotNull(timestampStr);
     Assert.assertTrue(Long.parseLong(timestampStr) >= now);
   }
 
+  @Test
+  public void testCustomHeader() throws Exception {
+    Context ctx = new Context();
+    ctx.put(TimestampInterceptor.Constants.CONFIG_HEADER_NAME, "timestampHeader");
+    Interceptor.Builder builder = InterceptorBuilderFactory.newInstance(
+            InterceptorType.TIMESTAMP.toString());
+    builder.configure(ctx);
+    Interceptor interceptor = builder.build();
+
+    long originalTs = 1L;
+    Event event = EventBuilder.withBody("test event", Charsets.UTF_8);
+    event.getHeaders().put(Constants.DEFAULT_HEADER_NAME, Long.toString(originalTs));
+
+    Long now = System.currentTimeMillis();
+    event = interceptor.intercept(event);
+    Assert.assertEquals(Long.toString(originalTs),
+            event.getHeaders().get(Constants.DEFAULT_HEADER_NAME));
+    String timestampStr = event.getHeaders().get("timestampHeader");
+    Assert.assertNotNull(timestampStr);
+    Assert.assertTrue(Long.parseLong(timestampStr) >= now);
+  }
 }
