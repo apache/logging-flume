@@ -1182,7 +1182,6 @@ headers.<filegroupName>.<headerKey> --                             Header value 
 byteOffsetHeader                    false                          Whether to add the byte offset of a tailed line to a header called 'byteoffset'.
 skipToEnd                           false                          Whether to skip the position to EOF in the case of files not written on the position file.
 idleTimeout                         120000                         Time (ms) to close inactive files. If the closed file is appended new lines to, this source will automatically re-open it.
-writePosInterval                    3000                           Interval time (ms) to write the last position of each file on the position file.
 batchSize                           100                            Max number of lines to read and send to the channel at a time. Using the default is usually fine.
 backoffSleepIncrement               1000                           The increment for time delay before reattempting to poll for new data, when the last attempt did not find any new data.
 maxBackoffSleep                     5000                           The max time delay between each reattempt to poll for new data, when the last attempt did not find any new data.

@@ -20,6 +20,7 @@ package org.apache.flume.source.taildir;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
+import java.util.logging.Logger;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
@@ -44,7 +45,6 @@ import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstant
 import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.FILE_GROUPS_PREFIX;
 import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.HEADERS_PREFIX;
 import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.POSITION_FILE;
-import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.WRITE_POS;
 import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.FILENAME_HEADER;
 import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.FILENAME_HEADER_KEY;
 import static org.junit.Assert.assertArrayEquals;
@@ -53,12 +53,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import org.slf4j.LoggerFactory;
 
 public class TestTaildirSource {
   static TaildirSource source;
   static MemoryChannel channel;
   private File tmpDir;
   private String posFilePath;
+  private static final org.slf4j.Logger logger = LoggerFactory.getLogger(TestTaildirSource.class);
 
   @Before
   public void setUp() {
@@ -319,15 +321,15 @@ public class TestTaildirSource {
   }
 
   @Test
-  public void testPutFilenameHeaderWithoutWritePos() throws IOException {
+  public void testNotifyEvent() throws IOException {
     File f1 = new File(tmpDir, "file1");
     Files.write("f1\n", f1, Charsets.UTF_8);
+    Files.write("f2\n", f1, Charsets.UTF_8);
 
     Context context = new Context();
     context.put(POSITION_FILE, posFilePath);
     context.put(FILE_GROUPS, "fg");
     context.put(FILE_GROUPS_PREFIX + "fg", tmpDir.getAbsolutePath() + "/file.*");
-    context.put(WRITE_POS, "false");
 
     Configurables.configure(source, context);
     source.start();
@@ -338,10 +340,8 @@ public class TestTaildirSource {
     txn.commit();
     txn.close();
 
-    assertNotNull(e.getHeaders().get("pos"));
-    assertNotNull(e.getHeaders().get("inode"));
-    assertNotNull(e.getHeaders().get("path"));
-    assertEquals(f1.getAbsolutePath(),
-            e.getHeaders().get("path"));
+    assertEquals(e.getHeaders().get("pos"), "3");
+    assertEquals(source.getInodePositionMap().get(e.getHeaders().get("inode")), "3");
+    assertEquals(source.getInodePathMap().get(e.getHeaders().get("inode")), e.getHeaders().get("path"));
   }
 }

@@ -162,6 +162,9 @@ public class TailFile {
       return null;
     }
     Event event = EventBuilder.withBody(line.line);
+    event.getHeaders().put("inode", Long.toString(this.getInode()));
+    event.getHeaders().put("pos", Long.toString(this.getLineReadPos()));
+    event.getHeaders().put("path", this.getPath());
     if (addByteOffset == true) {
       event.getHeaders().put(BYTE_OFFSET_HEADER_KEY, posTmp.toString());
     }

@@ -57,7 +57,6 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
   private boolean addByteOffset;
   private boolean cachePatternMatching;
   private boolean committed = true;
-  private final boolean writePos;
   private final boolean annotateFileName;
   private final String fileNameHeader;
 
@@ -67,7 +66,7 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
   private ReliableTaildirEventReader(Map<String, String> filePaths,
       Table<String, String, String> headerTable, String positionFilePath,
       boolean skipToEnd, boolean addByteOffset, boolean cachePatternMatching,
-      boolean writePos, boolean annotateFileName, String fileNameHeader) throws IOException {
+      boolean annotateFileName, String fileNameHeader) throws IOException {
     // Sanity checks
     Preconditions.checkNotNull(filePaths);
     Preconditions.checkNotNull(positionFilePath);
@@ -88,7 +87,6 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
     this.headerTable = headerTable;
     this.addByteOffset = addByteOffset;
     this.cachePatternMatching = cachePatternMatching;
-    this.writePos = writePos;
     this.annotateFileName = annotateFileName;
     this.fileNameHeader = fileNameHeader;
     updateTailFiles(skipToEnd);
@@ -200,18 +198,13 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
     }
 
     Map<String, String> headers = currentFile.getHeaders();
-    if (annotateFileName || !writePos || (headers != null && !headers.isEmpty())) {
+    if (annotateFileName || (headers != null && !headers.isEmpty())) {
       for (Event event : events) {
         if (headers != null && !headers.isEmpty()) {
           event.getHeaders().putAll(headers);
         }
         if (annotateFileName) {
           event.getHeaders().put(fileNameHeader, currentFile.getPath());
-        }
-        if (!writePos) {
-          event.getHeaders().put("inode", Long.toString(currentFile.getInode()));
-          event.getHeaders().put("pos", Long.toString(currentFile.getLineReadPos()));
-          event.getHeaders().put("path", currentFile.getPath());
         }
       }
     }
@@ -304,8 +297,6 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
     private boolean skipToEnd;
     private boolean addByteOffset;
     private boolean cachePatternMatching;
-    private Boolean writePos =
-            TaildirSourceConfigurationConstants.DEFAULT_WRITE_POS;
     private Boolean annotateFileName =
             TaildirSourceConfigurationConstants.DEFAULT_FILE_HEADER;
     private String fileNameHeader =
@@ -341,11 +332,6 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
       return this;
     }
 
-    public Builder writePos(boolean writePos) {
-      this.writePos = writePos;
-      return this;
-    }
-
     public Builder annotateFileName(boolean annotateFileName) {
       this.annotateFileName = annotateFileName;
       return this;
@@ -358,7 +344,7 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
 
     public ReliableTaildirEventReader build() throws IOException {
       return new ReliableTaildirEventReader(filePaths, headerTable, positionFilePath, skipToEnd,
-                                            addByteOffset, cachePatternMatching, writePos,
+                                            addByteOffset, cachePatternMatching,
                                             annotateFileName, fileNameHeader);
     }
   }

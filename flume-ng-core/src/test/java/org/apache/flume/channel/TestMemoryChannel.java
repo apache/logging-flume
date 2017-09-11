@@ -79,41 +79,6 @@ public class TestMemoryChannel {
   }
 
   @Test
-  public void testPutTakeWithWritePos() throws IOException, InterruptedException,
-      EventDeliveryException {
-    Event event = EventBuilder.withBody("test event".getBytes());
-    event.getHeaders().put("inode", "1");
-    event.getHeaders().put("pos", "100");
-    event.getHeaders().put("path", "test");
-    Context context = new Context();
-    Map<String, String> parms = new HashMap<String, String>();
-    File tmpDir = Files.createTempDir();
-
-    parms.put("writePos", "true");
-    parms.put("positionFile", tmpDir.getAbsolutePath() + "pos");
-    context.putAll(parms);
-    Configurables.configure(channel, context);
-
-    Transaction transaction = channel.getTransaction();
-    Assert.assertNotNull(transaction);
-
-    transaction.begin();
-    channel.put(event);
-    transaction.commit();
-    transaction.close();
-
-    transaction = channel.getTransaction();
-    Assert.assertNotNull(transaction);
-
-    transaction.begin();
-    Event event2 = channel.take();
-    Assert.assertEquals(event, event2);
-    transaction.commit();
-    Assert.assertEquals(IOUtils.toString(new FileReader(tmpDir.getAbsolutePath() + "pos")),
-        "[{\"inode\":\"1\",\"pos\":\"100\",\"file\":\"test\"}]");
-  }
-
-  @Test
   public void testPutAcceptsNullValueInHeader() {
     Configurables.configure(channel, new Context());
 

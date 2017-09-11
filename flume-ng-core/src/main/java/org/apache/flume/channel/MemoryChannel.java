@@ -20,37 +20,19 @@ package org.apache.flume.channel;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.gson.Gson;
-import com.google.gson.stream.JsonReader;
-import java.util.HashMap;
 import org.apache.flume.ChannelException;
 import org.apache.flume.ChannelFullException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
-import org.apache.flume.FlumeException;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.annotations.Recyclable;
+import org.apache.flume.event.SimpleEvent;
 import org.apache.flume.instrumentation.ChannelCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.GuardedBy;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -78,8 +60,6 @@ public class MemoryChannel extends BasicChannelSemantics {
   private static final Integer defaultByteCapacityBufferPercentage = 20;
 
   private static final Integer defaultKeepAlive = 3;
-  private static final String defaultPositionFile = "/.flume/taildir_position.json";
-  private static final boolean defaultWritePos = false;
 
   private class MemoryTransaction extends BasicTransactionSemantics {
     private LinkedBlockingDeque<Event> takeList;
@@ -153,29 +133,11 @@ public class MemoryChannel extends BasicChannelSemantics {
       int puts = putList.size();
       int takes = takeList.size();
       synchronized (queueLock) {
-        if (writePos && takes > 0) {
+        if (takes > 0 && takeList.getFirst() instanceof SimpleEvent) {
           for (Event event : takeList) {
-            if (event.getHeaders().containsKey("inode")) {
-              inodePositionMap.put(event.getHeaders().get("inode"), event.getHeaders().get("pos"));
-              inodePathMap.put(event.getHeaders().get("inode"), event.getHeaders().get("path"));
-            }
-            if (event.getHeaders().containsKey("existingInodes")) {
-              HashMap<String, String> existingInodes = Maps.newHashMap();
-              String[] inodes = event.getHeaders().get("existingInodes").split(",");
-              for (String inode : inodes) {
-                existingInodes.put(inode, "");
-              }
-              Iterator<Map.Entry<String,String>> iter = inodePositionMap.entrySet().iterator();
-              while (iter.hasNext()) {
-                String inode = iter.next().getKey();
-                if (!existingInodes.containsKey(inode)) {
-                  iter.remove();
-                  inodePathMap.remove(inode);
-                }
-              }
-            }
+            ((SimpleEvent) event).notifySource();
           }
-          writePosition();
+          ((SimpleEvent) takeList.getLast()).commit();
         }
         if (puts > 0) {
           while (!putList.isEmpty()) {
@@ -253,11 +215,6 @@ public class MemoryChannel extends BasicChannelSemantics {
   private Semaphore bytesRemaining;
   private ChannelCounter channelCounter;
 
-  private String positionFilePath;
-  private boolean writePos;
-  private ConcurrentHashMap<String, String> inodePositionMap = new ConcurrentHashMap<>();
-  private ConcurrentHashMap<String, String> inodePathMap = new ConcurrentHashMap<>();
-
   public MemoryChannel() {
     super();
   }
@@ -272,9 +229,6 @@ public class MemoryChannel extends BasicChannelSemantics {
    */
   @Override
   public void configure(Context context) {
-    String homePath = System.getProperty("user.home").replace('\\', '/');
-    positionFilePath = context.getString("positionFile", homePath + defaultPositionFile);
-    writePos = context.getBoolean("writePos", defaultWritePos);
     Integer capacity = null;
     try {
       capacity = context.getInteger("capacity", defaultCapacity);
@@ -400,15 +354,6 @@ public class MemoryChannel extends BasicChannelSemantics {
 
   @Override
   public synchronized void start() {
-    if (writePos) {
-      try {
-        Files.createDirectories(Paths.get(positionFilePath).getParent());
-      } catch (IOException e) {
-        throw new FlumeException("Error creating positionFile parent directories", e);
-      }
-      loadPositionFile(positionFilePath);
-    }
-
     channelCounter.start();
     channelCounter.setChannelSize(queue.size());
     channelCounter.setChannelCapacity(Long.valueOf(
@@ -426,94 +371,6 @@ public class MemoryChannel extends BasicChannelSemantics {
   @Override
   protected BasicTransactionSemantics createTransaction() {
     return new MemoryTransaction(transCapacity, channelCounter);
-  }
-
-  private void writePosition() {
-    File file = new File(positionFilePath);
-    FileWriter writer = null;
-    try {
-      writer = new FileWriter(file);
-      if (!inodePositionMap.isEmpty()) {
-        String json = toPosInfoJson();
-        writer.write(json);
-      }
-    } catch (Throwable t) {
-      LOGGER.error("Failed writing positionFile", t);
-      throw new ChannelFullException(t);
-    } finally {
-      try {
-        if (writer != null) writer.close();
-      } catch (IOException e) {
-        LOGGER.error("Error: " + e.getMessage(), e);
-      }
-    }
-  }
-
-  private String toPosInfoJson() {
-    @SuppressWarnings("rawtypes")
-    List<Map> posInfos = Lists.newArrayList();
-    for (String inode : inodePositionMap.keySet()) {
-      posInfos.add(ImmutableMap.of("inode", inode, "pos", inodePositionMap.get(inode),
-          "file", inodePathMap.get(inode)));
-    }
-    return new Gson().toJson(posInfos);
-  }
-
-  /**
-   * Load a position file which has the last read position of each file.
-   * If the position file exists, update tailFiles mapping.
-   */
-  public void loadPositionFile(String filePath) {
-    Long inode, pos;
-    String path;
-    FileReader fr = null;
-    JsonReader jr = null;
-    try {
-      fr = new FileReader(filePath);
-      jr = new JsonReader(fr);
-      jr.beginArray();
-      while (jr.hasNext()) {
-        inode = null;
-        pos = null;
-        path = null;
-        jr.beginObject();
-        while (jr.hasNext()) {
-          switch (jr.nextName()) {
-            case "inode":
-              inode = jr.nextLong();
-              break;
-            case "pos":
-              pos = jr.nextLong();
-              break;
-            case "file":
-              path = jr.nextString();
-              break;
-            default:
-              break;
-          }
-        }
-        jr.endObject();
-
-        for (Object v : Arrays.asList(inode, pos, path)) {
-          Preconditions.checkNotNull(v, "Detected missing value in position file. "
-              + "inode: " + inode + ", pos: " + pos + ", path: " + path);
-        }
-        inodePositionMap.put(inode + "", pos + "");
-        inodePathMap.put(inode + "", path);
-      }
-      jr.endArray();
-    } catch (FileNotFoundException e) {
-      LOGGER.info("File not found: " + filePath + ", not updating position");
-    } catch (IOException e) {
-      LOGGER.error("Failed loading positionFile: " + filePath, e);
-    } finally {
-      try {
-        if (fr != null) fr.close();
-        if (jr != null) jr.close();
-      } catch (IOException e) {
-        LOGGER.error("Error: " + e.getMessage(), e);
-      }
-    }
   }
 
   private long estimateEventSize(Event event) {

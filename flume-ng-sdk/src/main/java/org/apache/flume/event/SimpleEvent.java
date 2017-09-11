@@ -64,4 +64,7 @@ public class SimpleEvent implements Event {
     return "[Event headers = " + headers + ", body.length = " + bodyLen + " ]";
   }
 
+  public void notifySource() {}
+
+  public void commit() {}
 }

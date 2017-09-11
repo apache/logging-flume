@@ -25,6 +25,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -40,6 +43,7 @@ import org.apache.flume.Event;
 import org.apache.flume.FlumeException;
 import org.apache.flume.PollableSource;
 import org.apache.flume.conf.Configurable;
+import org.apache.flume.event.SimpleEvent;
 import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.source.AbstractSource;
 import org.apache.flume.source.PollableSourceConstants;
@@ -71,23 +75,20 @@ public class TaildirSource extends AbstractSource implements
   private SourceCounter sourceCounter;
   private ReliableTaildirEventReader reader;
   private ScheduledExecutorService idleFileChecker;
-  private ScheduledExecutorService positionWriter;
   private int retryInterval = 1000;
   private int maxRetryInterval = 5000;
   private int idleTimeout;
   private int checkIdleInterval = 5000;
-  private int writePosInitDelay = 5000;
-  private int writePosInterval;
-  private boolean writePos;
   private boolean cachePatternMatching;
 
   private List<Long> existingInodes = new CopyOnWriteArrayList<Long>();
   private List<Long> idleInodes = new CopyOnWriteArrayList<Long>();
+  private HashMap<String, String> inodePositionMap = new HashMap<>();
+  private HashMap<String, String> inodePathMap = new HashMap<>();
   private Long backoffSleepIncrement;
   private Long maxBackOffSleepInterval;
   private boolean fileHeader;
   private String fileHeaderKey;
-  private String existingInodeList;
 
   @Override
   public synchronized void start() {
@@ -100,24 +101,20 @@ public class TaildirSource extends AbstractSource implements
           .skipToEnd(skipToEnd)
           .addByteOffset(byteOffsetHeader)
           .cachePatternMatching(cachePatternMatching)
-          .writePos(writePos)
           .annotateFileName(fileHeader)
           .fileNameHeader(fileHeaderKey)
           .build();
     } catch (IOException e) {
       throw new FlumeException("Error instantiating ReliableTaildirEventReader", e);
     }
+    for (Entry<Long, TailFile> entry : reader.getTailFiles().entrySet()) {
+      inodePositionMap.put(entry.getKey() + "", entry.getValue().getPos() + "");
+      inodePathMap.put(entry.getKey() + "", entry.getValue().getPath() + "");
+    }
     idleFileChecker = Executors.newSingleThreadScheduledExecutor(
         new ThreadFactoryBuilder().setNameFormat("idleFileChecker").build());
     idleFileChecker.scheduleWithFixedDelay(new idleFileCheckerRunnable(),
         idleTimeout, checkIdleInterval, TimeUnit.MILLISECONDS);
-
-    positionWriter = Executors.newSingleThreadScheduledExecutor(
-        new ThreadFactoryBuilder().setNameFormat("positionWriter").build());
-    if (writePos) {
-      positionWriter.scheduleWithFixedDelay(new PositionWriterRunnable(),
-          writePosInitDelay, writePosInterval, TimeUnit.MILLISECONDS);
-    }
 
     super.start();
     logger.debug("TaildirSource started");
@@ -128,16 +125,12 @@ public class TaildirSource extends AbstractSource implements
   public synchronized void stop() {
     try {
       super.stop();
-      ExecutorService[] services = {idleFileChecker, positionWriter};
+      ExecutorService[] services = {idleFileChecker};
       for (ExecutorService service : services) {
         service.shutdown();
         if (!service.awaitTermination(1, TimeUnit.SECONDS)) {
           service.shutdownNow();
         }
-      }
-      if (writePos) {
-        // write the last position
-        writePosition();
       }
       reader.close();
     } catch (InterruptedException e) {
@@ -152,8 +145,8 @@ public class TaildirSource extends AbstractSource implements
   @Override
   public String toString() {
     return String.format("Taildir source: { positionFile: %s, skipToEnd: %s, "
-        + "byteOffsetHeader: %s, idleTimeout: %s, writePosInterval: %s }",
-        positionFilePath, skipToEnd, byteOffsetHeader, idleTimeout, writePosInterval);
+        + "byteOffsetHeader: %s, idleTimeout: %s}",
+        positionFilePath, skipToEnd, byteOffsetHeader, idleTimeout);
   }
 
   @Override
@@ -179,8 +172,6 @@ public class TaildirSource extends AbstractSource implements
     skipToEnd = context.getBoolean(SKIP_TO_END, DEFAULT_SKIP_TO_END);
     byteOffsetHeader = context.getBoolean(BYTE_OFFSET_HEADER, DEFAULT_BYTE_OFFSET_HEADER);
     idleTimeout = context.getInteger(IDLE_TIMEOUT, DEFAULT_IDLE_TIMEOUT);
-    writePosInterval = context.getInteger(WRITE_POS_INTERVAL, DEFAULT_WRITE_POS_INTERVAL);
-    writePos = context.getBoolean(WRITE_POS, DEFAULT_WRITE_POS);
     cachePatternMatching = context.getBoolean(CACHE_PATTERN_MATCHING,
         DEFAULT_CACHE_PATTERN_MATCHING);
 
@@ -222,20 +213,30 @@ public class TaildirSource extends AbstractSource implements
     return sourceCounter;
   }
 
+  @VisibleForTesting
+  protected HashMap<String, String> getInodePathMap() {
+    return inodePathMap;
+  }
+
+  @VisibleForTesting
+  protected HashMap<String, String> getInodePositionMap() {
+    return inodePositionMap;
+  }
+
   @Override
   public Status process() {
     Status status = Status.READY;
     try {
       existingInodes.clear();
       existingInodes.addAll(reader.updateTailFiles());
-      StringBuilder inodes = new StringBuilder();
-      for (int i = 0; i < existingInodes.size(); i++) {
-        inodes.append(existingInodes.get(i));
-        if (i != existingInodes.size() - 1) {
-          inodes.append(",");
+      Iterator<Map.Entry<String,String>> iter = inodePositionMap.entrySet().iterator();
+      while (iter.hasNext()) {
+        String inode = iter.next().getKey();
+        if (!existingInodes.contains(Long.valueOf(inode))) {
+          iter.remove();
+          inodePathMap.remove(inode);
         }
       }
-      existingInodeList = inodes.toString();
       for (long inode : existingInodes) {
         TailFile tf = reader.getTailFiles().get(inode);
         if (tf.needTail()) {
@@ -273,11 +274,15 @@ public class TaildirSource extends AbstractSource implements
       if (events.isEmpty()) {
         break;
       }
-      events.get(0).getHeaders().put("existingInodes", existingInodeList);
+      List<Event> notifyEvents = new ArrayList<>();
+      for (Event event : events) {
+        NotifyEvent notifyEvent = new NotifyEvent(event);
+        notifyEvents.add(notifyEvent);
+      }
       sourceCounter.addToEventReceivedCount(events.size());
       sourceCounter.incrementAppendBatchReceivedCount();
       try {
-        getChannelProcessor().processEventBatch(events);
+        getChannelProcessor().processEventBatch(notifyEvents);
         reader.commit();
       } catch (ChannelException ex) {
         logger.warn("The channel is full or unexpected failure. " +
@@ -327,13 +332,22 @@ public class TaildirSource extends AbstractSource implements
     }
   }
 
-  /**
-   * Runnable class that writes a position file which has the last read position
-   * of each file.
-   */
-  private class PositionWriterRunnable implements Runnable {
+  public class NotifyEvent extends SimpleEvent {
+    public NotifyEvent(Event e) {
+      this.setBody(e.getBody());
+      this.setHeaders(e.getHeaders());
+    }
+
     @Override
-    public void run() {
+    public void notifySource() {
+      if (this.getHeaders().containsKey("inode")) {
+        inodePositionMap.put(this.getHeaders().get("inode"), this.getHeaders().get("pos"));
+        inodePathMap.put(this.getHeaders().get("inode"), this.getHeaders().get("path"));
+      }
+    }
+
+    @Override
+    public void commit() {
       writePosition();
     }
   }
@@ -349,6 +363,7 @@ public class TaildirSource extends AbstractSource implements
       }
     } catch (Throwable t) {
       logger.error("Failed writing positionFile", t);
+      throw new FlumeException(t);
     } finally {
       try {
         if (writer != null) writer.close();
@@ -361,9 +376,9 @@ public class TaildirSource extends AbstractSource implements
   private String toPosInfoJson() {
     @SuppressWarnings("rawtypes")
     List<Map> posInfos = Lists.newArrayList();
-    for (Long inode : existingInodes) {
-      TailFile tf = reader.getTailFiles().get(inode);
-      posInfos.add(ImmutableMap.of("inode", inode, "pos", tf.getPos(), "file", tf.getPath()));
+    for (String inode : inodePositionMap.keySet()) {
+      posInfos.add(ImmutableMap.of("inode", inode, "pos", inodePositionMap.get(inode),
+          "file", inodePathMap.get(inode)));
     }
     return new Gson().toJson(posInfos);
   }
