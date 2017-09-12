@@ -49,9 +49,13 @@ public class KafkaSourceConstants {
   public static final String OLD_GROUP_ID = "groupId";
 
   // flume event headers
-  public static final String TOPIC_HEADER = "topic";
+  public static final String DEFAULT_TOPIC_HEADER = "topic";
   public static final String KEY_HEADER = "key";
   public static final String TIMESTAMP_HEADER = "timestamp";
   public static final String PARTITION_HEADER = "partition";
+
+  public static final String SET_TOPIC_HEADER = "setTopicHeader";
+  public static final boolean DEFAULT_SET_TOPIC_HEADER = true;
+  public static final String TOPIC_HEADER = "topicHeader";
 
 }
