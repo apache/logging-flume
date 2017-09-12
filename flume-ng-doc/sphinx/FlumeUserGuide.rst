@@ -3196,7 +3196,7 @@ pollTimeout                              500                         The amount 
                                                                      https://kafka.apache.org/090/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html#poll(long)
 defaultPartitionId                       --                          Specifies a Kafka partition ID (integer) for all events in this channel to be sent to, unless
                                                                      overriden by ``partitionIdHeader``. By default, if this property is not set, events will be
-                                                                     distributed by the Kafka Producer's partitioner - including by ``key`` if specified (or by a 
+                                                                     distributed by the Kafka Producer's partitioner - including by ``key`` if specified (or by a
                                                                      partitioner specified by ``kafka.partitioner.class``).
 partitionIdHeader                        --                          When set, the producer will take the value of the field named using the value of this property
                                                                      from the event header and send the message to the specified partition of the topic. If the
@@ -4694,7 +4694,7 @@ become unavailable and may lose data.
 
 **Whether you use redundant topologies.** Flume let's you replicate flows
 across redundant topologies. This can provide a very easy source of fault
-tolerance and one which is overcomes both disk or machine failures. 
+tolerance and one which is overcomes both disk or machine failures.
 
 *The best way to think about reliability in a Flume topology is to consider
 various failure scenarios and their outcomes.* What happens if a disk fails?
