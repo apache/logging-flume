@@ -71,6 +71,8 @@ public class TestHttpSinkIT {
       httpSinkContext.put("contentTypeHeader", "application/json");
       httpSinkContext.put("backoff.200", "false");
       httpSinkContext.put("rollback.200", "false");
+      httpSinkContext.put("backoff.401", "false");
+      httpSinkContext.put("rollback.401", "false");
       httpSinkContext.put("incrementMetrics.200", "true");
 
       Context memoryChannelContext = new Context();
@@ -129,6 +131,36 @@ public class TestHttpSinkIT {
 
     service.verify(2, postRequestedFor(urlEqualTo("/endpoint"))
         .withRequestBody(equalToJson(event("TRANSIENT_ERROR"))));
+  }
+
+  @Test
+  public void ensureEventsNotResentOn401Failure() throws Exception {
+    String errorScenario = "Error skip scenario";
+
+    service.stubFor(post(urlEqualTo("/endpoint"))
+            .inScenario(errorScenario)
+            .whenScenarioStateIs(STARTED)
+            .withRequestBody(equalToJson(event("UNAUTHORIZED REQUEST")))
+            .willReturn(aResponse().withStatus(401)
+            .withHeader("Content-Type", "text/plain")
+            .withBody("Not allowed!"))
+            .willSetStateTo("Error Sent"));
+
+    service.stubFor(post(urlEqualTo("/endpoint"))
+            .inScenario(errorScenario)
+            .whenScenarioStateIs("Error Sent")
+            .withRequestBody(equalToJson(event("NEXT EVENT")))
+            .willReturn(aResponse().withStatus(200)));
+
+    addEventToChannel(event("UNAUTHORIZED REQUEST"), Status.READY);
+    addEventToChannel(event("NEXT EVENT"), Status.READY);
+
+    service.verify(1, postRequestedFor(urlEqualTo("/endpoint"))
+            .withRequestBody(equalToJson(event("UNAUTHORIZED REQUEST"))));
+
+    service.verify(1, postRequestedFor(urlEqualTo("/endpoint"))
+            .withRequestBody(equalToJson(event("NEXT EVENT"))));
+
   }
 
   @Test

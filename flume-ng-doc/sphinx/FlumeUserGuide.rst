@@ -1481,8 +1481,8 @@ Also please make sure that the operating system user of the Flume processes has 
     };
 
 
-NetCat Source
-~~~~~~~~~~~~~
+NetCat TCP Source
+~~~~~~~~~~~~~~~~~
 
 A netcat-like source that listens on a given port and turns each line of text
 into an event. Acts like ``nc -k -l [host] [port]``. In other words,
@@ -1514,6 +1514,40 @@ Example for agent named a1:
   a1.sources = r1
   a1.channels = c1
   a1.sources.r1.type = netcat
+  a1.sources.r1.bind = 0.0.0.0
+  a1.sources.r1.port = 6666
+  a1.sources.r1.channels = c1
+
+NetCat UDP Source
+~~~~~~~~~~~~~~~~~
+
+As per the original Netcat (TCP) source, this source that listens on a given
+port and turns each line of text into an event and sent via the connected channel.
+Acts like ``nc -u -k -l [host] [port]``.
+
+Required properties are in **bold**.
+
+==================  ===========  ===========================================
+Property Name       Default      Description
+==================  ===========  ===========================================
+**channels**        --
+**type**            --           The component type name, needs to be ``netcatudp``
+**bind**            --           Host name or IP address to bind to
+**port**            --           Port # to bind to
+remoteAddressHeader --
+selector.type       replicating  replicating or multiplexing
+selector.*                       Depends on the selector.type value
+interceptors        --           Space-separated list of interceptors
+interceptors.*
+==================  ===========  ===========================================
+
+Example for agent named a1:
+
+.. code-block:: properties
+
+  a1.sources = r1
+  a1.channels = c1
+  a1.sources.r1.type = netcatudp
   a1.sources.r1.bind = 0.0.0.0
   a1.sources.r1.port = 6666
   a1.sources.r1.channels = c1
@@ -2805,7 +2839,7 @@ argument.
     a1.sinks.k1.kafka.flumeBatchSize = 20
     a1.sinks.k1.kafka.producer.acks = 1
     a1.sinks.k1.kafka.producer.linger.ms = 1
-    a1.sinks.ki.kafka.producer.compression.type = snappy
+    a1.sinks.k1.kafka.producer.compression.type = snappy
 
 
 **Security and Kafka Sink:**
@@ -3931,15 +3965,16 @@ Timestamp Interceptor
 ~~~~~~~~~~~~~~~~~~~~~
 
 This interceptor inserts into the event headers, the time in millis at which it processes the event. This interceptor
-inserts a header with key ``timestamp`` whose value is the relevant timestamp. This interceptor
-can preserve an existing timestamp if it is already present in the configuration.
+inserts a header with key ``timestamp`` (or as specified by the ``header`` property) whose value is the relevant timestamp.
+This interceptor can preserve an existing timestamp if it is already present in the configuration.
 
-================  =======  ========================================================================
-Property Name     Default  Description
-================  =======  ========================================================================
-**type**          --       The component type name, has to be ``timestamp`` or the FQCN
-preserveExisting  false    If the timestamp already exists, should it be preserved - true or false
-================  =======  ========================================================================
+================  =========  ========================================================================
+Property Name     Default    Description
+================  =========  ========================================================================
+**type**          --         The component type name, has to be ``timestamp`` or the FQCN
+header            timestamp  The name of the header in which to place the generated timestamp.
+preserveExisting  false      If the timestamp already exists, should it be preserved - true or false
+================  =========  ========================================================================
 
 Example for agent named a1:
 

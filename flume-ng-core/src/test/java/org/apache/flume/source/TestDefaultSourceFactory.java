@@ -66,6 +66,7 @@ public class TestDefaultSourceFactory {
   public void testSourceCreation() throws Exception {
     verifySourceCreation("seq-src", "seq", SequenceGeneratorSource.class);
     verifySourceCreation("netcat-src", "netcat", NetcatSource.class);
+    verifySourceCreation("netcat-udp-src", "netcatudp", NetcatUdpSource.class);
     verifySourceCreation("exec-src", "exec", ExecSource.class);
     verifySourceCreation("avro-src", "avro", AvroSource.class);
     verifySourceCreation("syslogtcp-src", "syslogtcp", SyslogTcpSource.class);

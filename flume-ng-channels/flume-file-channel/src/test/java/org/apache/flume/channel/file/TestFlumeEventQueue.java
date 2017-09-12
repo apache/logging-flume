@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.flume.channel.file.instrumentation.FileChannelCounter;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -96,7 +97,7 @@ public class TestFlumeEventQueue {
           public EventQueueBackingStore get() throws Exception {
             Assert.assertTrue(baseDir.isDirectory() || baseDir.mkdirs());
             return new EventQueueBackingStoreFileV2(getCheckpoint(), 1000,
-                                                    "test");
+                                                    "test", new FileChannelCounter("test"));
           }
         }
       },
@@ -105,7 +106,9 @@ public class TestFlumeEventQueue {
           @Override
           public EventQueueBackingStore get() throws Exception {
             Assert.assertTrue(baseDir.isDirectory() || baseDir.mkdirs());
-            return new EventQueueBackingStoreFileV3(getCheckpoint(), 1000, "test");
+            return new EventQueueBackingStoreFileV3(
+                getCheckpoint(), 1000, "test", new FileChannelCounter("test")
+            );
           }
         }
       }
@@ -135,7 +138,9 @@ public class TestFlumeEventQueue {
     backingStore.close();
     File checkpoint = backingStoreSupplier.getCheckpoint();
     Assert.assertTrue(checkpoint.delete());
-    backingStore = new EventQueueBackingStoreFileV2(checkpoint, 1, "test");
+    backingStore = new EventQueueBackingStoreFileV2(
+        checkpoint, 1, "test", new FileChannelCounter("test")
+    );
     queue = new FlumeEventQueue(backingStore,
                                 backingStoreSupplier.getInflightTakes(),
                                 backingStoreSupplier.getInflightPuts(),
@@ -149,7 +154,9 @@ public class TestFlumeEventQueue {
     backingStore.close();
     File checkpoint = backingStoreSupplier.getCheckpoint();
     Assert.assertTrue(checkpoint.delete());
-    backingStore = new EventQueueBackingStoreFileV2(checkpoint, 0, "test");
+    backingStore = new EventQueueBackingStoreFileV2(
+        checkpoint, 0, "test", new FileChannelCounter("test")
+    );
     queue = new FlumeEventQueue(backingStore,
                                 backingStoreSupplier.getInflightTakes(),
                                 backingStoreSupplier.getInflightPuts(),
@@ -161,7 +168,9 @@ public class TestFlumeEventQueue {
     backingStore.close();
     File checkpoint = backingStoreSupplier.getCheckpoint();
     Assert.assertTrue(checkpoint.delete());
-    backingStore = new EventQueueBackingStoreFileV2(checkpoint, -1, "test");
+    backingStore = new EventQueueBackingStoreFileV2(
+        checkpoint, -1, "test", new FileChannelCounter("test")
+    );
     queue = new FlumeEventQueue(backingStore,
                                 backingStoreSupplier.getInflightTakes(),
                                 backingStoreSupplier.getInflightPuts(),

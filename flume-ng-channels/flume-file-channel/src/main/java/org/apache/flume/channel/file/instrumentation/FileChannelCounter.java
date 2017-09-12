@@ -28,10 +28,15 @@ public class FileChannelCounter extends ChannelCounter implements FileChannelCou
   private static final String EVENT_PUT_ERROR_COUNT = "channel.file.event.put.error";
   private static final String EVENT_TAKE_ERROR_COUNT = "channel.file.event.take.error";
   private static final String CHECKPOINT_WRITE_ERROR_COUNT = "channel.file.checkpoint.write.error";
+  private static final String CHECKPOINT_BACKUP_WRITE_ERROR_COUNT
+      = "channel.file.checkpoint.backup.write.error";
 
   public FileChannelCounter(String name) {
     super(name, new String[] {
-        EVENT_PUT_ERROR_COUNT, EVENT_TAKE_ERROR_COUNT, CHECKPOINT_WRITE_ERROR_COUNT });
+        EVENT_PUT_ERROR_COUNT, EVENT_TAKE_ERROR_COUNT,
+        CHECKPOINT_WRITE_ERROR_COUNT, CHECKPOINT_BACKUP_WRITE_ERROR_COUNT
+        }
+    );
   }
 
   @Override
@@ -82,5 +87,14 @@ public class FileChannelCounter extends ChannelCounter implements FileChannelCou
 
   public void incrementCheckpointWriteErrorCount() {
     increment(CHECKPOINT_WRITE_ERROR_COUNT);
+  }
+
+  @Override
+  public long getCheckpointBackupWriteErrorCount() {
+    return get(CHECKPOINT_BACKUP_WRITE_ERROR_COUNT);
+  }
+
+  public void incrementCheckpointBackupWriteErrorCount() {
+    increment(CHECKPOINT_BACKUP_WRITE_ERROR_COUNT);
   }
 }

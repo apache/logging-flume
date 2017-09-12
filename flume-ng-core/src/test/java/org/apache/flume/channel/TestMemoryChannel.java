@@ -19,6 +19,7 @@
 
 package org.apache.flume.channel;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
@@ -32,6 +33,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -69,6 +71,26 @@ public class TestMemoryChannel {
     Event event2 = channel.take();
     Assert.assertEquals(event, event2);
     transaction.commit();
+  }
+
+  @Test
+  public void testPutAcceptsNullValueInHeader() {
+    Configurables.configure(channel, new Context());
+
+    Event event = EventBuilder.withBody("test body".getBytes(Charsets.UTF_8),
+        Collections.<String, String>singletonMap("test_key", null));
+
+    Transaction txPut = channel.getTransaction();
+    txPut.begin();
+    channel.put(event);
+    txPut.commit();
+    txPut.close();
+
+    Transaction txTake = channel.getTransaction();
+    txTake.begin();
+    Event eventTaken = channel.take();
+    Assert.assertEquals(event, eventTaken);
+    txTake.commit();
   }
 
   @Test

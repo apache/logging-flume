@@ -23,6 +23,7 @@ import java.io.IOException;
 
 import junit.framework.Assert;
 
+import org.apache.flume.channel.file.instrumentation.FileChannelCounter;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,7 +52,7 @@ public class TestCheckpoint {
   @Test
   public void testSerialization() throws Exception {
     EventQueueBackingStore backingStore =
-        new EventQueueBackingStoreFileV2(file, 1, "test");
+        new EventQueueBackingStoreFileV2(file, 1, "test", new FileChannelCounter("test"));
     FlumeEventPointer ptrIn = new FlumeEventPointer(10, 20);
     FlumeEventQueue queueIn = new FlumeEventQueue(backingStore,
         inflightTakes, inflightPuts, queueSet);
