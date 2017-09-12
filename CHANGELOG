@@ -1,3 +1,68 @@
+Release Notes - Flume - Version v1.8.0
+
+** New Feature
+    * [FLUME-2171] - Add Interceptor to remove headers from event
+    * [FLUME-2917] - Provide netcat UDP source as alternative to TCP
+    * [FLUME-2993] - Support environment variables in configuration files
+
+** Improvement
+    * [FLUME-1520] - Timestamp interceptor should support custom headers
+    * [FLUME-2945] - Bump java target version to 1.8
+    * [FLUME-3020] - Improve HDFSEventSink Escape Ingestion by more then 10x by not getting InetAddress on every record
+    * [FLUME-3025] - Expose FileChannel.open on JMX
+    * [FLUME-3072] - Add IP address to headers in flume log4j appender
+    * [FLUME-3092] - Extend the FileChannel's monitoring metrics
+    * [FLUME-3100] - Support arbitrary header substitution for topic of Kafka
+    * [FLUME-3144] - Improve Log4jAppender's performance by allowing logging collection of messages
+
+** Bug
+    * [FLUME-2620] - File channel throws NullPointerException if a header value is null
+    * [FLUME-2752] - Flume AvroSource will leak the memory and the OOM will be happened.
+    * [FLUME-2812] - Exception in thread "SinkRunner-PollingRunner-DefaultSinkProcessor" java.lang.Error: Maximum permit count exceeded
+    * [FLUME-2857] - Kafka Source/Channel/Sink does not restore default values when live update config
+    * [FLUME-2905] - NetcatSource - Socket not closed when an exception is encountered during start() leading to file descriptor leaks
+    * [FLUME-2991] - ExecSource command execution starts before starting the sourceCounter
+    * [FLUME-3027] - Kafka Channel should clear offsets map after commit
+    * [FLUME-3031] - sequence source should reset its counter for event body on channel exception
+    * [FLUME-3043] - KafkaSink SinkCallback throws NullPointerException when Log4J level is debug
+    * [FLUME-3046] - Kafka Sink and Source Configuration Improvements
+    * [FLUME-3049] - Wrapping the exception into SecurityException in UGIExecutor.execute hides the original one
+    * [FLUME-3057] - Build fails due to unsupported snappy-java version on ppc64le
+    * [FLUME-3080] - Close failure in HDFS Sink might cause data loss
+    * [FLUME-3083] - Taildir source can miss events if file updated in same second as file close
+    * [FLUME-3085] - HDFS Sink can skip flushing some BucketWriters, might lead to data loss
+    * [FLUME-3112] - Upgrade jackson-core library dependency
+    * [FLUME-3127] - Upgrade libfb303 library dependency
+    * [FLUME-3131] - Upgrade spring framework library dependencies
+    * [FLUME-3132] - Upgrade tomcat jasper library dependencies
+    * [FLUME-3135] - property logger in org.apache.flume.interceptor.RegexFilteringInterceptor confused
+    * [FLUME-3141] - Small typo found in RegexHbaseEventSerializer.java
+    * [FLUME-3152] - Add Flume Metric for Backup Checkpoint Errors
+    * [FLUME-3155] - Use batch mode in mvn to fix Travis CI error
+    * [FLUME-3157] - Refactor TestHDFSEventSinkOnMiniCluster to not use LeaseManager private API
+    * [FLUME-3173] - Upgrade joda-time
+    * [FLUME-3174] - HdfsSink AWS S3A authentication does not work on JDK 8
+    * [FLUME-3175] - Javadoc generation fails due to Java8's strict doclint
+
+** Documentation
+    * [FLUME-2175] - Update Developer Guide with notes on how to upgrade Protocol Buffer version
+    * [FLUME-2817] - Sink for multi-agent flow example in user guide is set up incorrectly
+
+** Wish
+    * [FLUME-2579] - JMS source support durable subscriptions and message listening
+
+** Question
+    * [FLUME-2427] - java.lang.NoSuchMethodException and warning on HDFS (S3) sink 
+
+** Task
+    * [FLUME-3093] - Groundwork for version changes in root pom
+    * [FLUME-3154] - Add HBase client version check to AsyncHBaseSink and HBaseSink
+
+** Test
+    * [FLUME-2997] - Fix flaky junit test in SpillableMemoryChannel
+    * [FLUME-3002] - Some tests in TestBucketWriter are flaky
+
+
 Release Notes - Flume - Version v1.7.0
 
 ** New Feature
