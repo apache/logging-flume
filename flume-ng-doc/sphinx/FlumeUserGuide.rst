@@ -1521,19 +1521,19 @@ Acts like ``nc -u -k -l [host] [port]``.
 
 Required properties are in **bold**.
 
-==================  ===========  ===========================================
-Property Name       Default      Description
-==================  ===========  ===========================================
-**channels**        --
-**type**            --           The component type name, needs to be ``netcatudp``
-**bind**            --           Host name or IP address to bind to
-**port**            --           Port # to bind to
-remoteAddressHeader --
-selector.type       replicating  replicating or multiplexing
-selector.*                       Depends on the selector.type value
-interceptors        --           Space-separated list of interceptors
+===================  ===========  ===========================================
+Property Name        Default      Description
+===================  ===========  ===========================================
+**channels**         --
+**type**             --           The component type name, needs to be ``netcatudp``
+**bind**             --           Host name or IP address to bind to
+**port**             --           Port # to bind to
+remoteAddressHeader  --
+selector.type        replicating  replicating or multiplexing
+selector.*                        Depends on the selector.type value
+interceptors         --           Space-separated list of interceptors
 interceptors.*
-==================  ===========  ===========================================
+===================  ===========  ===========================================
 
 Example for agent named a1:
 
