@@ -71,8 +71,8 @@ limitations under the License.
     </dependency>
 
     <dependency>
-      <groupId>javax.jms</groupId>
-      <artifactId>jms-api</artifactId>
+      <groupId>org.apache.geronimo.specs</groupId>
+      <artifactId>geronimo-jms_1.1_spec</artifactId>
     </dependency>
 
     <dependency>
