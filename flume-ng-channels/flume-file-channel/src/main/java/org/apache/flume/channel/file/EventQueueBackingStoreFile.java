@@ -86,7 +86,7 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
     this.compressBackup = compressBackup;
     this.backupDir = checkpointBackupDir;
     checkpointFileHandle = new RandomAccessFile(checkpointFile, "rw");
-    long totalBytes = (capacity + HEADER_SIZE) * Serialization.SIZE_OF_LONG;
+    long totalBytes = ((long)capacity + HEADER_SIZE) * Serialization.SIZE_OF_LONG;
     if (checkpointFileHandle.length() == 0) {
       allocate(checkpointFile, totalBytes);
       checkpointFileHandle.seek(INDEX_VERSION * Serialization.SIZE_OF_LONG);
