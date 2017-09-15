@@ -43,6 +43,7 @@
         <exclude>**/*.iml</exclude>
         <exclude>**/.settings/**</exclude>
         <exclude>lib/**</exclude>
+        <exclude>**/.DS_Store</exclude>
       </excludes>
     </fileSet>
   </fileSets>
