@@ -31,91 +31,20 @@
 
   <baseDirectory>apache-flume-${project.version}-src</baseDirectory>
 
-  <moduleSets>
-
-    <moduleSet>
-      <useAllReactorProjects>true</useAllReactorProjects>
-
-      <includes>
-        <include>org.apache.flume:flume-ng-configuration</include>
-        <include>org.apache.flume:flume-ng-sdk</include>
-        <include>org.apache.flume:flume-ng-core</include>
-        <include>org.apache.flume:flume-ng-node</include>
-        <include>org.apache.flume:flume-ng-dist</include>
-        <include>org.apache.flume:flume-ng-channels</include>
-        <include>org.apache.flume:flume-ng-sinks</include>
-        <include>org.apache.flume:flume-ng-sources</include>
-        <include>org.apache.flume:flume-ng-legacy-sources</include>
-        <include>org.apache.flume:flume-ng-clients</include>
-        <include>org.apache.flume:flume-ng-embedded-agent</include>
-        <include>org.apache.flume:flume-tools</include>
-        <include>org.apache.flume:flume-ng-auth</include>
-        <include>org.apache.flume:flume-shared</include>
-      </includes>
-
-      <sources>
-        <includeModuleDirectory>true</includeModuleDirectory>
-        <excludeSubModuleDirectories>false</excludeSubModuleDirectories>
-
-        <fileSets>
-          <fileSet>
-            <excludes>
-              <exclude>target/**</exclude>
-              <exclude>*/target/**</exclude>
-              <exclude>.classpath</exclude>
-              <exclude>*/.classpath</exclude>
-              <exclude>.project</exclude>
-              <exclude>*/.project</exclude>
-              <exclude>.settings/**</exclude>
-              <exclude>*/.settings/**</exclude>
-            </excludes>
-          </fileSet>
-        </fileSets>
-      </sources>
-
-    </moduleSet>
-
-  </moduleSets>
-
    <fileSets>
     <fileSet>
       <directory>../</directory>
 
       <excludes>
-        <exclude>flume-ng-configuration/**</exclude>
-        <exclude>flume-ng-sdk/**</exclude>
-        <exclude>flume-ng-core/**</exclude>
-        <exclude>flume-ng-node/**</exclude>
-        <exclude>flume-ng-dist/**</exclude>
-        <exclude>flume-ng-channels/**</exclude>
-        <exclude>flume-ng-sinks/**</exclude>
-        <exclude>flume-ng-sources/**</exclude>
-        <exclude>flume-ng-legacy-sources/**</exclude>
-        <exclude>flume-ng-clients/**</exclude>
-        <exclude>flume-ng-embedded-agent/**</exclude>
-        <exclude>flume-tools/**</exclude>
         <exclude>**/target/**</exclude>
         <exclude>**/.classpath</exclude>
         <exclude>**/.project</exclude>
+        <exclude>**/.idea/**</exclude>
+        <exclude>**/*.iml</exclude>
         <exclude>**/.settings/**</exclude>
         <exclude>lib/**</exclude>
+        <exclude>**/.DS_Store</exclude>
       </excludes>
-
-      <includes>
-        <include>.gitignore</include>
-        <include>DEVNOTES</include>
-        <include>README</include>
-        <include>LICENSE</include>
-        <include>NOTICE</include>
-        <include>CHANGELOG</include>
-        <include>RELEASE-NOTES</include>
-        <include>bin/**</include>
-        <include>conf/**</include>
-        <include>pom.xml</include>
-        <include>flume-ng-doc/**</include>
-        <include>flume-ng-tests/**</include>
-        <include>dev-support/**</include>
-      </includes>
     </fileSet>
   </fileSets>
 
