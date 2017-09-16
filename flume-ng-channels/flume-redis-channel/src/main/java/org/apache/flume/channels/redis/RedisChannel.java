@@ -20,10 +20,16 @@ package org.apache.flume.channels.redis;
 
 import com.google.common.base.Optional;
 
-import org.apache.avro.io.*;
+import org.apache.avro.io.BinaryDecoder;
+import org.apache.avro.io.BinaryEncoder;
+import org.apache.avro.io.DecoderFactory;
+import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
-import org.apache.flume.*;
+import org.apache.flume.ChannelException;
+import org.apache.flume.Context;
+import org.apache.flume.Event;
+import org.apache.flume.FlumeException;
 import org.apache.flume.channel.BasicChannelSemantics;
 import org.apache.flume.channel.BasicTransactionSemantics;
 import org.apache.flume.channels.redis.tools.RedisDao;
@@ -36,14 +42,22 @@ import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class RedisChannel extends BasicChannelSemantics {
 
-  private final static Logger LOGGER = LoggerFactory
+  private static final Logger LOGGER = LoggerFactory
       .getLogger(RedisChannel.class);
 
   private final Properties redisConf = new Properties();
@@ -288,7 +302,7 @@ public class RedisChannel extends BasicChannelSemantics {
               "Commit failed as send to Kafka failed", ex);
         }
       } else {
-        List<String> msgList = redisDao.mPop(queue_key, batch_number);
+        List<String> msgList = redisDao.mpop(queue_key, batch_number);
         counter.addToEventTakeSuccessCount(Long.valueOf(events.get()
             .size()));
         events.get().clear();

@@ -91,7 +91,7 @@ public class RedisDao {
     return result;
   }
 
-  public List<String> mPop(String key, Long batch) {
+  public List<String> mpop(String key, Long batch) {
     Jedis jedis = rc.getController();
     Response<List<String>> result;
     try {
