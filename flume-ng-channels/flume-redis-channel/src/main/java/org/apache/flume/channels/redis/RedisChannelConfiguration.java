@@ -22,7 +22,7 @@ public class RedisChannelConfiguration {
 
   public static final String RREDIS_PREFIX = "redis.";
   public static final String REDIS_SENTINEL_SERVER = "sentinel.servers";
-  public static final String REDIS_SERVER= "server";
+  public static final String REDIS_SERVER = "server";
   public static final String REDIS_PORT = "port";
   public static final String REDIS_MASTER_NAME = "master.name";
   public static final String REDIS_PASSWORD = "password";
