@@ -30,7 +30,7 @@ public class RedisChannelConfiguration {
   public static final String BATCH_NUMBER = "batch_number";
   public static final String DEFALUT_BATCH_NUMBER = "10";
   public static final String DEFALUT_REIDS_PORT = "6379";
-  
+
   public static final String PARSE_AS_FLUME_EVENT = "parseAsFlumeEvent";
   public static final boolean DEFAULT_PARSE_AS_FLUME_EVENT = true;
 }

@@ -19,32 +19,32 @@
 package org.apache.flume.channels.redis;
 
 public interface RedisChannelCounterMBean {
-	long getRedisEventGetTimer();
+  long getRedisEventGetTimer();
 
-	long getRedisEventSendTimer();
+  long getRedisEventSendTimer();
 
-	long getRedisCommitTimer();
+  long getRedisCommitTimer();
 
-	long getRollbackCount();
+  long getRollbackCount();
 
-	long getChannelSize();
+  long getChannelSize();
 
-	long getEventPutAttemptCount();
+  long getEventPutAttemptCount();
 
-	long getEventTakeAttemptCount();
+  long getEventTakeAttemptCount();
 
-	long getEventPutSuccessCount();
+  long getEventPutSuccessCount();
 
-	long getEventTakeSuccessCount();
+  long getEventTakeSuccessCount();
 
-	long getStartTime();
+  long getStartTime();
 
-	long getStopTime();
+  long getStopTime();
 
-	long getChannelCapacity();
+  long getChannelCapacity();
 
-	String getType();
+  String getType();
 
-	double getChannelFillPercentage();
+  double getChannelFillPercentage();
 
 }

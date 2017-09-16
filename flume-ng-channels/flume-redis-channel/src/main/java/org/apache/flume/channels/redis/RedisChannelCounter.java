@@ -24,7 +24,6 @@ import org.apache.flume.instrumentation.ChannelCounter;
 public class RedisChannelCounter extends ChannelCounter
     implements RedisChannelCounterMBean {
 
-
   private static final String TIMER_REDIS_EVENT_GET =
       "channel.redis.event.get.time";
 
@@ -37,14 +36,13 @@ public class RedisChannelCounter extends ChannelCounter
   private static final String COUNT_ROLLBACK =
       "channel.rollback.count";
 
-
   private static String[] ATTRIBUTES = {
-      TIMER_REDIS_COMMIT,TIMER_REDIS_EVENT_SEND,TIMER_REDIS_EVENT_GET,
+      TIMER_REDIS_COMMIT, TIMER_REDIS_EVENT_SEND, TIMER_REDIS_EVENT_GET,
       COUNT_ROLLBACK
   };
 
   public RedisChannelCounter(String name) {
-    super(name,ATTRIBUTES);
+    super(name, ATTRIBUTES);
   }
 
   public long addToRedisEventGetTimer(long delta) {
@@ -60,7 +58,7 @@ public class RedisChannelCounter extends ChannelCounter
   }
 
   public long addToRollbackCounter(long delta) {
-    return addAndGet(COUNT_ROLLBACK,delta);
+    return addAndGet(COUNT_ROLLBACK, delta);
   }
 
   public long getRedisEventGetTimer() {
