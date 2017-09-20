@@ -302,7 +302,6 @@ public class RedisChannel extends BasicChannelSemantics {
               "Commit failed as send to Kafka failed", ex);
         }
       } else {
-        List<String> msgList = redisDao.mpop(queue_key, batch_number);
         counter.addToEventTakeSuccessCount(Long.valueOf(events.get()
             .size()));
         events.get().clear();
