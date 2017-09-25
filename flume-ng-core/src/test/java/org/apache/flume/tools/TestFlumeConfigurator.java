@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import junit.framework.Assert;
 
 public class TestFlumeConfigurator {
-  private static final Logger LOG = LoggerFactory.getLogger(TestFlumeConfigurator.class);
   private String testPrefix = "TestBean.";
 
   /**
@@ -46,13 +45,13 @@ public class TestFlumeConfigurator {
     Map<String, String> props = new HashMap<String, String>();
     Random random = new Random();
     int intValue = random.nextInt(Integer.MAX_VALUE - 1 ) + 1;
-    props.put(testPrefix + "TestInt", Integer.toString(intValue));
+    props.put(testPrefix + "testInt", Integer.toString(intValue));
     Context context = new Context(props);
 
     TestBean bean = new TestBean();
     Assert.assertEquals(0, bean.getTestInt());
 
-    FlumeBeanConfigurator.setConfigurationFields(bean, context, LOG);
+    FlumeBeanConfigurator.setConfigurationFields(bean, context);
     Assert.assertEquals(intValue, bean.getTestInt());
   }
 
@@ -66,13 +65,13 @@ public class TestFlumeConfigurator {
     Map<String, String> props = new HashMap<String, String>();
     Random random = new Random();
     short shortValue = (short)(random.nextInt(Short.MAX_VALUE - 1 ) + 1);
-    props.put(testPrefix + "TestShort", Short.toString(shortValue));
+    props.put(testPrefix + "testShort", Short.toString(shortValue));
     Context context = new Context(props);
 
     TestBean bean = new TestBean();
     Assert.assertEquals(0, bean.getTestShort());
 
-    FlumeBeanConfigurator.setConfigurationFields(bean, context, LOG);
+    FlumeBeanConfigurator.setConfigurationFields(bean, context);
     Assert.assertEquals(shortValue, bean.getTestShort());
   }
 
@@ -86,13 +85,13 @@ public class TestFlumeConfigurator {
 
     Map<String, String> props = new HashMap<String, String>();
     long longValue = ThreadLocalRandom.current().nextLong(Integer.MAX_VALUE, Long.MAX_VALUE);
-    props.put(testPrefix + "TestLong", Long.toString(longValue));
+    props.put(testPrefix + "testLong", Long.toString(longValue));
     Context context = new Context(props);
 
     TestBean bean = new TestBean();
     Assert.assertEquals(0, bean.getTestLong());
 
-    FlumeBeanConfigurator.setConfigurationFields(bean, context, LOG);
+    FlumeBeanConfigurator.setConfigurationFields(bean, context);
     Assert.assertEquals(longValue, bean.getTestLong());
   }
 
@@ -106,13 +105,13 @@ public class TestFlumeConfigurator {
     Map<String, String> props = new HashMap<String, String>();
     Random random = new Random();
     byte byteValue = (byte)(random.nextInt(Byte.MAX_VALUE - 1 ) + 1);
-    props.put(testPrefix + "TestByte", Byte.toString(byteValue));
+    props.put(testPrefix + "testByte", Byte.toString(byteValue));
     Context context = new Context(props);
 
     TestBean bean = new TestBean();
     Assert.assertEquals(0, bean.getTestByte());
 
-    FlumeBeanConfigurator.setConfigurationFields(bean, context, LOG);
+    FlumeBeanConfigurator.setConfigurationFields(bean, context);
     Assert.assertEquals(byteValue, bean.getTestByte());
   }
   
@@ -123,13 +122,13 @@ public class TestFlumeConfigurator {
   public void testBooleanConfiguration() {
 
     Map<String, String> props = new HashMap<String, String>();
-    props.put(testPrefix + "TestBoolean", "true");
+    props.put(testPrefix + "testBoolean", "true");
     Context context = new Context(props);
 
     TestBean bean = new TestBean();
     Assert.assertEquals(false, bean.getTestBoolean());
 
-    FlumeBeanConfigurator.setConfigurationFields(bean, context, LOG);
+    FlumeBeanConfigurator.setConfigurationFields(bean, context);
     Assert.assertEquals(true, bean.getTestBoolean());
   }
   
@@ -143,14 +142,14 @@ public class TestFlumeConfigurator {
     Map<String, String> props = new HashMap<String, String>();
     Random random = new Random();
     double doubleValue = random.nextDouble();
-    props.put(testPrefix + "TestDouble", Double.toString(doubleValue));
+    props.put(testPrefix + "testDouble", Double.toString(doubleValue));
 
     Context context = new Context(props);
 
     TestBean bean = new TestBean();
     Assert.assertEquals(0.0d, bean.getTestDouble());
 
-    FlumeBeanConfigurator.setConfigurationFields(bean, context, LOG);
+    FlumeBeanConfigurator.setConfigurationFields(bean, context);
     Assert.assertEquals(doubleValue, bean.getTestDouble());
   }
   
@@ -165,14 +164,14 @@ public class TestFlumeConfigurator {
     Map<String, String> props = new HashMap<String, String>();
     Random random = new Random();
     float floatValue = random.nextFloat();
-    props.put(testPrefix + "TestFloat", Float.toString(floatValue));
+    props.put(testPrefix + "testFloat", Float.toString(floatValue));
     
     Context context = new Context(props);
 
     TestBean bean = new TestBean();
     Assert.assertEquals(0.0f, bean.getTestFloat());
 
-    FlumeBeanConfigurator.setConfigurationFields(bean, context, LOG);
+    FlumeBeanConfigurator.setConfigurationFields(bean, context);
     Assert.assertEquals(floatValue, bean.getTestFloat());
   }
 
@@ -185,13 +184,13 @@ public class TestFlumeConfigurator {
 
     Map<String, String> props = new HashMap<String, String>();
     String stringValue = UUID.randomUUID().toString();
-    props.put(testPrefix + "TestString", stringValue);
+    props.put(testPrefix + "testString", stringValue);
     Context context = new Context(props);
 
     TestBean bean = new TestBean();
     Assert.assertEquals("", bean.getTestString());
 
-    FlumeBeanConfigurator.setConfigurationFields(bean, context, LOG);
+    FlumeBeanConfigurator.setConfigurationFields(bean, context);
     Assert.assertEquals(stringValue, bean.getTestString());
   }
 
@@ -204,13 +203,13 @@ public class TestFlumeConfigurator {
     Map<String, String> props = new HashMap<String, String>();
     Random random = new Random();
     int intValue = random.nextInt(Integer.MAX_VALUE - 1 ) + 1;
-    props.put(testPrefix + "PrivateInt", Integer.toString(intValue));
+    props.put(testPrefix + "privateInt", Integer.toString(intValue));
     Context context = new Context(props);
 
     TestBean bean = new TestBean();
     Assert.assertEquals(0, bean.getPrivateInt());
 
-    FlumeBeanConfigurator.setConfigurationFields(bean, context, LOG);
+    FlumeBeanConfigurator.setConfigurationFields(bean, context);
     Assert.assertTrue(bean.getPrivateInt() != intValue);
   }
 
