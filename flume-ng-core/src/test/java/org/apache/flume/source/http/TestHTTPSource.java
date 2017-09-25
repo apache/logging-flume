@@ -340,6 +340,7 @@ public class TestHTTPSource {
     newSource.stop();
     newChannel.stop();
 
+    //Configure SslContextFactory with junk protocols (expect failure)
     newPort = findFreePort();
     configuredSourceContext = getDefaultSecureContext(newPort);
     configuredSourceContext.put("SslContextFactory.IncludeProtocols", "abc def");
@@ -462,6 +463,7 @@ public class TestHTTPSource {
     Gson gson = new Gson();
     String json = gson.toJson(events, listType);
     HttpsURLConnection httpsURLConnection = null;
+    Transaction transaction = null;
     try {
       TrustManager[] trustAllCerts = {
         new X509TrustManager() {
@@ -515,7 +517,7 @@ public class TestHTTPSource {
       int statusCode = httpsURLConnection.getResponseCode();
       Assert.assertEquals(200, statusCode);
 
-      Transaction transaction = httpsChannel.getTransaction();
+      transaction = httpsChannel.getTransaction();
       transaction.begin();
       for (int i = 0; i < 10; i++) {
         Event e = httpsChannel.take();
@@ -523,9 +525,11 @@ public class TestHTTPSource {
         Assert.assertEquals(String.valueOf(i), e.getHeaders().get("MsgNum"));
       }
 
-      transaction.commit();
-      transaction.close();
     } finally {
+      if (transaction != null) {
+        transaction.commit();
+        transaction.close();
+      }
       httpsURLConnection.disconnect();
     }
   }
