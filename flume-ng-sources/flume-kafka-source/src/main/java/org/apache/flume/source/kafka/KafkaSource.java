@@ -127,6 +127,8 @@ public class KafkaSource extends AbstractPollableSource
   private String bootstrapServers;
   private String groupId = DEFAULT_GROUP_ID;
   private boolean migrateZookeeperOffsets = DEFAULT_MIGRATE_ZOOKEEPER_OFFSETS;
+  private String topicHeader = null;
+  private boolean setTopicHeader;
 
   /**
    * This class is a helper to subscribe for topics by using
@@ -250,8 +252,9 @@ public class KafkaSource extends AbstractPollableSource
           headers.put(KafkaSourceConstants.TIMESTAMP_HEADER,
               String.valueOf(System.currentTimeMillis()));
         }
-        if (!headers.containsKey(KafkaSourceConstants.TOPIC_HEADER)) {
-          headers.put(KafkaSourceConstants.TOPIC_HEADER, message.topic());
+        // Only set the topic header if setTopicHeader and it isn't already populated
+        if (setTopicHeader && !headers.containsKey(topicHeader)) {
+          headers.put(topicHeader, message.topic());
         }
         if (!headers.containsKey(KafkaSourceConstants.PARTITION_HEADER)) {
           headers.put(KafkaSourceConstants.PARTITION_HEADER,
@@ -399,6 +402,12 @@ public class KafkaSource extends AbstractPollableSource
       groupId = DEFAULT_GROUP_ID;
       log.info("Group ID was not specified. Using {} as the group id.", groupId);
     }
+
+    setTopicHeader = context.getBoolean(KafkaSourceConstants.SET_TOPIC_HEADER,
+                                        KafkaSourceConstants.DEFAULT_SET_TOPIC_HEADER);
+
+    topicHeader = context.getString(KafkaSourceConstants.TOPIC_HEADER,
+                                    KafkaSourceConstants.DEFAULT_TOPIC_HEADER);
 
     setConsumerProps(context);
 

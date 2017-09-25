@@ -34,6 +34,7 @@ import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
 import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
+import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.sink.AbstractSink;
 import org.apache.hadoop.conf.Configuration;
@@ -329,6 +330,10 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
 
   @Override
   public void configure(Context context) {
+    if (!HBaseVersionCheck.hasVersionLessThan2(logger)) {
+      throw new ConfigurationException(
+              "HBase major version number must be less than 2 for asynchbase sink. ");
+    }
     tableName = context.getString(HBaseSinkConfigurationConstants.CONFIG_TABLE);
     String cf = context.getString(
         HBaseSinkConfigurationConstants.CONFIG_COLUMN_FAMILY);

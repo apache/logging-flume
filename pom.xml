@@ -27,7 +27,7 @@ limitations under the License.
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.apache.flume</groupId>
   <artifactId>flume-parent</artifactId>
-  <version>1.8.0-SNAPSHOT</version>
+  <version>1.9.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Apache Flume</name>
@@ -65,6 +65,7 @@ limitations under the License.
     <elasticsearch.version>0.90.1</elasticsearch.version>
     <fasterxml.jackson.version>2.8.9</fasterxml.jackson.version>
     <fest-reflect.version>1.4</fest-reflect.version>
+    <geronimo-jms.version>1.1.1</geronimo-jms.version>
     <gson.version>2.2.2</gson.version>
     <guava.version>18.0</guava.version>
     <guava-old.version>11.0.2</guava-old.version>
@@ -72,10 +73,14 @@ limitations under the License.
     <httpcore.version>4.4.6</httpcore.version>
     <httpclient.version>4.5.3</httpclient.version>
     <irclib.version>1.10</irclib.version>
-    <javax-jms.version>1.1-rev-1</javax-jms.version>
     <jersey.version>1.8</jersey.version>
+<<<<<<< HEAD
     <jetty.version>9.4.6.v20170531</jetty.version>
     <joda-time.version>2.1</joda-time.version>
+=======
+    <jetty.version>6.1.26</jetty.version>
+    <joda-time.version>2.9.9</joda-time.version>
+>>>>>>> apache/trunk
     <junit.version>4.10</junit.version>
     <kafka.version>0.9.0.1</kafka.version>
     <kite.version>1.0.0</kite.version>
@@ -106,7 +111,7 @@ limitations under the License.
     <solr-global.version>4.3.0</solr-global.version>
     <slf4j.version>1.6.1</slf4j.version>
     <system-rules.version>1.16.0</system-rules.version>
-    <thrift.version>0.7.0</thrift.version>
+    <thrift.version>0.9.3</thrift.version>
     <twitter4j.version>3.0.3</twitter4j.version>
     <xalan.version>2.7.2</xalan.version>
     <xerces.version>2.9.1</xerces.version>
@@ -196,7 +201,6 @@ limitations under the License.
         <hadoop.version>${hadoop2.version}</hadoop.version>
         <hbase.version>0.94.2</hbase.version>
         <hadoop.common.artifact.id>hadoop-common</hadoop.common.artifact.id>
-        <thrift.version>0.9.0</thrift.version>
       </properties>
       <dependencyManagement>
         <dependencies>
@@ -298,7 +302,6 @@ limitations under the License.
         <hadoop.version>${hadoop2.version}</hadoop.version>
         <hbase.version>1.0.0</hbase.version>
         <hadoop.common.artifact.id>hadoop-common</hadoop.common.artifact.id>
-        <thrift.version>0.9.0</thrift.version>
       </properties>
       <dependencyManagement>
         <dependencies>
@@ -520,6 +523,9 @@ limitations under the License.
                 </goals>
               </execution>
             </executions>
+            <configuration>
+              <additionalparam>-Xdoclint:none</additionalparam>
+            </configuration>
           </plugin>
 
           <plugin>
@@ -1239,9 +1245,9 @@ limitations under the License.
       </dependency>
 
       <dependency>
-        <groupId>javax.jms</groupId>
-        <artifactId>jms-api</artifactId>
-        <version>${javax-jms.version}</version>
+        <groupId>org.apache.geronimo.specs</groupId>
+        <artifactId>geronimo-jms_1.1_spec</artifactId>
+        <version>${geronimo-jms.version}</version>
       </dependency>
 
       <dependency>

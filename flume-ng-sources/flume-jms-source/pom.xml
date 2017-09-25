@@ -23,7 +23,7 @@ limitations under the License.
   <parent>
     <artifactId>flume-ng-sources</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.8.0-SNAPSHOT</version>
+    <version>1.9.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.apache.flume.flume-ng-sources</groupId>
@@ -71,8 +71,8 @@ limitations under the License.
     </dependency>
 
     <dependency>
-      <groupId>javax.jms</groupId>
-      <artifactId>jms-api</artifactId>
+      <groupId>org.apache.geronimo.specs</groupId>
+      <artifactId>geronimo-jms_1.1_spec</artifactId>
     </dependency>
 
     <dependency>
