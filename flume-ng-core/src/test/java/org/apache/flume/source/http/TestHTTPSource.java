@@ -316,10 +316,10 @@ public class TestHTTPSource {
 
     int newPort = findFreePort();
     Context configuredSourceContext = getDefaultNonSecureContext(newPort);
-    configuredSourceContext.put("HttpConfiguration.SendServerVersion", "false");
-    configuredSourceContext.put("HttpConfiguration.SendXPoweredBy", "true");
-    configuredSourceContext.put("ServerConnector.AcceptQueueSize", "22");
-    configuredSourceContext.put("QueuedThreadPool.MaxThreads", "123");
+    configuredSourceContext.put("HttpConfiguration.sendServerVersion", "false");
+    configuredSourceContext.put("HttpConfiguration.sendXPoweredBy", "true");
+    configuredSourceContext.put("ServerConnector.acceptQueueSize", "22");
+    configuredSourceContext.put("QueuedThreadPool.maxThreads", "123");
 
     HTTPSource newSource = new HTTPSource();
     Channel newChannel = new MemoryChannel();
@@ -357,7 +357,7 @@ public class TestHTTPSource {
       doTestHttps(null, newPort);
       //We are testing that this fails because we've deliberately configured the wrong protocols
       Assert.assertTrue(false);
-    } catch (Exception ex) {
+    } catch (AssertionError ex) {
       //no-op
     }
     newSource.stop();

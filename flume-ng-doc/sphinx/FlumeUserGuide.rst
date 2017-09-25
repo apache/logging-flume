@@ -1752,7 +1752,7 @@ N.B. Jetty-specific settings are set using the setter-methods on the objects lis
  <http://www.eclipse.org/jetty/javadoc/9.4.6.v20170531/org/eclipse/jetty/util/ssl/SslContextFactory.html> and
  <http://www.eclipse.org/jetty/javadoc/9.4.6.v20170531/org/eclipse/jetty/server/ServerConnector.html>).
 When using Jetty-specific setings, named properites above will take precedence (for example excludeProtocols will take
-prcedence over SslContextFactory.ExcludeProtocols).
+prcedence over SslContextFactory.ExcludeProtocols). All properties will be inital lower case.
 
 An example http source for agent named a1:
 
@@ -1765,8 +1765,8 @@ An example http source for agent named a1:
   a1.sources.r1.channels = c1
   a1.sources.r1.handler = org.example.rest.RestHandler
   a1.sources.r1.handler.nickname = random props
-  a1.sources.r1.HttpConfiguration.SendServerVersion = false
-  a1.sources.r1.ServerConnector.IdleTimeout = 300
+  a1.sources.r1.HttpConfiguration.sendServerVersion = false
+  a1.sources.r1.ServerConnector.idleTimeout = 300
 
 JSONHandler
 '''''''''''
