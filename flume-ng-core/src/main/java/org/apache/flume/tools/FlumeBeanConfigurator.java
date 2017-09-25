@@ -22,9 +22,9 @@ package org.apache.flume.tools;
 import java.lang.reflect.Method;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.flume.Context;
 import org.apache.flume.conf.ConfigurationException;
-import org.slf4j.Logger;
 
 /**
  * Utility class to enable runtime configuration of Java objects using provided
@@ -38,16 +38,15 @@ public class FlumeBeanConfigurator {
   /**
    * Utility method that will set properties on a Java bean (<code>Object configurable</code>)
    * based on the provided <code>properties</code> bundle.
-   * Logs using the provided <code>logger</code>. If there is a type issue, or an access problem
+   * If there is a type issue, or an access problem
    * then a <code>ConfigurationException</code> will be thrown.
    *
    * @param configurable Any properties must be modifiable via setter methods.
    * @param properties Map&lt;String, String&gt;
-   * @param logger org.slf4j.Logger
    * @throws ConfigurationException
    */
-  public static void setConfigurationFields(Object configurable, Map<String, String> properties,
-          Logger logger) throws ConfigurationException {
+  public static void setConfigurationFields(Object configurable, Map<String, String> properties)
+      throws ConfigurationException {
     Class<?> clazz = configurable.getClass();
 
     for (Method method : clazz.getMethods()) {
@@ -55,7 +54,7 @@ public class FlumeBeanConfigurator {
       if (methodName.startsWith("set") && method.getParameterTypes().length == 1) {
         String fieldName = methodName.substring(3);
 
-        String value = properties.get(fieldName);
+        String value = properties.get(StringUtils.uncapitalize(fieldName));
         if (value != null) {
 
           Class<?> fieldType = method.getParameterTypes()[0];;
@@ -81,14 +80,11 @@ public class FlumeBeanConfigurator {
             } else if (fieldType.equals(String[].class)) {
               method.invoke(configurable, (Object)value.split("\\s+"));
             } else {
-              logger.error("Unable to set " + fieldName + " as it is an unsupported type: "
-                      + fieldType.getCanonicalName());
               throw new ConfigurationException(
-                  "Unable to configure component due to an unsupported type");
+                  "Unable to configure component due to an unsupported type on field: " 
+              + fieldName);
             }
           } catch (Exception ex) {
-            logger.error("Unable to set " + fieldName + " due to an exception: "
-                + ex.getMessage(), ex);
             if (ex instanceof ConfigurationException) {
               throw (ConfigurationException)ex;
             } else {
@@ -105,19 +101,18 @@ public class FlumeBeanConfigurator {
    * based on the provided <code>Context</code>.
    * N.B. This method will take the Flume Context and look for sub-properties named after the
    * class name of the <code>configurable</code> object.
-   * Logs using the provided <code>logger</code>. If there is a type issue, or an access problem
+   * If there is a type issue, or an access problem
    * then a <code>ConfigurationException</code> will be thrown.
    *
    * @param configurable Any properties must be modifiable via setter methods.
    * @param context
-   * @param logger org.slf4j.Logger
    * @throws ConfigurationException
    */
-  public static void setConfigurationFields(Object configurable, Context context, Logger logger)
+  public static void setConfigurationFields(Object configurable, Context context)
                         throws ConfigurationException {
     Class<?> clazz = configurable.getClass();
     Map<String, String> properties = context.getSubProperties(clazz.getSimpleName() + ".");
-    setConfigurationFields(configurable, properties, logger);
+    setConfigurationFields(configurable, properties);
   }
 
   /**
@@ -125,18 +120,17 @@ public class FlumeBeanConfigurator {
    * based on the provided <code>Context</code>.
    * N.B. This method will take the Flume Context and look for sub-properties named after the
    * <code>subPropertiesPrefix</code> String.
-   * Logs using the provided <code>logger</code>. If there is a type issue, or an access problem
+   * If there is a type issue, or an access problem
    * then a <code>ConfigurationException</code> will be thrown.
    *
    * @param configurable Object: Any properties must be modifiable via setter methods.
    * @param context org.apache.flume.Context;
    * @param subPropertiesPrefix String
-   * @param logger org.slf4j.Logger
    * @throws ConfigurationException
    */
   public static void setConfigurationFields(Object configurable, Context context,
-      String subPropertiesPrefix, Logger logger) throws ConfigurationException {
+      String subPropertiesPrefix) throws ConfigurationException {
     Map<String, String> properties = context.getSubProperties(subPropertiesPrefix);
-    setConfigurationFields(configurable, properties, logger);
+    setConfigurationFields(configurable, properties);
   }
 }

@@ -183,7 +183,7 @@ public class HTTPSource extends AbstractSource implements
             + "Will not attempt to start.");
     QueuedThreadPool threadPool = new QueuedThreadPool();
     if (sourceContext.getSubProperties("QueuedThreadPool.").size() > 0) {
-      FlumeBeanConfigurator.setConfigurationFields(threadPool, sourceContext, LOG);
+      FlumeBeanConfigurator.setConfigurationFields(threadPool, sourceContext);
     }
     srv = new Server(threadPool);
 
@@ -195,12 +195,12 @@ public class HTTPSource extends AbstractSource implements
     HttpConfiguration httpConfiguration = new HttpConfiguration();
     httpConfiguration.addCustomizer(new SecureRequestCustomizer());
 
-    FlumeBeanConfigurator.setConfigurationFields(httpConfiguration, sourceContext, LOG);
+    FlumeBeanConfigurator.setConfigurationFields(httpConfiguration, sourceContext);
     ServerConnector connector;
 
     if (sslEnabled) {
       SslContextFactory sslCtxFactory = new SslContextFactory();
-      FlumeBeanConfigurator.setConfigurationFields(sslCtxFactory, sourceContext, LOG);
+      FlumeBeanConfigurator.setConfigurationFields(sslCtxFactory, sourceContext);
       sslCtxFactory.setExcludeProtocols(excludedProtocols.toArray(new String[0]));
       sslCtxFactory.setKeyStorePath(keyStorePath);
       sslCtxFactory.setKeyStorePassword(keyStorePassword);
@@ -219,7 +219,7 @@ public class HTTPSource extends AbstractSource implements
     connector.setHost(host);
     connector.setReuseAddress(true);
 
-    FlumeBeanConfigurator.setConfigurationFields(connector, sourceContext, LOG);
+    FlumeBeanConfigurator.setConfigurationFields(connector, sourceContext);
 
     srv.addConnector(connector);
 
