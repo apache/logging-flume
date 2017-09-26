@@ -3391,6 +3391,36 @@ Also please make sure that the operating system user of the Flume processes has 
     };
 
 
+Redis Channel
+~~~~~~~~~~~~~
+
+The events are stored in a redis server (must be installed separately). Redis provides high concurrency. If you have many agents but want to share one channel which can provide high concurrency, Redis Channel is a good choice. Redis also can provide high availability and replication, you can choose the best way to adapt your application.
+
+This version of Flume requires redis version 2.6 or greater. If you want to use redis cluster, we recommend redis version 3.1 or greater. 
+
+Required properties are in **bold**.
+
+================================================  ================================  ========================================================
+Property Name                                     Default                           Description
+================================================  ================================  ========================================================
+**type**                                          --                                The component type name, needs to be ``org.flume.channels.redis.RedisChannel``
+**server**                                        --                                Redis server used by the channel
+**key**                                           --                                Since we use list to store events, you must specify a name of list. The list can be not exist in redis server.
+port                                              6379                              The port of redis server
+password                                          --                                The password of redis.
+================================================  ================================  ========================================================
+
+
+Example for agent named a1 and channel named channel1:
+
+.. code-block:: properties
+
+    a1.channels.channel1.type = org.flume.channels.redis.RedisChannel
+    a1.channels.channel1.server = redis-server
+    a1.channels.channel1.key = redis-channel
+    a1.channels.channel1.password = mytest
+
+
 File Channel
 ~~~~~~~~~~~~
 
