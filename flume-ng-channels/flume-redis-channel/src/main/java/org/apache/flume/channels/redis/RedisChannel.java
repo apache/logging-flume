@@ -18,8 +18,6 @@
  */
 package org.apache.flume.channels.redis;
 
-import com.google.common.base.Optional;
-
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.DecoderFactory;
@@ -91,8 +89,7 @@ public class RedisChannel extends BasicChannelSemantics {
   public void start() {
     try {
       LOGGER.info("Starting Redis Channel: " + getName());
-      redisDao = RedisDao.getInstance(
-          redisConf.getProperty(REDIS_SERVER),
+      redisDao = RedisDao.getInstance(redisConf.getProperty(REDIS_SERVER),
           Integer.parseInt(redisConf.getProperty(REDIS_PORT)),
           redisConf.getProperty(REDIS_PASSWORD));
       counter.start();
@@ -165,20 +162,18 @@ public class RedisChannel extends BasicChannelSemantics {
 
     private TransactionType type = TransactionType.NONE;
     // For Puts
-    private Optional<ByteArrayOutputStream> tempOutStream = Optional
-        .absent();
+    private ByteArrayOutputStream tempOutStream = new ByteArrayOutputStream();
 
     // For put transactions, serialize the events and batch them and send
     // it.
-    private Optional<LinkedList<byte[]>> serializedEvents = Optional
-        .absent();
+    private LinkedList<byte[]> serializedEvents = new LinkedList<byte[]>();
     // For take transactions, deserialize and hold them till commit goes
     // through
-    private Optional<LinkedList<Event>> events = Optional.absent();
-    private Optional<SpecificDatumWriter<AvroFlumeEvent>> writer = Optional
-        .absent();
-    private Optional<SpecificDatumReader<AvroFlumeEvent>> reader = Optional
-        .absent();
+    private LinkedList<Event> events = new LinkedList<Event>();
+    private SpecificDatumWriter<AvroFlumeEvent> writer = new SpecificDatumWriter<AvroFlumeEvent>(
+        AvroFlumeEvent.class);
+    private SpecificDatumReader<AvroFlumeEvent> reader = new SpecificDatumReader<AvroFlumeEvent>(
+        AvroFlumeEvent.class);
 
     // Fine to use null for initial value, Avro will create new ones if this
     // is null
@@ -190,28 +185,15 @@ public class RedisChannel extends BasicChannelSemantics {
     @Override
     protected void doPut(Event event) throws InterruptedException {
       type = TransactionType.PUT;
-      if (!serializedEvents.isPresent()) {
-        serializedEvents = Optional.of(new LinkedList<byte[]>());
-      }
-
       try {
-        if (!tempOutStream.isPresent()) {
-          tempOutStream = Optional.of(new ByteArrayOutputStream());
-        }
-        if (!writer.isPresent()) {
-          writer = Optional
-              .of(new SpecificDatumWriter<AvroFlumeEvent>(
-                  AvroFlumeEvent.class));
-        }
-        tempOutStream.get().reset();
-        AvroFlumeEvent e = new AvroFlumeEvent(
-            toCharSeqMap(event.getHeaders()), ByteBuffer.wrap(event
-            .getBody()));
-        encoder = EncoderFactory.get().directBinaryEncoder(
-            tempOutStream.get(), encoder);
-        writer.get().write(e, encoder);
+        tempOutStream.reset();
+        AvroFlumeEvent e = new AvroFlumeEvent(toCharSeqMap(event.getHeaders()),
+            ByteBuffer.wrap(event.getBody()));
+        encoder = EncoderFactory.get().directBinaryEncoder(tempOutStream,
+            encoder);
+        writer.write(e, encoder);
         // Not really possible to avoid this copy :(
-        serializedEvents.get().add(tempOutStream.get().toByteArray());
+        serializedEvents.add(tempOutStream.toByteArray());
       } catch (Exception e) {
         throw new ChannelException("Error while serializing event", e);
       }
@@ -229,9 +211,6 @@ public class RedisChannel extends BasicChannelSemantics {
       } catch (Exception ex) {
         LOGGER.warn("Error while get multi message", ex);
       }
-      if (!events.isPresent()) {
-        events = Optional.of(new LinkedList<Event>());
-      }
       Event e;
       if (!transFailoverController.get().failedEvents.isEmpty()) {
         e = transFailoverController.get().failedEvents.removeFirst();
@@ -244,34 +223,28 @@ public class RedisChannel extends BasicChannelSemantics {
             message = redisDao.rpop(queue_key);
           }
           long endTime = System.nanoTime();
-          counter.addToRedisEventGetTimer((endTime - startTime)
-              / (1000 * 1000));
+          counter
+              .addToRedisEventGetTimer((endTime - startTime) / (1000 * 1000));
           if (parseAsFlumeEvent) {
             ByteArrayInputStream in = new ByteArrayInputStream(
                 message.getBytes());
-            decoder = DecoderFactory.get().directBinaryDecoder(in,
-                decoder);
-            if (!reader.isPresent()) {
-              reader = Optional
-                  .of(new SpecificDatumReader<AvroFlumeEvent>(
-                      AvroFlumeEvent.class));
-            }
-            AvroFlumeEvent event = reader.get().read(null, decoder);
+            decoder = DecoderFactory.get().directBinaryDecoder(in, decoder);
+            AvroFlumeEvent event = reader.read(null, decoder);
             e = EventBuilder.withBody(event.getBody().array(),
                 toStringMap(event.getHeaders()));
           } else {
-            e = EventBuilder.withBody(message.getBytes(),
-                Collections.EMPTY_MAP);
+            e = EventBuilder
+                .withBody(message.getBytes(), Collections.EMPTY_MAP);
           }
 
         } catch (Exception ex) {
           LOGGER.warn("Error while getting events from redis", ex);
-          throw new ChannelException(
-              "Error while getting events from redis", ex);
+          throw new ChannelException("Error while getting events from redis",
+              ex);
         }
       }
       eventTaken = true;
-      events.get().add(e);
+      events.add(e);
       return e;
     }
 
@@ -283,28 +256,25 @@ public class RedisChannel extends BasicChannelSemantics {
       if (type.equals(TransactionType.PUT)) {
         try {
           List<String> messages = new ArrayList<String>();
-          for (byte[] event : serializedEvents.get()) {
+          for (byte[] event : serializedEvents) {
             messages.add(new String(event));
           }
           long startTime = System.nanoTime();
           String[] message_to_redis = new String[messages.size()];
-          redisDao.lpush(queue_key,
-              messages.toArray(message_to_redis));
+          redisDao.lpush(queue_key, messages.toArray(message_to_redis));
           long endTime = System.nanoTime();
           counter.addToRedisEventSendTimer((endTime - startTime)
               / (1000 * 1000));
-          counter.addToEventPutSuccessCount(Long.valueOf(messages
-              .size()));
-          serializedEvents.get().clear();
+          counter.addToEventPutSuccessCount(Long.valueOf(messages.size()));
+          serializedEvents.clear();
         } catch (Exception ex) {
           LOGGER.warn("Sending events to Kafka failed", ex);
-          throw new ChannelException(
-              "Commit failed as send to Kafka failed", ex);
+          throw new ChannelException("Commit failed as send to Kafka failed",
+              ex);
         }
       } else {
-        counter.addToEventTakeSuccessCount(Long.valueOf(events.get()
-            .size()));
-        events.get().clear();
+        counter.addToEventTakeSuccessCount(Long.valueOf(events.size()));
+        events.clear();
       }
     }
 
@@ -314,11 +284,11 @@ public class RedisChannel extends BasicChannelSemantics {
         return;
       }
       if (type.equals(TransactionType.PUT)) {
-        serializedEvents.get().clear();
+        serializedEvents.clear();
       } else {
-        counter.addToRollbackCounter(Long.valueOf(events.get().size()));
-        transFailoverController.get().failedEvents.addAll(events.get());
-        events.get().clear();
+        counter.addToRollbackCounter(Long.valueOf(events.size()));
+        transFailoverController.get().failedEvents.addAll(events);
+        events.clear();
       }
     }
   }
@@ -341,10 +311,8 @@ public class RedisChannel extends BasicChannelSemantics {
   private static Map<String, String> toStringMap(
       Map<CharSequence, CharSequence> charSeqMap) {
     Map<String, String> stringMap = new HashMap<String, String>();
-    for (Map.Entry<CharSequence, CharSequence> entry : charSeqMap
-        .entrySet()) {
-      stringMap.put(entry.getKey().toString(), entry.getValue()
-          .toString());
+    for (Map.Entry<CharSequence, CharSequence> entry : charSeqMap.entrySet()) {
+      stringMap.put(entry.getKey().toString(), entry.getValue().toString());
     }
     return stringMap;
   }
