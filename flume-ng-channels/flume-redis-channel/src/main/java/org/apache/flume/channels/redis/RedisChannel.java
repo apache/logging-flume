@@ -30,15 +30,22 @@ import org.apache.flume.Event;
 import org.apache.flume.FlumeException;
 import org.apache.flume.channel.BasicChannelSemantics;
 import org.apache.flume.channel.BasicTransactionSemantics;
-import org.apache.flume.channels.redis.tools.RedisDao;
+import org.apache.flume.channels.redis.tools.RedisInit;
+import org.apache.flume.channels.redis.tools.RedisOperator;
 import org.apache.flume.conf.ConfigurationException;
 
 import static org.apache.flume.channels.redis.RedisChannelConfiguration.*;
 
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.source.avro.AvroFlumeEvent;
+import org.apache.commons.lang.StringUtils;
+import org.jboss.netty.util.internal.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import redis.clients.jedis.JedisPoolConfig;
+
+import com.google.common.net.HostAndPort;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -61,12 +68,12 @@ public class RedisChannel extends BasicChannelSemantics {
   private final Properties redisConf = new Properties();
   private final String channelUUID = UUID.randomUUID().toString();
 
-  private AtomicReference<String> topic = new AtomicReference<String>();
   private boolean parseAsFlumeEvent = DEFAULT_PARSE_AS_FLUME_EVENT;
-  private Long batch_number;
   private String queue_key;
-  private RedisDao redisDao;
+  private RedisOperator redisOperator;
+  private JedisPoolConfig jedisPoolConfig;
   private RedisChannelCounter counter;
+
 
   private final ThreadLocal<TransEvents> transFailoverController = new ThreadLocal<TransEvents>() {
     @Override
@@ -89,9 +96,7 @@ public class RedisChannel extends BasicChannelSemantics {
   public void start() {
     try {
       LOGGER.info("Starting Redis Channel: " + getName());
-      redisDao = RedisDao.getInstance(redisConf.getProperty(REDIS_SERVER),
-          Integer.parseInt(redisConf.getProperty(REDIS_PORT)),
-          redisConf.getProperty(REDIS_PASSWORD));
+      redisOperator = RedisInit.getInstance(redisConf, jedisPoolConfig);
       counter.start();
       super.start();
     } catch (Exception e) {
@@ -118,15 +123,138 @@ public class RedisChannel extends BasicChannelSemantics {
     return redisConf;
   }
 
+  private JedisPoolConfig createJedisConfig(Properties redisConf)
+      throws ConfigurationException {
+    String maxTotal = redisConf.getProperty(MAX_TO_TOTAL, DEFAULT_MAX_TO_TOTAL);
+    String maxIdle = redisConf.getProperty(MAX_IDLE, DEFAULT_MAX_IDLE);
+    String minIdle = redisConf.getProperty(MIN_IDLE, DEFAULT_MIN_IDLE);
+    String maxWaitMillis = redisConf.getProperty(MAX_WAIT_MILLIS,
+        DEFAULT_MAX_WAIT_MILLIS);
+    String testOnBorrow = redisConf.getProperty(TEST_ON_BORROW,
+        DEFAULT_TEST_ON_BORROW);
+    String testOnReturn = redisConf.getProperty(TEST_ON_RETURN,
+        DEFAULT_TEST_ON_RETURN);
+    String testWhileIdle = redisConf.getProperty(TEST_WHILE_IDLE,
+        DEFAULT_TEST_WHILE_IDLE);
+    String timeBetweenEvictionRunsMillis = redisConf.getProperty(
+        TIME_BETWEEN_EVICTION_RUNMILLIS,
+        DEFAULT_TIME_BETWEEN_EVICTION_RUNMILLIS);
+    String numTestsPerEvictionRun = redisConf.getProperty(
+        NUM_TESTS_PER_EVICTION_RUN, DEFAULT_NUM_TESTS_PER_EVICTION_RUN);
+    String minEvictableIdleTimeMillis = redisConf.getProperty(
+        MIN_EVICTABLE_IDLE_TIME_MILLS, DEFAULT_MIN_EVICTABLE_IDLE_TIME_MILLS);
+
+    if (!StringUtils.isNumeric(maxTotal) || !StringUtils.isNumeric(maxIdle)
+        || !StringUtils.isNumeric(minIdle)
+        || !StringUtils.isNumeric(maxWaitMillis)
+        || !StringUtils.isNumeric(timeBetweenEvictionRunsMillis)
+        || !StringUtils.isNumeric(numTestsPerEvictionRun)
+        || !StringUtils.isNumeric(minEvictableIdleTimeMillis)) {
+      StringBuilder sb = new StringBuilder(
+          "Error configuration of redis, the value of these key must be a postive number, but you may specified other types.\n");
+      sb.append(MAX_TO_TOTAL + ": " + maxTotal + "\n");
+      sb.append(MAX_IDLE + ": " + maxIdle + "\n");
+      sb.append(MIN_IDLE + ": " + minIdle + "\n");
+      sb.append(MAX_WAIT_MILLIS + ": " + maxWaitMillis + "\n");
+      sb.append(TIME_BETWEEN_EVICTION_RUNMILLIS + ": "
+          + timeBetweenEvictionRunsMillis + "\n");
+      sb.append(
+          NUM_TESTS_PER_EVICTION_RUN + ": " + numTestsPerEvictionRun + "\n");
+      sb.append(MIN_EVICTABLE_IDLE_TIME_MILLS + ": "
+          + minEvictableIdleTimeMillis + "\n");
+      throw new ConfigurationException(sb.toString());
+    }
+    boolean testOnBorrowBool = true;
+    boolean testOnReturnBool = true;
+    boolean testWhileIdleBool = true;
+    try {
+      testOnBorrowBool = Boolean.parseBoolean(testOnBorrow.trim());
+      testOnReturnBool = Boolean.parseBoolean(testOnReturn.trim());
+      testWhileIdleBool = Boolean.parseBoolean(testWhileIdle.trim());
+    } catch (Exception ex) {
+      StringBuilder sb = new StringBuilder(
+          "Error configuration of redis, the value of these key must be with \"true\" or \"false\", but you may specified other types.\n");
+      sb.append(TEST_ON_BORROW + ": " + testOnBorrow + "\n");
+      sb.append(testOnReturnBool + ": " + testOnReturnBool + "\n");
+      sb.append(testWhileIdleBool + ": " + testWhileIdleBool + "\n");
+      throw new ConfigurationException(sb.toString());
+    }
+
+    JedisPoolConfig jedisConfig = new JedisPoolConfig();
+    jedisConfig.setMaxTotal(Integer.parseInt(maxTotal));
+    jedisConfig.setMaxIdle(Integer.parseInt(maxIdle));
+    jedisConfig.setMinIdle(Integer.parseInt(minIdle));
+    jedisConfig.setMaxWaitMillis(Integer.parseInt(maxWaitMillis));
+    jedisConfig.setTestOnBorrow(testOnBorrowBool);
+    jedisConfig.setTestOnReturn(testOnReturnBool);
+    jedisConfig.setTestWhileIdle(testWhileIdleBool);
+    jedisConfig.setTimeBetweenEvictionRunsMillis(
+        Integer.parseInt(timeBetweenEvictionRunsMillis));
+    jedisConfig
+        .setNumTestsPerEvictionRun(Integer.parseInt(numTestsPerEvictionRun));
+    jedisConfig.setMinEvictableIdleTimeMillis(
+        Integer.parseInt(minEvictableIdleTimeMillis));
+    return jedisConfig;
+  }
+
   @Override
   public void configure(Context ctx) {
-    String host = ctx.getString(REDIS_SERVER);
-    if (host == null || host.isEmpty()) {
-      throw new ConfigurationException("redis server must be specified");
+    String redisType = ctx.getString(SERVER_TYPE, DEFAULT_SEVER_TYPE);
+    if (!redisType.equals(DEFAULT_SEVER_TYPE)
+        && !redisType.equals(CLUSTER_SERVER_TYPE)
+        && !redisType.equals(SENTINEL_SERVER_TYPE)) {
+      throw new ConfigurationException("redis type must be specified with \""
+          + DEFAULT_SEVER_TYPE + "\", \"" + CLUSTER_SERVER_TYPE + "\" or \""
+          + SENTINEL_SERVER_TYPE + "\". but I get a \"" + redisType + "\".");
     }
-    String port = ctx.getString(REDIS_PORT, DEFALUT_REIDS_PORT);
+    String host;
+    if (redisType.equals(DEFAULT_SEVER_TYPE)) {
+      host = ctx.getString(REDIS_SERVER);
+      if (null == host || host.isEmpty()) {
+        throw new ConfigurationException("redis server must be specified.");
+      }
+      String hostAndPortPair[] = host.split(":");
+      if (2 != hostAndPortPair.length
+          || !StringUtils.isNumeric(hostAndPortPair[1])) {
+        throw new ConfigurationException("wrong redis server format.");
+      }
+    } else if (redisType.equals(CLUSTER_SERVER_TYPE)) {
+      host = ctx.getString(REDIS_CLUSTER_SERVER);
+      if (null == host || host.isEmpty()) {
+        throw new ConfigurationException(
+            "redis cluster server must be specified.");
+      }
+      String[] hosts = host.split(",");
+      if (0 == hosts.length) {
+        throw new ConfigurationException("wrong redis cluster server format.");
+      }
+      for (String hostAndPort : hosts) {
+        String[] hostAndPortPair = hostAndPort.split(":");
+        if (2 != hostAndPortPair.length
+            || !StringUtils.isNumeric(hostAndPortPair[1])) {
+          throw new ConfigurationException(
+              "wrong redis server format with host: " + hostAndPort + ".");
+        }
+      }
+    } else if (redisType.equals(SENTINEL_SERVER_TYPE)) {
+      host = ctx.getString(REDIS_SENTINEL_SERVER);
+      if (null == host || host.isEmpty()) {
+        throw new ConfigurationException(
+            "redis sentinel server must be specified.");
+      }
+      String masterName = ctx.getString(SENTINEL_MASTER_NAME);
+      if (null == masterName || masterName.isEmpty()) {
+        throw new ConfigurationException(
+            "Sentinel master name must be specified.");
+      }
+      redisConf.put(SENTINEL_MASTER_NAME, masterName);
+    } else {
+      throw new ConfigurationException(
+          "Unknown error about redis type \"" + redisType + "\".");
+    }
+    String batchNumber = ctx.getString(BATCH_NUMBER, DEFAULT_BATCH_NUMBER);
     String password = ctx.getString(REDIS_PASSWORD);
-    if (password == null || password.isEmpty()) {
+    if (null == password || password.isEmpty()) {
       password = "";
       LOGGER.info("redis password has not be specified.");
     }
@@ -134,17 +262,29 @@ public class RedisChannel extends BasicChannelSemantics {
     if (key == null || key.isEmpty()) {
       throw new ConfigurationException("queue key must be specified");
     }
-    String batch_number = ctx.getString(BATCH_NUMBER, DEFALUT_BATCH_NUMBER);
-
+    String redisTimeOut = redisConf.getProperty(REDIS_CONNTIMOUT,
+        DEFAULT_REDIS_CONNTIMEOUT);
+    String clusterMaxAttemp = redisConf.getProperty(CLUSTER_MAX_ATTEMP,
+        DEFAULT_CLUSTER_MAX_ATTEMP);
+    if (!StringUtils.isNumeric(redisTimeOut)
+        || !StringUtils.isNumeric(clusterMaxAttemp)) {
+      StringBuilder sb = new StringBuilder(
+          "Error configuration of redis, the value of these key must be a postive number, but you may specified other types.\n");
+      sb.append(REDIS_CONNTIMOUT + ": " + redisTimeOut + "\n");
+      sb.append(CLUSTER_MAX_ATTEMP + ": " + clusterMaxAttemp + "\n");
+      throw new ConfigurationException(sb.toString());
+    }
     redisConf.putAll(ctx.getSubProperties(RREDIS_PREFIX));
+    redisConf.put(SERVER_TYPE, redisType);
     redisConf.put(REDIS_SERVER, host);
-    redisConf.put(REDIS_PORT, port);
     redisConf.put(REDIS_PASSWORD, password);
     redisConf.put(QUEUE_KEY, key);
+    redisConf.put(REDIS_CONNTIMOUT, redisTimeOut);
+    redisConf.put(CLUSTER_MAX_ATTEMP, clusterMaxAttemp);
+    redisConf.put(BATCH_NUMBER, batchNumber);
 
-    this.batch_number = Long.parseLong(batch_number);
+    this.jedisPoolConfig = createJedisConfig(redisConf);
     this.queue_key = key;
-
     parseAsFlumeEvent = ctx.getBoolean(PARSE_AS_FLUME_EVENT,
         DEFAULT_PARSE_AS_FLUME_EVENT);
 
@@ -217,14 +357,15 @@ public class RedisChannel extends BasicChannelSemantics {
       } else {
         try {
           long startTime = System.nanoTime();
-          String message = redisDao.rpop(queue_key);
-          while (message == null || message.isEmpty()) {
+          Long queueLength = redisOperator.llen(queue_key);
+          while (queueLength == null || queueLength == 0) {
             Thread.sleep(1000);
-            message = redisDao.rpop(queue_key);
+            queueLength = redisOperator.llen(queue_key);
           }
           long endTime = System.nanoTime();
           counter
               .addToRedisEventGetTimer((endTime - startTime) / (1000 * 1000));
+          String message = redisOperator.rpop(queue_key);
           if (parseAsFlumeEvent) {
             ByteArrayInputStream in = new ByteArrayInputStream(
                 message.getBytes());
@@ -233,8 +374,8 @@ public class RedisChannel extends BasicChannelSemantics {
             e = EventBuilder.withBody(event.getBody().array(),
                 toStringMap(event.getHeaders()));
           } else {
-            e = EventBuilder
-                .withBody(message.getBytes(), Collections.EMPTY_MAP);
+            e = EventBuilder.withBody(message.getBytes(),
+                Collections.EMPTY_MAP);
           }
 
         } catch (Exception ex) {
@@ -261,10 +402,10 @@ public class RedisChannel extends BasicChannelSemantics {
           }
           long startTime = System.nanoTime();
           String[] message_to_redis = new String[messages.size()];
-          redisDao.lpush(queue_key, messages.toArray(message_to_redis));
+          redisOperator.lpush(queue_key, messages.toArray(message_to_redis));
           long endTime = System.nanoTime();
-          counter.addToRedisEventSendTimer((endTime - startTime)
-              / (1000 * 1000));
+          counter
+              .addToRedisEventSendTimer((endTime - startTime) / (1000 * 1000));
           counter.addToEventPutSuccessCount(Long.valueOf(messages.size()));
           serializedEvents.clear();
         } catch (Exception ex) {

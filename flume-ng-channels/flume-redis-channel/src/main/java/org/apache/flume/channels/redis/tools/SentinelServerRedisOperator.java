@@ -26,26 +26,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;
 import redis.clients.jedis.Transaction;
 
-public class RedisDao {
-  private static final Logger log = LoggerFactory.getLogger(RedisDao.class);
-  private static RedisDao instance;
-  private static RedisController rc;
+public class SentinelServerRedisOperator implements RedisOperator{
+  private static final Logger log = LoggerFactory.getLogger(RedisInit.class);
+  private SentinelRedisController rc;
 
-  private RedisDao(String host, int port, String passwd) {
-    rc = RedisController.getRedisController(host, port, passwd);
+  public SentinelServerRedisOperator(String mastName, String servers, String passwd,
+      int timeout, JedisPoolConfig jedisPoolConfig) {
+    rc = new SentinelRedisController(mastName, servers, passwd, timeout, jedisPoolConfig);
   }
-
-  public static synchronized RedisDao getInstance(String host, int port, String passwd) {
-    if (null == instance) {
-      instance = new RedisDao(host, port, passwd);
-    }
-    return instance;
-  }
-
 
   public long lpush(String key, String... strings) {
     Jedis jedis = rc.getController();
@@ -113,5 +106,4 @@ public class RedisDao {
   public Jedis getRedis() {
     return rc.getController();
   }
-
 }
