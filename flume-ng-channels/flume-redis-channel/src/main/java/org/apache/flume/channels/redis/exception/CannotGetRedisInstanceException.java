@@ -22,17 +22,19 @@ import org.apache.flume.channels.redis.RedisChannelConfiguration;
 
 public class CannotGetRedisInstanceException extends Exception {
   
-  public CannotGetRedisInstanceException(){
+  public CannotGetRedisInstanceException() {
     super();
   }
+
   public CannotGetRedisInstanceException(String message) {
     super(message);
   }
-  public CannotGetRedisInstanceException(String message,Throwable cause){
+
+  public CannotGetRedisInstanceException(String message,Throwable cause) {
     super(message,cause);
   }
   
-  public CannotGetRedisInstanceException(Throwable cause){
+  public CannotGetRedisInstanceException(Throwable cause) {
     super(cause);
   }
 }

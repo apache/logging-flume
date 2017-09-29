@@ -31,7 +31,7 @@ import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;
 import redis.clients.jedis.Transaction;
 
-public class SentinelServerRedisOperator implements RedisOperator{
+public class SentinelServerRedisOperator implements RedisOperator {
   private static final Logger log = LoggerFactory.getLogger(RedisInit.class);
   private SentinelRedisController rc;
 

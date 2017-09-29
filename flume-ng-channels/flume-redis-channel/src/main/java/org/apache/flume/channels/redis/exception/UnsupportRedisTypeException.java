@@ -22,17 +22,19 @@ import org.apache.flume.channels.redis.RedisChannelConfiguration;
 
 public class UnsupportRedisTypeException extends Exception {
   
-  public UnsupportRedisTypeException(){
+  public UnsupportRedisTypeException() {
     super();
   }
+
   public UnsupportRedisTypeException(String message) {
     super(message);
   }
-  public UnsupportRedisTypeException(String message,Throwable cause){
+
+  public UnsupportRedisTypeException(String message,Throwable cause) {
     super(message,cause);
   }
   
-  public UnsupportRedisTypeException(Throwable cause){
+  public UnsupportRedisTypeException(Throwable cause) {
     super(cause);
   }
 }

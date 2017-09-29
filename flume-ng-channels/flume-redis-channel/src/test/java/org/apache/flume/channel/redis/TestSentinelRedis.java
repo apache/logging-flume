@@ -35,45 +35,50 @@ import java.io.IOException;
 import java.util.Set;
 
 public class TestSentinelRedis {
-	private RedisCluster cluster;
-	private Set<String> jedisSentinelHosts;
-	private SentinelServerRedisOperator sentinelServerRedisOpertor;
+  private RedisCluster cluster;
+  private Set<String> jedisSentinelHosts;
+  private SentinelServerRedisOperator sentinelServerRedisOpertor;
 
-	@Before
-	public void setUp() throws IOException {
-		cluster = RedisCluster.builder().ephemeral().sentinelCount(3).quorumSize(2).replicationGroup("master1", 1)
-				.replicationGroup("master2", 1).replicationGroup("master3", 1).build();
-		cluster.start();
-		jedisSentinelHosts = JedisUtil.sentinelHosts(cluster);
-		StringBuilder sb = new StringBuilder();
-		for (String host : jedisSentinelHosts) {
-			sb.append(host + ",");
-		}
-		sentinelServerRedisOpertor = new SentinelServerRedisOperator("master1",
-				sb.toString(), "", 5000, new JedisPoolConfig());
-	}
+  @Before
+  public void setUp() throws IOException {
+    cluster = RedisCluster.builder().ephemeral().sentinelCount(3).quorumSize(2).replicationGroup
+        ("master1", 1)
+        .replicationGroup("master2", 1)
+        .replicationGroup("master3", 1).build();
+    cluster.start();
+    jedisSentinelHosts = JedisUtil.sentinelHosts(cluster);
+    StringBuilder sb = new StringBuilder();
+    for (String host : jedisSentinelHosts) {
+      sb.append(host + ",");
+    }
+    sentinelServerRedisOpertor = new SentinelServerRedisOperator("master1",
+        sb.toString(), "", 5000, new JedisPoolConfig());
+  }
 
-	@Test
-	public void testSimpleListOperator() {
-		Assert.assertEquals(1, sentinelServerRedisOpertor.lpush("test", "a"));
-		Assert.assertEquals(1, Integer.parseInt(sentinelServerRedisOpertor.llen("test").toString()));
-		Assert.assertEquals("a", sentinelServerRedisOpertor.rpop("test"));
-		Assert.assertEquals(0, Integer.parseInt(sentinelServerRedisOpertor.llen("test").toString()));
-	}
+  @Test
+  public void testSimpleListOperator() {
+    Assert.assertEquals(1, sentinelServerRedisOpertor.lpush("test", "a"));
+    Assert.assertEquals(1, Integer.parseInt(sentinelServerRedisOpertor.llen("test")
+                        .toString()));
+    Assert.assertEquals("a", sentinelServerRedisOpertor.rpop("test"));
+    Assert.assertEquals(0, Integer.parseInt(sentinelServerRedisOpertor.llen("test")
+                        .toString()));
+  }
 
-	@Test
-	public void testComplexListOperator() {
-		String[] multiPush = { "a", "b", "c", "d", "e" };
-		Assert.assertEquals(multiPush.length, sentinelServerRedisOpertor.lpush("test", multiPush));
-		Assert.assertEquals(multiPush.length, Integer.parseInt(sentinelServerRedisOpertor.llen("test").toString()));
-		Assert.assertEquals(multiPush[0], sentinelServerRedisOpertor.rpop("test"));
-		Assert.assertEquals(multiPush.length - 1, Integer.parseInt(sentinelServerRedisOpertor.llen("test").toString()));
+  @Test
+  public void testComplexListOperator() {
+    String[] multiPush = {"a", "b", "c", "d", "e"};
+    Assert.assertEquals(multiPush.length, sentinelServerRedisOpertor.lpush("test", multiPush));
+    Assert.assertEquals(multiPush.length, Integer.parseInt(sentinelServerRedisOpertor.llen
+        ("test").toString()));
+    Assert.assertEquals(multiPush[0], sentinelServerRedisOpertor.rpop("test"));
+    Assert.assertEquals(multiPush.length - 1,
+                        Integer.parseInt(sentinelServerRedisOpertor.llen("test").toString()));
 
-	}
+  }
 
-	@After
-	public void tearDown() {
-		/* cluster.stop(); */
-	}
-
+  @After
+  public void tearDown() {
+    cluster.stop();
+  }
 }

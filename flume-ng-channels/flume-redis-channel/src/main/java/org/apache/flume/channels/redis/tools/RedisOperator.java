@@ -20,7 +20,7 @@ package org.apache.flume.channels.redis.tools;
 
 import java.util.List;
 
-public interface RedisOperator{
+public interface RedisOperator {
 
   public long lpush(String key, String... strings);
 

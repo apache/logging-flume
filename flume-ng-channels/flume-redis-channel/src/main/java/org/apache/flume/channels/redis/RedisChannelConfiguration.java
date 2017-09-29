@@ -19,8 +19,6 @@
 package org.apache.flume.channels.redis;
 
 public class RedisChannelConfiguration {
-
-
   public static final String SERVER_TYPE = "server.type";
   public static final String REDIS_CLUSTER_SERVER = "cluster.servers";
   public static final String REDIS_SERVER = "single.server";

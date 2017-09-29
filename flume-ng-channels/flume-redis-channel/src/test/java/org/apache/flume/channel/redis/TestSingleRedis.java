@@ -54,9 +54,11 @@ public class TestSingleRedis {
   public void testComplexListOperator() {
     String[] multiPush = {"a","b","c","d","e"};
     Assert.assertEquals(multiPush.length,singleServerRedisOperator.lpush("test", multiPush));
-    Assert.assertEquals(multiPush.length, Integer.parseInt(singleServerRedisOperator.llen("test").toString()));
+    Assert.assertEquals(multiPush.length,
+                        Integer.parseInt(singleServerRedisOperator.llen("test").toString()));
     Assert.assertEquals(multiPush[0], singleServerRedisOperator.rpop("test"));
-    Assert.assertEquals(multiPush.length - 1, Integer.parseInt(singleServerRedisOperator.llen("test").toString())); 
+    Assert.assertEquals(multiPush.length - 1,
+                        Integer.parseInt(singleServerRedisOperator.llen("test").toString()));
     
   }
 

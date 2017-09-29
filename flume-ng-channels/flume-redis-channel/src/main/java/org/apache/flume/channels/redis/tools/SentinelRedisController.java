@@ -36,8 +36,9 @@ public class SentinelRedisController {
     String[] arr = servers.split(",");
     if (arr != null && arr.length > 0) {
       for (String item : arr) {
-        if (item != null && !item.equals(""))
+        if (item != null && !item.equals("")) {
           sentinels.add(item);
+        }
       }
     }
     if (StringUtils.isBlank(passwd)) {

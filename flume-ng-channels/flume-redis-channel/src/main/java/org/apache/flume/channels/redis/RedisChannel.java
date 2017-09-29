@@ -74,7 +74,6 @@ public class RedisChannel extends BasicChannelSemantics {
   private JedisPoolConfig jedisPoolConfig;
   private RedisChannelCounter counter;
 
-
   private final ThreadLocal<TransEvents> transFailoverController = new ThreadLocal<TransEvents>() {
     @Override
     public TransEvents initialValue() {
@@ -151,7 +150,8 @@ public class RedisChannel extends BasicChannelSemantics {
         || !StringUtils.isNumeric(numTestsPerEvictionRun)
         || !StringUtils.isNumeric(minEvictableIdleTimeMillis)) {
       StringBuilder sb = new StringBuilder(
-          "Error configuration of redis, the value of these key must be a postive number, but you may specified other types.\n");
+          "Error configuration of redis, the value of these key must be a postive number, but you" +
+              " may specified other types.\n");
       sb.append(MAX_TO_TOTAL + ": " + maxTotal + "\n");
       sb.append(MAX_IDLE + ": " + maxIdle + "\n");
       sb.append(MIN_IDLE + ": " + minIdle + "\n");
@@ -173,7 +173,8 @@ public class RedisChannel extends BasicChannelSemantics {
       testWhileIdleBool = Boolean.parseBoolean(testWhileIdle.trim());
     } catch (Exception ex) {
       StringBuilder sb = new StringBuilder(
-          "Error configuration of redis, the value of these key must be with \"true\" or \"false\", but you may specified other types.\n");
+          "Error configuration of redis, the value of these key must be with \"true\" or " +
+              "\"false\", but you may specified other types.\n");
       sb.append(TEST_ON_BORROW + ": " + testOnBorrow + "\n");
       sb.append(testOnReturnBool + ": " + testOnReturnBool + "\n");
       sb.append(testWhileIdleBool + ": " + testWhileIdleBool + "\n");
@@ -269,7 +270,8 @@ public class RedisChannel extends BasicChannelSemantics {
     if (!StringUtils.isNumeric(redisTimeOut)
         || !StringUtils.isNumeric(clusterMaxAttemp)) {
       StringBuilder sb = new StringBuilder(
-          "Error configuration of redis, the value of these key must be a postive number, but you may specified other types.\n");
+          "Error configuration of redis, the value of these key must be a postive number, but you" +
+              " may specified other types.\n");
       sb.append(REDIS_CONNTIMOUT + ": " + redisTimeOut + "\n");
       sb.append(CLUSTER_MAX_ATTEMP + ": " + clusterMaxAttemp + "\n");
       throw new ConfigurationException(sb.toString());
