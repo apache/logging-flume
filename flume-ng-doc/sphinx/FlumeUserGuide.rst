@@ -3404,10 +3404,23 @@ Required properties are in **bold**.
 Property Name                                     Default                           Description
 ================================================  ================================  ========================================================
 **type**                                          --                                The component type name, needs to be ``org.flume.channels.redis.RedisChannel``
-**server**                                        --                                Redis server used by the channel
+**server.type**                                   single                              Specify the type of redis, now we support single, sentinel and cluster. Default value is single server mode.
+single.server                                     --                                 A Single Redis server used by the channel. It will work with "single" server type.
+sentinel.servers                                  --                                 Sentinel Redis servers used by the channel. It will work with "sentinel" server type. Use commas to separate different node.
+sentinel.master.name                              --                                 Sentinel Redis master name. It will work with "sentinel" server type.
+cluster.servers                                   --                                 Cluster Redis servers used by the channel. It will work with "cluster" server type. Use commas to separate different node.
+cluster.max.attemp                                1                                   Amount times to retry to access redis cluster.
 **key**                                           --                                Since we use list to store events, you must specify a name of list. The list can be not exist in redis server.
-port                                              6379                              The port of redis server
 password                                          --                                The password of redis.
+redis.timout                                      5000                                Amount of time (in milliseconds) to wait to connect redis.
+redis.max.total                                   500
+Max total number connections of redis pool.
+redis.max.idle                                    300                                Max idle number connections of redis pool.
+redis.min.idle                                    10                                Min idle number connections of redis pools.  
+redis.max.wait.millis                             60000                               Amount of time(in milliseconds) to get a connection from redis pool.
+redis.test.on.borrow                              true                                If test when get a connection from redis pool. Recommond let it be true in case the connection lost.  
+redis.test.on.return                              true                                If test when give a connection back to redis pool. 
+redis.test.while.idle                             true                                If test while connection in redis pool. Recommond let it be true in case the connection lost.
 ================================================  ================================  ========================================================
 
 
@@ -3416,9 +3429,21 @@ Example for agent named a1 and channel named channel1:
 .. code-block:: properties
 
     a1.channels.channel1.type = org.flume.channels.redis.RedisChannel
-    a1.channels.channel1.server = redis-server
+    a1.channels.channel1.server = 10.0.0.1:6379
     a1.channels.channel1.key = redis-channel
     a1.channels.channel1.password = mytest
+
+    a1.channels.channel2.type = org.flume.channels.redis.RedisChannel
+    a1.channels.channel2.server.type = sentinel
+    a1.channels.channel2.sentinel.servers = 10.0.0.1:26379,10.0.0.2:26379
+    a1.channels.channel2.sentinel.master.name = mymaster
+    a1.channels.channel2.key = redis-channel
+
+    a1.channels.channel3.type = org.flume.channels.redis.RedisChannel
+    a1.channels.channel3.server.type = cluster
+    a1.channels.channel3.cluster.servers = 10.0.0.1:7000,10.0.0.1:7001,10.0.0.1:7002
+    a1.channels.channel3.key = redis-channel
+
 
 
 File Channel
