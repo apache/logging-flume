@@ -41,8 +41,8 @@ public class TestSentinelRedis {
 
   @Before
   public void setUp() throws IOException {
-    cluster = RedisCluster.builder().ephemeral().sentinelCount(3).quorumSize(2).replicationGroup
-        ("master1", 1)
+    cluster = RedisCluster.builder().ephemeral().sentinelCount(3).quorumSize(2).replicationGroup(
+        "master1",1)
         .replicationGroup("master2", 1)
         .replicationGroup("master3", 1).build();
     cluster.start();
@@ -69,8 +69,8 @@ public class TestSentinelRedis {
   public void testComplexListOperator() {
     String[] multiPush = {"a", "b", "c", "d", "e"};
     Assert.assertEquals(multiPush.length, sentinelServerRedisOpertor.lpush("test", multiPush));
-    Assert.assertEquals(multiPush.length, Integer.parseInt(sentinelServerRedisOpertor.llen
-        ("test").toString()));
+    Assert.assertEquals(multiPush.length, Integer.parseInt(sentinelServerRedisOpertor.llen(
+        "test").toString()));
     Assert.assertEquals(multiPush[0], sentinelServerRedisOpertor.rpop("test"));
     Assert.assertEquals(multiPush.length - 1,
                         Integer.parseInt(sentinelServerRedisOpertor.llen("test").toString()));

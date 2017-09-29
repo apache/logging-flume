@@ -214,7 +214,7 @@ public class RedisChannel extends BasicChannelSemantics {
       if (null == host || host.isEmpty()) {
         throw new ConfigurationException("redis server must be specified.");
       }
-      String hostAndPortPair[] = host.split(":");
+      String[] hostAndPortPair = host.split(":");
       if (2 != hostAndPortPair.length
           || !StringUtils.isNumeric(hostAndPortPair[1])) {
         throw new ConfigurationException("wrong redis server format.");
