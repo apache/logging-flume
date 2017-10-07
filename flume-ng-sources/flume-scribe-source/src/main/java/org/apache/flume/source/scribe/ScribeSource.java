@@ -96,7 +96,8 @@ public class ScribeSource extends AbstractSource implements
         TNonblockingServerTransport transport = new TNonblockingServerSocket(port);
         THsHaServer.Args args = new THsHaServer.Args(transport);
 
-        args.workerThreads(workers);
+        args.minWorkerThreads(workers);
+        args.maxWorkerThreads(workers);
         args.processor(processor);
         args.transportFactory(new TFramedTransport.Factory(maxReadBufferBytes));
         args.protocolFactory(new TBinaryProtocol.Factory(false, false));

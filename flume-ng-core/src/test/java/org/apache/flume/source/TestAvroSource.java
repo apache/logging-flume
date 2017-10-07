@@ -20,17 +20,19 @@
 package org.apache.flume.source;
 
 import java.io.IOException;
-import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.security.cert.X509Certificate;
+import java.nio.channels.ServerSocketChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
+
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManager;
@@ -53,7 +55,6 @@ import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
-import org.jboss.netty.channel.ChannelException;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.socket.SocketChannel;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
@@ -114,6 +115,62 @@ public class TestAvroSource {
     source.stop();
     Assert.assertTrue("Reached stop or error",
         LifecycleController.waitForOneOf(source, LifecycleState.STOP_OR_ERROR));
+    Assert.assertEquals("Server is stopped", LifecycleState.STOP,
+        source.getLifecycleState());
+  }
+
+  @Test
+  public void testSourceStoppedOnFlumeExceptionIfPortUsed()
+      throws InterruptedException, IOException {
+    final String loopbackIPv4 = "127.0.0.1";
+    final int port = 10500;
+
+    // create a dummy socket bound to a known port.
+    try (ServerSocketChannel dummyServerSocket = ServerSocketChannel.open()) {
+      dummyServerSocket.socket().setReuseAddress(true);
+      dummyServerSocket.socket().bind(new InetSocketAddress(loopbackIPv4, port));
+
+      Context context = new Context();
+      context.put("port", String.valueOf(port));
+      context.put("bind", loopbackIPv4);
+      Configurables.configure(source, context);
+      try {
+        source.start();
+        Assert.fail("Expected an exception during startup caused by binding on a used port");
+      } catch (FlumeException e) {
+        logger.info("Received an expected exception.", e);
+        Assert.assertTrue("Expected a server socket setup related root cause",
+            e.getMessage().contains("server socket"));
+      }
+    }
+    // As port is already in use, an exception is thrown and the source is stopped
+    // cleaning up the opened sockets during source.start().
+    Assert.assertEquals("Server is stopped", LifecycleState.STOP,
+            source.getLifecycleState());
+  }
+
+  @Test
+  public void testInvalidAddress()
+      throws InterruptedException, IOException {
+    final String invalidHost = "invalid.host";
+    final int port = 10501;
+
+    Context context = new Context();
+    context.put("port", String.valueOf(port));
+    context.put("bind", invalidHost);
+    Configurables.configure(source, context);
+
+    try {
+      source.start();
+      Assert.fail("Expected an exception during startup caused by binding on a invalid host");
+    } catch (FlumeException e) {
+      logger.info("Received an expected exception.", e);
+      Assert.assertTrue("Expected a server socket setup related root cause",
+          e.getMessage().contains("server socket"));
+    }
+
+    // As port is already in use, an exception is thrown and the source is stopped
+    // cleaning up the opened sockets during source.start().
     Assert.assertEquals("Server is stopped", LifecycleState.STOP,
         source.getLifecycleState());
   }
@@ -264,31 +321,17 @@ public class TestAvroSource {
 
   @Test
   public void testSslRequest() throws InterruptedException, IOException {
-    boolean bound = false;
 
-    for (int i = 0; i < 10 && !bound; i++) {
-      try {
-        Context context = new Context();
+    Context context = new Context();
 
-        context.put("port", String.valueOf(selectedPort = 41414 + i));
-        context.put("bind", "0.0.0.0");
-        context.put("ssl", "true");
-        context.put("keystore", "src/test/resources/server.p12");
-        context.put("keystore-password", "password");
-        context.put("keystore-type", "PKCS12");
-
-        Configurables.configure(source, context);
-
-        source.start();
-        bound = true;
-      } catch (ChannelException e) {
-        /*
-         * NB: This assume we're using the Netty server under the hood and the
-         * failure is to bind. Yucky.
-         */
-        Thread.sleep(100);
-      }
-    }
+    context.put("port", String.valueOf(selectedPort = getFreePort()));
+    context.put("bind", "0.0.0.0");
+    context.put("ssl", "true");
+    context.put("keystore", "src/test/resources/server.p12");
+    context.put("keystore-password", "password");
+    context.put("keystore-type", "PKCS12");
+    Configurables.configure(source, context);
+    source.start();
 
     Assert
         .assertTrue("Reached start or error", LifecycleController.waitForOneOf(
@@ -416,11 +459,20 @@ public class TestAvroSource {
     doIpFilterTest(localhost, "deny:ip:" +
         localhost.getHostAddress().substring(0, 3) + "*,allow:ip:*",
         false, false);
+
+    // Private lambda expression to check the received FlumeException within this test
+    Consumer<Exception> exceptionChecker = (Exception ex) -> {
+      logger.info("Received an expected exception", ex);
+      //covers all ipFilter related exceptions
+      Assert.assertTrue("Expected an ipFilterRules related exception",
+          ex.getMessage().contains("ipFilter"));
+    };
+
     try {
       doIpFilterTest(localhost, null, false, false);
       Assert.fail("The null ipFilterRules config should have thrown an exception.");
     } catch (FlumeException e) {
-      //Do nothing
+      exceptionChecker.accept(e);
     }
 
     try {
@@ -428,57 +480,44 @@ public class TestAvroSource {
       Assert.fail("The empty string ipFilterRules config should have thrown "
           + "an exception");
     } catch (FlumeException e) {
-      //Do nothing
+      exceptionChecker.accept(e);
     }
 
     try {
       doIpFilterTest(localhost, "homer:ip:45.4.23.1", true, false);
       Assert.fail("Bad ipFilterRules config should have thrown an exception.");
     } catch (FlumeException e) {
-      //Do nothing
+      exceptionChecker.accept(e);
     }
+
     try {
       doIpFilterTest(localhost, "allow:sleeps:45.4.23.1", true, false);
       Assert.fail("Bad ipFilterRules config should have thrown an exception.");
     } catch (FlumeException e) {
-      //Do nothing
+      exceptionChecker.accept(e);
     }
   }
 
   public void doIpFilterTest(InetAddress dest, String ruleDefinition,
       boolean eventShouldBeAllowed, boolean testWithSSL)
       throws InterruptedException, IOException {
-    boolean bound = false;
-
-    for (int i = 0; i < 100 && !bound; i++) {
-      try {
-        Context context = new Context();
-        context.put("port", String.valueOf(selectedPort = 41414 + i));
-        context.put("bind", "0.0.0.0");
-        context.put("ipFilter", "true");
-        if (ruleDefinition != null) {
-          context.put("ipFilterRules", ruleDefinition);
-        }
-        if (testWithSSL) {
-          logger.info("Client testWithSSL" + testWithSSL);
-          context.put("ssl", "true");
-          context.put("keystore", "src/test/resources/server.p12");
-          context.put("keystore-password", "password");
-          context.put("keystore-type", "PKCS12");
-        }
-
-        Configurables.configure(source, context);
-
-        source.start();
-        bound = true;
-      } catch (ChannelException e) {
-        /*
-         * NB: This assume we're using the Netty server under the hood and the
-         * failure is to bind. Yucky.
-         */
-        Thread.sleep(100);
-      }
+    Context context = new Context();
+    context.put("port", String.valueOf(selectedPort = getFreePort()));
+    context.put("bind", "0.0.0.0");
+    context.put("ipFilter", "true");
+    if (ruleDefinition != null) {
+      context.put("ipFilterRules", ruleDefinition);
     }
+    if (testWithSSL) {
+      logger.info("Client testWithSSL" + testWithSSL);
+      context.put("ssl", "true");
+      context.put("keystore", "src/test/resources/server.p12");
+      context.put("keystore-password", "password");
+      context.put("keystore-type", "PKCS12");
+    }
+    // Invalid configuration may result in a FlumeException
+    Configurables.configure(source, context);
+    source.start();
 
     Assert
         .assertTrue("Reached start or error", LifecycleController.waitForOneOf(

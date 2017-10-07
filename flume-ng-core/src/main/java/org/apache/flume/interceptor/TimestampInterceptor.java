@@ -28,18 +28,22 @@ import static org.apache.flume.interceptor.TimestampInterceptor.Constants.*;
 /**
  * Simple Interceptor class that sets the current system timestamp on all events
  * that are intercepted.
- * By convention, this timestamp header is named "timestamp" and its format
+ * By convention, this timestamp header is named "timestamp" by default and its format
  * is a "stringified" long timestamp in milliseconds since the UNIX epoch.
+ * The name of the header can be changed through the configuration using the
+ * config key "header".
  */
 public class TimestampInterceptor implements Interceptor {
 
   private final boolean preserveExisting;
+  private final String header;
 
   /**
    * Only {@link TimestampInterceptor.Builder} can build me
    */
-  private TimestampInterceptor(boolean preserveExisting) {
+  private TimestampInterceptor(boolean preserveExisting, String header) {
     this.preserveExisting = preserveExisting;
+    this.header = header;
   }
 
   @Override
@@ -53,11 +57,11 @@ public class TimestampInterceptor implements Interceptor {
   @Override
   public Event intercept(Event event) {
     Map<String, String> headers = event.getHeaders();
-    if (preserveExisting && headers.containsKey(TIMESTAMP)) {
+    if (preserveExisting && headers.containsKey(header)) {
       // we must preserve the existing timestamp
     } else {
       long now = System.currentTimeMillis();
-      headers.put(TIMESTAMP, Long.toString(now));
+      headers.put(header, Long.toString(now));
     }
     return event;
   }
@@ -85,24 +89,27 @@ public class TimestampInterceptor implements Interceptor {
    */
   public static class Builder implements Interceptor.Builder {
 
-    private boolean preserveExisting = PRESERVE_DFLT;
+    private boolean preserveExisting = DEFAULT_PRESERVE;
+    private String header = DEFAULT_HEADER_NAME;
 
     @Override
     public Interceptor build() {
-      return new TimestampInterceptor(preserveExisting);
+      return new TimestampInterceptor(preserveExisting, header);
     }
 
     @Override
     public void configure(Context context) {
-      preserveExisting = context.getBoolean(PRESERVE, PRESERVE_DFLT);
+      preserveExisting = context.getBoolean(CONFIG_PRESERVE, DEFAULT_PRESERVE);
+      header = context.getString(CONFIG_HEADER_NAME, DEFAULT_HEADER_NAME);
     }
 
   }
 
   public static class Constants {
-    public static String TIMESTAMP = "timestamp";
-    public static String PRESERVE = "preserveExisting";
-    public static boolean PRESERVE_DFLT = false;
+    public static final String CONFIG_PRESERVE = "preserveExisting";
+    public static final boolean DEFAULT_PRESERVE = false;
+    public static final String CONFIG_HEADER_NAME = "headerName";
+    public static final String DEFAULT_HEADER_NAME = "timestamp";
   }
 
 }

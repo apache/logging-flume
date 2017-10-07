@@ -23,10 +23,15 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
+
+import com.google.common.base.Throwables;
 import org.apache.commons.io.FileUtils;
 import org.apache.flume.Context;
 import org.apache.flume.EventDeliveryException;
+import org.apache.flume.Transaction;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.event.EventBuilder;
 import org.apache.hadoop.conf.Configuration;
@@ -35,7 +40,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
-import org.junit.After;
+import org.apache.hadoop.hdfs.server.namenode.NameNodeAdapter;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -462,6 +467,120 @@ public class TestHDFSEventSinkOnMiniCluster {
     System.out.println("There are " + statuses.length + " files.");
     Assert.assertEquals("31 files expected, found " + statuses.length,
         31, statuses.length);
+
+    if (!KEEP_DATA) {
+      fs.delete(outputDirPath, true);
+    }
+
+    cluster.shutdown();
+    cluster = null;
+  }
+
+  /**
+   * Tests if the lease gets released if the close() call throws IOException.
+   * For more details see https://issues.apache.org/jira/browse/FLUME-3080
+   */
+  @Test
+  public void testLeaseRecoveredIfCloseThrowsIOException() throws Exception {
+    testLeaseRecoveredIfCloseFails(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        throw new IOException();
+      }
+    });
+  }
+
+  /**
+   * Tests if the lease gets released if the close() call times out.
+   * For more details see https://issues.apache.org/jira/browse/FLUME-3080
+   */
+  @Test
+  public void testLeaseRecoveredIfCloseTimesOut() throws Exception {
+    testLeaseRecoveredIfCloseFails(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        TimeUnit.SECONDS.sleep(30);
+        return null;
+      }
+    });
+  }
+
+  private void testLeaseRecoveredIfCloseFails(final Callable<?> doThisInClose)
+      throws Exception {
+    cluster = new MiniDFSCluster.Builder(new Configuration()).numDataNodes(1).format(true).build();
+    cluster.waitActive();
+
+    String outputDir = "/flume/leaseRecovery";
+    Path outputDirPath = new Path(outputDir);
+
+    logger.info("Running test with output dir: {}", outputDir);
+
+    FileSystem fs = cluster.getFileSystem();
+    // ensure output directory is empty
+    if (fs.exists(outputDirPath)) {
+      fs.delete(outputDirPath, true);
+    }
+    String nnURL = getNameNodeURL(cluster);
+
+    Context ctx = new Context();
+    MemoryChannel channel = new MemoryChannel();
+    channel.configure(ctx);
+    channel.start();
+
+    ctx.put("hdfs.path", nnURL + outputDir);
+    ctx.put("hdfs.fileType", HDFSWriterFactory.DataStreamType);
+    ctx.put("hdfs.batchSize", Integer.toString(1));
+    ctx.put("hdfs.callTimeout", Integer.toString(1000));
+
+    HDFSWriter hdfsWriter = new HDFSDataStream() {
+      @Override
+      public void close() throws IOException {
+        try {
+          doThisInClose.call();
+        } catch (Throwable e) {
+          Throwables.propagateIfPossible(e, IOException.class);
+          throw new RuntimeException(e);
+        }
+      }
+    };
+    hdfsWriter.configure(ctx);
+
+    HDFSEventSink sink = new HDFSEventSink();
+    sink.configure(ctx);
+    sink.setMockFs(fs);
+    sink.setMockWriter(hdfsWriter);
+    sink.setChannel(channel);
+    sink.start();
+
+    Transaction txn = channel.getTransaction();
+    txn.begin();
+    try {
+      channel.put(EventBuilder.withBody("test", Charsets.UTF_8));
+      txn.commit();
+    } finally {
+      txn.close();
+    }
+
+    sink.process();
+    sink.stop();
+    channel.stop();
+
+    FileStatus[] statuses = fs.listStatus(outputDirPath);
+    Assert.assertEquals(1, statuses.length);
+
+    String filePath = statuses[0].getPath().toUri().getPath();
+
+    // -1 in case that the lease doesn't exist.
+    long leaseRenewalTime = NameNodeAdapter.getLeaseRenewalTime(cluster.getNameNode(), filePath);
+    // wait until the NameNode recovers the lease
+    for (int i = 0; (i < 10) && (leaseRenewalTime != -1L); i++) {
+      TimeUnit.SECONDS.sleep(1);
+      leaseRenewalTime = NameNodeAdapter.getLeaseRenewalTime(cluster.getNameNode(), filePath);
+    }
+
+    // There should be no lease for the given path even if close failed as the BucketWriter
+    // explicitly calls the recoverLease()
+    Assert.assertEquals(-1L, leaseRenewalTime);
 
     if (!KEEP_DATA) {
       fs.delete(outputDirPath, true);

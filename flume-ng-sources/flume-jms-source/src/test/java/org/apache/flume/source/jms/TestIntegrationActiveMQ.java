@@ -235,4 +235,56 @@ public class TestIntegrationActiveMQ {
     Collections.sort(actual);
     Assert.assertEquals(expected, actual);
   }
+
+  @Test
+  public void testDurableSubscription() throws Exception {
+    context.put(JMSSourceConfiguration.DESTINATION_TYPE,
+        JMSSourceConfiguration.DESTINATION_TYPE_TOPIC);
+    context.put(JMSSourceConfiguration.CLIENT_ID, "FLUME");
+    context.put(JMSSourceConfiguration.DURABLE_SUBSCRIPTION_NAME, "SOURCE1");
+    context.put(JMSSourceConfiguration.CREATE_DURABLE_SUBSCRIPTION, "true");
+    context.put(JMSSourceConfiguration.BATCH_SIZE, "10");
+    source.configure(context);
+    source.start();
+    Thread.sleep(5000L);
+    List<String> expected = Lists.newArrayList();
+    List<String> input = Lists.newArrayList();
+    for (int i = 0; i < 10; i++) {
+      input.add("before " + String.valueOf(i));
+    }
+    expected.addAll(input);
+    putTopic(input);
+
+    Thread.sleep(500L);
+    Assert.assertEquals(Status.READY, source.process());
+    Assert.assertEquals(Status.BACKOFF, source.process());
+    source.stop();
+    Thread.sleep(500L);
+    input = Lists.newArrayList();
+    for (int i = 0; i < 10; i++) {
+      input.add("during " + String.valueOf(i));
+    }
+    expected.addAll(input);
+    putTopic(input);
+    source.start();
+    Thread.sleep(500L);
+    input = Lists.newArrayList();
+    for (int i = 0; i < 10; i++) {
+      input.add("after " + String.valueOf(i));
+    }
+    expected.addAll(input);
+    putTopic(input);
+
+    Assert.assertEquals(Status.READY, source.process());
+    Assert.assertEquals(Status.READY, source.process());
+    Assert.assertEquals(Status.BACKOFF, source.process());
+    Assert.assertEquals(expected.size(), events.size());
+    List<String> actual = Lists.newArrayList();
+    for (Event event : events) {
+      actual.add(new String(event.getBody(), Charsets.UTF_8));
+    }
+    Collections.sort(expected);
+    Collections.sort(actual);
+    Assert.assertEquals(expected, actual);
+  }
 }

@@ -24,6 +24,7 @@ import java.io.File;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.flume.channel.file.instrumentation.FileChannelCounter;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -70,7 +71,7 @@ public class TestCheckpointRebuilder extends TestFileChannelBase {
     Assert.assertTrue(inflightPutsFile.delete());
     EventQueueBackingStore backingStore =
         EventQueueBackingStoreFactory.get(checkpointFile, 50,
-            "test");
+            "test", new FileChannelCounter("test"));
     FlumeEventQueue queue = new FlumeEventQueue(backingStore, inflightTakesFile,
           inflightPutsFile, queueSetDir);
     CheckpointRebuilder checkpointRebuilder =

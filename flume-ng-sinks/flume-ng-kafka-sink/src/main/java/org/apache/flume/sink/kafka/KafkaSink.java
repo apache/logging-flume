@@ -32,6 +32,7 @@ import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.conf.LogPrivacyUtil;
+import org.apache.flume.formatter.output.BucketPath;
 import org.apache.flume.instrumentation.kafka.KafkaSinkCounter;
 import org.apache.flume.sink.AbstractSink;
 import org.apache.flume.source.avro.AvroFlumeEvent;
@@ -66,7 +67,6 @@ import static org.apache.flume.sink.kafka.KafkaSinkConstants.KEY_HEADER;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.OLD_BATCH_SIZE;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.REQUIRED_ACKS_FLUME_KEY;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.TOPIC_CONFIG;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.TOPIC_HEADER;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.KEY_SERIALIZER_KEY;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.MESSAGE_SERIALIZER_KEY;
 
@@ -116,6 +116,9 @@ public class KafkaSink extends AbstractSink implements Configurable {
   private boolean useAvroEventFormat;
   private String partitionHeader = null;
   private Integer staticPartitionId = null;
+  private boolean allowTopicOverride;
+  private String topicHeader = null;
+
   private Optional<SpecificDatumWriter<AvroFlumeEvent>> writer =
           Optional.absent();
   private Optional<SpecificDatumReader<AvroFlumeEvent>> reader =
@@ -171,10 +174,19 @@ public class KafkaSink extends AbstractSink implements Configurable {
         byte[] eventBody = event.getBody();
         Map<String, String> headers = event.getHeaders();
 
-        eventTopic = headers.get(TOPIC_HEADER);
-        if (eventTopic == null) {
+        if (allowTopicOverride) {
+          eventTopic = headers.get(topicHeader);
+          if (eventTopic == null) {
+            eventTopic = BucketPath.escapeString(topic, event.getHeaders());
+            logger.debug("{} was set to true but header {} was null. Producing to {}" + 
+                " topic instead.",
+                new Object[]{KafkaSinkConstants.ALLOW_TOPIC_OVERRIDE_HEADER, 
+                    topicHeader, eventTopic});
+          }
+        } else {
           eventTopic = topic;
         }
+
         eventKey = headers.get(KEY_HEADER);
         if (logger.isTraceEnabled()) {
           if (LogPrivacyUtil.allowLogRawData()) {
@@ -316,6 +328,12 @@ public class KafkaSink extends AbstractSink implements Configurable {
     partitionHeader = context.getString(KafkaSinkConstants.PARTITION_HEADER_NAME);
     staticPartitionId = context.getInteger(KafkaSinkConstants.STATIC_PARTITION_CONF);
 
+    allowTopicOverride = context.getBoolean(KafkaSinkConstants.ALLOW_TOPIC_OVERRIDE_HEADER,
+                                          KafkaSinkConstants.DEFAULT_ALLOW_TOPIC_OVERRIDE_HEADER);
+
+    topicHeader = context.getString(KafkaSinkConstants.TOPIC_OVERRIDE_HEADER,
+                                    KafkaSinkConstants.DEFAULT_TOPIC_OVERRIDE_HEADER);
+
     if (logger.isDebugEnabled()) {
       logger.debug(KafkaSinkConstants.AVRO_EVENT + " set to: {}", useAvroEventFormat);
     }
@@ -453,7 +471,10 @@ class SinkCallback implements Callback {
 
     if (logger.isDebugEnabled()) {
       long eventElapsedTime = System.currentTimeMillis() - startTime;
-      logger.debug("Acked message partition:{} ofset:{}",  metadata.partition(), metadata.offset());
+      if (metadata != null) {
+        logger.debug("Acked message partition:{} ofset:{}", metadata.partition(),
+                metadata.offset());
+      }
       logger.debug("Elapsed time for send: {}", eventElapsedTime);
     }
   }

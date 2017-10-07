@@ -91,6 +91,7 @@ public class TestKafkaSink {
     topics.add(DEFAULT_TOPIC);
     topics.add(TestConstants.STATIC_TOPIC);
     topics.add(TestConstants.CUSTOM_TOPIC);
+    topics.add(TestConstants.HEADER_1_VALUE + "-topic");
     testUtil.initTopicList(topics);
   }
 
@@ -237,6 +238,128 @@ public class TestKafkaSink {
     assertEquals(msg, new String((byte[]) fetchedMsg.message(), "UTF-8"));
     assertEquals(TestConstants.CUSTOM_KEY,
                  new String((byte[]) fetchedMsg.key(), "UTF-8"));
+  }
+
+  /**
+   * Tests that a message will be produced to a topic as specified by a
+   * custom topicHeader parameter (FLUME-3046).
+   * @throws UnsupportedEncodingException
+   */
+  @Test
+  public void testTopicFromConfHeader() throws UnsupportedEncodingException {
+    String customTopicHeader = "customTopicHeader";
+    Sink kafkaSink = new KafkaSink();
+    Context context = prepareDefaultContext();
+    context.put(KafkaSinkConstants.TOPIC_OVERRIDE_HEADER, customTopicHeader);
+    Configurables.configure(kafkaSink, context);
+    Channel memoryChannel = new MemoryChannel();
+    Configurables.configure(memoryChannel, context);
+    kafkaSink.setChannel(memoryChannel);
+    kafkaSink.start();
+
+    String msg = "test-topic-from-config-header";
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put(customTopicHeader, TestConstants.CUSTOM_TOPIC);
+    Transaction tx = memoryChannel.getTransaction();
+    tx.begin();
+    Event event = EventBuilder.withBody(msg.getBytes(), headers);
+    memoryChannel.put(event);
+    tx.commit();
+    tx.close();
+
+    try {
+      Sink.Status status = kafkaSink.process();
+      if (status == Sink.Status.BACKOFF) {
+        fail("Error Occurred");
+      }
+    } catch (EventDeliveryException ex) {
+      // ignore
+    }
+
+    MessageAndMetadata<?, ?> fetchedMsg =
+        testUtil.getNextMessageFromConsumer(TestConstants.CUSTOM_TOPIC);
+
+    assertEquals(msg, new String((byte[]) fetchedMsg.message(), "UTF-8"));
+  }
+
+  /**
+   * Tests that the topicHeader parameter will be ignored if the allowTopicHeader
+   * parameter is set to false (FLUME-3046).
+   * @throws UnsupportedEncodingException
+   */
+  @Test
+  public void testTopicNotFromConfHeader() throws UnsupportedEncodingException {
+    Sink kafkaSink = new KafkaSink();
+    Context context = prepareDefaultContext();
+    context.put(KafkaSinkConstants.ALLOW_TOPIC_OVERRIDE_HEADER, "false");
+    context.put(KafkaSinkConstants.TOPIC_OVERRIDE_HEADER, "foo");
+
+    Configurables.configure(kafkaSink, context);
+    Channel memoryChannel = new MemoryChannel();
+    Configurables.configure(memoryChannel, context);
+    kafkaSink.setChannel(memoryChannel);
+    kafkaSink.start();
+
+    String msg = "test-topic-from-config-header";
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put(KafkaSinkConstants.DEFAULT_TOPIC_OVERRIDE_HEADER, TestConstants.CUSTOM_TOPIC);
+    headers.put("foo", TestConstants.CUSTOM_TOPIC);
+    Transaction tx = memoryChannel.getTransaction();
+    tx.begin();
+    Event event = EventBuilder.withBody(msg.getBytes(), headers);
+    memoryChannel.put(event);
+    tx.commit();
+    tx.close();
+
+    try {
+      Sink.Status status = kafkaSink.process();
+      if (status == Sink.Status.BACKOFF) {
+        fail("Error Occurred");
+      }
+    } catch (EventDeliveryException ex) {
+      // ignore
+    }
+
+    MessageAndMetadata<?, ?> fetchedMsg =
+        testUtil.getNextMessageFromConsumer(DEFAULT_TOPIC);
+
+    assertEquals(msg, new String((byte[]) fetchedMsg.message(), "UTF-8"));
+  }
+
+  @Test
+  public void testReplaceSubStringOfTopicWithHeaders() throws UnsupportedEncodingException {
+    Sink kafkaSink = new KafkaSink();
+    Context context = prepareDefaultContext();
+    context.put(TOPIC_CONFIG, TestConstants.HEADER_TOPIC);
+    Configurables.configure(kafkaSink, context);
+    Channel memoryChannel = new MemoryChannel();
+    Configurables.configure(memoryChannel, context);
+    kafkaSink.setChannel(memoryChannel);
+    kafkaSink.start();
+
+    String msg = "test-replace-substring-of-topic-with-headers";
+    Map<String, String> headers = new HashMap<>();
+    headers.put(TestConstants.HEADER_1_KEY, TestConstants.HEADER_1_VALUE);
+    Transaction tx = memoryChannel.getTransaction();
+    tx.begin();
+    Event event = EventBuilder.withBody(msg.getBytes(), headers);
+    memoryChannel.put(event);
+    tx.commit();
+    tx.close();
+
+    try {
+      Sink.Status status = kafkaSink.process();
+      if (status == Sink.Status.BACKOFF) {
+        fail("Error Occurred");
+      }
+    } catch (EventDeliveryException ex) {
+      // ignore
+    }
+
+    String fetchedMsg = new String((byte[])
+        testUtil.getNextMessageFromConsumer(TestConstants.HEADER_1_VALUE + "-topic").message());
+
+    assertEquals(msg, fetchedMsg);
   }
 
   @SuppressWarnings("rawtypes")

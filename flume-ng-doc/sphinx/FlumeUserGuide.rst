@@ -15,7 +15,7 @@
 
 
 ======================================
-Flume 1.8.0-SNAPSHOT User Guide
+Flume 1.9.0-SNAPSHOT User Guide
 ======================================
 
 Introduction
@@ -50,7 +50,7 @@ in the latest architecture.
 System Requirements
 -------------------
 
-#. Java Runtime Environment - Java 1.7 or later
+#. Java Runtime Environment - Java 1.8 or later
 #. Memory - Sufficient memory for configurations used by sources, channels or sinks
 #. Disk Space - Sufficient disk space for configurations used by channels or sinks
 #. Directory Permissions - Read/Write permissions for directories used by agent
@@ -595,9 +595,9 @@ Weblog agent config:
   agent_foo.sinks.avro-forward-sink.channel = file-channel
 
   # avro sink properties
-  agent_foo.sources.avro-forward-sink.type = avro
-  agent_foo.sources.avro-forward-sink.hostname = 10.1.1.100
-  agent_foo.sources.avro-forward-sink.port = 10000
+  agent_foo.sinks.avro-forward-sink.type = avro
+  agent_foo.sinks.avro-forward-sink.hostname = 10.1.1.100
+  agent_foo.sinks.avro-forward-sink.port = 10000
 
   # configure other pieces
   #...
@@ -616,7 +616,7 @@ HDFS agent config:
   agent_foo.sources.avro-collection-source.channels = mem-channel
   agent_foo.sinks.hdfs-sink.channel = mem-channel
 
-  # avro sink properties
+  # avro source properties
   agent_foo.sources.avro-collection-source.type = avro
   agent_foo.sources.avro-collection-source.bind = 10.1.1.100
   agent_foo.sources.avro-collection-source.port = 10000
@@ -954,6 +954,12 @@ batchSize                   100          Number of messages to consume in one ba
 converter.type              DEFAULT      Class to use to convert messages to flume events. See below.
 converter.*                 --           Converter properties.
 converter.charset           UTF-8        Default converter only. Charset to use when converting JMS TextMessages to byte arrays.
+createDurableSubscription   false        Whether to create durable subscription. Durable subscription can only be used with
+                                         destinationType topic. If true, "clientId" and "durableSubscriptionName"
+                                         have to be specified.
+clientId                    --           JMS client identifier set on Connection right after it is created.
+                                         Required for durable subscriptions.
+durableSubscriptionName     --           Name used to identify the durable subscription. Required for durable subscriptions.
 =========================   ===========  ==============================================================
 
 
@@ -1278,6 +1284,12 @@ useFlumeEventFormat                 false        By default events are taken as 
                                                  true to read events as the Flume Avro binary format. Used in conjunction with the same property
                                                  on the KafkaSink or with the parseAsFlumeEvent property on the Kafka Channel this will preserve
                                                  any Flume headers sent on the producing side.
+setTopicHeader                      true         When set to true, stores the topic of the retrieved message into a header, defined by the
+                                                 ``topicHeader`` property.
+topicHeader                         topic        Defines the name of the header in which to store the name of the topic the message was received
+                                                 from, if the ``setTopicHeader`` property is set to ``true``. Care should be taken if combining
+                                                 with the Kafka Sink ``topicHeader`` property so as to avoid sending the message back to the same
+                                                 topic in a loop.
 migrateZookeeperOffsets             true         When no Kafka stored offset is found, look up the offsets in Zookeeper and commit them to Kafka.
                                                  This should be true to support seamless Kafka client migration from older versions of Flume.
                                                  Once migrated this can be set to false, though that should generally not be required.
@@ -1469,8 +1481,8 @@ Also please make sure that the operating system user of the Flume processes has 
     };
 
 
-NetCat Source
-~~~~~~~~~~~~~
+NetCat TCP Source
+~~~~~~~~~~~~~~~~~
 
 A netcat-like source that listens on a given port and turns each line of text
 into an event. Acts like ``nc -k -l [host] [port]``. In other words,
@@ -1502,6 +1514,40 @@ Example for agent named a1:
   a1.sources = r1
   a1.channels = c1
   a1.sources.r1.type = netcat
+  a1.sources.r1.bind = 0.0.0.0
+  a1.sources.r1.port = 6666
+  a1.sources.r1.channels = c1
+
+NetCat UDP Source
+~~~~~~~~~~~~~~~~~
+
+As per the original Netcat (TCP) source, this source that listens on a given
+port and turns each line of text into an event and sent via the connected channel.
+Acts like ``nc -u -k -l [host] [port]``.
+
+Required properties are in **bold**.
+
+===================  ===========  ===========================================
+Property Name        Default      Description
+===================  ===========  ===========================================
+**channels**         --
+**type**             --           The component type name, needs to be ``netcatudp``
+**bind**             --           Host name or IP address to bind to
+**port**             --           Port # to bind to
+remoteAddressHeader  --
+selector.type        replicating  replicating or multiplexing
+selector.*                        Depends on the selector.type value
+interceptors         --           Space-separated list of interceptors
+interceptors.*
+===================  ===========  ===========================================
+
+Example for agent named a1:
+
+.. code-block:: properties
+
+  a1.sources = r1
+  a1.channels = c1
+  a1.sources.r1.type = netcatudp
   a1.sources.r1.bind = 0.0.0.0
   a1.sources.r1.port = 6666
   a1.sources.r1.channels = c1
@@ -2727,6 +2773,8 @@ kafka.topic                         default-flume-topic  The topic in Kafka to w
                                                          messages will be published to this topic.
                                                          If the event header contains a "topic" field, the event will be published to that topic
                                                          overriding the topic configured here.
+                                                         Arbitrary header substitution is supported, eg. %{header} is replaced with value of event header named "header".
+                                                         (If using the substitution, it is recommended to set "auto.create.topics.enable" property of Kafka broker to true.)
 flumeBatchSize                      100                  How many messages to process in one batch. Larger batches improve throughput while adding latency.
 kafka.producer.acks                 1                    How many replicas must acknowledge a message before its considered successfully written.
                                                          Accepted values are 0 (Never wait for acknowledgement), 1 (wait for leader only), -1 (wait for all replicas)
@@ -2743,6 +2791,9 @@ partitionIdHeader                   --                   When set, the sink will
                                                          from the event header and send the message to the specified partition of the topic. If the
                                                          value represents an invalid partition, an EventDeliveryException will be thrown. If the header value
                                                          is present then this setting overrides ``defaultPartitionId``.
+allowTopicOverride                  true                 When set, the sink will allow a message to be produced into a topic specified by the ``topicHeader`` property (if provided).
+topicHeader                         topic                When set in conjunction with ``allowTopicOverride`` will produce a message into the value of the header named using the value of this property.
+                                                         Care should be taken when using in conjunction with the Kafka Source ``topicHeader`` property to avoid creating a loopback.
 kafka.producer.security.protocol    PLAINTEXT            Set to SASL_PLAINTEXT, SASL_SSL or SSL if writing to Kafka using some level of security. See below for additional info on secure setup.
 *more producer security props*                           If using SASL_PLAINTEXT, SASL_SSL or SSL refer to `Kafka security <http://kafka.apache.org/documentation.html#security>`_ for additional
                                                          properties that need to be set on producer.
@@ -2788,7 +2839,7 @@ argument.
     a1.sinks.k1.kafka.flumeBatchSize = 20
     a1.sinks.k1.kafka.producer.acks = 1
     a1.sinks.k1.kafka.producer.linger.ms = 1
-    a1.sinks.ki.kafka.producer.compression.type = snappy
+    a1.sinks.k1.kafka.producer.compression.type = snappy
 
 
 **Security and Kafka Sink:**
@@ -3914,15 +3965,16 @@ Timestamp Interceptor
 ~~~~~~~~~~~~~~~~~~~~~
 
 This interceptor inserts into the event headers, the time in millis at which it processes the event. This interceptor
-inserts a header with key ``timestamp`` whose value is the relevant timestamp. This interceptor
-can preserve an existing timestamp if it is already present in the configuration.
+inserts a header with key ``timestamp`` (or as specified by the ``header`` property) whose value is the relevant timestamp.
+This interceptor can preserve an existing timestamp if it is already present in the configuration.
 
-================  =======  ========================================================================
-Property Name     Default  Description
-================  =======  ========================================================================
-**type**          --       The component type name, has to be ``timestamp`` or the FQCN
-preserveExisting  false    If the timestamp already exists, should it be preserved - true or false
-================  =======  ========================================================================
+================  =========  ========================================================================
+Property Name     Default    Description
+================  =========  ========================================================================
+**type**          --         The component type name, has to be ``timestamp`` or the FQCN
+header            timestamp  The name of the header in which to place the generated timestamp.
+preserveExisting  false      If the timestamp already exists, should it be preserved - true or false
+================  =========  ========================================================================
 
 Example for agent named a1:
 
@@ -4202,7 +4254,7 @@ Log4J Appender
 
 Appends Log4j events to a flume agent's avro source. A client using this
 appender must have the flume-ng-sdk in the classpath (eg,
-flume-ng-sdk-1.8.0-SNAPSHOT.jar).
+flume-ng-sdk-1.9.0-SNAPSHOT.jar).
 Required properties are in **bold**.
 
 =====================  =======  ==================================================================================
@@ -4266,7 +4318,7 @@ Load Balancing Log4J Appender
 
 Appends Log4j events to a list of flume agent's avro source. A client using this
 appender must have the flume-ng-sdk in the classpath (eg,
-flume-ng-sdk-1.8.0-SNAPSHOT.jar). This appender supports a round-robin and random
+flume-ng-sdk-1.9.0-SNAPSHOT.jar). This appender supports a round-robin and random
 scheme for performing the load balancing. It also supports a configurable backoff
 timeout so that down agents are removed temporarily from the set of hosts
 Required properties are in **bold**.

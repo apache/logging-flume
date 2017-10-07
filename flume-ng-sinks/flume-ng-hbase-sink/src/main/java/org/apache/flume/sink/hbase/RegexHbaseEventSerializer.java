@@ -58,7 +58,7 @@ public class RegexHbaseEventSerializer implements HbaseEventSerializer {
 
   /** Whether to ignore case when performing regex matches. */
   public static final String IGNORE_CASE_CONFIG = "regexIgnoreCase";
-  public static final boolean INGORE_CASE_DEFAULT = false;
+  public static final boolean IGNORE_CASE_DEFAULT = false;
 
   /** Comma separated list of column names to place matching groups in. */
   public static final String COL_NAME_CONFIG = "colNames";
@@ -97,7 +97,7 @@ public class RegexHbaseEventSerializer implements HbaseEventSerializer {
   public void configure(Context context) {
     String regex = context.getString(REGEX_CONFIG, REGEX_DEFAULT);
     regexIgnoreCase = context.getBoolean(IGNORE_CASE_CONFIG,
-        INGORE_CASE_DEFAULT);
+            IGNORE_CASE_DEFAULT);
     depositHeaders = context.getBoolean(DEPOSIT_HEADERS_CONFIG,
         DEPOSIT_HEADERS_DEFAULT);
     inputPattern = Pattern.compile(regex, Pattern.DOTALL

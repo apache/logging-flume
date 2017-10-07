@@ -22,6 +22,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.google.common.base.Preconditions;
 import org.apache.commons.io.FileUtils;
 import org.apache.flume.Context;
 import org.junit.After;
@@ -32,6 +33,7 @@ import com.google.common.io.Files;
 
 public class TestFileChannelBase {
 
+  private final int dataDirCount;
   protected FileChannel channel;
   protected File baseDir;
   protected File checkpointDir;
@@ -40,6 +42,15 @@ public class TestFileChannelBase {
   protected File backupDir;
   protected File uncompressedBackupCheckpoint;
   protected File compressedBackupCheckpoint;
+
+  public TestFileChannelBase() {
+    this(3); // By default the tests run with multiple data directories
+  }
+
+  public TestFileChannelBase(int dataDirCount) {
+    Preconditions.checkArgument(dataDirCount > 0, "Invalid dataDirCount");
+    this.dataDirCount = dataDirCount;
+  }
 
   @Before
   public void setup() throws Exception {
@@ -51,7 +62,7 @@ public class TestFileChannelBase {
       "checkpoint.snappy");
     Assert.assertTrue(checkpointDir.mkdirs() || checkpointDir.isDirectory());
     Assert.assertTrue(backupDir.mkdirs() || backupDir.isDirectory());
-    dataDirs = new File[3];
+    dataDirs = new File[dataDirCount];
     dataDir = "";
     for (int i = 0; i < dataDirs.length; i++) {
       dataDirs[i] = new File(baseDir, "data" + (i + 1));

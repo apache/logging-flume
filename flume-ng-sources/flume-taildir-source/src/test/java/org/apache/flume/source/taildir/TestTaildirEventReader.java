@@ -493,4 +493,29 @@ public class TestTaildirEventReader {
     assertTrue(out.contains("file1line3"));
     assertTrue(out.contains("file1line4"));
   }
+
+  @Test
+  // Ensure tail file is set to be read when its last updated time
+  // equals the underlying file's modification time and there are
+  // pending bytes to be read.
+  public void testUpdateWhenLastUpdatedSameAsModificationTime() throws IOException {
+    File file = new File(tmpDir, "file");
+    Files.write("line1\n", file, Charsets.UTF_8);
+
+    ReliableTaildirEventReader reader = getReader();
+    for (TailFile tf : reader.getTailFiles().values()) {
+      reader.readEvents(tf, 1);
+      reader.commit();
+    }
+
+    Files.append("line2\n", file, Charsets.UTF_8);
+    for (TailFile tf : reader.getTailFiles().values()) {
+      tf.setLastUpdated(file.lastModified());
+    }
+
+    reader.updateTailFiles();
+    for (TailFile tf : reader.getTailFiles().values()) {
+      assertEquals(true, tf.needTail());
+    }
+  }
 }

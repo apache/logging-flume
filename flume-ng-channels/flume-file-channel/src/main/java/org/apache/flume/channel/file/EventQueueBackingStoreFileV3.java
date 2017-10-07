@@ -20,6 +20,7 @@ package org.apache.flume.channel.file;
 
 import com.google.common.base.Preconditions;
 import com.google.protobuf.InvalidProtocolBufferException;
+import org.apache.flume.channel.file.instrumentation.FileChannelCounter;
 import org.apache.flume.channel.file.proto.ProtosFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,16 +37,17 @@ final class EventQueueBackingStoreFileV3 extends EventQueueBackingStoreFile {
   private static final Logger LOG = LoggerFactory.getLogger(EventQueueBackingStoreFileV3.class);
   private final File metaDataFile;
 
-  EventQueueBackingStoreFileV3(File checkpointFile, int capacity,
-                               String name) throws IOException, BadCheckpointException {
-    this(checkpointFile, capacity, name, null, false, false);
+  EventQueueBackingStoreFileV3(
+      File checkpointFile, int capacity, String name, FileChannelCounter counter
+  ) throws IOException, BadCheckpointException {
+    this(checkpointFile, capacity, name, counter, null, false, false);
   }
 
   EventQueueBackingStoreFileV3(File checkpointFile, int capacity,
-                               String name, File checkpointBackupDir,
+                               String name, FileChannelCounter counter, File checkpointBackupDir,
                                boolean backupCheckpoint, boolean compressBackup)
       throws IOException, BadCheckpointException {
-    super(capacity, name, checkpointFile, checkpointBackupDir, backupCheckpoint,
+    super(capacity, name, counter, checkpointFile, checkpointBackupDir, backupCheckpoint,
         compressBackup);
     Preconditions.checkArgument(capacity > 0,
         "capacity must be greater than 0 " + capacity);

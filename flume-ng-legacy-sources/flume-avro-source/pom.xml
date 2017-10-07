@@ -23,7 +23,7 @@ limitations under the License.
   <parent>
     <artifactId>flume-ng-legacy-sources</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.8.0-SNAPSHOT</version>
+    <version>1.9.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.apache.flume.flume-ng-legacy-sources</groupId>
@@ -40,7 +40,7 @@ limitations under the License.
         <plugin>
           <groupId>org.eclipse.m2e</groupId>
           <artifactId>lifecycle-mapping</artifactId>
-          <version>1.0.0</version>
+          <version>${lifecycle-mapping.version}</version>
           <configuration>
             <lifecycleMappingMetadata>
               <pluginExecutions>
