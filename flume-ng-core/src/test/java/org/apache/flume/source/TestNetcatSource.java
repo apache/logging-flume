@@ -56,7 +56,7 @@ public class TestNetcatSource {
       LoggerFactory.getLogger(TestAvroSource.class);
 
 
-  private static final int getFreePort() {
+  private static int getFreePort() {
     try (ServerSocket socket = new ServerSocket(0)) {
       return socket.getLocalPort();
     } catch (IOException e) {

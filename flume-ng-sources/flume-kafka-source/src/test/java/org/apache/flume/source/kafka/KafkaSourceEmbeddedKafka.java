@@ -50,8 +50,8 @@ public class KafkaSourceEmbeddedKafka {
     }
   }
 
-  int zkPort = findFreePort(); // none-standard
-  int serverPort = findFreePort();
+  private int zkPort = findFreePort(); // none-standard
+  private int serverPort = findFreePort();
 
   KafkaProducer<String, byte[]> producer;
   File dir;

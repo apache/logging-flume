@@ -183,6 +183,7 @@ public class TestLog4jAppenderWithAvro {
   @Test
   public void testDifferentEventTypesInBatchWithAvroReflect() throws IOException {
     loadProperties("flume-log4jtest-avro-reflect.properties");
+    props.put("log4j.appender.out2.Port", String.valueOf(port));
     PropertyConfigurator.configure(props);
     Logger logger = LogManager.getLogger(getClass());
     List<Object> events = Arrays.asList("string", new AppEvent("appEvent"));
@@ -213,6 +214,7 @@ public class TestLog4jAppenderWithAvro {
   @Test
   public void testDifferentEventTypesInBatchWithAvroGeneric() throws IOException {
     loadProperties("flume-log4jtest-avro-generic.properties");
+    props.put("log4j.appender.out2.Port", String.valueOf(port));
     PropertyConfigurator.configure(props);
     Logger logger = LogManager.getLogger(getClass());
     String msg = "Avro log message";

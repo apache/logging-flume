@@ -41,10 +41,8 @@ import org.junit.Test;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 
-import java.io.IOException;
 import java.net.ServerSocket;
 import java.nio.charset.Charset;
-import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class TestThriftSink {

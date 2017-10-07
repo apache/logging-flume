@@ -48,7 +48,7 @@ public class TestHTTPMetricsServer {
   Type mapType = new TypeToken<Map<String, Map<String, String>>>() {}.getType();
   Gson gson = new Gson();
 
-  private static final int getFreePort() throws Exception {
+  private static int getFreePort() throws Exception {
     try (ServerSocket socket = new ServerSocket(0)) {
       return socket.getLocalPort();
     }
