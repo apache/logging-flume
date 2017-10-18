@@ -22,6 +22,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.UnsignedBytes;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -42,6 +43,7 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.zookeeper.ZKConfig;
 import org.hbase.async.AtomicIncrementRequest;
+import org.hbase.async.Config;
 import org.hbase.async.HBaseClient;
 import org.hbase.async.PutRequest;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
@@ -107,6 +109,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
   private long batchSize;
   private static final Logger logger = LoggerFactory.getLogger(AsyncHBaseSink.class);
   private AsyncHbaseEventSerializer serializer;
+  private Config asyncClientConfig;
   private String eventSerializerType;
   private Context serializerContext;
   private HBaseClient client;
@@ -422,6 +425,19 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
         context.getInteger(HBaseSinkConfigurationConstants.CONFIG_MAX_CONSECUTIVE_FAILS,
                            HBaseSinkConfigurationConstants.DEFAULT_MAX_CONSECUTIVE_FAILS);
 
+
+    ImmutableMap<String, String> asyncProperties
+            = context.getSubProperties(HBaseSinkConfigurationConstants.ASYNC_PREFIX);
+    asyncClientConfig = new Config();
+    asyncClientConfig.overrideConfig(
+            HBaseSinkConfigurationConstants.ASYNC_ZK_QUORUM_KEY, zkQuorum
+    );
+    asyncClientConfig.overrideConfig(
+            HBaseSinkConfigurationConstants.ASYNC_ZK_BASEPATH_KEY, zkBaseDir
+    );
+    for (String property: asyncProperties.keySet()) {
+      asyncClientConfig.overrideConfig(property, asyncProperties.get(property));
+    }
   }
 
   @VisibleForTesting
@@ -450,7 +466,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
     sinkCallbackPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
         .setNameFormat(this.getName() + " HBase Call Pool").build());
     logger.info("Callback pool created");
-    client = new HBaseClient(zkQuorum, zkBaseDir,
+    client = new HBaseClient(asyncClientConfig,
         new NioClientSocketChannelFactory(sinkCallbackPool, sinkCallbackPool));
 
     final CountDownLatch latch = new CountDownLatch(1);
