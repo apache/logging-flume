@@ -26,22 +26,28 @@ import org.apache.flume.EventDrivenSource;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.source.AbstractSource;
+import org.apache.flume.tools.FlumeBeanConfigurator;
 import org.apache.flume.tools.HTTPServerConstraintUtil;
-import org.mortbay.jetty.Connector;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.nio.SelectChannelConnector;
-import org.mortbay.jetty.security.SslSocketConnector;
-import org.mortbay.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.SslConnectionFactory;
+import org.eclipse.jetty.http.HttpVersion;
+import org.eclipse.jetty.jmx.MBeanContainer;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.SSLServerSocket;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.util.ArrayList;
+import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -100,9 +106,11 @@ public class HTTPSource extends AbstractSource implements
   private volatile Boolean sslEnabled;
   private final List<String> excludedProtocols = new LinkedList<String>();
 
+  private Context sourceContext;
 
   @Override
   public void configure(Context context) {
+    sourceContext = context;
     try {
       // SSL related config
       sslEnabled = context.getBoolean(HTTPSourceConfigurationConstants.SSL_ENABLED, false);
@@ -141,15 +149,12 @@ public class HTTPSource extends AbstractSource implements
         }
       }
 
-
-
       @SuppressWarnings("unchecked")
       Class<? extends HTTPSourceHandler> clazz =
               (Class<? extends HTTPSourceHandler>)
               Class.forName(handlerClassName);
       handler = clazz.getDeclaredConstructor().newInstance();
-      //ref: http://docs.codehaus.org/display/JETTY/Embedding+Jetty
-      //ref: http://jetty.codehaus.org/jetty/jetty-6/apidocs/org/mortbay/jetty/servlet/Context.html
+
       Map<String, String> subProps =
               context.getSubProperties(
               HTTPSourceConfigurationConstants.CONFIG_HANDLER_PREFIX);
@@ -170,47 +175,62 @@ public class HTTPSource extends AbstractSource implements
     }
   }
 
-  private void checkHostAndPort() {
-    Preconditions.checkState(host != null && !host.isEmpty(),
-        "HTTPSource hostname specified is empty");
-    Preconditions.checkNotNull(port, "HTTPSource requires a port number to be"
-        + " specified");
-  }
-
   @Override
   public void start() {
     Preconditions.checkState(srv == null,
             "Running HTTP Server found in source: " + getName()
             + " before I started one."
             + "Will not attempt to start.");
-    srv = new Server();
+    QueuedThreadPool threadPool = new QueuedThreadPool();
+    if (sourceContext.getSubProperties("QueuedThreadPool.").size() > 0) {
+      FlumeBeanConfigurator.setConfigurationFields(threadPool, sourceContext);
+    }
+    srv = new Server(threadPool);
 
-    // Connector Array
-    Connector[] connectors = new Connector[1];
+    //Register with JMX for advanced monitoring
+    MBeanContainer mbContainer = new MBeanContainer(ManagementFactory.getPlatformMBeanServer());
+    srv.addEventListener(mbContainer);
+    srv.addBean(mbContainer);
 
+    HttpConfiguration httpConfiguration = new HttpConfiguration();
+    httpConfiguration.addCustomizer(new SecureRequestCustomizer());
+
+    FlumeBeanConfigurator.setConfigurationFields(httpConfiguration, sourceContext);
+    ServerConnector connector;
 
     if (sslEnabled) {
-      SslSocketConnector sslSocketConnector = new HTTPSourceSocketConnector(excludedProtocols);
-      sslSocketConnector.setKeystore(keyStorePath);
-      sslSocketConnector.setKeyPassword(keyStorePassword);
-      sslSocketConnector.setReuseAddress(true);
-      connectors[0] = sslSocketConnector;
+      SslContextFactory sslCtxFactory = new SslContextFactory();
+      FlumeBeanConfigurator.setConfigurationFields(sslCtxFactory, sourceContext);
+      sslCtxFactory.setExcludeProtocols(excludedProtocols.toArray(new String[0]));
+      sslCtxFactory.setKeyStorePath(keyStorePath);
+      sslCtxFactory.setKeyStorePassword(keyStorePassword);
+      
+      httpConfiguration.setSecurePort(port);
+      httpConfiguration.setSecureScheme("https");
+
+      connector = new ServerConnector(srv,
+          new SslConnectionFactory(sslCtxFactory,HttpVersion.HTTP_1_1.asString()),
+          new HttpConnectionFactory(httpConfiguration));
     } else {
-      SelectChannelConnector connector = new SelectChannelConnector();
-      connector.setReuseAddress(true);
-      connectors[0] = connector;
+      connector = new ServerConnector(srv, new HttpConnectionFactory(httpConfiguration));
     }
 
-    connectors[0].setHost(host);
-    connectors[0].setPort(port);
-    srv.setConnectors(connectors);
+    connector.setPort(port);
+    connector.setHost(host);
+    connector.setReuseAddress(true);
+
+    FlumeBeanConfigurator.setConfigurationFields(connector, sourceContext);
+
+    srv.addConnector(connector);
+
     try {
-      org.mortbay.jetty.servlet.Context root = new org.mortbay.jetty.servlet.Context(
-          srv, "/", org.mortbay.jetty.servlet.Context.SESSIONS);
-      root.addServlet(new ServletHolder(new FlumeHTTPServlet()), "/");
-      HTTPServerConstraintUtil.enforceConstraints(root);
+      ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+      context.setContextPath("/");
+      srv.setHandler(context);
+
+      context.addServlet(new ServletHolder(new FlumeHTTPServlet()),"/");
+      context.setSecurityHandler(HTTPServerConstraintUtil.enforceConstraints());
       srv.start();
-      Preconditions.checkArgument(srv.getHandler().equals(root));
     } catch (Exception ex) {
       LOG.error("Error while starting HTTPSource. Exception follows.", ex);
       Throwables.propagate(ex);
@@ -286,28 +306,6 @@ public class HTTPSource extends AbstractSource implements
     public void doGet(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
       doPost(request, response);
-    }
-  }
-
-  private static class HTTPSourceSocketConnector extends SslSocketConnector {
-    private final List<String> excludedProtocols;
-
-    HTTPSourceSocketConnector(List<String> excludedProtocols) {
-      this.excludedProtocols = excludedProtocols;
-    }
-
-    @Override
-    public ServerSocket newServerSocket(String host, int port, int backlog) throws IOException {
-      SSLServerSocket socket = (SSLServerSocket)super.newServerSocket(host, port, backlog);
-      String[] protocols = socket.getEnabledProtocols();
-      List<String> newProtocols = new ArrayList<String>(protocols.length);
-      for (String protocol: protocols) {
-        if (!excludedProtocols.contains(protocol)) {
-          newProtocols.add(protocol);
-        }
-      }
-      socket.setEnabledProtocols(newProtocols.toArray(new String[newProtocols.size()]));
-      return socket;
     }
   }
 }
