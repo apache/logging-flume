@@ -74,4 +74,10 @@ public class HBaseSinkConfigurationConstants {
 
   public static final String CONFIG_MAX_CONSECUTIVE_FAILS = "maxConsecutiveFails";
 
+  public static final String ASYNC_PREFIX = "async.";
+
+  public static final String ASYNC_ZK_QUORUM_KEY = "hbase.zookeeper.quorum";
+
+  public static final String ASYNC_ZK_BASEPATH_KEY = "hbase.zookeeper.znode.parent";
+
 }
