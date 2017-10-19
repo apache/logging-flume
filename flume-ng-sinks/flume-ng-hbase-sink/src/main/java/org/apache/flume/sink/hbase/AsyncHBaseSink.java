@@ -22,7 +22,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.UnsignedBytes;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -109,6 +108,8 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
   private long batchSize;
   private static final Logger logger = LoggerFactory.getLogger(AsyncHBaseSink.class);
   private AsyncHbaseEventSerializer serializer;
+
+  @VisibleForTesting
   Config asyncClientConfig;
   private String eventSerializerType;
   private Context serializerContext;

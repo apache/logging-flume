@@ -49,14 +49,14 @@ public class TestAsyncHBaseSinkConfiguration {
   @Test
   public void testAsyncConfigBackwardCompatibility() throws Exception {
     //Old way: zookeeperQuorum
-    String oldZkQuoriumTestValue = "old_zookeeper_quorium_test_value";
+    String oldZkQuorumTestValue = "old_zookeeper_quorum_test_value";
     String oldZkZnodeParentValue = "old_zookeeper_znode_parent_test_value";
-    ctx.put(HBaseSinkConfigurationConstants.ZK_QUORUM, oldZkQuoriumTestValue);
+    ctx.put(HBaseSinkConfigurationConstants.ZK_QUORUM, oldZkQuorumTestValue);
     ctx.put(HBaseSinkConfigurationConstants.ZK_ZNODE_PARENT,oldZkZnodeParentValue);
     AsyncHBaseSink sink = new AsyncHBaseSink();
     Configurables.configure(sink, ctx);
     Assert.assertEquals(
-            oldZkQuoriumTestValue,
+            oldZkQuorumTestValue,
             sink.asyncClientConfig.getString(HBaseSinkConfigurationConstants.ASYNC_ZK_QUORUM_KEY));
     Assert.assertEquals(
             oldZkZnodeParentValue,
@@ -67,17 +67,17 @@ public class TestAsyncHBaseSinkConfiguration {
   @Test
   public void testAsyncConfigNewStyleOverwriteOldOne() throws Exception {
     //Old way: zookeeperQuorum
-    String oldZkQuoriumTestValue = "old_zookeeper_quorium_test_value";
+    String oldZkQuorumTestValue = "old_zookeeper_quorum_test_value";
     String oldZkZnodeParentValue = "old_zookeeper_znode_parent_test_value";
-    ctx.put(HBaseSinkConfigurationConstants.ZK_QUORUM, oldZkQuoriumTestValue);
+    ctx.put(HBaseSinkConfigurationConstants.ZK_QUORUM, oldZkQuorumTestValue);
     ctx.put(HBaseSinkConfigurationConstants.ZK_ZNODE_PARENT,oldZkZnodeParentValue);
 
-    String newZkQuoriumTestValue = "new_zookeeper_quorium_test_value";
+    String newZkQuorumTestValue = "new_zookeeper_quorum_test_value";
     String newZkZnodeParentValue = "new_zookeeper_znode_parent_test_value";
     ctx.put(
             HBaseSinkConfigurationConstants.ASYNC_PREFIX +
                     HBaseSinkConfigurationConstants.ASYNC_ZK_QUORUM_KEY,
-            newZkQuoriumTestValue);
+            newZkQuorumTestValue);
     ctx.put(
             HBaseSinkConfigurationConstants.ASYNC_PREFIX +
                     HBaseSinkConfigurationConstants.ASYNC_ZK_BASEPATH_KEY,
@@ -85,7 +85,7 @@ public class TestAsyncHBaseSinkConfiguration {
     AsyncHBaseSink sink = new AsyncHBaseSink();
     Configurables.configure(sink, ctx);
     Assert.assertEquals(
-            newZkQuoriumTestValue,
+            newZkQuorumTestValue,
             sink.asyncClientConfig.getString(HBaseSinkConfigurationConstants.ASYNC_ZK_QUORUM_KEY));
     Assert.assertEquals(
             newZkZnodeParentValue,
