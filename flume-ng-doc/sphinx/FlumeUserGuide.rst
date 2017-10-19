@@ -2540,6 +2540,10 @@ timeout              60000                                                      
                                                                                    all events in a transaction.
 serializer           org.apache.flume.sink.hbase.SimpleAsyncHbaseEventSerializer
 serializer.*         --                                                            Properties to be passed to the serializer.
+async.*              --                                                            Properties to be passed to asyncHbase library.
+                                                                                   These properties have precedence over the old ``zookeeperQuorum`` and ``znodeParent`` values.
+                                                                                   You can find the list of the available properties at
+                                                                                   `the documentation page of AsyncHBase <http://opentsdb.github.io/asynchbase/docs/build/html/configuration.html#properties>`_.
 ===================  ============================================================  ====================================================================================
 
 Note that this sink takes the Zookeeper Quorum and parent znode information in
