@@ -109,7 +109,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
   private long batchSize;
   private static final Logger logger = LoggerFactory.getLogger(AsyncHBaseSink.class);
   private AsyncHbaseEventSerializer serializer;
-  private Config asyncClientConfig;
+  Config asyncClientConfig;
   private String eventSerializerType;
   private Context serializerContext;
   private HBaseClient client;
@@ -426,7 +426,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
                            HBaseSinkConfigurationConstants.DEFAULT_MAX_CONSECUTIVE_FAILS);
 
 
-    ImmutableMap<String, String> asyncProperties
+    Map<String, String> asyncProperties
             = context.getSubProperties(HBaseSinkConfigurationConstants.ASYNC_PREFIX);
     asyncClientConfig = new Config();
     asyncClientConfig.overrideConfig(
