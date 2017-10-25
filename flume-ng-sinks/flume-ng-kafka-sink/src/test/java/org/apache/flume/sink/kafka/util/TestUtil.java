@@ -22,8 +22,10 @@ import kafka.message.MessageAndMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.BindException;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Properties;
@@ -37,7 +39,6 @@ public class TestUtil {
   private static final Logger logger = LoggerFactory.getLogger(TestUtil.class);
   private static TestUtil instance = new TestUtil();
 
-  private Random randPortGen = new Random(System.currentTimeMillis());
   private KafkaLocal kafkaServer;
   private KafkaConsumer kafkaConsumer;
   private String hostname = "localhost";
@@ -72,19 +73,12 @@ public class TestUtil {
       zkProperties.load(Class.class.getResourceAsStream(
           "/zookeeper.properties"));
 
-      ZooKeeperLocal zookeeper;
-      while (true) {
-        //start local Zookeeper
-        try {
-          zkLocalPort = getNextPort();
-          // override the Zookeeper client port with the generated one.
-          zkProperties.setProperty("clientPort", Integer.toString(zkLocalPort));
-          zookeeper = new ZooKeeperLocal(zkProperties);
-          break;
-        } catch (BindException bindEx) {
-          // bind exception. port is already in use. Try a different port.
-        }
-      }
+      //start local Zookeeper
+      zkLocalPort = getNextPort();
+      // override the Zookeeper client port with the generated one.
+      zkProperties.setProperty("clientPort", Integer.toString(zkLocalPort));
+      new ZooKeeperLocal(zkProperties);
+
       logger.info("ZooKeeper instance is successfully started on port " +
           zkLocalPort);
 
@@ -92,20 +86,12 @@ public class TestUtil {
           "/kafka-server.properties"));
       // override the Zookeeper url.
       kafkaProperties.setProperty("zookeeper.connect", getZkUrl());
-      while (true) {
-        kafkaLocalPort = getNextPort();
-        // override the Kafka server port
-        kafkaProperties.setProperty("port", Integer.toString(kafkaLocalPort));
-        kafkaServer = new KafkaLocal(kafkaProperties);
-        try {
-          kafkaServer.start();
-          break;
-        } catch (BindException bindEx) {
-          // let's try another port.
-        }
-      }
-      logger.info("Kafka Server is successfully started on port " +
-          kafkaLocalPort);
+      kafkaLocalPort = getNextPort();
+      // override the Kafka server port
+      kafkaProperties.setProperty("port", Integer.toString(kafkaLocalPort));
+      kafkaServer = new KafkaLocal(kafkaProperties);
+      kafkaServer.start();
+      logger.info("Kafka Server is successfully started on port " + kafkaLocalPort);
       return true;
 
     } catch (Exception e) {
@@ -160,9 +146,10 @@ public class TestUtil {
     logger.info("Completed the tearDown phase.");
   }
 
-  private synchronized int getNextPort() {
-    // generate a random port number between 49152 and 65535
-    return randPortGen.nextInt(65535 - 49152) + 49152;
+  private synchronized int getNextPort() throws IOException {
+    try (ServerSocket socket = new ServerSocket(0)) {
+      return socket.getLocalPort();
+    }
   }
 
   public String getZkUrl() {

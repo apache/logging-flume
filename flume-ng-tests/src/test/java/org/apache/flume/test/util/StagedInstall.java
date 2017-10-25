@@ -33,6 +33,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
 import java.util.Map;
@@ -78,6 +79,12 @@ public class StagedInstall {
     return INSTANCE;
   }
 
+  public static int findFreePort() throws IOException {
+    try (ServerSocket socket = new ServerSocket(0)) {
+      return socket.getLocalPort();
+    }
+  }
+
   public synchronized boolean isRunning() {
     return process != null;
   }
@@ -100,16 +107,17 @@ public class StagedInstall {
     Thread.sleep(3000); // sleep for 3s to let system shutdown
   }
 
-  public synchronized void startAgent(String name, String configResource)
+  public synchronized int startAgent(String name, String configResource)
       throws Exception {
     if (process != null) {
       throw new Exception("A process is already running");
     }
-
+    int port = findFreePort();
     Properties props = new Properties();
     props.load(ClassLoader.getSystemResourceAsStream(configResource));
-
+    props.put("rpccagent.sources.src1.port", String.valueOf(port));
     startAgent(name, props);
+    return port;
   }
 
   public synchronized void startAgent(String name, Properties properties)

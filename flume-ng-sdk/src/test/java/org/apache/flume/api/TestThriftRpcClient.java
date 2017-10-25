@@ -26,13 +26,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -43,13 +43,14 @@ public class TestThriftRpcClient {
   private final Properties props = new Properties();
   ThriftRpcClient client;
   ThriftTestingSource src;
-  private final Random random = new Random();
   int port;
 
   @Before
   public void setUp() throws Exception {
     props.setProperty("hosts", "h1");
-    port = random.nextInt(40000) + 1024;
+    try (ServerSocket socket = new ServerSocket(0)) {
+      port = socket.getLocalPort();
+    }
     props.setProperty(RpcClientConfigurationConstants.CONFIG_CLIENT_TYPE, "thrift");
     props.setProperty("hosts.h1", "0.0.0.0:" + String.valueOf(port));
     props.setProperty(RpcClientConfigurationConstants.CONFIG_BATCH_SIZE, "10");
@@ -147,7 +148,7 @@ public class TestThriftRpcClient {
     try {
       src = new ThriftTestingSource(ThriftTestingSource.HandlerType.ERROR.name(), port,
                                     ThriftRpcClient.COMPACT_PROTOCOL);
-      client = (ThriftRpcClient) RpcClientFactory.getThriftInstance("0.0.0" + ".0", port);
+      client = (ThriftRpcClient) RpcClientFactory.getThriftInstance("0.0.0.0", port);
       insertEvents(client, 2); //2 events
     } catch (EventDeliveryException ex) {
       Assert.assertEquals("Failed to send event. ", ex.getMessage());
@@ -170,7 +171,7 @@ public class TestThriftRpcClient {
   public void testMultipleThreads() throws Throwable {
     src = new ThriftTestingSource(ThriftTestingSource.HandlerType.OK.name(), port,
                                   ThriftRpcClient.COMPACT_PROTOCOL);
-    client = (ThriftRpcClient) RpcClientFactory.getThriftInstance("0.0.0" + ".0", port, 10);
+    client = (ThriftRpcClient) RpcClientFactory.getThriftInstance("0.0.0.0", port, 10);
     int threadCount = 100;
     ExecutorService submissionSvc = Executors.newFixedThreadPool(threadCount);
     ArrayList<Future<?>> futures = new ArrayList<Future<?>>(threadCount);

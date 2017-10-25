@@ -37,6 +37,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -60,11 +62,21 @@ public class TestHttpSinkIT {
 
   private HttpSink httpSink;
 
+  private static int findFreePort() {
+    try (ServerSocket socket = new ServerSocket(0)) {
+      return socket.getLocalPort();
+    } catch (IOException e) {
+      throw new AssertionError("Can not find free port.", e);
+    }
+  }
+
+  private final int port = findFreePort();
+
   @Before
   public void setupSink() {
     if (httpSink == null) {
       Context httpSinkContext = new Context();
-      httpSinkContext.put("endpoint", "http://localhost:8080/endpoint");
+      httpSinkContext.put("endpoint", "http://localhost:" + port + "/endpoint");
       httpSinkContext.put("requestTimeout", "2000");
       httpSinkContext.put("connectTimeout", "1500");
       httpSinkContext.put("acceptHeader", "application/json");
@@ -91,11 +103,11 @@ public class TestHttpSinkIT {
   @After
   public void waitForShutdown() throws InterruptedException {
     httpSink.stop();
-    new CountDownLatch(1).await(500, TimeUnit.MILLISECONDS);
+    Thread.sleep(500);
   }
 
   @Rule
-  public WireMockRule service = new WireMockRule(wireMockConfig().port(8080));
+  public WireMockRule service = new WireMockRule(wireMockConfig().port(port));
 
   @Test
   public void ensureSuccessfulMessageDelivery() throws Exception {

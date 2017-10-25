@@ -23,6 +23,7 @@ import com.google.common.io.Resources;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,6 +60,13 @@ public class TestLog4jAppenderWithAvro {
   private AvroSource source;
   private Channel ch;
   private Properties props;
+  private int port;
+
+  private static int getFreePort() throws Exception {
+    try (ServerSocket socket = new ServerSocket(0)) {
+      return socket.getLocalPort();
+    }
+  }
 
   @Before
   public void setUp() throws Exception {
@@ -66,7 +74,7 @@ public class TestLog4jAppenderWithAvro {
     Files.copy(Resources.newInputStreamSupplier(schemaUrl),
         new File("/tmp/myrecord.avsc"));
 
-    int port = 25430;
+    port = getFreePort();
     source = new AvroSource();
     ch = new MemoryChannel();
     Configurables.configure(ch, new Context());
@@ -99,6 +107,7 @@ public class TestLog4jAppenderWithAvro {
   @Test
   public void testAvroGeneric() throws IOException {
     loadProperties("flume-log4jtest-avro-generic.properties");
+    props.put("log4j.appender.out2.Port", String.valueOf(port));
     PropertyConfigurator.configure(props);
     Logger logger = LogManager.getLogger(TestLog4jAppenderWithAvro.class);
     String msg = "This is log message number " + String.valueOf(0);
@@ -136,6 +145,7 @@ public class TestLog4jAppenderWithAvro {
   @Test
   public void testAvroReflect() throws IOException {
     loadProperties("flume-log4jtest-avro-reflect.properties");
+    props.put("log4j.appender.out2.Port", String.valueOf(port));
     PropertyConfigurator.configure(props);
     Logger logger = LogManager.getLogger(TestLog4jAppenderWithAvro.class);
     String msg = "This is log message number " + String.valueOf(0);
@@ -173,6 +183,7 @@ public class TestLog4jAppenderWithAvro {
   @Test
   public void testDifferentEventTypesInBatchWithAvroReflect() throws IOException {
     loadProperties("flume-log4jtest-avro-reflect.properties");
+    props.put("log4j.appender.out2.Port", String.valueOf(port));
     PropertyConfigurator.configure(props);
     Logger logger = LogManager.getLogger(getClass());
     List<Object> events = Arrays.asList("string", new AppEvent("appEvent"));
@@ -203,6 +214,7 @@ public class TestLog4jAppenderWithAvro {
   @Test
   public void testDifferentEventTypesInBatchWithAvroGeneric() throws IOException {
     loadProperties("flume-log4jtest-avro-generic.properties");
+    props.put("log4j.appender.out2.Port", String.valueOf(port));
     PropertyConfigurator.configure(props);
     Logger logger = LogManager.getLogger(getClass());
     String msg = "Avro log message";
