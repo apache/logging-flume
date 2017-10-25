@@ -23,25 +23,51 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.security.Principal;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Locale;
 import java.util.Map;
 
+import javax.servlet.AsyncContext;
+import javax.servlet.DispatcherType;
+import javax.servlet.ReadListener;
 import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.servlet.http.HttpUpgradeHandler;
+import javax.servlet.http.Part;
 
 class FlumeHttpServletRequestWrapper implements HttpServletRequest {
 
   private ServletInputStream stream;
   private String charset;
-  
+
   public FlumeHttpServletRequestWrapper(final byte[] data) {
     stream = new ServletInputStream() {
-      private final InputStream in = new ByteArrayInputStream(data);      
+      @Override
+      public boolean isFinished() {
+        throw new UnsupportedOperationException("Not supported yet.");
+      }
+
+      @Override
+      public boolean isReady() {
+        throw new UnsupportedOperationException("Not supported yet.");
+      }
+
+      @Override
+      public void setReadListener(ReadListener readListener) {
+        throw new UnsupportedOperationException("Not supported yet.");
+      }
+
+      private final InputStream in = new ByteArrayInputStream(data);
       @Override
       public int read() throws IOException {
         return in.read();
@@ -155,6 +181,11 @@ class FlumeHttpServletRequestWrapper implements HttpServletRequest {
   }
 
   @Override
+  public String changeSessionId() {
+    return null;
+  }
+
+  @Override
   public boolean isRequestedSessionIdValid() {
     throw new UnsupportedOperationException("Not supported yet.");
   }
@@ -175,12 +206,43 @@ class FlumeHttpServletRequestWrapper implements HttpServletRequest {
   }
 
   @Override
+  public boolean authenticate(HttpServletResponse response) throws IOException, ServletException {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  @Override
+  public void login(String username, String password) throws ServletException {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  @Override
+  public void logout() throws ServletException {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  @Override
+  public Collection<Part> getParts() throws IOException, ServletException {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  @Override
+  public Part getPart(String name) throws IOException, ServletException {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  @Override
+  public <T extends HttpUpgradeHandler> T upgrade(Class<T> handlerClass)
+      throws IOException, ServletException {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  @Override
   public Object getAttribute(String name) {
     throw new UnsupportedOperationException("Not supported yet.");
   }
 
   @Override
-  public Enumeration getAttributeNames() {
+  public Enumeration<String> getAttributeNames() {
     throw new UnsupportedOperationException("Not supported yet.");
   }
 
@@ -197,6 +259,11 @@ class FlumeHttpServletRequestWrapper implements HttpServletRequest {
   @Override
   public int getContentLength() {
     throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  @Override
+  public long getContentLengthLong() {
+    return 0;
   }
 
   @Override
@@ -280,7 +347,7 @@ class FlumeHttpServletRequestWrapper implements HttpServletRequest {
   }
 
   @Override
-  public Enumeration getLocales() {
+  public Enumeration<Locale> getLocales() {
     throw new UnsupportedOperationException("Not supported yet.");
   }
 
@@ -316,6 +383,42 @@ class FlumeHttpServletRequestWrapper implements HttpServletRequest {
 
   @Override
   public int getLocalPort() {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  @Override
+  public ServletContext getServletContext() {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  @Override
+  public AsyncContext startAsync() throws IllegalStateException {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  @Override
+  public AsyncContext startAsync(ServletRequest servletRequest, ServletResponse servletResponse)
+      throws IllegalStateException {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  @Override
+  public boolean isAsyncStarted() {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  @Override
+  public boolean isAsyncSupported() {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  @Override
+  public AsyncContext getAsyncContext() {
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
+
+  @Override
+  public DispatcherType getDispatcherType() {
     throw new UnsupportedOperationException("Not supported yet.");
   }
 }

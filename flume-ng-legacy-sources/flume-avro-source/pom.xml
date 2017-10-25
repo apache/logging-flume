@@ -130,11 +130,6 @@ limitations under the License.
       <artifactId>avro-ipc</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>org.mortbay.jetty</groupId>
-      <artifactId>servlet-api</artifactId>
-    </dependency>
-
   </dependencies>
 
 </project>

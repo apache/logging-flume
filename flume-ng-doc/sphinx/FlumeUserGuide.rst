@@ -1725,25 +1725,43 @@ unavailable status.
 All events sent in one post request are considered to be one batch and
 inserted into the channel in one transaction.
 
-=================  ============================================  =====================================================================================
-Property Name      Default                                       Description
-=================  ============================================  =====================================================================================
-**type**                                                         The component type name, needs to be ``http``
-**port**           --                                            The port the source should bind to.
-bind               0.0.0.0                                       The hostname or IP address to listen on
-handler            ``org.apache.flume.source.http.JSONHandler``  The FQCN of the handler class.
-handler.*          --                                            Config parameters for the handler
-selector.type      replicating                                   replicating or multiplexing
-selector.*                                                       Depends on the selector.type value
-interceptors       --                                            Space-separated list of interceptors
-interceptors.*
-enableSSL          false                                         Set the property true, to enable SSL. *HTTP Source does not support SSLv3.*
-excludeProtocols   SSLv3                                         Space-separated list of SSL/TLS protocols to exclude. SSLv3 is always excluded.
-keystore                                                         Location of the keystore includng keystore file name
-keystorePassword                                                 Keystore password
-======================================================================================================================================================
+This source is based on Jetty 9.4 and offers the ability to set additional
+Jetty-specific parameters which will be passed directly to the Jetty components.
 
-For example, a http source for agent named a1:
+====================  ============================================  =====================================================================================
+Property Name         Default                                       Description
+====================  ============================================  =====================================================================================
+**type**                                                            The component type name, needs to be ``http``
+**port**              --                                            The port the source should bind to.
+bind                  0.0.0.0                                       The hostname or IP address to listen on
+handler               ``org.apache.flume.source.http.JSONHandler``  The FQCN of the handler class.
+handler.*             --                                            Config parameters for the handler
+selector.type         replicating                                   replicating or multiplexing
+selector.*                                                          Depends on the selector.type value
+interceptors          --                                            Space-separated list of interceptors
+interceptors.*
+enableSSL             false                                         Set the property true, to enable SSL. *HTTP Source does not support SSLv3.*
+excludeProtocols      SSLv3                                         Space-separated list of SSL/TLS protocols to exclude. SSLv3 is always excluded.
+keystore                                                            Location of the keystore includng keystore file name
+keystorePassword                                                    Keystore password
+QueuedThreadPool.*                                                  Jetty specific settings to be set on org.eclipse.jetty.util.thread.QueuedThreadPool.
+                                                                    N.B. QueuedThreadPool will only be used if at least one property of this class is set.
+HttpConfiguration.*                                                 Jetty specific settings to be set on org.eclipse.jetty.server.HttpConfiguration
+SslContextFactory.*                                                 Jetty specific settings to be set on org.eclipse.jetty.util.ssl.SslContextFactory (only
+                                                                    applicable when *enableSSL* is set to true).
+ServerConnector.*                                                   Jetty specific settings to be set on org.eclipse.jetty.server.ServerConnector
+=========================================================================================================================================================
+
+N.B. Jetty-specific settings are set using the setter-methods on the objects listed above. For full details see the Javadoc for these classes
+(`QueuedThreadPool <http://www.eclipse.org/jetty/javadoc/9.4.6.v20170531/org/eclipse/jetty/util/thread/QueuedThreadPool.html>`_,
+`HttpConfiguration <http://www.eclipse.org/jetty/javadoc/9.4.6.v20170531/org/eclipse/jetty/server/HttpConfiguration.html>`_,
+`SslContextFactory <http://www.eclipse.org/jetty/javadoc/9.4.6.v20170531/org/eclipse/jetty/util/ssl/SslContextFactory.html>`_ and
+`ServerConnector <http://www.eclipse.org/jetty/javadoc/9.4.6.v20170531/org/eclipse/jetty/server/ServerConnector.html>`_).
+
+When using Jetty-specific setings, named properites above will take precedence (for example excludeProtocols will take
+precedence over SslContextFactory.ExcludeProtocols). All properties will be inital lower case.
+
+An example http source for agent named a1:
 
 .. code-block:: properties
 
@@ -1754,6 +1772,8 @@ For example, a http source for agent named a1:
   a1.sources.r1.channels = c1
   a1.sources.r1.handler = org.example.rest.RestHandler
   a1.sources.r1.handler.nickname = random props
+  a1.sources.r1.HttpConfiguration.sendServerVersion = false
+  a1.sources.r1.ServerConnector.idleTimeout = 300
 
 JSONHandler
 '''''''''''
