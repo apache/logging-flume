@@ -59,6 +59,7 @@ import javax.net.ssl.SSLEngine;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.nio.charset.Charset;
 import java.security.KeyStore;
 import java.security.Security;
@@ -72,7 +73,15 @@ public class TestAvroSink {
   private static final Logger logger = LoggerFactory
       .getLogger(TestAvroSink.class);
   private static final String hostname = "127.0.0.1";
-  private static final Integer port = 41414;
+  private static final Integer port;
+
+  static {
+    try (ServerSocket socket = new ServerSocket(0)) {
+      port = socket.getLocalPort();
+    } catch (IOException e) {
+      throw new AssertionError("Cannot find free port", e);
+    }
+  }
 
   private AvroSink sink;
   private Channel channel;

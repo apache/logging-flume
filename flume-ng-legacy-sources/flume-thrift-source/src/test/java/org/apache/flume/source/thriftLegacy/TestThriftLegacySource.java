@@ -26,7 +26,6 @@ import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
-import org.apache.flume.FlumeException;
 import org.apache.flume.Transaction;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
@@ -43,22 +42,16 @@ import org.apache.thrift.transport.TTransportException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-//EventStatus.java  Priority.java  ThriftFlumeEvent.java  ThriftFlumeEventServer.java
-
 public class TestThriftLegacySource {
-
-  private static final Logger logger = LoggerFactory
-      .getLogger(ThriftLegacySource.class);
 
   private int selectedPort;
   private ThriftLegacySource source;
@@ -91,7 +84,7 @@ public class TestThriftLegacySource {
   }
 
   @Before
-  public void setUp() {
+  public void setUp() throws Exception {
     source = new ThriftLegacySource();
     channel = new MemoryChannel();
 
@@ -104,26 +97,21 @@ public class TestThriftLegacySource {
     rcs.setChannels(channels);
 
     source.setChannelProcessor(new ChannelProcessor(rcs));
+
+    try (ServerSocket socket = new ServerSocket(0)) {
+      selectedPort = socket.getLocalPort();
+    }
   }
 
   private void bind() throws InterruptedException {
-    boolean bound = false;
+    Context context = new Context();
 
-    for (int i = 0; i < 100 && !bound; i++) {
-      try {
-        Context context = new Context();
+    context.put("port", String.valueOf(selectedPort));
+    context.put("host", "0.0.0.0");
 
-        context.put("port", String.valueOf(selectedPort = 41414 + i));
-        context.put("host", "0.0.0.0");
+    Configurables.configure(source, context);
 
-        Configurables.configure(source, context);
-
-        source.start();
-        bound = true;
-      } catch (FlumeException e) {
-        // Assume port in use, try another one
-      }
-    }
+    source.start();
 
     Assert
         .assertTrue("Reached start or error", LifecycleController.waitForOneOf(
@@ -150,7 +138,7 @@ public class TestThriftLegacySource {
   public void testRequest() throws InterruptedException, IOException {
     bind();
 
-    Map flumeMap = new HashMap<CharSequence, ByteBuffer>();
+    Map<String, ByteBuffer> flumeMap = new HashMap<>();
     ThriftFlumeEvent thriftEvent =  new ThriftFlumeEvent(
         1, Priority.INFO, ByteBuffer.wrap("foo".getBytes()),
         0, "fooHost", flumeMap);
@@ -175,7 +163,7 @@ public class TestThriftLegacySource {
   public void testHeaders() throws InterruptedException, IOException {
     bind();
 
-    Map flumeHeaders = new HashMap<CharSequence, ByteBuffer>();
+    Map<String, ByteBuffer> flumeHeaders = new HashMap<>();
     flumeHeaders.put("hello", ByteBuffer.wrap("world".getBytes("UTF-8")));
     ThriftFlumeEvent thriftEvent =  new ThriftFlumeEvent(
         1, Priority.INFO, ByteBuffer.wrap("foo".getBytes()),
