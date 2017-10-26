@@ -22,6 +22,7 @@ package org.apache.flume.source;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.security.cert.X509Certificate;
@@ -94,26 +95,16 @@ public class TestAvroSource {
   }
 
   @Test
-  public void testLifecycle() throws InterruptedException {
-    boolean bound = false;
+  public void testLifecycle() throws InterruptedException, IOException {
 
-    for (int i = 0; i < 100 && !bound; i++) {
+    Context context = new Context();
 
-      Context context = new Context();
+    context.put("port", String.valueOf(selectedPort = getFreePort()));
+    context.put("bind", "0.0.0.0");
 
-      context.put("port", String.valueOf(selectedPort = 41414 + i));
-      context.put("bind", "0.0.0.0");
-      // Invalid configuration may throw a FlumeException which has to be expected in the callers
-      Configurables.configure(source, context);
-      try {
-        source.start();
-        bound = true;
-      } catch (FlumeException e) {
-        /*
-         * NB: This assume the failure is to bind.
-         */
-      }
-    }
+    Configurables.configure(source, context);
+
+    source.start();
 
     Assert
         .assertTrue("Reached start or error", LifecycleController.waitForOneOf(
@@ -232,28 +223,20 @@ public class TestAvroSource {
 
   private void doRequest(boolean serverEnableCompression, boolean clientEnableCompression,
                          int compressionLevel) throws InterruptedException, IOException {
-    boolean bound = false;
 
-    for (int i = 0; i < 100 && !bound; i++) {
-      Context context = new Context();
-      context.put("port", String.valueOf(selectedPort = 41414 + i));
-      context.put("bind", "0.0.0.0");
-      context.put("threads", "50");
-      if (serverEnableCompression) {
-        context.put("compression-type", "deflate");
-      } else {
-        context.put("compression-type", "none");
-      }
-      Configurables.configure(source, context);
-      try {
-        source.start();
-        bound = true;
-      } catch (FlumeException e) {
-        /*
-         * NB: This assume the failure is to bind.
-         */
-      }
+    Context context = new Context();
+    context.put("port", String.valueOf(selectedPort = getFreePort()));
+    context.put("bind", "0.0.0.0");
+    context.put("threads", "50");
+    if (serverEnableCompression) {
+      context.put("compression-type", "deflate");
+    } else {
+      context.put("compression-type", "none");
     }
+
+    Configurables.configure(source, context);
+
+    source.start();
 
     Assert
         .assertTrue("Reached start or error", LifecycleController.waitForOneOf(
@@ -307,6 +290,12 @@ public class TestAvroSource {
         source.getLifecycleState());
   }
 
+  private static int getFreePort() throws IOException {
+    try (ServerSocket socket = new ServerSocket(0)) {
+      return socket.getLocalPort();
+    }
+  }
+
   private static class CompressionChannelFactory extends
       NioClientSocketChannelFactory {
     private int compressionLevel;
@@ -332,28 +321,17 @@ public class TestAvroSource {
 
   @Test
   public void testSslRequest() throws InterruptedException, IOException {
-    boolean bound = false;
 
-    for (int i = 0; i < 10 && !bound; i++) {
-      Context context = new Context();
+    Context context = new Context();
 
-      context.put("port", String.valueOf(selectedPort = 41414 + i));
-      context.put("bind", "0.0.0.0");
-      context.put("ssl", "true");
-      context.put("keystore", "src/test/resources/server.p12");
-      context.put("keystore-password", "password");
-      context.put("keystore-type", "PKCS12");
-      Configurables.configure(source, context);
-      try {
-        source.start();
-        bound = true;
-      } catch (FlumeException e) {
-        /*
-         * NB: This assume the failure is to bind.
-         */
-        Thread.sleep(100);
-      }
-    }
+    context.put("port", String.valueOf(selectedPort = getFreePort()));
+    context.put("bind", "0.0.0.0");
+    context.put("ssl", "true");
+    context.put("keystore", "src/test/resources/server.p12");
+    context.put("keystore-password", "password");
+    context.put("keystore-type", "PKCS12");
+    Configurables.configure(source, context);
+    source.start();
 
     Assert
         .assertTrue("Reached start or error", LifecycleController.waitForOneOf(
@@ -523,37 +501,23 @@ public class TestAvroSource {
   public void doIpFilterTest(InetAddress dest, String ruleDefinition,
       boolean eventShouldBeAllowed, boolean testWithSSL)
       throws InterruptedException, IOException {
-    boolean bound = false;
-
-    for (int i = 0; i < 100 && !bound; i++) {
-
-      Context context = new Context();
-      context.put("port", String.valueOf(selectedPort = 41414 + i));
-      context.put("bind", "0.0.0.0");
-      context.put("ipFilter", "true");
-      if (ruleDefinition != null) {
-        context.put("ipFilterRules", ruleDefinition);
-      }
-      if (testWithSSL) {
-        logger.info("Client testWithSSL" + testWithSSL);
-        context.put("ssl", "true");
-        context.put("keystore", "src/test/resources/server.p12");
-        context.put("keystore-password", "password");
-        context.put("keystore-type", "PKCS12");
-      }
-      // Invalid configuration may result in a FlumeException
-      Configurables.configure(source, context);
-
-      try {
-        source.start();
-        bound = true;
-      } catch (FlumeException e) {
-        /*
-         * NB: This assume the failure is to bind.
-         */
-        Thread.sleep(100);
-      }
+    Context context = new Context();
+    context.put("port", String.valueOf(selectedPort = getFreePort()));
+    context.put("bind", "0.0.0.0");
+    context.put("ipFilter", "true");
+    if (ruleDefinition != null) {
+      context.put("ipFilterRules", ruleDefinition);
     }
+    if (testWithSSL) {
+      logger.info("Client testWithSSL" + testWithSSL);
+      context.put("ssl", "true");
+      context.put("keystore", "src/test/resources/server.p12");
+      context.put("keystore-password", "password");
+      context.put("keystore-type", "PKCS12");
+    }
+    // Invalid configuration may result in a FlumeException
+    Configurables.configure(source, context);
+    source.start();
 
     Assert
         .assertTrue("Reached start or error", LifecycleController.waitForOneOf(

@@ -24,6 +24,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
@@ -56,17 +57,17 @@ import org.apache.mina.transport.socket.nio.NioSession;
 import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static org.mockito.Mockito.*;
 
 public class TestMultiportSyslogTCPSource {
 
-  private static final Logger logger =
-      LoggerFactory.getLogger(TestMultiportSyslogTCPSource.class);
+  private static final int getFreePort() throws IOException {
+    try (ServerSocket socket = new ServerSocket(0)) {
+      return socket.getLocalPort();
+    }
+  }
 
-  private static final int BASE_TEST_SYSLOG_PORT = 14455;
   private final DateTime time = new DateTime();
   private final String stamp1 = time.toString();
   private final String host1 = "localhost.localdomain";
@@ -105,9 +106,18 @@ public class TestMultiportSyslogTCPSource {
 
     source.setChannelProcessor(new ChannelProcessor(rcs));
     Context context = new Context();
+
+    List<Integer> portList = new ArrayList<>(1000);
+    while (portList.size() < 1000) {
+      int port = getFreePort();
+      if (!portList.contains(port)) {
+        portList.add(port);
+      }
+    }
+
     StringBuilder ports = new StringBuilder();
     for (int i = 0; i < 1000; i++) {
-      ports.append(String.valueOf(BASE_TEST_SYSLOG_PORT + i)).append(" ");
+      ports.append(String.valueOf(portList.get(i))).append(" ");
     }
     context.put(SyslogSourceConfigurationConstants.CONFIG_PORTS,
         ports.toString().trim());
@@ -117,7 +127,7 @@ public class TestMultiportSyslogTCPSource {
     Socket syslogSocket;
     for (int i = 0; i < 1000 ; i++) {
       syslogSocket = new Socket(
-              InetAddress.getLocalHost(), BASE_TEST_SYSLOG_PORT + i);
+              InetAddress.getLocalHost(), portList.get(i));
       syslogSocket.getOutputStream().write(getEvent(i));
       syslogSocket.close();
     }
@@ -161,7 +171,7 @@ public class TestMultiportSyslogTCPSource {
         Assert.assertEquals(host1, host2);
 
         if (port != null) {
-          int num = port - BASE_TEST_SYSLOG_PORT;
+          int num = portList.indexOf(port);
           Assert.assertEquals(data1 + " " + String.valueOf(num),
               new String(e.getBody()));
         }

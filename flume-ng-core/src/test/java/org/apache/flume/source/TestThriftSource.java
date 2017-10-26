@@ -43,12 +43,14 @@ import org.junit.Test;
 
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.KeyManagerFactory;
+
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Random;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -58,13 +60,14 @@ public class TestThriftSource {
   private ThriftSource source;
   private MemoryChannel channel;
   private RpcClient client;
-  private final Random random = new Random();
   private final Properties props = new Properties();
   private int port;
 
   @Before
-  public void setUp() {
-    port = random.nextInt(50000) + 1024;
+  public void setUp() throws IOException {
+    try (ServerSocket socket = new ServerSocket(0)) {
+      port = socket.getLocalPort();
+    }
     props.clear();
     props.setProperty("hosts", "h1");
     props.setProperty("hosts.h1", "0.0.0.0:" + String.valueOf(port));
@@ -252,7 +255,7 @@ public class TestThriftSource {
     context.put(ThriftSource.CONFIG_PORT, String.valueOf(port));
     Configurables.configure(source, context);
     source.start();
-    ExecutorCompletionService<Void> completionService = new ExecutorCompletionService(submitter);
+    ExecutorCompletionService<Void> completionService = new ExecutorCompletionService<>(submitter);
     for (int i = 0; i < 30; i++) {
       completionService.submit(new SubmitHelper(i), null);
     }

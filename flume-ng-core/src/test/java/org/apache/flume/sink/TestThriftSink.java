@@ -40,8 +40,9 @@ import org.junit.Test;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
+
+import java.net.ServerSocket;
 import java.nio.charset.Charset;
-import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class TestThriftSink {
@@ -51,14 +52,14 @@ public class TestThriftSink {
   private String hostname;
   private int port;
 
-  private final Random random = new Random();
-
   @Before
   public void setUp() throws Exception {
     sink = new ThriftSink();
     channel = new MemoryChannel();
     hostname = "0.0.0.0";
-    port = random.nextInt(50000) + 1024;
+    try (ServerSocket socket = new ServerSocket(0)) {
+      port = socket.getLocalPort();
+    }
     Context context = new Context();
 
     context.put("hostname", hostname);
