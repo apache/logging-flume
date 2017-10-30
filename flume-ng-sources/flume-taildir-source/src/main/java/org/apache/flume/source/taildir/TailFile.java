@@ -46,6 +46,7 @@ public class TailFile {
   private final String path;
   private final long inode;
   private long pos;
+  private boolean writePosOnCommit;
   private long lastUpdated;
   private boolean needTail;
   private final Map<String, String> headers;
@@ -54,7 +55,7 @@ public class TailFile {
   private int bufferPos;
   private long lineReadPos;
 
-  public TailFile(File file, Map<String, String> headers, long inode, long pos)
+  public TailFile(File file, Map<String, String> headers, long inode, long pos, boolean writePosOnCommit)
       throws IOException {
     this.raf = new RandomAccessFile(file, "r");
     if (pos > 0) {
@@ -64,6 +65,7 @@ public class TailFile {
     this.path = file.getAbsolutePath();
     this.inode = inode;
     this.pos = pos;
+    this.writePosOnCommit = writePosOnCommit;
     this.lastUpdated = 0L;
     this.needTail = true;
     this.headers = headers;
@@ -137,10 +139,10 @@ public class TailFile {
 
 
   public List<Event> readEvents(int numEvents, boolean backoffWithoutNL,
-      boolean addByteOffset) throws IOException {
+      boolean addByteOffset, boolean writePosOnCommit) throws IOException {
     List<Event> events = Lists.newLinkedList();
     for (int i = 0; i < numEvents; i++) {
-      Event event = readEvent(backoffWithoutNL, addByteOffset);
+      Event event = readEvent(backoffWithoutNL, addByteOffset, writePosOnCommit);
       if (event == null) {
         break;
       }
@@ -149,7 +151,8 @@ public class TailFile {
     return events;
   }
 
-  private Event readEvent(boolean backoffWithoutNL, boolean addByteOffset) throws IOException {
+  private Event readEvent(boolean backoffWithoutNL, boolean addByteOffset,
+      boolean writePosOnCommit) throws IOException {
     Long posTmp = getLineReadPos();
     LineResult line = readLine();
     if (line == null) {
@@ -162,9 +165,11 @@ public class TailFile {
       return null;
     }
     Event event = EventBuilder.withBody(line.line);
-    event.getHeaders().put("inode", Long.toString(this.getInode()));
-    event.getHeaders().put("pos", Long.toString(this.getLineReadPos()));
-    event.getHeaders().put("path", this.getPath());
+    if (writePosOnCommit) {
+      event.getHeaders().put("inode", Long.toString(this.getInode()));
+      event.getHeaders().put("pos", Long.toString(this.getLineReadPos()));
+      event.getHeaders().put("path", this.getPath());
+    }
     if (addByteOffset == true) {
       event.getHeaders().put(BYTE_OFFSET_HEADER_KEY, posTmp.toString());
     }

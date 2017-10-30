@@ -41,6 +41,14 @@ public class TaildirSourceConfigurationConstants {
   public static final String IDLE_TIMEOUT = "idleTimeout";
   public static final int DEFAULT_IDLE_TIMEOUT = 120000;
 
+  /** Interval time (ms) to write the last position of each file on the position file. */
+  public static final String WRITE_POS_INTERVAL = "writePosInterval";
+  public static final int DEFAULT_WRITE_POS_INTERVAL = 3000;
+
+  /** Whether to writ position of each file when commit in MemoryChannel. */
+  public static final String WRITE_POS_ON_COMMIT = "writePosOnCommit";
+  public static final boolean DEFAULT_WRITE_POS_ON_COMMIT = false;
+
   /** Whether to add the byte offset of a tailed line to the header */
   public static final String BYTE_OFFSET_HEADER = "byteOffsetHeader";
   public static final String BYTE_OFFSET_HEADER_KEY = "byteoffset";

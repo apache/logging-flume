@@ -56,6 +56,7 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
   private long updateTime;
   private boolean addByteOffset;
   private boolean cachePatternMatching;
+  private boolean writePosOnCommit;
   private boolean committed = true;
   private final boolean annotateFileName;
   private final String fileNameHeader;
@@ -66,7 +67,8 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
   private ReliableTaildirEventReader(Map<String, String> filePaths,
       Table<String, String, String> headerTable, String positionFilePath,
       boolean skipToEnd, boolean addByteOffset, boolean cachePatternMatching,
-      boolean annotateFileName, String fileNameHeader) throws IOException {
+      boolean writePosOnCommit, boolean annotateFileName, String fileNameHeader)
+      throws IOException {
     // Sanity checks
     Preconditions.checkNotNull(filePaths);
     Preconditions.checkNotNull(positionFilePath);
@@ -87,6 +89,7 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
     this.headerTable = headerTable;
     this.addByteOffset = addByteOffset;
     this.cachePatternMatching = cachePatternMatching;
+    this.writePosOnCommit = writePosOnCommit;
     this.annotateFileName = annotateFileName;
     this.fileNameHeader = fileNameHeader;
     updateTailFiles(skipToEnd);
@@ -192,7 +195,7 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
       long lastPos = currentFile.getPos();
       currentFile.updateFilePos(lastPos);
     }
-    List<Event> events = currentFile.readEvents(numEvents, backoffWithoutNL, addByteOffset);
+    List<Event> events = currentFile.readEvents(numEvents, backoffWithoutNL, addByteOffset, writePosOnCommit);
     if (events.isEmpty()) {
       return events;
     }
@@ -281,7 +284,7 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
   private TailFile openFile(File file, Map<String, String> headers, long inode, long pos) {
     try {
       logger.info("Opening file: " + file + ", inode: " + inode + ", pos: " + pos);
-      return new TailFile(file, headers, inode, pos);
+      return new TailFile(file, headers, inode, pos, writePosOnCommit);
     } catch (IOException e) {
       throw new FlumeException("Failed opening file: " + file, e);
     }
@@ -296,6 +299,7 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
     private String positionFilePath;
     private boolean skipToEnd;
     private boolean addByteOffset;
+    private boolean writePosOnCommit;
     private boolean cachePatternMatching;
     private Boolean annotateFileName =
             TaildirSourceConfigurationConstants.DEFAULT_FILE_HEADER;
@@ -332,6 +336,11 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
       return this;
     }
 
+    public Builder writePosOnCommit(boolean writePosOnCommit) {
+      this.writePosOnCommit = writePosOnCommit;
+      return this;
+    }
+
     public Builder annotateFileName(boolean annotateFileName) {
       this.annotateFileName = annotateFileName;
       return this;
@@ -344,7 +353,7 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
 
     public ReliableTaildirEventReader build() throws IOException {
       return new ReliableTaildirEventReader(filePaths, headerTable, positionFilePath, skipToEnd,
-                                            addByteOffset, cachePatternMatching,
+                                            addByteOffset, cachePatternMatching, writePosOnCommit,
                                             annotateFileName, fileNameHeader);
     }
   }
