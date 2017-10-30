@@ -284,7 +284,7 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
   private TailFile openFile(File file, Map<String, String> headers, long inode, long pos) {
     try {
       logger.info("Opening file: " + file + ", inode: " + inode + ", pos: " + pos);
-      return new TailFile(file, headers, inode, pos, writePosOnCommit);
+      return new TailFile(file, headers, inode, pos);
     } catch (IOException e) {
       throw new FlumeException("Failed opening file: " + file, e);
     }

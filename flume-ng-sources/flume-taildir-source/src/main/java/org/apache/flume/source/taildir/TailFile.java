@@ -46,7 +46,6 @@ public class TailFile {
   private final String path;
   private final long inode;
   private long pos;
-  private boolean writePosOnCommit;
   private long lastUpdated;
   private boolean needTail;
   private final Map<String, String> headers;
@@ -55,7 +54,7 @@ public class TailFile {
   private int bufferPos;
   private long lineReadPos;
 
-  public TailFile(File file, Map<String, String> headers, long inode, long pos, boolean writePosOnCommit)
+  public TailFile(File file, Map<String, String> headers, long inode, long pos)
       throws IOException {
     this.raf = new RandomAccessFile(file, "r");
     if (pos > 0) {
@@ -65,7 +64,6 @@ public class TailFile {
     this.path = file.getAbsolutePath();
     this.inode = inode;
     this.pos = pos;
-    this.writePosOnCommit = writePosOnCommit;
     this.lastUpdated = 0L;
     this.needTail = true;
     this.headers = headers;
