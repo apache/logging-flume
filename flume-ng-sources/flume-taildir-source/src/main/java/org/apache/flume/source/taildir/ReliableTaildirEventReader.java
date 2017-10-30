@@ -195,7 +195,8 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
       long lastPos = currentFile.getPos();
       currentFile.updateFilePos(lastPos);
     }
-    List<Event> events = currentFile.readEvents(numEvents, backoffWithoutNL, addByteOffset, writePosOnCommit);
+    List<Event> events = currentFile.readEvents(numEvents, backoffWithoutNL,
+        addByteOffset, writePosOnCommit);
     if (events.isEmpty()) {
       return events;
     }

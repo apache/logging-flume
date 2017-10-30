@@ -114,15 +114,17 @@ public class TaildirSource extends AbstractSource implements
     }
     if (writePosOnCommit) {
       for (Entry<Long, TailFile> entry : reader.getTailFiles().entrySet()) {
-        inodePositionMap.put(String.valueOf(entry.getKey()), String.valueOf(entry.getValue().getPos()));
-        inodePathMap.put(String.valueOf(entry.getKey()), String.valueOf(entry.getValue().getPath()));
+        inodePositionMap.put(String.valueOf(entry.getKey()),
+            String.valueOf(entry.getValue().getPos()));
+        inodePathMap.put(String.valueOf(entry.getKey()),
+            String.valueOf(entry.getValue().getPath()));
       }
     }
     idleFileChecker = Executors.newSingleThreadScheduledExecutor(
         new ThreadFactoryBuilder().setNameFormat("idleFileChecker").build());
     idleFileChecker.scheduleWithFixedDelay(new idleFileCheckerRunnable(),
         idleTimeout, checkIdleInterval, TimeUnit.MILLISECONDS);
-    
+
     if (!writePosOnCommit) {
       positionWriter = Executors.newSingleThreadScheduledExecutor(
           new ThreadFactoryBuilder().setNameFormat("positionWriter").build());
@@ -165,7 +167,8 @@ public class TaildirSource extends AbstractSource implements
   public String toString() {
     return String.format("Taildir source: { positionFile: %s, skipToEnd: %s, "
         + "byteOffsetHeader: %s, idleTimeout: %s, writePosInterval: %s }",
-        positionFilePath, skipToEnd, byteOffsetHeader, idleTimeout, writePosInterval);  }
+        positionFilePath, skipToEnd, byteOffsetHeader, idleTimeout, writePosInterval);
+  }
 
   @Override
   public synchronized void configure(Context context) {
