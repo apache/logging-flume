@@ -1161,7 +1161,7 @@ If the new lines are being written, this source will retry reading them in wait 
 This source is reliable and will not miss data even when the tailing files rotate.
 By default it periodically writes the last read position of each files on the given position file in JSON format.
 It can also be configured by setting writePosOnCommit to true and use MemoryChannel to write the last consumed position of each file when commits.
-This way, we save CPU costs in FileChannel and maintains reliability as well.
+This way, we reach reliability and avoid heavy system calls in FileChannel thus reducing CPU cost.
 If Flume is stopped or down for some reason, it can restart tailing from the position written on the existing position file.
 
 In other use case, this source can also start tailing from the arbitrary position for each files using the given position file.
