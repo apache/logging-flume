@@ -44,12 +44,12 @@ The Flume 1.x guide and FAQ are available here:
 
 ## Contact us!
 
-* Mailing lists: https://cwiki.apache.org/confluence/display/FLUME/Mailing+Lists
+* Mailing lists: https://cwiki.apache.org/confluence/display/FLUME/Mailing+Lists //mail for your concerns
 * IRC channel #flume on irc.freenode.net
 
 Bug and Issue tracker.
 
-* https://issues.apache.org/jira/browse/FLUME
+* https://issues.apache.org/jira/browse/FLUME //report bugs here 
 
 ## Compiling Flume
 
