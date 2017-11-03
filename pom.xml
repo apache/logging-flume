@@ -81,8 +81,7 @@ limitations under the License.
     <kite.version>1.0.0</kite.version>
     <hive.version>1.0.0</hive.version>
     <lifecycle-mapping.version>1.0.0</lifecycle-mapping.version>
-    <log4j-extras.version>1.1</log4j-extras.version>
-    <log4j-log4j.version>1.2.17</log4j-log4j.version>
+    <log4j.version>2.9.1</log4j.version>
     <mapdb.version>0.9.9</mapdb.version>
     <mina.version>2.0.4</mina.version>
     <mockito.version>1.9.0</mockito.version>
@@ -991,36 +990,38 @@ limitations under the License.
       </dependency>
 
       <dependency>
-        <groupId>log4j</groupId>
-        <artifactId>log4j</artifactId>
-        <version>${log4j-log4j.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>com.sun.jdmk</groupId>
-            <artifactId>jmxtools</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sun.jmx</groupId>
-            <artifactId>jmxri</artifactId>
-          </exclusion>
-        </exclusions>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-api</artifactId>
+        <version>${log4j.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>log4j</groupId>
-        <artifactId>apache-log4j-extras</artifactId>
-        <version>${log4j-extras.version}</version>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-core</artifactId>
+        <version>${log4j.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-slf4j-impl</artifactId>
+        <version>${log4j.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-1.2-api</artifactId>
+        <version>${log4j.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-jcl</artifactId>
+        <version>${log4j.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
-        <version>${slf4j.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-log4j12</artifactId>
         <version>${slf4j.version}</version>
       </dependency>
 
