@@ -199,11 +199,23 @@
     <dependency>
       <groupId>org.apache.flume.flume-ng-clients</groupId>
       <artifactId>flume-ng-log4jappender</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.flume.flume-ng-clients</groupId>
       <artifactId>flume-ng-log4jappender</artifactId>
       <classifier>jar-with-dependencies</classifier>
+      <exclusions>
+        <exclusion>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.flume</groupId>

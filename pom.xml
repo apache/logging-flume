@@ -81,8 +81,7 @@ limitations under the License.
     <kite.version>1.0.0</kite.version>
     <hive.version>1.0.0</hive.version>
     <lifecycle-mapping.version>1.0.0</lifecycle-mapping.version>
-    <log4j-extras.version>1.1</log4j-extras.version>
-    <log4j-log4j.version>1.2.17</log4j-log4j.version>
+    <log4j.version>2.10.0</log4j.version>
     <mapdb.version>0.9.9</mapdb.version>
     <mina.version>2.0.4</mina.version>
     <mockito.version>1.9.0</mockito.version>
@@ -203,6 +202,16 @@ limitations under the License.
             <groupId>org.apache.hadoop</groupId>
             <artifactId>${hadoop.common.artifact.id}</artifactId>
             <version>${hadoop.version}</version>
+            <exclusions>
+              <exclusion>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+              </exclusion>
+            </exclusions>
           </dependency>
           <dependency>
             <groupId>org.apache.hadoop</groupId>
@@ -216,6 +225,14 @@ limitations under the License.
               <exclusion>
                 <groupId>tomcat</groupId>
                 <artifactId>jasper-runtime</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
               </exclusion>
             </exclusions>
           </dependency>
@@ -237,6 +254,14 @@ limitations under the License.
                 <groupId>tomcat</groupId>
                 <artifactId>jasper-runtime</artifactId>
               </exclusion>
+              <exclusion>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+              </exclusion>
             </exclusions>
           </dependency>
           <dependency>
@@ -253,6 +278,16 @@ limitations under the License.
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-auth</artifactId>
             <version>${hadoop.version}</version>
+            <exclusions>
+              <exclusion>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+              </exclusion>
+            </exclusions>
           </dependency>
 
           <dependency>
@@ -282,6 +317,17 @@ limitations under the License.
             <artifactId>flume-dataset-sink</artifactId>
             <version>${project.version}</version>
           </dependency>
+          <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.17</version>
+            <scope>test</scope>
+          </dependency>
+          <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <scope>test</scope>
+          </dependency>
         </dependencies>
       </dependencyManagement>
     </profile>
@@ -304,6 +350,16 @@ limitations under the License.
             <groupId>org.apache.hadoop</groupId>
             <artifactId>${hadoop.common.artifact.id}</artifactId>
             <version>${hadoop.version}</version>
+            <exclusions>
+              <exclusion>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+              </exclusion>
+            </exclusions>
           </dependency>
           <dependency>
             <groupId>org.apache.hadoop</groupId>
@@ -317,6 +373,14 @@ limitations under the License.
               <exclusion>
                 <groupId>tomcat</groupId>
                 <artifactId>jasper-runtime</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
               </exclusion>
             </exclusions>
           </dependency>
@@ -349,6 +413,16 @@ limitations under the License.
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-auth</artifactId>
             <version>${hadoop.version}</version>
+            <exclusions>
+              <exclusion>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+              </exclusion>
+            </exclusions>
           </dependency>
 
           <!-- Ideally this should be optional, but making it optional causes
@@ -408,6 +482,14 @@ limitations under the License.
                 <groupId>tomcat</groupId>
                 <artifactId>jasper-runtime</artifactId>
               </exclusion>
+              <exclusion>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+              </exclusion>
             </exclusions>
           </dependency>
 
@@ -426,6 +508,14 @@ limitations under the License.
                 <groupId>tomcat</groupId>
                 <artifactId>jasper-runtime</artifactId>
               </exclusion>
+              <exclusion>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+              </exclusion>
             </exclusions>
           </dependency>
 
@@ -441,6 +531,17 @@ limitations under the License.
             <groupId>org.apache.flume.flume-ng-sinks</groupId>
             <artifactId>flume-dataset-sink</artifactId>
             <version>${project.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.17</version>
+            <scope>test</scope>
+          </dependency>
+          <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <scope>test</scope>
           </dependency>
         </dependencies>
       </dependencyManagement>
@@ -991,25 +1092,33 @@ limitations under the License.
       </dependency>
 
       <dependency>
-        <groupId>log4j</groupId>
-        <artifactId>log4j</artifactId>
-        <version>${log4j-log4j.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>com.sun.jdmk</groupId>
-            <artifactId>jmxtools</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sun.jmx</groupId>
-            <artifactId>jmxri</artifactId>
-          </exclusion>
-        </exclusions>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-api</artifactId>
+        <version>${log4j.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>log4j</groupId>
-        <artifactId>apache-log4j-extras</artifactId>
-        <version>${log4j-extras.version}</version>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-core</artifactId>
+        <version>${log4j.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-slf4j-impl</artifactId>
+        <version>${log4j.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-1.2-api</artifactId>
+        <version>${log4j.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-jcl</artifactId>
+        <version>${log4j.version}</version>
       </dependency>
 
       <dependency>
@@ -1019,9 +1128,16 @@ limitations under the License.
       </dependency>
 
       <dependency>
+        <groupId>log4j</groupId>
+        <artifactId>log4j</artifactId>
+        <version>1.2.17</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-log4j12</artifactId>
         <version>${slf4j.version}</version>
+        <scope>test</scope>
       </dependency>
 
       <dependency>
@@ -1134,6 +1250,14 @@ limitations under the License.
             <groupId>tomcat</groupId>
             <artifactId>jasper-runtime</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
 
@@ -1216,6 +1340,12 @@ limitations under the License.
         <groupId>org.apache.zookeeper</groupId>
         <artifactId>zookeeper</artifactId>
         <version>${zookeeper.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+          </exclusion>
+        </exclusions>
        </dependency>
 
       <dependency>
@@ -1516,6 +1646,16 @@ limitations under the License.
         <groupId>org.apache.kafka</groupId>
         <artifactId>kafka_2.10</artifactId>
         <version>${kafka.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.kafka</groupId>
@@ -1546,11 +1686,31 @@ limitations under the License.
         <groupId>org.apache.hive</groupId>
         <artifactId>hive-exec</artifactId>
         <version>${hive.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.hive</groupId>
         <artifactId>hive-metastore</artifactId>
         <version>${hive.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>
@@ -1563,6 +1723,16 @@ limitations under the License.
         <groupId>org.apache.hive.hcatalog</groupId>
         <artifactId>hive-hcatalog-streaming</artifactId>
         <version>${hive.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>
