@@ -25,7 +25,7 @@
       <PatternLayout pattern="%d (%t) [%p - %l] %m%n" />
     </Console>
     <RollingFile name="LogFile" fileName="${LOG_DIR}/flume.log" filePattern="${LOG_DIR}/archive/flume.log.%d{yyyyMMdd}-%i">
-      <PatternLayout pattern="%d{dd MMM yyyy HH:mm:ss,SSS} %-5p [%t] (%C.%M:%L) %x - %m%n" />
+      <PatternLayout pattern="%d{dd MMM yyyy HH:mm:ss,SSS} %-5p [%t] (%C.%M:%L) %equals{%x }{[] }{}- %m%n" />
       <Policies>
         <!-- Roll every night at midnight or when the file reaches 100MB -->
         <SizeBasedTriggeringPolicy size="100 MB"/>
