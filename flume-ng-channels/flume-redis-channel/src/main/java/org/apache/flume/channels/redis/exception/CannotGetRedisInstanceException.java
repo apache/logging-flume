@@ -18,8 +18,6 @@
  */
 package org.apache.flume.channels.redis.exception;
 
-import org.apache.flume.channels.redis.RedisChannelConfiguration;
-
 public class CannotGetRedisInstanceException extends Exception {
   
   public CannotGetRedisInstanceException() {

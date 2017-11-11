@@ -32,6 +32,8 @@ import org.apache.flume.channel.BasicChannelSemantics;
 import org.apache.flume.channel.BasicTransactionSemantics;
 import org.apache.flume.channels.redis.tools.RedisInit;
 import org.apache.flume.channels.redis.tools.RedisOperator;
+import org.apache.flume.channels.redis.exception.CannotGetRedisInstanceException;
+import org.apache.flume.channels.redis.exception.UnsupportRedisTypeException;
 import org.apache.flume.conf.ConfigurationException;
 
 import static org.apache.flume.channels.redis.RedisChannelConfiguration.*;
@@ -98,11 +100,15 @@ public class RedisChannel extends BasicChannelSemantics {
       redisOperator = RedisInit.getInstance(redisConf, jedisPoolConfig);
       counter.start();
       super.start();
-    } catch (Exception e) {
+    } catch (CannotGetRedisInstanceException e) {
       LOGGER.error("Could not start Redis Chnnel");
       throw new FlumeException("Unable to create Redis Connections. "
           + "Check whether Redis Server are up and that the "
           + "Flume agent can connect to it.", e);
+    } catch (UnsupportRedisTypeException e) {
+      LOGGER.error("Could not start Redis Chnnel");
+      throw new FlumeException("Unable to create Redis Connections. "
+          + "Check whether Redis Type is correct.", e);
     }
   }
 
