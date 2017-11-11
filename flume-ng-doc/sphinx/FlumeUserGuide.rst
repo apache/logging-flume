@@ -1566,6 +1566,7 @@ keepFields       none         Setting this to 'all' will preserve the Priority,
                               fields can be included: priority, version,
                               timestamp, hostname. The values 'true' and 'false'
                               have been deprecated in favor of 'all' and 'none'.
+ipHeader         --           If specified, the IP will be stored in the header of each event using the header name specified here. This allows for interceptors and channel selectors to customize routing logic based on the incoming port.
 selector.type                 replicating or multiplexing
 selector.*       replicating  Depends on the selector.type value
 interceptors     --           Space-separated list of interceptors
@@ -1609,6 +1610,7 @@ keepFields            none              Setting this to 'all' will preserve the
                                         fields can be included: priority, version,
                                         timestamp, hostname. The values 'true' and 'false'
                                         have been deprecated in favor of 'all' and 'none'.
+ipHeader              --                If specified, the IP will be stored in the header of each event using the header name specified here. This allows for interceptors and channel selectors to customize routing logic based on the incoming port.
 portHeader            --                If specified, the port number will be stored in the header of each event using the header name specified here. This allows for interceptors and channel selectors to customize routing logic based on the incoming port.
 charset.default       UTF-8             Default character set used while parsing syslog events into strings.
 charset.port.<port>   --                Character set is configurable on a per-port basis.
@@ -1645,6 +1647,7 @@ Property Name   Default      Description
 **port**        --           Port # to bind to
 keepFields      false        Setting this to true will preserve the Priority,
                              Timestamp and Hostname in the body of the event.
+ipHeader        --           If specified, the IP will be stored in the header of each event using the header name specified here. This allows for interceptors and channel selectors to customize routing logic based on the incoming port.
 selector.type                replicating or multiplexing
 selector.*      replicating  Depends on the selector.type value
 interceptors    --           Space-separated list of interceptors
