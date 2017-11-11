@@ -51,7 +51,13 @@ public enum ChannelType {
    *
    * @see SpillableMemoryChannel
    */
-  SPILLABLEMEMORY("org.apache.flume.channel.SpillableMemoryChannel");
+  SPILLABLEMEMORY("org.apache.flume.channel.SpillableMemoryChannel"),
+
+  /**
+   *  Redis Channel
+   *  @see RedisChannel
+   */
+  REDIS("org.flume.channels.redis.RedisChannel");
 
   private final String channelClassName;
 

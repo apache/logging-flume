@@ -3403,7 +3403,7 @@ Required properties are in **bold**.
 ================================================  ================================  ========================================================
 Property Name                                     Default                           Description
 ================================================  ================================  ========================================================
-**type**                                          --                                The component type name, needs to be ``org.flume.channels.redis.RedisChannel``
+**type**                                          --                                The component type name, needs to be ``redis``
 **server.type**                                   single                              Specify the type of Redis, now we support single, sentinel and cluster. Default value is single server mode.
 single.server                                     --                                 A Single Redis server used by the channel. It will work with "single" server type.
 sentinel.servers                                  --                                 Sentinel Redis servers used by the channel. It will work with "sentinel" server type. Use commas to separate different node.
