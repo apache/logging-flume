@@ -411,7 +411,7 @@ public class TestMultiportSyslogTCPSource {
     Context context = new Context();
     StringBuilder ports = new StringBuilder();
     context.put(SyslogSourceConfigurationConstants.CONFIG_PORTS,
-            String.valueOf(BASE_TEST_SYSLOG_PORT));
+            String.valueOf(getFreePort()));
     context.put(SyslogSourceConfigurationConstants.CONFIG_IP_HEADER,
             TEST_IP_HEADER);
 
@@ -421,7 +421,7 @@ public class TestMultiportSyslogTCPSource {
     //create a socket to send a test event
     Socket syslogSocket;
     syslogSocket = new Socket(
-            InetAddress.getLocalHost(), BASE_TEST_SYSLOG_PORT);
+            InetAddress.getLocalHost(), getFreePort());
     syslogSocket.getOutputStream().write(getEvent(0));
 
     //take event frome channel
