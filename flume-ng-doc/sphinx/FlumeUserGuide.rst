@@ -3394,9 +3394,9 @@ Also please make sure that the operating system user of the Flume processes has 
 Redis Channel
 ~~~~~~~~~~~~~
 
-The events are stored in a redis server (must be installed separately). Redis provides high concurrency. If you have many agents but want to share one channel which can provide high concurrency, Redis Channel is a good choice. Redis also can provide high availability and replication, you can choose the best way to adapt your application.
+The events are stored in a Redis server (must be installed separately). If you have many agents but want to share one channel which can provide high concurrency, Redis Channel is a good choice. Redis also can provide high availability and replication, you can choose the best way to adapt your application.
 
-This version of Flume requires redis version 2.6 or greater. If you want to use redis cluster, we recommend redis version 3.1 or greater. 
+This version of Flume requires Redis version 2.6 or greater. If you want to use Redis cluster, we recommend Redis version 3.1 or greater. 
 
 Required properties are in **bold**.
 
@@ -3404,23 +3404,23 @@ Required properties are in **bold**.
 Property Name                                     Default                           Description
 ================================================  ================================  ========================================================
 **type**                                          --                                The component type name, needs to be ``org.flume.channels.redis.RedisChannel``
-**server.type**                                   single                              Specify the type of redis, now we support single, sentinel and cluster. Default value is single server mode.
+**server.type**                                   single                              Specify the type of Redis, now we support single, sentinel and cluster. Default value is single server mode.
 single.server                                     --                                 A Single Redis server used by the channel. It will work with "single" server type.
 sentinel.servers                                  --                                 Sentinel Redis servers used by the channel. It will work with "sentinel" server type. Use commas to separate different node.
 sentinel.master.name                              --                                 Sentinel Redis master name. It will work with "sentinel" server type.
 cluster.servers                                   --                                 Cluster Redis servers used by the channel. It will work with "cluster" server type. Use commas to separate different node.
-cluster.max.attemp                                1                                   Amount times to retry to access redis cluster.
-**key**                                           --                                Since we use list to store events, you must specify a name of list. The list can be not exist in redis server.
-password                                          --                                The password of redis.
-redis.timout                                      5000                                Amount of time (in milliseconds) to wait to connect redis.
+cluster.max.attemp                                1                                   Amount times to retry to access Redis cluster.
+**key**                                           --                                Since we use list to store events, you must specify a name of list. The list can be not exist in Redis server.
+password                                          --                                The password of Redis.
+redis.timout                                      5000                                Amount of time (in milliseconds) to wait to connect Redis.
 redis.max.total                                   500
-Max total number connections of redis pool.
-redis.max.idle                                    300                                Max idle number connections of redis pool.
-redis.min.idle                                    10                                Min idle number connections of redis pools.  
-redis.max.wait.millis                             60000                               Amount of time(in milliseconds) to get a connection from redis pool.
-redis.test.on.borrow                              true                                If test when get a connection from redis pool. Recommond let it be true in case the connection lost.  
-redis.test.on.return                              true                                If test when give a connection back to redis pool. 
-redis.test.while.idle                             true                                If test while connection in redis pool. Recommond let it be true in case the connection lost.
+Max total number connections of Redis pool.
+redis.max.idle                                    300                                Max idle number connections of Redis pool.
+redis.min.idle                                    10                                Min idle number connections of Redis pools.  
+redis.max.wait.millis                             60000                               Amount of time(in milliseconds) to get a connection from Redis pool.
+redis.test.on.borrow                              true                                If test when get a connection from Redis pool. Recommond let it be true in case the connection lost.  
+redis.test.on.return                              true                                If test when give a connection back to Redis pool. 
+redis.test.while.idle                             true                                If test while connection in Redis pool. Recommond let it be true in case the connection lost.
 ================================================  ================================  ========================================================
 
 
