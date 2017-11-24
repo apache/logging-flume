@@ -81,7 +81,7 @@ limitations under the License.
     <kite.version>1.0.0</kite.version>
     <hive.version>1.0.0</hive.version>
     <lifecycle-mapping.version>1.0.0</lifecycle-mapping.version>
-    <log4j.version>2.10.0-SNAPSHOT</log4j.version>
+    <log4j.version>2.10.0</log4j.version>
     <mapdb.version>0.9.9</mapdb.version>
     <mina.version>2.0.4</mina.version>
     <mockito.version>1.9.0</mockito.version>
