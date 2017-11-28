@@ -468,16 +468,16 @@ public class KafkaSource extends AbstractPollableSource
     ZkUtils zkUtils = ZkUtils.apply(zookeeperConnect, ZK_SESSION_TIMEOUT, ZK_CONNECTION_TIMEOUT,
         JaasUtils.isZkSecurityEnabled());
     try {
-        List<Broker> brokers = seqAsJavaList(zkUtils.getAllBrokersInCluster());
+      List<Broker> brokers = seqAsJavaList(zkUtils.getAllBrokersInCluster());
 
-        List<String> connections = new ArrayList<>();
+      List<String> connections = new ArrayList<>();
 
-        for (Broker broker : brokers) {
-            List<EndPoint> endPointList = seqAsJavaList(broker.endPoints());
-            for (EndPoint endPoint : endPointList) {
-                connections.add(endPoint.host() + ":" + endPoint.port());
-            }
+      for (Broker broker : brokers) {
+        List<EndPoint> endPointList = seqAsJavaList(broker.endPoints());
+        for (EndPoint endPoint : endPointList) {
+          connections.add(endPoint.host() + ":" + endPoint.port());
         }
+      }
 
       return StringUtils.join(connections, ',');
     } finally {

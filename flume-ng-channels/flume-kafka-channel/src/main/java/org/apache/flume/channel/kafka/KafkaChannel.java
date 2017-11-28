@@ -383,7 +383,8 @@ public class KafkaChannel extends BasicChannelSemantics {
   private Map<TopicPartition, OffsetAndMetadata> getZookeeperOffsets(ZkUtils client) {
     Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
     ZKGroupTopicDirs topicDirs = new ZKGroupTopicDirs(groupId, topicStr);
-    List<String> partitions = seqAsJavaList(client.getChildrenParentMayNotExist(topicDirs.consumerOffsetDir()));
+    List<String> partitions = seqAsJavaList(client.getChildrenParentMayNotExist(topicDirs
+        .consumerOffsetDir()));
     for (String partition : partitions) {
       TopicPartition key = new TopicPartition(topicStr, Integer.valueOf(partition));
       Option<String> data = client.readDataMaybeNull(
