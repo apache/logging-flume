@@ -16,21 +16,10 @@
  */
 package org.apache.flume.source.kafka;
 
-import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.regex.Pattern;
-
 import com.google.common.annotations.VisibleForTesting;
-import kafka.cluster.BrokerEndPoint;
+import com.google.common.base.Optional;
+import kafka.cluster.Broker;
+import kafka.cluster.EndPoint;
 import kafka.utils.ZKGroupTopicDirs;
 import kafka.utils.ZkUtils;
 import org.apache.avro.io.BinaryDecoder;
@@ -57,16 +46,31 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.common.protocol.SecurityProtocol;
 import org.apache.kafka.common.security.JaasUtils;
+import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Optional;
 import scala.Option;
 
-import static org.apache.flume.source.kafka.KafkaSourceConstants.*;
-import static scala.collection.JavaConverters.asJavaListConverter;
+import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
+
+import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_GROUP_ID;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_MIGRATE_ZOOKEEPER_OFFSETS;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.KAFKA_CONSUMER_PREFIX;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.MIGRATE_ZOOKEEPER_OFFSETS;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.ZOOKEEPER_CONNECT_FLUME_KEY;
+import static scala.collection.JavaConverters.seqAsJavaList;
 
 /**
  * A Source for Kafka which reads messages from kafka topics.
@@ -464,12 +468,17 @@ public class KafkaSource extends AbstractPollableSource
     ZkUtils zkUtils = ZkUtils.apply(zookeeperConnect, ZK_SESSION_TIMEOUT, ZK_CONNECTION_TIMEOUT,
         JaasUtils.isZkSecurityEnabled());
     try {
-      List<BrokerEndPoint> endPoints =
-          asJavaListConverter(zkUtils.getAllBrokerEndPointsForChannel(securityProtocol)).asJava();
-      List<String> connections = new ArrayList<>();
-      for (BrokerEndPoint endPoint : endPoints) {
-        connections.add(endPoint.connectionString());
-      }
+        List<Broker> brokers = seqAsJavaList(zkUtils.getAllBrokersInCluster());
+
+        List<String> connections = new ArrayList<>();
+
+        for (Broker broker : brokers) {
+            List<EndPoint> endPointList = seqAsJavaList(broker.endPoints());
+            for (EndPoint endPoint : endPointList) {
+                connections.add(endPoint.host() + ":" + endPoint.port());
+            }
+        }
+
       return StringUtils.join(connections, ',');
     } finally {
       zkUtils.close();
@@ -597,8 +606,8 @@ public class KafkaSource extends AbstractPollableSource
                                                                      String topicStr) {
     Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
     ZKGroupTopicDirs topicDirs = new ZKGroupTopicDirs(groupId, topicStr);
-    List<String> partitions = asJavaListConverter(
-        client.getChildrenParentMayNotExist(topicDirs.consumerOffsetDir())).asJava();
+    List<String> partitions = seqAsJavaList(
+        client.getChildrenParentMayNotExist(topicDirs.consumerOffsetDir()));
     for (String partition : partitions) {
       TopicPartition key = new TopicPartition(topicStr, Integer.valueOf(partition));
       Option<String> data = client.readDataMaybeNull(

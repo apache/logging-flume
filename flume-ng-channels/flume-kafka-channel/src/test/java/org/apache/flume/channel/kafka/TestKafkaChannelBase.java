@@ -20,6 +20,7 @@ package org.apache.flume.channel.kafka;
 
 import com.google.common.collect.Lists;
 import kafka.admin.AdminUtils;
+import kafka.admin.RackAwareMode;
 import kafka.utils.ZkUtils;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.flume.Context;
@@ -97,7 +98,8 @@ public class TestKafkaChannelBase {
         ZkUtils.apply(testUtil.getZkUrl(), sessionTimeoutMs, connectionTimeoutMs, false);
     int replicationFactor = 1;
     Properties topicConfig = new Properties();
-    AdminUtils.createTopic(zkUtils, topicName, numPartitions, replicationFactor, topicConfig);
+    AdminUtils.createTopic(zkUtils, topicName, numPartitions, replicationFactor,
+            topicConfig, RackAwareMode.Enforced$.MODULE$);
   }
 
   static void deleteTopic(String topicName) {
@@ -120,6 +122,7 @@ public class TestKafkaChannelBase {
     Context context = new Context();
     context.put(BOOTSTRAP_SERVERS_CONFIG, testUtil.getKafkaServerUrl());
     context.put(PARSE_AS_FLUME_EVENT, String.valueOf(parseAsFlume));
+    context.put("offsets.topic.replication.factor", "1");
     context.put(TOPIC_CONFIG, topic);
 
     return context;

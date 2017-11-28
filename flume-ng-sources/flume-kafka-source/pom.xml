@@ -55,7 +55,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka_2.10</artifactId>
+      <artifactId>kafka_2.12</artifactId>
       <version>${kafka.version}</version>
     </dependency>
     <dependency>
@@ -83,9 +83,8 @@
     </dependency>
     <dependency>
       <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka_2.10</artifactId>
-      <classifier>test</classifier>
-      <scope>test</scope>
+      <artifactId>kafka_2.12</artifactId>
+      <version>${kafka.version}</version>
       <exclusions>
         <exclusion>
           <groupId>log4j</groupId>

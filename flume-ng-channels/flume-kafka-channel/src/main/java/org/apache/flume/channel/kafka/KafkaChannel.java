@@ -62,6 +62,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -76,8 +77,32 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.*;
-import static scala.collection.JavaConverters.asJavaListConverter;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.BOOTSTRAP_SERVERS_CONFIG;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.BROKER_LIST_FLUME_KEY;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_ACKS;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_AUTO_OFFSET_RESET;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_GROUP_ID;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_KEY_DESERIALIZER;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_KEY_SERIALIZER;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_MIGRATE_ZOOKEEPER_OFFSETS;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_PARSE_AS_FLUME_EVENT;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_POLL_TIMEOUT;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_TOPIC;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_VALUE_DESERIAIZER;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_VALUE_SERIAIZER;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.GROUP_ID_FLUME;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.KAFKA_CONSUMER_PREFIX;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.KAFKA_PRODUCER_PREFIX;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.KEY_HEADER;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.MIGRATE_ZOOKEEPER_OFFSETS;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.PARSE_AS_FLUME_EVENT;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.PARTITION_HEADER_NAME;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.POLL_TIMEOUT;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.READ_SMALLEST_OFFSET;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.STATIC_PARTITION_CONF;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.TOPIC_CONFIG;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.ZOOKEEPER_CONNECT_FLUME_KEY;
+import static scala.collection.JavaConverters.seqAsJavaList;
 
 public class KafkaChannel extends BasicChannelSemantics {
 
@@ -296,8 +321,9 @@ public class KafkaChannel extends BasicChannelSemantics {
       KafkaConsumer<String, byte[]> consumer = new KafkaConsumer<String, byte[]>(consumerProps);
       ConsumerAndRecords car = new ConsumerAndRecords(consumer, channelUUID);
       logger.info("Created new consumer to connect to Kafka");
-      car.consumer.subscribe(Arrays.asList(topic.get()),
-                             new ChannelRebalanceListener(rebalanceFlag));
+      ArrayList<String> topicsList = new ArrayList<String>();
+      topicsList.addAll(Arrays.asList(topic.get()));
+      car.consumer.subscribe(topicsList, new ChannelRebalanceListener(rebalanceFlag));
       car.offsets = new HashMap<TopicPartition, OffsetAndMetadata>();
       consumers.add(car);
       return car;
@@ -357,8 +383,7 @@ public class KafkaChannel extends BasicChannelSemantics {
   private Map<TopicPartition, OffsetAndMetadata> getZookeeperOffsets(ZkUtils client) {
     Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
     ZKGroupTopicDirs topicDirs = new ZKGroupTopicDirs(groupId, topicStr);
-    List<String> partitions = asJavaListConverter(
-        client.getChildrenParentMayNotExist(topicDirs.consumerOffsetDir())).asJava();
+    List<String> partitions = seqAsJavaList(client.getChildrenParentMayNotExist(topicDirs.consumerOffsetDir()));
     for (String partition : partitions) {
       TopicPartition key = new TopicPartition(topicStr, Integer.valueOf(partition));
       Option<String> data = client.readDataMaybeNull(

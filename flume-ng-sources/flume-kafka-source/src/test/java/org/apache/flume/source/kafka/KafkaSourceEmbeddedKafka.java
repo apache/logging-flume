@@ -17,6 +17,7 @@
 package org.apache.flume.source.kafka;
 
 import kafka.admin.AdminUtils;
+import kafka.admin.RackAwareMode;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServerStartable;
 import kafka.utils.ZkUtils;
@@ -67,6 +68,7 @@ public class KafkaSourceEmbeddedKafka {
     Properties props = new Properties();
     props.put("zookeeper.connect",zookeeper.getConnectString());
     props.put("broker.id","1");
+    props.put("offsets.topic.replication.factor", "1");
     props.put("host.name", "localhost");
     props.put("port", String.valueOf(serverPort));
     props.put("log.dir", dir.getAbsolutePath());
@@ -140,7 +142,8 @@ public class KafkaSourceEmbeddedKafka {
     ZkUtils zkUtils = ZkUtils.apply(zkClient, false);
     int replicationFactor = 1;
     Properties topicConfig = new Properties();
-    AdminUtils.createTopic(zkUtils, topicName, numPartitions, replicationFactor, topicConfig);
+    AdminUtils.createTopic(zkUtils, topicName, numPartitions, replicationFactor,
+            topicConfig, RackAwareMode.Enforced$.MODULE$);
   }
 
 }

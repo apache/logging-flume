@@ -20,6 +20,7 @@ package org.apache.flume.shared.kafka.test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -199,7 +200,9 @@ public class KafkaPartitionTestUtil {
 
       TopicPartition partition = new TopicPartition(topic, i);
 
-      consumer.assign(Arrays.asList(partition));
+      Collection<TopicPartition>  topicPartitionCollection = new ArrayList<>();
+      topicPartitionCollection.addAll(Arrays.asList(partition));
+      consumer.assign(topicPartitionCollection);
 
       ConsumerRecords<String, byte[]> records = consumer.poll(1000);
       for (ConsumerRecord<String, byte[]> record : records) {

@@ -57,6 +57,7 @@ public class TestUtil {
     // get the localhost.
     try {
       hostname = InetAddress.getLocalHost().getHostName();
+      hostname = "localhost";
     } catch (UnknownHostException e) {
       logger.warn("Error getting the value of localhost. " +
           "Proceeding with 'localhost'.", e);

@@ -49,6 +49,7 @@ public class TestBasicFunctionality extends TestKafkaChannelBase {
     Context context = new Context();
     context.put("kafka.producer.some-parameter", "1");
     context.put("kafka.consumer.another-parameter", "1");
+    context.put("offsets.topic.replication.factor", "1");
     context.put(BOOTSTRAP_SERVERS_CONFIG, testUtil.getKafkaServerUrl());
     context.put(TOPIC_CONFIG, topic);
 

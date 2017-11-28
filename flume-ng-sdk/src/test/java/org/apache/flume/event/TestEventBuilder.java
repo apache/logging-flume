@@ -19,13 +19,13 @@
 
 package org.apache.flume.event;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.flume.Event;
 import org.apache.flume.FlumeException;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class TestEventBuilder {
 
