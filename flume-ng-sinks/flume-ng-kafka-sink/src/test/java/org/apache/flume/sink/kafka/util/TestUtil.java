@@ -23,13 +23,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.BindException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Properties;
-import java.util.Random;
 
 /**
  * A utility class for starting/stopping Kafka Server.
@@ -57,7 +55,6 @@ public class TestUtil {
     // get the localhost.
     try {
       hostname = InetAddress.getLocalHost().getHostName();
-      hostname = "localhost";
     } catch (UnknownHostException e) {
       logger.warn("Error getting the value of localhost. " +
           "Proceeding with 'localhost'.", e);
