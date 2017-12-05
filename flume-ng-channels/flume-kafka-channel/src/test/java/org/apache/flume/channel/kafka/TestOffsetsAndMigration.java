@@ -121,7 +121,6 @@ public class TestOffsetsAndMigration extends TestKafkaChannelBase {
     Context context = prepareDefaultContext(false);
     context.put(ZOOKEEPER_CONNECT_FLUME_KEY, testUtil.getZkUrl());
     context.put(GROUP_ID_FLUME, group);
-    context.put("offsets.topic.replication.factor", "1");
     final KafkaChannel channel = createChannel(context);
 
     // Produce some data and save an offset

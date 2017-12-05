@@ -122,7 +122,6 @@ public class TestKafkaChannelBase {
     Context context = new Context();
     context.put(BOOTSTRAP_SERVERS_CONFIG, testUtil.getKafkaServerUrl());
     context.put(PARSE_AS_FLUME_EVENT, String.valueOf(parseAsFlume));
-    context.put("offsets.topic.replication.factor", "1");
     context.put(TOPIC_CONFIG, topic);
 
     return context;
