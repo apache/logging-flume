@@ -406,7 +406,7 @@ public class SyslogUtils {
                     //Need to roll forward a year
                     Calendar c1 = Calendar.getInstance();
                     c1.setTime(parsedDate);
-                    c1.add(Calendar.YEAR, -1);
+                    c1.add(Calendar.YEAR, +1);
                     parsedDate = c1.getTime();
                   }
                 }
