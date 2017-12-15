@@ -443,9 +443,11 @@ public class HiveSink extends AbstractSink implements Configurable {
   private void closeAllWriters() throws InterruptedException {
     //1) Retire writers
     for (Entry<HiveEndPoint,HiveWriter> entry : allWriters.entrySet()) {
-        try {
-          entry.getValue().close();
-        } catch (Throwable t) {}
+      try {
+        entry.getValue().close();
+      } catch (Throwable t) {
+        LOG.warn(getName() + ": threw at closing writer", t);
+      }
     }
 
     //2) Clear cache
@@ -460,7 +462,9 @@ public class HiveSink extends AbstractSink implements Configurable {
     for (Entry<HiveEndPoint,HiveWriter> entry : allWriters.entrySet()) {
       try {
         entry.getValue().abort();
-      } catch (Throwable t) {}
+      } catch (Throwable t) {
+        LOG.warn(getName() + ": threw at aborting writer", t);
+      }
     }
   }
 
