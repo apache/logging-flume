@@ -114,6 +114,13 @@ class HiveWriter {
     batchCounter = 0;
   }
 
+  public void sendHeartbeatIfNeeded() throws InterruptedException {
+    if (hearbeatNeeded) {
+      hearbeatNeeded = false;
+      heartBeat();
+    }
+  }
+    
   void setHearbeatNeeded() {
     hearbeatNeeded = true;
   }
