@@ -217,7 +217,7 @@ public class ResettableFileInputStream extends ResettableInputStream
   }
 
   @Override
-  public synchronized int read() throws IOException {
+  public int read() throws IOException {
     int len = read(byteBuf, 0, 1);
     if (len == -1) {
       return -1;
@@ -230,7 +230,7 @@ public class ResettableFileInputStream extends ResettableInputStream
   }
 
   @Override
-  public synchronized int read(byte[] b, int off, int len) throws IOException {
+  public int read(byte[] b, int off, int len) throws IOException {
     logger.trace("read(buf, {}, {})", off, len);
 
     if (position >= fileSize) {
@@ -251,7 +251,7 @@ public class ResettableFileInputStream extends ResettableInputStream
   }
 
   @Override
-  public synchronized int readChar() throws IOException {
+  public int readChar() throws IOException {
 
     // Check whether we are in the middle of a surrogate pair,
     // in which case, return the last (low surrogate) char of the pair.
