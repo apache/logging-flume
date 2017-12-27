@@ -119,8 +119,11 @@ public class NonSyncResettableFileInputStream extends ResettableInputStream
    * @throws FileNotFoundException If the file to read does not exist
    * @throws IOException If the position reported by the tracker cannot be sought
    */
-  public NonSyncResettableFileInputStream(File file, PositionTracker tracker,
-                                   int bufSize, Charset charset, DecodeErrorPolicy decodeErrorPolicy)
+  public NonSyncResettableFileInputStream(File file,
+                                          PositionTracker tracker,
+                                          int bufSize,
+                                          Charset charset,
+                                          DecodeErrorPolicy decodeErrorPolicy)
       throws IOException {
     this.file = file;
     this.tracker = tracker;
