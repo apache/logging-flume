@@ -38,4 +38,5 @@ public class Config {
   public static final String SECOND = "second";
   public static final String ROUND_VALUE = "roundValue";
   public static final String SERIALIZER = "serializer";
+  public static final String EXIT_WHEN = "exitWhen";
 }

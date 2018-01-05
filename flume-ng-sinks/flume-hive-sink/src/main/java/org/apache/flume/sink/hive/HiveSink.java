@@ -50,6 +50,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+import javax.script.SimpleBindings;
+
 public class HiveSink extends AbstractSink implements Configurable {
 
   private static final Logger LOG = LoggerFactory.getLogger(HiveSink.class);
@@ -77,6 +82,9 @@ public class HiveSink extends AbstractSink implements Configurable {
   private String serializerType;
   private HiveEventSerializer serializer;
 
+  private String exitWhen;
+  private ScriptEngine nashorn = new ScriptEngineManager().getEngineByName("nashorn");
+  
   /**
    * Default timeout for blocking I/O calls in HiveWriter
    */
@@ -202,6 +210,8 @@ public class HiveSink extends AbstractSink implements Configurable {
     serializer = createSerializer(serializerType);
     serializer.configure(context);
 
+    exitWhen = context.getString(Config.EXIT_WHEN);
+    
     Preconditions.checkArgument(batchSize > 0, "batchSize must be greater than 0");
 
     if (sinkCounter == null) {
@@ -276,6 +286,7 @@ public class HiveSink extends AbstractSink implements Configurable {
   // Drains one batch of events from Channel into Hive
   private int drainOneBatch(Channel channel)
           throws HiveWriter.Failure, InterruptedException {
+    Boolean exit = false;
     int txnEventCount = 0;
     try {
       Map<HiveEndPoint,HiveWriter> activeWriters = Maps.newHashMap();
@@ -284,6 +295,32 @@ public class HiveSink extends AbstractSink implements Configurable {
         Event event = channel.take();
         if (event == null) {
           break;
+        }
+        
+        // 检查是否满足退出条件
+        if (exitWhen != null && !exitWhen.isEmpty()) {
+          @SuppressWarnings("unchecked")
+          SimpleBindings bindings = new SimpleBindings(
+              (Map<String, Object>) (Map<?, ?>) event.getHeaders());
+          try {
+            Object ret = nashorn.eval(exitWhen, bindings);
+
+            if (ret instanceof Boolean) {
+              exit = (Boolean) ret;
+            } else if (ret instanceof Integer) {
+              exit = 0 != (Integer) ret;
+            } else if (ret instanceof Long) {
+              exit = 0 != (Long) ret;
+            } else if (ret instanceof String) {
+              exit = !String.valueOf(ret).isEmpty();
+            }
+
+            if (exit) {
+              break;
+            }
+          } catch (ScriptException e) {
+            LOG.error("Fail to eval 'exitWhen' expression.", e);
+          }
         }
 
         //1) Create end point by substituting place holders
@@ -322,6 +359,12 @@ public class HiveSink extends AbstractSink implements Configurable {
       }
 
       sinkCounter.addToEventDrainSuccessCount(txnEventCount);
+      
+      if (exit) {
+        LOG.info("'exitWhen' condition satisfied. Flume's going to exit.");
+        System.exit(0);
+      }
+      
       return txnEventCount;
     } catch (HiveWriter.Failure | RuntimeException e) {
       // in case of error we close all TxnBatches to start clean next time
