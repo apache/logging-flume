@@ -55,12 +55,6 @@ public class SinkConfiguration extends ComponentConfiguration {
 
   @Override
   public String toString(int indentCount) {
-    StringBuilder indentSb = new StringBuilder("");
-
-    for (int i = 0; i < indentCount; i++) {
-      indentSb.append(FlumeConfiguration.INDENTSTEP);
-    }
-
     String basicStr = super.toString(indentCount);
     StringBuilder sb = new StringBuilder();
     sb.append(basicStr).append(FlumeConfiguration.INDENTSTEP).append(

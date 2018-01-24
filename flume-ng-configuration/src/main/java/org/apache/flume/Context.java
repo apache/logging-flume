@@ -22,6 +22,7 @@ package org.apache.flume;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -88,10 +89,11 @@ public class Context {
         "The given prefix does not end with a period (" + prefix + ")");
     Map<String, String> result = Maps.newHashMap();
     synchronized (parameters) {
-      for (String key : parameters.keySet()) {
+      for (Entry<String, String> entry : parameters.entrySet()) {
+        String key = entry.getKey();
         if (key.startsWith(prefix)) {
           String name = key.substring(prefix.length());
-          result.put(name, parameters.get(key));
+          result.put(name, entry.getValue());
         }
       }
     }

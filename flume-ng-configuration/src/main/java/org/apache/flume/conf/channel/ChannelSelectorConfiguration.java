@@ -18,11 +18,9 @@ package org.apache.flume.conf.channel;
 
 import java.util.Set;
 
-import org.apache.flume.Context;
 import org.apache.flume.conf.ComponentConfiguration;
 import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.conf.channel.ChannelConfiguration.ChannelConfigurationType;
-import org.apache.flume.conf.source.SourceConfiguration;
 
 public class ChannelSelectorConfiguration extends
     ComponentConfiguration {
@@ -42,10 +40,6 @@ public class ChannelSelectorConfiguration extends
 
   public void setChannels(Set<String> channelNames) {
     this.channelNames = channelNames;
-  }
-
-  public void configure(Context context) throws ConfigurationException {
-    super.configure(context);
   }
 
   public enum ChannelSelectorConfigurationType {

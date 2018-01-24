@@ -128,7 +128,7 @@ public class SourceConfiguration extends ComponentConfiguration {
     ChannelSelectorType[] values = ChannelSelectorType.values();
     for (ChannelSelectorType value : values) {
       if (value.toString().equalsIgnoreCase(type)) return value;
-      String clName = value.getChannelSelectorClassName();
+      String clName = value.getClassName();
       if (clName != null && clName.equalsIgnoreCase(type)) return value;
     }
     return null;
