@@ -48,8 +48,9 @@ public class Context {
    * Gets a copy of the backing map structure.
    * @return immutable copy of backing map structure
    */
-  public ImmutableMap<String, String> getParameters() {
+  public Map<String, String> getParameters() {
     synchronized (parameters) {
+
       return ImmutableMap.copyOf(parameters);
     }
   }
@@ -82,7 +83,7 @@ public class Context {
    * @throws IllegalArguemntException if the given prefix does not end with
    *   a period character.
    */
-  public ImmutableMap<String, String> getSubProperties(String prefix) {
+  public Map<String, String> getSubProperties(String prefix) {
     Preconditions.checkArgument(prefix.endsWith("."),
         "The given prefix does not end with a period (" + prefix + ")");
     Map<String, String> result = Maps.newHashMap();

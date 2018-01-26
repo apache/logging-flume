@@ -20,7 +20,6 @@ package org.apache.flume.source;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -113,7 +112,7 @@ public class MultiportSyslogTCPSource extends AbstractSource implements
     // clear any previous charset configuration and reconfigure it
     portCharsets.clear();
     {
-      ImmutableMap<String, String> portCharsetCfg = context.getSubProperties(
+      Map<String, String> portCharsetCfg = context.getSubProperties(
           SyslogSourceConfigurationConstants.CONFIG_PORT_CHARSET_PREFIX);
       for (Map.Entry<String, String> entry : portCharsetCfg.entrySet()) {
         String portStr = entry.getKey();
