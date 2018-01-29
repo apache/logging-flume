@@ -21,6 +21,10 @@ import org.apache.flume.conf.ComponentConfiguration.ComponentType;
 import org.apache.flume.conf.FlumeConfigurationError.ErrorOrWarning;
 import org.apache.flume.conf.channel.ChannelConfiguration;
 import org.apache.flume.conf.channel.ChannelType;
+import org.apache.flume.configfilter.ConfigFilter;
+import org.apache.flume.configfilter.ConfigFilterConfiguration;
+import org.apache.flume.configfilter.ConfigFilterFactory;
+import org.apache.flume.configfilter.ConfigFilterType;
 import org.apache.flume.conf.sink.SinkConfiguration;
 import org.apache.flume.conf.sink.SinkGroupConfiguration;
 import org.apache.flume.conf.sink.SinkType;
@@ -47,6 +51,8 @@ import java.util.StringTokenizer;
 import static org.apache.flume.conf.BasicConfigurationConstants.CONFIG_CHANNELS;
 import static org.apache.flume.conf.BasicConfigurationConstants.CONFIG_CHANNELS_PREFIX;
 import static org.apache.flume.conf.BasicConfigurationConstants.CONFIG_CONFIG;
+import static org.apache.flume.conf.BasicConfigurationConstants.CONFIG_CONFIGFILTERS;
+import static org.apache.flume.conf.BasicConfigurationConstants.CONFIG_CONFIGFILTERS_PREFIX;
 import static org.apache.flume.conf.BasicConfigurationConstants.CONFIG_SINKGROUPS;
 import static org.apache.flume.conf.BasicConfigurationConstants.CONFIG_SINKGROUPS_PREFIX;
 import static org.apache.flume.conf.BasicConfigurationConstants.CONFIG_SINKS;
@@ -221,6 +227,7 @@ public class FlumeConfiguration {
   public static class AgentConfiguration {
 
     private final String agentName;
+    private String configFilters;
     private String sources;
     private String sinks;
     private String channels;
@@ -230,31 +237,38 @@ public class FlumeConfiguration {
     private final Map<String, ComponentConfiguration> sinkConfigMap;
     private final Map<String, ComponentConfiguration> channelConfigMap;
     private final Map<String, ComponentConfiguration> sinkgroupConfigMap;
+    private final Map<String, ComponentConfiguration> configFilterConfigMap;
 
+    private Map<String, Context> configFilterContextMap;
     private Map<String, Context> sourceContextMap;
     private Map<String, Context> sinkContextMap;
     private Map<String, Context> channelContextMap;
     private Map<String, Context> sinkGroupContextMap;
 
     private Set<String> sinkSet;
+    private Set<String> configFilterSet;
     private Set<String> sourceSet;
     private Set<String> channelSet;
     private Set<String> sinkgroupSet;
 
     private final List<FlumeConfigurationError> errorList;
+    private List<ConfigFilter> configFiltersInstances;
 
     private AgentConfiguration(String agentName,
                                List<FlumeConfigurationError> errorList) {
       this.agentName = agentName;
       this.errorList = errorList;
+      configFilterConfigMap = new HashMap<>();
       sourceConfigMap = new HashMap<>();
       sinkConfigMap = new HashMap<>();
       channelConfigMap = new HashMap<>();
       sinkgroupConfigMap = new HashMap<>();
+      configFilterContextMap = new HashMap<>();
       sourceContextMap = new HashMap<>();
       sinkContextMap = new HashMap<>();
       channelContextMap = new HashMap<>();
       sinkGroupContextMap = new HashMap<>();
+      configFiltersInstances = new ArrayList<>();
 
     }
 
@@ -266,12 +280,20 @@ public class FlumeConfiguration {
       return sourceConfigMap;
     }
 
+    public Map<String, ComponentConfiguration> getConfigFilterConfigMap() {
+      return configFilterConfigMap;
+    }
+
     public Map<String, ComponentConfiguration> getSinkConfigMap() {
       return sinkConfigMap;
     }
 
     public Map<String, ComponentConfiguration> getSinkGroupConfigMap() {
       return sinkgroupConfigMap;
+    }
+
+    public Map<String, Context> getConfigFilterContext() {
+      return configFilterContextMap;
     }
 
     public Map<String, Context> getSourceContext() {
@@ -288,6 +310,10 @@ public class FlumeConfiguration {
 
     public Set<String> getSinkSet() {
       return sinkSet;
+    }
+
+    public Set<String> getConfigFilterSet() {
+      return configFilterSet;
     }
 
     public Set<String> getSourceSet() {
@@ -323,6 +349,10 @@ public class FlumeConfiguration {
       if (LOGGER.isDebugEnabled() && LogPrivacyUtil.allowLogPrintConfig()) {
         LOGGER.debug("Initial configuration: {}", getPrevalidationConfig());
       }
+
+      configFilterSet = validateConfigFilterSet();
+      createConfigFilters();
+      runFiltersThroughConfigs();
 
       // Make sure that at least one channel is specified
       if (channels == null || channels.trim().isEmpty()) {
@@ -364,6 +394,7 @@ public class FlumeConfiguration {
 
       // Now rewrite the sources/sinks/channels
 
+      this.configFilters = getSpaceDelimitedList(configFilterSet);
       sources = getSpaceDelimitedList(sourceSet);
       channels = getSpaceDelimitedList(channelSet);
       sinks = getSpaceDelimitedList(sinkSet);
@@ -375,6 +406,63 @@ public class FlumeConfiguration {
       }
 
       return true;
+    }
+
+    private void runFiltersThroughConfigs() {
+      runFiltersOnContextMaps(
+          sourceContextMap,
+          channelContextMap,
+          sinkContextMap,
+          sinkGroupContextMap
+      );
+    }
+
+    private void runFiltersOnContextMaps(Map<String, Context>... maps) {
+      for (Map<String, Context> map: maps) {
+        for (Context c : map.values()) {
+          for (Entry<String, String> k : c.getParameters().entrySet()) {
+            c.put(k.getKey(), filterValue(k.getValue()));
+          }
+        }
+      }
+    }
+
+    private void createConfigFilters() {
+      for (String name: configFilterSet) {
+        Context context = configFilterContextMap.get(name);
+        ComponentConfiguration componentConfiguration = configFilterConfigMap.get(name);
+        try {
+
+          if (context != null) {
+            ConfigFilter configFilter = ConfigFilterFactory.create(
+                name, context.getString(BasicConfigurationConstants.CONFIG_TYPE)
+            );
+            configFilter.setConfiguration(context.getParameters());
+            configFiltersInstances.add(configFilter);
+          } else if (componentConfiguration != null) {
+            ConfigFilter configFilter = ConfigFilterFactory.create(
+                componentConfiguration.getComponentName(), componentConfiguration.getType()
+            );
+            configFiltersInstances.add(configFilter);
+          }
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+    }
+
+    private String filterValue(String value) {
+      for (ConfigFilter configFilter : configFiltersInstances) {
+        //JAVA EL expression style ${myFilterName['my_key']}
+        if (value.startsWith("${" + configFilter.getName() + "['") && value.endsWith("']}")) {
+          String filteredValue = configFilter.filter(value.substring(
+              configFilter.getName().length() + 4,
+              value.length() - 3
+          ));
+          return filteredValue == null ? value : filteredValue;
+        }
+      }
+      return value;
     }
 
     private void addError(String key, FlumeConfigurationErrorType errorType, ErrorOrWarning level) {
@@ -391,6 +479,10 @@ public class FlumeConfiguration {
 
     private SourceType getKnownSource(String type) {
       return getKnownComponent(type, SourceType.values());
+    }
+
+    private ConfigFilterType getKnownConfigFilter(String type) {
+      return getKnownComponent(type, ConfigFilterType.values());
     }
 
     private <T extends ComponentWithClassName> T getKnownComponent(String type, T[] values) {
@@ -494,6 +586,88 @@ public class FlumeConfiguration {
       channelSet.retainAll(tempchannelSet);
       return channelSet;
     }
+
+    private Set<String> validateConfigFilterSet() {
+      if (configFilters == null || configFilters.isEmpty()) {
+        LOGGER.warn("Agent configuration for '{}' has no configfilters.", agentName);
+       // addError(CONFIG_CONFIGFILTERS, PROPERTY_VALUE_NULL, WARNING);
+        return new HashSet<>();
+      }
+      Set<String> configFilterSet = new HashSet<>(Arrays.asList(configFilters.split("\\s+")));
+      Map<String, Context> newContextMap = new HashMap<>();
+
+      Iterator<String> iter = configFilterSet.iterator();
+      ConfigFilterConfiguration conf = null;
+      while (iter.hasNext()) {
+        String configFilterName = iter.next();
+        Context configFilterContext = configFilterContextMap.get(configFilterName);
+        if (configFilterContext != null) {
+
+
+          // Get the configuration object for the channel:
+          ConfigFilterType chType = getKnownConfigFilter(configFilterContext.getString(
+              BasicConfigurationConstants.CONFIG_TYPE));
+          boolean configSpecified = false;
+          String config = null;
+          // Not a known channel - cannot do specific validation to this channel
+          if (chType == null) {
+            config = configFilterContext.getString(CONFIG_CONFIG);
+            if (config == null || config.isEmpty()) {
+              config = "OTHER";
+            } else {
+              configSpecified = true;
+            }
+          } else {
+            config = chType.toString().toUpperCase(Locale.ENGLISH);
+            configSpecified = true;
+          }
+
+          try {
+            conf =
+                (ConfigFilterConfiguration) ComponentConfigurationFactory.create(
+                    configFilterName, config, ComponentType.CONFIG_FILTER);
+            LOGGER.debug("Created configfilter {}", configFilterName);
+            if (conf != null) {
+              conf.configure(configFilterContext);
+            }
+            if ((configSpecified && conf.isNotFoundConfigClass()) ||
+                !configSpecified) {
+              newContextMap.put(configFilterName, configFilterContext);
+            } else if (configSpecified) {
+              configFilterConfigMap.put(configFilterName, conf);
+            }
+
+            if (conf != null) {
+              errorList.addAll(conf.getErrors());
+            }
+          } catch (ConfigurationException e) {
+            // Could not configure channel - skip it.
+            // No need to add to error list - already added before exception is
+            // thrown
+            if (conf != null) errorList.addAll(conf.getErrors());
+            iter.remove();
+            LOGGER.warn(
+                "Could not configure configfilter {} due to: {}",
+                new Object[]{configFilterName, e.getMessage(), e}
+            );
+
+          }
+        } else {
+          iter.remove();
+          addError(configFilterName, CONFIG_ERROR, ERROR);
+          LOGGER.warn("Configuration empty for: {}.Removed.", configFilterName);
+        }
+      }
+
+      configFilterContextMap = newContextMap;
+      Set<String> tempchannelSet = new HashSet<String>();
+      tempchannelSet.addAll(configFilterConfigMap.keySet());
+      tempchannelSet.addAll(configFilterContextMap.keySet());
+      configFilterSet.retainAll(tempchannelSet);
+
+      return configFilterSet;
+    }
+
 
     private Set<String> validateSources(Set<String> channelSet) {
       //Arrays.split() call will throw NPE if the sources string is empty
@@ -834,10 +1008,11 @@ public class FlumeConfiguration {
 
     public String getPrevalidationConfig() {
       StringBuilder sb = new StringBuilder("AgentConfiguration[");
-      sb.append(agentName).append("]").append(NEWLINE).append("SOURCES: ");
-      sb.append(sourceContextMap).append(NEWLINE).append("CHANNELS: ");
-      sb.append(channelContextMap).append(NEWLINE).append("SINKS: ");
-      sb.append(sinkContextMap).append(NEWLINE);
+      sb.append(agentName).append("]").append(NEWLINE);
+      sb.append("CONFIG_FILTERS: ").append(configFilterContextMap).append(NEWLINE);
+      sb.append("SOURCES: ").append(sourceContextMap).append(NEWLINE);
+      sb.append("CHANNELS: ").append(channelContextMap).append(NEWLINE);
+      sb.append("SINKS: ").append(sinkContextMap).append(NEWLINE);
 
       return sb.toString();
     }
@@ -887,6 +1062,17 @@ public class FlumeConfiguration {
     }
 
     private boolean addProperty(String key, String value) {
+      // Check for configFilters
+      if (key.equals(CONFIG_CONFIGFILTERS)) {
+        if (configFilters == null) {
+          configFilters = value;
+          return true;
+        } else {
+          LOGGER.warn("Duplicate configfilter list specified for agent: {}", agentName);
+          addError(CONFIG_CONFIGFILTERS, DUPLICATE_PROPERTY, ERROR);
+          return false;
+        }
+      }
       // Check for sources
       if (key.equals(CONFIG_SOURCES)) {
         if (sources == null) {
@@ -942,6 +1128,7 @@ public class FlumeConfiguration {
           || addAsChannelValue(key, value)
           || addAsSinkConfig(key, value)
           || addAsSinkGroupConfig(key, value)
+          || addAsConfigFilterConfig(key, value)
       ) {
         return true;
       }
@@ -949,6 +1136,12 @@ public class FlumeConfiguration {
       LOGGER.warn("Invalid property specified: {}", key);
       addError(key, INVALID_PROPERTY, ERROR);
       return false;
+    }
+
+    private boolean addAsConfigFilterConfig(String key, String value) {
+      return getComponentNameAndConfigKey(
+          key, value, CONFIG_CONFIGFILTERS_PREFIX, configFilterContextMap
+      ) != null;
     }
 
     private boolean addAsSinkGroupConfig(String key, String value) {

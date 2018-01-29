@@ -36,7 +36,7 @@ public class TestFlumeConfiguration {
    * Test fails without FLUME-1743
    */
   @Test
-  public void testFLUME1743() throws Exception {
+  public void testFLUME1743() {
     Properties properties = new Properties();
     properties.put("agent1.channels", "ch0");
     properties.put("agent1.channels.ch0.type", "memory");
@@ -52,6 +52,9 @@ public class TestFlumeConfiguration {
     properties.put("agent1.sinks.sink0.type", "null");
     properties.put("agent1.sinks.sink0.channel", "ch0");
 
+    properties.put("agent1.configfilters", "f1");
+    properties.put("agent1.configfilters.f1.type", "env");
+
     FlumeConfiguration conf = new FlumeConfiguration(properties);
     AgentConfiguration agentConfiguration = conf.getConfigurationFor("agent1");
     Assert.assertEquals(String.valueOf(agentConfiguration.getSourceSet()), 1,
@@ -63,6 +66,7 @@ public class TestFlumeConfiguration {
     Assert.assertTrue(agentConfiguration.getSourceSet().contains("src0"));
     Assert.assertTrue(agentConfiguration.getChannelSet().contains("ch0"));
     Assert.assertTrue(agentConfiguration.getSinkSet().contains("sink0"));
+    Assert.assertTrue(agentConfiguration.getConfigFilterSet().contains("f1"));
   }
 
   @Test

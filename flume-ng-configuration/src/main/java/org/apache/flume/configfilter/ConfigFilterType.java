@@ -14,16 +14,23 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.flume.conf.source.jms;
+package org.apache.flume.configfilter;
 
-import org.apache.flume.conf.source.SourceConfiguration;
+import org.apache.flume.conf.ComponentWithClassName;
 
-/**
- * This is a mock to avoid the circular dependency in tests
- * TODO fix wrong dependency directions in the project config should not depend on an implementation
- */
-public class JMSSourceConfiguration extends SourceConfiguration {
-  public JMSSourceConfiguration(String componentName) {
-    super(componentName);
+public enum ConfigFilterType implements ComponentWithClassName {
+  OTHER(null),
+  ENV("org.apache.flume.configfilter.EnvironmentVariableConfigFilter"),
+  HADOOP("org.apache.flume.configfilter.HadoopCredentialStoreConfigFilter");
+
+  private final String className;
+
+  ConfigFilterType(String className) {
+    this.className = className;
+  }
+
+  @Override
+  public String getClassName() {
+    return className;
   }
 }

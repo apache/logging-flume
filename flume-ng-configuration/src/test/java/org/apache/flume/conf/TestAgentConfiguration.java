@@ -1,10 +1,31 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with this
+ * work for additional information regarding copyright ownership. The ASF
+ * licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package org.apache.flume.conf;
 
 import org.apache.flume.Context;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.apache.flume.conf.FlumeConfigurationError.ErrorOrWarning.ERROR;
 import static org.junit.Assert.*;
@@ -34,13 +55,10 @@ public class TestAgentConfiguration {
     PROPERTIES.put(SINKS + ".k2.channel", "c2");
     PROPERTIES.put(AGENT + ".sinkgroups", "g1");
     PROPERTIES.put(AGENT + ".sinkgroups.g1.sinks", "k1 k2");
-    //PROPERTIES.put(AGENT + ".configfilters", "f1 f2");
-    //PROPERTIES.put(AGENT + ".configfilters.f1.type", "f1_type");
-    //PROPERTIES.put(AGENT + ".configfilters.f2.type", "env");
+    PROPERTIES.put(AGENT + ".configfilters", "f1 f2");
+    PROPERTIES.put(AGENT + ".configfilters.f1.type", "f1_type");
+    PROPERTIES.put(AGENT + ".configfilters.f2.type", "env");
   }
-  //channels null or empty
-  //channelset?
-  //
 
   @Test
   public void testConfigHasNoErrors() {
@@ -53,6 +71,13 @@ public class TestAgentConfiguration {
     FlumeConfiguration configuration = new FlumeConfiguration(PROPERTIES);
     Set<String> sourceSet = configuration.getConfigurationFor(AGENT).getSourceSet();
     assertEquals(new HashSet<>(Arrays.asList("s1", "s2")), sourceSet);
+  }
+
+  @Test
+  public void testFiltersAdded() {
+    FlumeConfiguration configuration = new FlumeConfiguration(PROPERTIES);
+    Set<String> configFilterSet = configuration.getConfigurationFor(AGENT).getConfigFilterSet();
+    assertEquals(new HashSet<>(Arrays.asList("f1", "f2")), configFilterSet);
   }
 
   @Test
@@ -74,6 +99,14 @@ public class TestAgentConfiguration {
     FlumeConfiguration configuration = new FlumeConfiguration(PROPERTIES);
     Set<String> sinkSet = configuration.getConfigurationFor(AGENT).getSinkgroupSet();
     assertEquals(new HashSet<>(Arrays.asList("g1")), sinkSet);
+  }
+
+  @Test
+  public void testConfigFiltersMappedCorrectly() {
+    FlumeConfiguration configuration = new FlumeConfiguration(PROPERTIES);
+    Map<String, Context> contextMap =
+        configuration.getConfigurationFor(AGENT).getConfigFilterContext();
+    assertEquals("f1_type", contextMap.get("f1").getString("type"));
   }
 
   @Test
@@ -100,28 +133,40 @@ public class TestAgentConfiguration {
   @Test
   public void testChannelsConfigMappedCorrectly() {
     FlumeConfiguration configuration = new FlumeConfiguration(PROPERTIES);
-    Map<String, ComponentConfiguration> configMap = configuration.getConfigurationFor(AGENT).getChannelConfigMap();
+    Map<String, ComponentConfiguration> configMap =
+        configuration.getConfigurationFor(AGENT).getChannelConfigMap();
     assertEquals("memory", configMap.get("c2").getType());
+  }
+
+  @Test
+  public void testConfigFilterConfigMappedCorrectly() {
+    FlumeConfiguration configuration = new FlumeConfiguration(PROPERTIES);
+    Map<String, ComponentConfiguration> configMap =
+        configuration.getConfigurationFor(AGENT).getConfigFilterConfigMap();
+    assertEquals("env", configMap.get("f2").getType());
   }
 
   @Test
   public void testSourceConfigMappedCorrectly() {
     FlumeConfiguration configuration = new FlumeConfiguration(PROPERTIES);
-    Map<String, ComponentConfiguration> configMap = configuration.getConfigurationFor(AGENT).getSourceConfigMap();
+    Map<String, ComponentConfiguration> configMap =
+        configuration.getConfigurationFor(AGENT).getSourceConfigMap();
     assertEquals("jms", configMap.get("s2").getType());
   }
 
   @Test
   public void testSinkConfigMappedCorrectly() {
     FlumeConfiguration configuration = new FlumeConfiguration(PROPERTIES);
-    Map<String, ComponentConfiguration> configMap = configuration.getConfigurationFor(AGENT).getSinkConfigMap();
+    Map<String, ComponentConfiguration> configMap =
+        configuration.getConfigurationFor(AGENT).getSinkConfigMap();
     assertEquals("null", configMap.get("k2").getType());
   }
 
   @Test
   public void testSinkgroupConfigMappedCorrectly() {
     FlumeConfiguration configuration = new FlumeConfiguration(PROPERTIES);
-    Map<String, ComponentConfiguration> configMap = configuration.getConfigurationFor(AGENT).getSinkGroupConfigMap();
+    Map<String, ComponentConfiguration> configMap =
+        configuration.getConfigurationFor(AGENT).getSinkGroupConfigMap();
     assertEquals("Sinkgroup", configMap.get("g1").getType());
   }
 
@@ -168,11 +213,13 @@ public class TestAgentConfiguration {
 
   private void assertConfigHasNoError(FlumeConfiguration configuration) {
     List<FlumeConfigurationError> configurationErrors = configuration.getConfigurationErrors();
-    assertTrue(configurationErrors
-        .stream().filter(
-            e -> e.getErrorOrWarning().equals(ERROR)
-        ).count() == 0
-    );
+    long count = 0L;
+    for (FlumeConfigurationError e : configurationErrors) {
+      if (e.getErrorOrWarning().equals(ERROR)) {
+        count++;
+      }
+    }
+    assertTrue(count == 0);
   }
 
   @Test

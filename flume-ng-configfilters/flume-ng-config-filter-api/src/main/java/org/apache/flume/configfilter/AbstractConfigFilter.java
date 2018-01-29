@@ -14,16 +14,34 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.flume.conf.source.jms;
+package org.apache.flume.configfilter;
 
-import org.apache.flume.conf.source.SourceConfiguration;
+import java.util.Map;
 
-/**
- * This is a mock to avoid the circular dependency in tests
- * TODO fix wrong dependency directions in the project config should not depend on an implementation
- */
-public class JMSSourceConfiguration extends SourceConfiguration {
-  public JMSSourceConfiguration(String componentName) {
-    super(componentName);
+public abstract class AbstractConfigFilter implements ConfigFilter {
+
+  private String name;
+  private Map<String, String> configuration;
+
+  protected abstract void initialize();
+
+  @Override
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  @Override
+  public String getName() {
+    return name;
+  }
+
+  @Override
+  public void setConfiguration(Map<String, String> configuration) {
+    this.configuration = configuration;
+    initialize();
+  }
+
+  protected Map<String, String> getConfiguration() {
+    return configuration;
   }
 }

@@ -126,6 +126,7 @@ public abstract class ComponentConfiguration {
 
   public enum ComponentType {
     OTHER(null),
+    CONFIG_FILTER("ConfigFilter"),
     SOURCE("Source"),
     SINK("Sink"),
     SINK_PROCESSOR("SinkProcessor"),
