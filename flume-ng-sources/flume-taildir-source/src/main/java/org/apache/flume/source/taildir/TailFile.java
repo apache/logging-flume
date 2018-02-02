@@ -120,7 +120,7 @@ public class TailFile {
   }
 
   public boolean updatePos(String path, long inode, long pos) throws IOException {
-    if (this.inode == inode && this.path.equals(path)) {
+    if (this.inode == inode) {
       setPos(pos);
       updateFilePos(pos);
       logger.info("Updated position, file: " + path + ", inode: " + inode + ", pos: " + pos);
