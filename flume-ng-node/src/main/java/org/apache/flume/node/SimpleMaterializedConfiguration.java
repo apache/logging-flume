@@ -61,17 +61,17 @@ public class SimpleMaterializedConfiguration implements MaterializedConfiguratio
   }
 
   @Override
-  public ImmutableMap<String, Channel> getChannels() {
+  public Map<String, Channel> getChannels() {
     return ImmutableMap.copyOf(channels);
   }
 
   @Override
-  public ImmutableMap<String, SourceRunner> getSourceRunners() {
+  public Map<String, SourceRunner> getSourceRunners() {
     return ImmutableMap.copyOf(sourceRunners);
   }
 
   @Override
-  public ImmutableMap<String, SinkRunner> getSinkRunners() {
+  public Map<String, SinkRunner> getSinkRunners() {
     return ImmutableMap.copyOf(sinkRunners);
   }
 

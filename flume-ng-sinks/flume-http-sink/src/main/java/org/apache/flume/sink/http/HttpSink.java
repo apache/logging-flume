@@ -18,7 +18,6 @@
  */
 package org.apache.flume.sink.http;
 
-import com.google.common.collect.ImmutableMap;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -323,7 +322,7 @@ public class HttpSink extends AbstractSink implements Configurable {
                                     final Context context,
                                     final Map<String, Boolean> override) {
 
-    ImmutableMap<String, String> config = context.getSubProperties(
+    Map<String, String> config = context.getSubProperties(
         propertyName + ".");
 
     if (config != null) {
