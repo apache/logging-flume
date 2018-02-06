@@ -23,7 +23,7 @@ import org.apache.flume.Channel;
 import org.apache.flume.SinkRunner;
 import org.apache.flume.SourceRunner;
 
-import com.google.common.collect.ImmutableMap;
+import java.util.Map;
 
 /**
  * MaterializedConfiguration represents the materialization of a Flume
@@ -38,10 +38,10 @@ public interface MaterializedConfiguration {
 
   public void addChannel(String name, Channel channel);
 
-  public ImmutableMap<String, SourceRunner> getSourceRunners();
+  public Map<String, SourceRunner> getSourceRunners();
 
-  public ImmutableMap<String, SinkRunner> getSinkRunners();
+  public Map<String, SinkRunner> getSinkRunners();
 
-  public ImmutableMap<String, Channel> getChannels();
+  public Map<String, Channel> getChannels();
 
 }
