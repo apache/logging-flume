@@ -18,6 +18,8 @@
  */
 package org.apache.flume.configfilter;
 
+import java.util.Map;
+
 public class EnvironmentVariableConfigFilter extends AbstractConfigFilter {
 
   @Override
@@ -26,7 +28,7 @@ public class EnvironmentVariableConfigFilter extends AbstractConfigFilter {
   }
 
   @Override
-  protected void initialize() {
-    //NOOP
+  public void initializeWithConfiguration(Map<String, String> configuration) {
+    //NO-OP
   }
 }

@@ -21,7 +21,7 @@ import java.util.Locale;
 import org.apache.flume.conf.ComponentConfiguration.ComponentType;
 import org.apache.flume.conf.channel.ChannelConfiguration.ChannelConfigurationType;
 import org.apache.flume.conf.channel.ChannelSelectorConfiguration.ChannelSelectorConfigurationType;
-import org.apache.flume.configfilter.ConfigFilterConfiguration.ConfigFilterConfigurationType;
+import org.apache.flume.conf.configfilter.ConfigFilterConfiguration.ConfigFilterConfigurationType;
 import org.apache.flume.conf.sink.SinkConfiguration.SinkConfigurationType;
 import org.apache.flume.conf.sink.SinkGroupConfiguration;
 import org.apache.flume.conf.sink.SinkProcessorConfiguration.SinkProcessorConfigurationType;

@@ -17,43 +17,57 @@
 package org.apache.flume.configfilter;
 
 import java.io.IOException;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class HadoopCredentialStoreConfigFilter extends AbstractConfigFilter {
 
-  public static final String CREDSTORE_JAVA_KEYSTORE_PROVIDER_PASSWORD_FILE_CONFIG_KEY
+  private static final Logger LOGGER = LoggerFactory.getLogger(
+      HadoopCredentialStoreConfigFilter.class);
+
+  static final String PASSWORD_FILE_CONFIG_KEY
       = "credstore.java-keystore-provider.password-file";
-  public static final String CREDENTIAL_PROVIDER_PATH
+  static final String CREDENTIAL_PROVIDER_PATH
       = "credential.provider.path";
-  public static final String HADOOP_SECURITY = "hadoop.security.";
+  static final String HADOOP_SECURITY = "hadoop.security.";
   private Configuration hadoopConfiguration;
 
-  @Override
-  protected void initialize() {
+  public void initializeWithConfiguration(Map<String, String> configuration) {
+
+    LOGGER.debug("Initializing hadoop credential store.");
     hadoopConfiguration = new Configuration();
     hadoopConfiguration.set(
         HADOOP_SECURITY + CREDENTIAL_PROVIDER_PATH,
-        getConfiguration().get(CREDENTIAL_PROVIDER_PATH)
+        configuration.get(CREDENTIAL_PROVIDER_PATH)
     );
 
-    String passwordFile = getConfiguration()
-        .get(CREDSTORE_JAVA_KEYSTORE_PROVIDER_PASSWORD_FILE_CONFIG_KEY);
+    String passwordFile = configuration.get(PASSWORD_FILE_CONFIG_KEY);
     if (passwordFile != null && !passwordFile.isEmpty()) {
+      checkPasswordFile(passwordFile);
       hadoopConfiguration.set(
-          HADOOP_SECURITY + CREDSTORE_JAVA_KEYSTORE_PROVIDER_PASSWORD_FILE_CONFIG_KEY, passwordFile
+          HADOOP_SECURITY + PASSWORD_FILE_CONFIG_KEY, passwordFile
+      );
+    }
+  }
+
+  private void checkPasswordFile(String passwordFile) {
+    if (Thread.currentThread().getContextClassLoader().getResource(passwordFile) == null) {
+      LOGGER.error("The java keystore provider password file has to be on the classpath." +
+          " The password file provided in the configuration cannot be found and will not be used"
       );
     }
   }
 
   @Override
   public String filter(String key) {
-    char[] result;
+    char[] result = null;
     try {
       result = hadoopConfiguration.getPassword(key);
     } catch (IOException e) {
-      e.printStackTrace();
-      result = null;
+      LOGGER.error("Error while reading value for key {}: ", key, e);
     }
 
     return result == null ? null : new String(result);

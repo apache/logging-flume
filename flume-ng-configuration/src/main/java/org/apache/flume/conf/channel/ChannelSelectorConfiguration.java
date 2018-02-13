@@ -63,7 +63,7 @@ public class ChannelSelectorConfiguration extends
     public ChannelSelectorConfiguration getConfiguration(
         String name)
         throws ConfigurationException {
-      if (this.equals(ChannelConfigurationType.OTHER)) {
+      if (this == OTHER) {
         return new ChannelSelectorConfiguration(name);
       }
       Class<? extends ChannelSelectorConfiguration> clazz;

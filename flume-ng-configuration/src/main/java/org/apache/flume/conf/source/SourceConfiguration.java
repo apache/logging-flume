@@ -237,7 +237,7 @@ public class SourceConfiguration extends ComponentConfiguration {
     @SuppressWarnings("unchecked")
     public SourceConfiguration getConfiguration(String name)
         throws ConfigurationException {
-      if (this.equals(SourceConfigurationType.OTHER)) {
+      if (this == OTHER) {
         return new SourceConfiguration(name);
       }
       Class<? extends SourceConfiguration> clazz = null;

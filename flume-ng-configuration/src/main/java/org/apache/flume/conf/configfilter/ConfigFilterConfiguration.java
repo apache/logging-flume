@@ -14,7 +14,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.flume.configfilter;
+package org.apache.flume.conf.configfilter;
 
 import org.apache.flume.conf.ComponentConfiguration;
 import org.apache.flume.conf.ConfigurationException;
@@ -23,8 +23,9 @@ public class ConfigFilterConfiguration extends ComponentConfiguration {
 
   public enum ConfigFilterConfigurationType {
     OTHER(null),
-    ENV("org.apache.flume.configfilter.EnvironmentVariableConfigFilterConfiguration"),
-    HADOOP("org.apache.flume.configfilter.HadoopCredentialStoreConfigFilterConfiguration");
+    ENV("org.apache.flume.conf.configfilter.EnvironmentVariableConfigFilterConfiguration"),
+    HADOOP("org.apache.flume.conf.configfilter.HadoopCredentialStoreConfigFilterConfiguration"),
+    EXTERNAL("org.apache.flume.conf.configfilter.ExternalProcessConfigFilterConfiguration");
 
     private final String configurationName;
 
@@ -39,7 +40,7 @@ public class ConfigFilterConfiguration extends ComponentConfiguration {
     @SuppressWarnings("unchecked")
     public ConfigFilterConfiguration getConfiguration(String name)
         throws ConfigurationException {
-      if (equals(OTHER)) {
+      if (this == OTHER) {
         return new ConfigFilterConfiguration(name);
       }
       Class<? extends ConfigFilterConfiguration> clazz;

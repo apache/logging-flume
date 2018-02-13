@@ -22,9 +22,8 @@ import org.apache.flume.conf.FlumeConfigurationError.ErrorOrWarning;
 import org.apache.flume.conf.channel.ChannelConfiguration;
 import org.apache.flume.conf.channel.ChannelType;
 import org.apache.flume.configfilter.ConfigFilter;
-import org.apache.flume.configfilter.ConfigFilterConfiguration;
-import org.apache.flume.configfilter.ConfigFilterFactory;
-import org.apache.flume.configfilter.ConfigFilterType;
+import org.apache.flume.conf.configfilter.ConfigFilterConfiguration;
+import org.apache.flume.conf.configfilter.ConfigFilterType;
 import org.apache.flume.conf.sink.SinkConfiguration;
 import org.apache.flume.conf.sink.SinkGroupConfiguration;
 import org.apache.flume.conf.sink.SinkType;
@@ -437,7 +436,7 @@ public class FlumeConfiguration {
             ConfigFilter configFilter = ConfigFilterFactory.create(
                 name, context.getString(BasicConfigurationConstants.CONFIG_TYPE)
             );
-            configFilter.setConfiguration(context.getParameters());
+            configFilter.initializeWithConfiguration(context.getParameters());
             configFiltersInstances.add(configFilter);
           } else if (componentConfiguration != null) {
             ConfigFilter configFilter = ConfigFilterFactory.create(
@@ -446,20 +445,29 @@ public class FlumeConfiguration {
             configFiltersInstances.add(configFilter);
           }
         } catch (Exception e) {
-          e.printStackTrace();
+          LOGGER.error("Error while creating config filter {}", name, e);
         }
       }
     }
 
     private String filterValue(String value) {
       for (ConfigFilter configFilter : configFiltersInstances) {
-        //JAVA EL expression style ${myFilterName['my_key']}
-        if (value.startsWith("${" + configFilter.getName() + "['") && value.endsWith("']}")) {
-          String filteredValue = configFilter.filter(value.substring(
-              configFilter.getName().length() + 4,
-              value.length() - 3
-          ));
-          return filteredValue == null ? value : filteredValue;
+        //JAVA EL expression style ${myFilterName['my_key']} or
+        //JAVA EL expression style ${myFilterName["my_key"]} or
+        //JAVA EL expression style ${myFilterName[my_key]}
+        List<String> delimiters = Arrays.asList("'", "\"", "");
+        for (String delimiter: delimiters) {
+          String prefix = "${" + configFilter.getName() + "[" + delimiter;
+          String suffix = delimiter + "]}";
+          boolean matchesWithDelimiter = value.startsWith(prefix) && value.endsWith(suffix);
+
+          if (matchesWithDelimiter) {
+            String filteredValue = configFilter.filter(value.substring(
+                configFilter.getName().length() + delimiter.length() + 3,
+                value.length() - delimiter.length() - 2
+            ));
+            return filteredValue == null ? value : filteredValue;
+          }
         }
       }
       return value;
@@ -590,7 +598,6 @@ public class FlumeConfiguration {
     private Set<String> validateConfigFilterSet() {
       if (configFilters == null || configFilters.isEmpty()) {
         LOGGER.warn("Agent configuration for '{}' has no configfilters.", agentName);
-       // addError(CONFIG_CONFIGFILTERS, PROPERTY_VALUE_NULL, WARNING);
         return new HashSet<>();
       }
       Set<String> configFilterSet = new HashSet<>(Arrays.asList(configFilters.split("\\s+")));
@@ -641,9 +648,6 @@ public class FlumeConfiguration {
               errorList.addAll(conf.getErrors());
             }
           } catch (ConfigurationException e) {
-            // Could not configure channel - skip it.
-            // No need to add to error list - already added before exception is
-            // thrown
             if (conf != null) errorList.addAll(conf.getErrors());
             iter.remove();
             LOGGER.warn(
@@ -655,7 +659,7 @@ public class FlumeConfiguration {
         } else {
           iter.remove();
           addError(configFilterName, CONFIG_ERROR, ERROR);
-          LOGGER.warn("Configuration empty for: {}.Removed.", configFilterName);
+          LOGGER.warn("Configuration empty for: {}. Removed.", configFilterName);
         }
       }
 
@@ -902,9 +906,7 @@ public class FlumeConfiguration {
             if (conf != null) errorList.addAll(conf.getErrors());
             if (groupSinks != null && !groupSinks.isEmpty()) {
               List<String> sinkArray = new ArrayList<String>();
-              for (String sink : groupSinks) {
-                sinkArray.add(sink);
-              }
+              sinkArray.addAll(groupSinks);
               conf.setSinks(sinkArray);
               sinkgroupConfigMap.put(sinkgroupName, conf);
             } else {
@@ -985,7 +987,7 @@ public class FlumeConfiguration {
         return null;
       }
 
-      StringBuilder sb = new StringBuilder("");
+      StringBuilder sb = new StringBuilder();
 
       for (String entry : entries) {
         sb.append(" ").append(entry);
@@ -1063,7 +1065,7 @@ public class FlumeConfiguration {
 
     private boolean addProperty(String key, String value) {
       // Check for configFilters
-      if (key.equals(CONFIG_CONFIGFILTERS)) {
+      if (CONFIG_CONFIGFILTERS.equals(key)) {
         if (configFilters == null) {
           configFilters = value;
           return true;
@@ -1074,7 +1076,7 @@ public class FlumeConfiguration {
         }
       }
       // Check for sources
-      if (key.equals(CONFIG_SOURCES)) {
+      if (CONFIG_SOURCES.equals(key)) {
         if (sources == null) {
           sources = value;
           return true;
@@ -1086,7 +1088,7 @@ public class FlumeConfiguration {
       }
 
       // Check for sinks
-      if (key.equals(CONFIG_SINKS)) {
+      if (CONFIG_SINKS.equals(key)) {
         if (sinks == null) {
           sinks = value;
           LOGGER.info("Added sinks: {} Agent: {}", sinks, agentName);
@@ -1099,7 +1101,7 @@ public class FlumeConfiguration {
       }
 
       // Check for channels
-      if (key.equals(CONFIG_CHANNELS)) {
+      if (CONFIG_CHANNELS.equals(key)) {
         if (channels == null) {
           channels = value;
 
@@ -1112,7 +1114,7 @@ public class FlumeConfiguration {
       }
 
       // Check for sinkgroups
-      if (key.equals(CONFIG_SINKGROUPS)) {
+      if (CONFIG_SINKGROUPS.equals(key)) {
         if (sinkgroups == null) {
           sinkgroups = value;
 
@@ -1139,54 +1141,56 @@ public class FlumeConfiguration {
     }
 
     private boolean addAsConfigFilterConfig(String key, String value) {
-      return getComponentNameAndConfigKey(
+      return addComponentConfig(
           key, value, CONFIG_CONFIGFILTERS_PREFIX, configFilterContextMap
-      ) != null;
+      );
     }
 
     private boolean addAsSinkGroupConfig(String key, String value) {
-      return getComponentNameAndConfigKey(
+      return addComponentConfig(
           key, value, CONFIG_SINKGROUPS_PREFIX, sinkGroupContextMap
-      ) != null;
+      );
     }
 
     private boolean addAsSinkConfig(String key, String value) {
-      return getComponentNameAndConfigKey(
+      return addComponentConfig(
           key, value, CONFIG_SINKS_PREFIX, sinkContextMap
-      ) != null;
+      );
     }
 
     private boolean addAsChannelValue(String key, String value) {
-      return getComponentNameAndConfigKey(
+      return addComponentConfig(
           key, value, CONFIG_CHANNELS_PREFIX, channelContextMap
-      ) != null;
+      );
     }
 
     private boolean addAsSourceConfig(String key, String value) {
-      return getComponentNameAndConfigKey(
+      return addComponentConfig(
           key, value, CONFIG_SOURCES_PREFIX, sourceContextMap
-      ) != null;
+      );
     }
 
-    private ComponentNameAndConfigKey getComponentNameAndConfigKey(
+    private boolean addComponentConfig(
         String key, String value, String configPrefix, Map<String, Context> contextMap
 
     ) {
-      ComponentNameAndConfigKey cnck = parseConfigKey(key, configPrefix);
-      if (cnck != null) {
-        String name = cnck.getComponentName().trim();
+      ComponentNameAndConfigKey parsed = parseConfigKey(key, configPrefix);
+      if (parsed != null) {
+        String name = parsed.getComponentName().trim();
         LOGGER.info("Processing:{}", name);
         Context context = contextMap.get(name);
 
         if (context == null) {
-          LOGGER.debug("Created context for {}: {}", name, cnck.getConfigKey());
+          LOGGER.debug("Created context for {}: {}", name, parsed.getConfigKey());
           context = new Context();
           contextMap.put(name, context);
         }
 
-        context.put(cnck.getConfigKey(), value);
+        context.put(parsed.getConfigKey(), value);
+        return true;
       }
-      return cnck;
+
+      return false;
     }
 
     private ComponentNameAndConfigKey parseConfigKey(String key, String prefix) {

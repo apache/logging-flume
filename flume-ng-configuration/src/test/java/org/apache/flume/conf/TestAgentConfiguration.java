@@ -32,7 +32,7 @@ import static org.junit.Assert.*;
 
 public class TestAgentConfiguration {
 
-  public static final Map<String, String> PROPERTIES = new HashMap();
+  public static final Map<String, String> PROPERTIES = new HashMap<>();
   public static final String AGENT = "agent";
   public static final String SINKS = AGENT + ".sinks";
   public static final String SOURCES = AGENT + ".sources";
@@ -215,7 +215,7 @@ public class TestAgentConfiguration {
     List<FlumeConfigurationError> configurationErrors = configuration.getConfigurationErrors();
     long count = 0L;
     for (FlumeConfigurationError e : configurationErrors) {
-      if (e.getErrorOrWarning().equals(ERROR)) {
+      if (e.getErrorOrWarning() == ERROR) {
         count++;
       }
     }

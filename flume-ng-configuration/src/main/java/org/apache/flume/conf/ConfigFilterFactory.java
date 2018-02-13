@@ -16,10 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.flume.configfilter;
+package org.apache.flume.conf;
 
 import com.google.common.base.Preconditions;
 import org.apache.flume.FlumeException;
+import org.apache.flume.configfilter.ConfigFilter;
+import org.apache.flume.conf.configfilter.ConfigFilterType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +55,7 @@ public class ConfigFilterFactory {
     } catch (IllegalArgumentException ex) {
       logger.debug("Configfilter type {} is a custom type", type);
     }
-    if (!srcType.equals(ConfigFilterType.OTHER)) {
+    if (srcType != ConfigFilterType.OTHER) {
       classname = srcType.getClassName();
     }
     try {

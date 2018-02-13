@@ -58,7 +58,7 @@ public class ChannelConfiguration extends ComponentConfiguration {
     @SuppressWarnings("unchecked")
     public ChannelConfiguration getConfiguration(String name)
         throws ConfigurationException {
-      if (this.equals(ChannelConfigurationType.OTHER)) {
+      if (this == OTHER) {
         return new ChannelConfiguration(name);
       }
       Class<? extends ChannelConfiguration> clazz;

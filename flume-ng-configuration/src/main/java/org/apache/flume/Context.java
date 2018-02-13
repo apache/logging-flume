@@ -133,7 +133,7 @@ public class Context {
   public Boolean getBoolean(String key, Boolean defaultValue) {
     String value = get(key);
     if (value != null) {
-      return Boolean.parseBoolean(value.trim());
+      return Boolean.valueOf(Boolean.parseBoolean(value.trim()));
     }
     return defaultValue;
   }
@@ -162,7 +162,7 @@ public class Context {
   public Integer getInteger(String key, Integer defaultValue) {
     String value = get(key);
     if (value != null) {
-      return Integer.parseInt(value.trim());
+      return Integer.valueOf(Integer.parseInt(value.trim()));
     }
     return defaultValue;
   }
@@ -191,7 +191,7 @@ public class Context {
   public Long getLong(String key, Long defaultValue) {
     String value = get(key);
     if (value != null) {
-      return Long.parseLong(value.trim());
+      return Long.valueOf(Long.parseLong(value.trim()));
     }
     return defaultValue;
   }

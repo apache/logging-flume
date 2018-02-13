@@ -170,7 +170,7 @@ public class SinkConfiguration extends ComponentConfiguration {
     @SuppressWarnings("unchecked")
     public SinkConfiguration getConfiguration(String name)
         throws ConfigurationException {
-      if (this.equals(SinkConfigurationType.OTHER)) {
+      if (this == OTHER) {
         return new SinkConfiguration(name);
       }
       Class<? extends SinkConfiguration> clazz;

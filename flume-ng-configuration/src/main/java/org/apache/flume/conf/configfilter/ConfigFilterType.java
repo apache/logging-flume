@@ -14,23 +14,24 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package org.apache.flume.configfilter;
+package org.apache.flume.conf.configfilter;
 
-/**
- * A base implementation of the common methods for Configuration filters
- */
-public abstract class AbstractConfigFilter implements ConfigFilter {
+import org.apache.flume.conf.ComponentWithClassName;
 
-  private String name;
+public enum ConfigFilterType implements ComponentWithClassName {
+  OTHER(null),
+  ENV("org.apache.flume.configfilter.EnvironmentVariableConfigFilter"),
+  HADOOP("org.apache.flume.configfilter.HadoopCredentialStoreConfigFilter"),
+  EXTERNAL("org.apache.flume.configfilter.ExternalProcessConfigFilter");
 
-  @Override
-  public void setName(String name) {
-    this.name = name;
+  private final String className;
+
+  ConfigFilterType(String className) {
+    this.className = className;
   }
 
   @Override
-  public String getName() {
-    return name;
+  public String getClassName() {
+    return className;
   }
-
 }

@@ -22,15 +22,38 @@ package org.apache.flume.configfilter;
 import java.util.Map;
 
 /**
+ * ConfigFilter is a tool for replacing sensitive or generated data in Flume configuration
  *
  */
 public interface ConfigFilter {
 
+  /**
+   * Filter method that returns the value associated with the given key
+   *
+   * @param key the key to look up in the concrete implementations
+   * @return the value represented by the key
+   */
   String filter(String key);
 
+  /**
+   * Sets the component name. Required by the configuration management.
+   *
+   * @param name
+   */
   void setName(String name);
 
+
+  /**
+   * Returns the component name. Required by the configuration management.
+   *
+   * @return String the component name
+   */
   String getName();
 
-  void setConfiguration(Map<String, String> configuration);
+  /**
+   * A method to configure the component
+   *
+   * @param configuration The map of configuration options needed by concrete implementations.
+   */
+  void initializeWithConfiguration(Map<String, String> configuration);
 }
