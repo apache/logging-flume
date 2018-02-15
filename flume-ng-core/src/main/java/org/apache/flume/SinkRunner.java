@@ -139,8 +139,8 @@ public class SinkRunner implements LifecycleAware {
     @Override
     public void run() {
       logger.debug("Polling sink runner starting");
-
-      while (!shouldStop.get()) {
+      boolean notEmpty = true;
+      while (!shouldStop.get() || notEmpty) {
         try {
           if (policy.process().equals(Sink.Status.BACKOFF)) {
             counterGroup.incrementAndGet("runner.backoffs");
@@ -148,6 +148,7 @@ public class SinkRunner implements LifecycleAware {
             Thread.sleep(Math.min(
                 counterGroup.incrementAndGet("runner.backoffs.consecutive")
                 * backoffSleepIncrement, maxBackoffSleep));
+            notEmpty = false;
           } else {
             counterGroup.set("runner.backoffs.consecutive", 0L);
           }
