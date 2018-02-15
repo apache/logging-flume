@@ -788,27 +788,3 @@ class ChannelCallback implements Callback {
     }
   }
 }
-
-class ChannelRebalanceListener implements ConsumerRebalanceListener {
-  private static final Logger log = LoggerFactory.getLogger(ChannelRebalanceListener.class);
-  private AtomicBoolean rebalanceFlag;
-
-  public ChannelRebalanceListener(AtomicBoolean rebalanceFlag) {
-    this.rebalanceFlag = rebalanceFlag;
-  }
-
-  // Set a flag that a rebalance has occurred. Then we can commit the currently written transactions
-  // on the next doTake() pass.
-  public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
-    for (TopicPartition partition : partitions) {
-      log.info("topic {} - partition {} revoked.", partition.topic(), partition.partition());
-      rebalanceFlag.set(true);
-    }
-  }
-
-  public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
-    for (TopicPartition partition : partitions) {
-      log.info("topic {} - partition {} assigned.", partition.topic(), partition.partition());
-    }
-  }
-}
