@@ -323,7 +323,7 @@ public class KafkaChannel extends BasicChannelSemantics {
       logger.info("Created new consumer to connect to Kafka");
       ArrayList<String> topicsList = new ArrayList<String>();
       topicsList.addAll(Arrays.asList(topic.get()));
-      car.consumer.subscribe(topicsList, new ChannelRebalanceListener(rebalanceFlag));
+      car.consumer.subscribe(topicsList);
       car.offsets = new HashMap<TopicPartition, OffsetAndMetadata>();
       consumers.add(car);
       return car;
