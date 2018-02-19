@@ -24,26 +24,33 @@ import org.apache.flume.Event;
 import org.apache.flume.conf.ComponentConfiguration;
 import org.apache.flume.conf.sink.SinkConfiguration;
 import org.apache.flume.event.SimpleEvent;
+import org.elasticsearch.action.index.IndexAction;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.io.BytesStream;
-import org.elasticsearch.common.io.FastByteArrayOutputStream;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.internal.matchers.Matches;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Locale;
 import java.util.Map;
 
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertThat;
 
 public class TestElasticSearchIndexRequestBuilderFactory
     extends AbstractElasticSearchSinkTest {
 
-  private static final Client FAKE_CLIENT = null;
+  private static final Client FAKE_CLIENT = new PreBuiltTransportClient(Settings.EMPTY);
 
   private EventSerializerIndexRequestBuilderFactory factory;
 
@@ -55,15 +62,16 @@ public class TestElasticSearchIndexRequestBuilderFactory
     factory = new EventSerializerIndexRequestBuilderFactory(serializer) {
       @Override
       IndexRequestBuilder prepareIndex(Client client) {
-        return new IndexRequestBuilder(FAKE_CLIENT);
+        return new IndexRequestBuilder(FAKE_CLIENT, IndexAction.INSTANCE);
       }
     };
   }
 
   @Test
   public void shouldUseUtcAsBasisForDateFormat() {
+    // use Locale.ENGLISH to ensure this test can pass on other Locales (eg. China)
     assertEquals("Coordinated Universal Time",
-        factory.fastDateFormat.getTimeZone().getDisplayName());
+        factory.fastDateFormat.getTimeZone().getDisplayName(Locale.ENGLISH));
   }
 
   @Test
@@ -136,8 +144,9 @@ public class TestElasticSearchIndexRequestBuilderFactory
         + ElasticSearchIndexRequestBuilderFactory.df.format(FIXED_TIME_MILLIS),
         indexRequestBuilder.request().index());
     assertEquals(indexType, indexRequestBuilder.request().type());
-    assertArrayEquals(FakeEventSerializer.FAKE_BYTES,
-        indexRequestBuilder.request().source().array());
+
+    assertThat(new String(indexRequestBuilder.request().source().toBytesRef().bytes),
+        new Matches(".*@message.*"));
   }
 
   @Test
@@ -195,10 +204,11 @@ public class TestElasticSearchIndexRequestBuilderFactory
     boolean configuredWithComponentConfiguration;
 
     @Override
-    public BytesStream getContentBuilder(Event event) throws IOException {
-      FastByteArrayOutputStream fbaos = new FastByteArrayOutputStream(4);
-      fbaos.write(FAKE_BYTES);
-      return fbaos;
+    public XContentBuilder getContentBuilder(Event event) throws IOException {
+      XContentBuilder builder = jsonBuilder().startObject();
+      ContentBuilderUtil.appendField(builder, "@message", FAKE_BYTES);
+      builder.endObject();
+      return builder;
     }
 
     @Override

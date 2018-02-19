@@ -24,7 +24,8 @@ import java.nio.charset.Charset;
 import org.apache.flume.Event;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.ConfigurableComponent;
-import org.elasticsearch.common.io.BytesStream;
+import org.elasticsearch.common.io.stream.BytesStream;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 
 /**
  * Interface for an event serializer which serializes the headers and body of an
@@ -40,9 +41,9 @@ public interface ElasticSearchEventSerializer extends Configurable,
    * Return an {@link BytesStream} made up of the serialized flume event
    * @param event
    *          The flume event to serialize
-   * @return A {@link BytesStream} used to write to ElasticSearch
+   * @return A {@link XContentBuilder} used to write to ElasticSearch
    * @throws IOException
    *           If an error occurs during serialization
    */
-  abstract BytesStream getContentBuilder(Event event) throws IOException;
+  abstract XContentBuilder getContentBuilder(Event event) throws IOException;
 }

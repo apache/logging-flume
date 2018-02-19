@@ -42,12 +42,10 @@ public interface ElasticSearchClient extends Configurable {
    *    Index name builder which generates name of index to feed
    * @param indexType
    *    Name of type of document which will be sent to the elasticsearch cluster
-   * @param ttlMs
-   *    Time to live expressed in milliseconds. Value <= 0 is ignored
    * @throws Exception
    */
   public void addEvent(Event event, IndexNameBuilder indexNameBuilder,
-      String indexType, long ttlMs) throws Exception;
+      String indexType) throws Exception;
 
   /**
    * Sends bulk to the elasticsearch cluster

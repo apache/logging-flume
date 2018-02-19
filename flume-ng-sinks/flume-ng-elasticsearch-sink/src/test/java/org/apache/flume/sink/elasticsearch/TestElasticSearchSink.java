@@ -30,9 +30,8 @@ import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
 import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.client.Requests;
-import org.elasticsearch.common.UUID;
-import org.elasticsearch.common.io.BytesStream;
-import org.elasticsearch.common.io.FastByteArrayOutputStream;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.junit.After;
 import org.junit.Before;
@@ -42,7 +41,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
+import java.util.UUID;
 
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.BATCH_SIZE;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.CLUSTER_NAME;
@@ -50,7 +49,7 @@ import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.HOS
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.INDEX_NAME;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.INDEX_TYPE;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.SERIALIZER;
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.TTL;
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -118,13 +117,13 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
 
     assertMatchAllQuery(3);
     assertSearch(1,
-        performSearch(QueryBuilders.fieldQuery("@message", "TEST1")),
+        performSearch(QueryBuilders.matchQuery("@message", "TEST1")),
         null, event1);
     assertSearch(1,
-        performSearch(QueryBuilders.fieldQuery("@message", "TEST2")),
+        performSearch(QueryBuilders.matchQuery("@message", "TEST2")),
         null, event2);
     assertSearch(1,
-        performSearch(QueryBuilders.fieldQuery("@message", "TEST3")),
+        performSearch(QueryBuilders.matchQuery("@message", "TEST3")),
         null, event3);
   }
 
@@ -153,7 +152,7 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
     assertSearch(1,
         performSearch(QueryBuilders.matchAllQuery()), expectedBody, event);
     assertSearch(1,
-        performSearch(QueryBuilders.fieldQuery("@message.event", "json")),
+        performSearch(QueryBuilders.matchQuery("@message.event", "json")),
         expectedBody, event);
   }
 
@@ -229,7 +228,6 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
     parameters.put(CLUSTER_NAME, "testing-cluster-name");
     parameters.put(INDEX_NAME, "testing-index-name");
     parameters.put(INDEX_TYPE, "testing-index-type");
-    parameters.put(TTL, "10");
 
     fixture = new ElasticSearchSink();
     fixture.configure(new Context(parameters));
@@ -239,7 +237,6 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
     assertEquals("testing-cluster-name", fixture.getClusterName());
     assertEquals("testing-index-name", fixture.getIndexName());
     assertEquals("testing-index-type", fixture.getIndexType());
-    assertEquals(TimeUnit.DAYS.toMillis(10), fixture.getTTLMs());
     assertArrayEquals(expected, fixture.getServerAddresses());
   }
 
@@ -321,7 +318,7 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
     Channel channel = bindAndStartChannel(fixture);
     Transaction tx = channel.getTransaction();
     tx.begin();
-    String body = "{ foo: \"bar\" }";
+    String body = "{ \"foo\": \"bar\" }";
     Event event = EventBuilder.withBody(body.getBytes());
     channel.put(event);
     tx.commit();
@@ -337,37 +334,6 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
     assertArrayEquals(event.getBody(),
         CustomElasticSearchIndexRequestBuilderFactory.actualEventBody);
     assertTrue(CustomElasticSearchIndexRequestBuilderFactory.hasContext);
-  }
-
-  @Test
-  public void shouldParseFullyQualifiedTTLs() {
-    Map<String, Long> testTTLMap = new HashMap<String, Long>();
-    testTTLMap.put("1ms", Long.valueOf(1));
-    testTTLMap.put("1s", Long.valueOf(1000));
-    testTTLMap.put("1m", Long.valueOf(60000));
-    testTTLMap.put("1h", Long.valueOf(3600000));
-    testTTLMap.put("1d", Long.valueOf(86400000));
-    testTTLMap.put("1w", Long.valueOf(604800000));
-    testTTLMap.put("1", Long.valueOf(86400000));
-
-    parameters.put(HOSTNAMES, "10.5.5.27");
-    parameters.put(CLUSTER_NAME, "testing-cluster-name");
-    parameters.put(INDEX_NAME, "testing-index-name");
-    parameters.put(INDEX_TYPE, "testing-index-type");
-
-    for (String ttl : testTTLMap.keySet()) {
-      parameters.put(TTL, ttl);
-      fixture = new ElasticSearchSink();
-      fixture.configure(new Context(parameters));
-
-      String[] expected = { "10.5.5.27" };
-      assertEquals("testing-cluster-name", fixture.getClusterName());
-      assertEquals("testing-index-name", fixture.getIndexName());
-      assertEquals("testing-index-type", fixture.getIndexType());
-      assertEquals((long) testTTLMap.get(ttl), fixture.getTTLMs());
-      assertArrayEquals(expected, fixture.getServerAddresses());
-
-    }
   }
 
   public static final class CustomElasticSearchIndexRequestBuilderFactory
@@ -388,7 +354,9 @@ public class TestElasticSearchSink extends AbstractElasticSearchSinkTest {
       actualIndexName = indexName;
       actualIndexType = indexType;
       actualEventBody = event.getBody();
-      indexRequest.setIndex(indexName).setType(indexType).setSource(event.getBody());
+      indexRequest.setIndex(indexName)
+        .setType(indexType)
+        .setSource(event.getBody(), XContentType.JSON);
     }
 
     @Override
@@ -461,10 +429,11 @@ class FakeEventSerializer implements ElasticSearchEventSerializer {
   boolean configuredWithComponentConfiguration;
 
   @Override
-  public BytesStream getContentBuilder(Event event) throws IOException {
-    FastByteArrayOutputStream fbaos = new FastByteArrayOutputStream(4);
-    fbaos.write(FAKE_BYTES);
-    return fbaos;
+  public XContentBuilder getContentBuilder(Event event) throws IOException {
+    XContentBuilder builder = jsonBuilder().startObject();
+    ContentBuilderUtil.appendField(builder, "@message", FAKE_BYTES);
+    builder.endObject();
+    return builder;
   }
 
   @Override

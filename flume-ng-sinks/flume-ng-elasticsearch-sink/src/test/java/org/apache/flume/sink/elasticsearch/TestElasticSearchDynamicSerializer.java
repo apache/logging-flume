@@ -21,7 +21,7 @@ package org.apache.flume.sink.elasticsearch;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
-import org.elasticsearch.common.collect.Maps;
+import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.junit.Test;
 
@@ -40,7 +40,7 @@ public class TestElasticSearchDynamicSerializer {
     fixture.configure(context);
 
     String message = "test body";
-    Map<String, String> headers = Maps.newHashMap();
+    Map<String, String> headers = MapBuilder.<String, String>newMapBuilder().map();
     headers.put("headerNameOne", "headerValueOne");
     headers.put("headerNameTwo", "headerValueTwo");
     headers.put("headerNameThree", "headerValueThree");
@@ -57,8 +57,8 @@ public class TestElasticSearchDynamicSerializer {
 
     XContentBuilder actual = fixture.getContentBuilder(event);
 
-    assertEquals(new String(expected.bytes().array()), new String(actual
-        .bytes().array()));
+    assertEquals(expected.bytes().utf8ToString(), actual
+            .bytes().utf8ToString());
 
   }
 }

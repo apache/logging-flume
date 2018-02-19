@@ -23,19 +23,18 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.conf.Configurables;
+import org.apache.flume.sink.elasticsearch.client.ElasticSearchTransportClient;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.common.collect.Maps;
-import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.client.support.AbstractClient;
+import org.elasticsearch.common.collect.MapBuilder;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.gateway.Gateway;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.node.Node;
-import org.elasticsearch.node.NodeBuilder;
-import org.elasticsearch.node.internal.InternalNode;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.transport.Netty4Plugin;
 import org.joda.time.DateTimeUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -43,12 +42,12 @@ import org.junit.Before;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.BATCH_SIZE;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.CLUSTER_NAME;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.INDEX_NAME;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.INDEX_TYPE;
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.TTL;
 import static org.junit.Assert.assertEquals;
 
 public abstract class AbstractElasticSearchSinkTest {
@@ -64,36 +63,43 @@ public abstract class AbstractElasticSearchSinkTest {
   Map<String, String> parameters;
 
   void initDefaults() {
-    parameters = Maps.newHashMap();
+    parameters = MapBuilder.<String, String>newMapBuilder().map();
     parameters.put(INDEX_NAME, DEFAULT_INDEX_NAME);
     parameters.put(INDEX_TYPE, DEFAULT_INDEX_TYPE);
     parameters.put(CLUSTER_NAME, DEFAULT_CLUSTER_NAME);
     parameters.put(BATCH_SIZE, "1");
-    parameters.put(TTL, "5");
 
     timestampedIndexName = DEFAULT_INDEX_NAME + '-'
         + ElasticSearchIndexRequestBuilderFactory.df.format(FIXED_TIME_MILLIS);
   }
 
   void createNodes() throws Exception {
-    Settings settings = ImmutableSettings
-        .settingsBuilder()
-        .put("number_of_shards", 1)
-        .put("number_of_replicas", 0)
-        .put("routing.hash.type", "simple")
-        .put("gateway.type", "none")
-        .put("path.data", "target/es-test")
+    String hostname = "localhost";
+    Settings settings = Settings.builder()
+        .put("cluster.name", "test")
+        // required to build a cluster, replica tests will test this.
+        .put("discovery.zen.ping.unicast.hosts", hostname)
+        .put("transport.type", Netty4Plugin.NETTY_TRANSPORT_NAME)
+        .put("network.host", hostname)
+        .put("http.enabled", false)
+        .put("path.home", "target/es-test" + UUID.randomUUID())
+        // maximum five nodes on same host
+        .put("node.max_local_storage_nodes", 5)
+        .put("thread_pool.bulk.size", Runtime.getRuntime().availableProcessors())
+        // default is 50 which is too low
+        .put("thread_pool.bulk.queue_size", 16 * Runtime.getRuntime().availableProcessors())
         .build();
 
-    node = NodeBuilder.nodeBuilder().settings(settings).local(true).node();
+    node = new MockNode(settings, Netty4Plugin.class);
+    node.start();
     client = node.client();
 
+    ElasticSearchTransportClient.testClient = (AbstractClient) client;
     client.admin().cluster().prepareHealth().setWaitForGreenStatus().execute()
         .actionGet();
   }
 
   void shutdownNodes() throws Exception {
-    ((InternalNode) node).injector().getInstance(Gateway.class).reset();
     client.close();
     node.close();
   }
@@ -127,7 +133,7 @@ public abstract class AbstractElasticSearchSinkTest {
   void assertBodyQuery(int expectedHits, Event... events) {
     // Perform Multi Field Match
     assertSearch(expectedHits,
-        performSearch(QueryBuilders.fieldQuery("@message", "event")),
+        performSearch(QueryBuilders.matchQuery("@message", "event")),
         null, events);
   }
 
@@ -152,7 +158,7 @@ public abstract class AbstractElasticSearchSinkTest {
     for (int i = 0; i < events.length; i++) {
       Event event = events[i];
       SearchHit hit = hits[i];
-      Map<String, Object> source = hit.getSource();
+      Map<String, Object> source = hit.getSourceAsMap();
       if (expectedBody == null) {
         assertEquals(new String(event.getBody()), source.get("@message"));
       } else {

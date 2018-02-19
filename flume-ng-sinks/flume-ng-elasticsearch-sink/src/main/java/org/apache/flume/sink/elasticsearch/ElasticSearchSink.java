@@ -23,14 +23,11 @@ import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.CLU
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.DEFAULT_CLUSTER_NAME;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.DEFAULT_INDEX_NAME;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.DEFAULT_INDEX_TYPE;
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.DEFAULT_TTL;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.HOSTNAMES;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.INDEX_NAME;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.INDEX_TYPE;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.SERIALIZER;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.SERIALIZER_PREFIX;
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.TTL;
-import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.TTL_REGEX;
 import org.apache.commons.lang.StringUtils;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
@@ -51,10 +48,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 
-import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.CLIENT_PREFIX;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.CLIENT_TYPE;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.DEFAULT_CLIENT_TYPE;
@@ -62,6 +55,8 @@ import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.DEF
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.DEFAULT_SERIALIZER_CLASS;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.INDEX_NAME_BUILDER;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.INDEX_NAME_BUILDER_PREFIX;
+import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.DEFAULT_COMPRESS;
+import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.COMPRESS;
 
 /**
  * A sink which reads events from a channel and writes them to ElasticSearch
@@ -95,14 +90,11 @@ public class ElasticSearchSink extends AbstractSink implements Configurable {
   private static final int defaultBatchSize = 100;
 
   private int batchSize = defaultBatchSize;
-  private long ttlMs = DEFAULT_TTL;
   private String clusterName = DEFAULT_CLUSTER_NAME;
   private String indexName = DEFAULT_INDEX_NAME;
   private String indexType = DEFAULT_INDEX_TYPE;
   private String clientType = DEFAULT_CLIENT_TYPE;
-  private final Pattern pattern = Pattern.compile(TTL_REGEX,
-      Pattern.CASE_INSENSITIVE);
-  private Matcher matcher = pattern.matcher("");
+  private String compress = DEFAULT_COMPRESS;
 
   private String[] serverAddresses = null;
 
@@ -157,11 +149,6 @@ public class ElasticSearchSink extends AbstractSink implements Configurable {
   }
 
   @VisibleForTesting
-  long getTTLMs() {
-    return ttlMs;
-  }
-
-  @VisibleForTesting
   ElasticSearchEventSerializer getEventSerializer() {
     return eventSerializer;
   }
@@ -187,7 +174,7 @@ public class ElasticSearchSink extends AbstractSink implements Configurable {
           break;
         }
         String realIndexType = BucketPath.escapeString(indexType, event.getHeaders());
-        client.addEvent(event, indexNameBuilder, realIndexType, ttlMs);
+        client.addEvent(event, indexNameBuilder, realIndexType);
       }
 
       if (count <= 0) {
@@ -261,14 +248,12 @@ public class ElasticSearchSink extends AbstractSink implements Configurable {
       this.batchSize = Integer.parseInt(context.getString(BATCH_SIZE));
     }
 
-    if (StringUtils.isNotBlank(context.getString(TTL))) {
-      this.ttlMs = parseTTL(context.getString(TTL));
-      Preconditions.checkState(ttlMs > 0, TTL
-          + " must be greater than 0 or not set.");
-    }
-
     if (StringUtils.isNotBlank(context.getString(CLIENT_TYPE))) {
       clientType = context.getString(CLIENT_TYPE);
+    }
+
+    if (StringUtils.isNotBlank(context.getString(COMPRESS))) {
+      compress = context.getString(COMPRESS);
     }
 
     elasticSearchClientContext = new Context();
@@ -356,7 +341,7 @@ public class ElasticSearchSink extends AbstractSink implements Configurable {
             clientType, eventSerializer, indexRequestFactory);
       } else {
         client = clientFactory.getClient(clientType, serverAddresses,
-            clusterName, eventSerializer, indexRequestFactory);
+            clusterName, eventSerializer, indexRequestFactory, compress.equalsIgnoreCase("true"));
         client.configure(elasticSearchClientContext);
       }
       sinkCounter.incrementConnectionCreatedCount();
@@ -381,48 +366,5 @@ public class ElasticSearchSink extends AbstractSink implements Configurable {
     sinkCounter.incrementConnectionClosedCount();
     sinkCounter.stop();
     super.stop();
-  }
-
-  /*
-   * Returns TTL value of ElasticSearch index in milliseconds when TTL specifier
-   * is "ms" / "s" / "m" / "h" / "d" / "w". In case of unknown specifier TTL is
-   * not set. When specifier is not provided it defaults to days in milliseconds
-   * where the number of days is parsed integer from TTL string provided by
-   * user. <p> Elasticsearch supports ttl values being provided in the format:
-   * 1d / 1w / 1ms / 1s / 1h / 1m specify a time unit like d (days), m
-   * (minutes), h (hours), ms (milliseconds) or w (weeks), milliseconds is used
-   * as default unit.
-   * http://www.elasticsearch.org/guide/reference/mapping/ttl-field/.
-   * 
-   * @param ttl TTL value provided by user in flume configuration file for the
-   * sink
-   * 
-   * @return the ttl value in milliseconds
-   */
-  private long parseTTL(String ttl) {
-    matcher = matcher.reset(ttl);
-    while (matcher.find()) {
-      if (matcher.group(2).equals("ms")) {
-        return Long.parseLong(matcher.group(1));
-      } else if (matcher.group(2).equals("s")) {
-        return TimeUnit.SECONDS.toMillis(Integer.parseInt(matcher.group(1)));
-      } else if (matcher.group(2).equals("m")) {
-        return TimeUnit.MINUTES.toMillis(Integer.parseInt(matcher.group(1)));
-      } else if (matcher.group(2).equals("h")) {
-        return TimeUnit.HOURS.toMillis(Integer.parseInt(matcher.group(1)));
-      } else if (matcher.group(2).equals("d")) {
-        return TimeUnit.DAYS.toMillis(Integer.parseInt(matcher.group(1)));
-      } else if (matcher.group(2).equals("w")) {
-        return TimeUnit.DAYS.toMillis(7 * Integer.parseInt(matcher.group(1)));
-      } else if (matcher.group(2).equals("")) {
-        logger.info("TTL qualifier is empty. Defaulting to day qualifier.");
-        return TimeUnit.DAYS.toMillis(Integer.parseInt(matcher.group(1)));
-      } else {
-        logger.debug("Unknown TTL qualifier provided. Setting TTL to 0.");
-        return 0;
-      }
-    }
-    logger.info("TTL not provided. Skipping the TTL config by returning 0.");
-    return 0;
   }
 }

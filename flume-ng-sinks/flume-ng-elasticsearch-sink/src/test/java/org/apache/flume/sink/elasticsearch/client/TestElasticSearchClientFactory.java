@@ -44,7 +44,7 @@ public class TestElasticSearchClientFactory {
   public void shouldReturnTransportClient() throws Exception {
     String[] hostNames = { "127.0.0.1" };
     Object o = factory.getClient(ElasticSearchClientFactory.TransportClient,
-                                 hostNames, "test", serializer, null);
+                                 hostNames, "test", serializer, null, false);
     assertThat(o, instanceOf(ElasticSearchTransportClient.class));
   }
 
@@ -52,13 +52,13 @@ public class TestElasticSearchClientFactory {
   public void shouldReturnRestClient() throws NoSuchClientTypeException {
     String[] hostNames = { "127.0.0.1" };
     Object o = factory.getClient(ElasticSearchClientFactory.RestClient,
-                                 hostNames, "test", serializer, null);
+                                 hostNames, "test", serializer, null, false);
     assertThat(o, instanceOf(ElasticSearchRestClient.class));
   }
 
   @Test(expected = NoSuchClientTypeException.class)
   public void shouldThrowNoSuchClientTypeException() throws NoSuchClientTypeException {
     String[] hostNames = { "127.0.0.1" };
-    factory.getClient("not_existing_client", hostNames, "test", null, null);
+    factory.getClient("not_existing_client", hostNames, "test", null, null, false);
   }
 }

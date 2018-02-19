@@ -50,7 +50,6 @@ public class  ElasticSearchRestClient implements ElasticSearchClient {
   private static final String INDEX_OPERATION_NAME = "index";
   private static final String INDEX_PARAM = "_index";
   private static final String TYPE_PARAM = "_type";
-  private static final String TTL_PARAM = "_ttl";
   private static final String BULK_ENDPOINT = "_bulk";
 
   private static final Logger logger = LoggerFactory.getLogger(ElasticSearchRestClient.class);
@@ -92,23 +91,20 @@ public class  ElasticSearchRestClient implements ElasticSearchClient {
   }
 
   @Override
-  public void addEvent(Event event, IndexNameBuilder indexNameBuilder, String indexType,
-                       long ttlMs) throws Exception {
+  public void addEvent(Event event, IndexNameBuilder indexNameBuilder, String indexType)
+      throws Exception {
     BytesReference content = serializer.getContentBuilder(event).bytes();
     Map<String, Map<String, String>> parameters = new HashMap<String, Map<String, String>>();
     Map<String, String> indexParameters = new HashMap<String, String>();
     indexParameters.put(INDEX_PARAM, indexNameBuilder.getIndexName(event));
     indexParameters.put(TYPE_PARAM, indexType);
-    if (ttlMs > 0) {
-      indexParameters.put(TTL_PARAM, Long.toString(ttlMs));
-    }
     parameters.put(INDEX_OPERATION_NAME, indexParameters);
 
     Gson gson = new Gson();
     synchronized (bulkBuilder) {
       bulkBuilder.append(gson.toJson(parameters));
       bulkBuilder.append("\n");
-      bulkBuilder.append(content.toBytesArray().toUtf8());
+      bulkBuilder.append(content.toBytesRef().utf8ToString());
       bulkBuilder.append("\n");
     }
   }

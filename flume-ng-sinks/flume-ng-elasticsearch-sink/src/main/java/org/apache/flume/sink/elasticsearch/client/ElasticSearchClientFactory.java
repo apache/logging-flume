@@ -39,15 +39,17 @@ public class ElasticSearchClientFactory {
    *    Elasticsearch cluster name used only by Transport Client
    * @param serializer
    *    Serializer of flume events to elasticsearch documents
+   * @param compress
    * @return
    */
   public ElasticSearchClient getClient(String clientType, String[] hostNames,
       String clusterName, ElasticSearchEventSerializer serializer,
-      ElasticSearchIndexRequestBuilderFactory indexBuilder) throws NoSuchClientTypeException {
+      ElasticSearchIndexRequestBuilderFactory indexBuilder, boolean compress)
+          throws NoSuchClientTypeException {
     if (clientType.equalsIgnoreCase(TransportClient) && serializer != null) {
-      return new ElasticSearchTransportClient(hostNames, clusterName, serializer);
+      return new ElasticSearchTransportClient(hostNames, clusterName, compress, serializer);
     } else if (clientType.equalsIgnoreCase(TransportClient) && indexBuilder != null) { 
-      return new ElasticSearchTransportClient(hostNames, clusterName, indexBuilder);
+      return new ElasticSearchTransportClient(hostNames, clusterName, compress, indexBuilder);
     } else if (clientType.equalsIgnoreCase(RestClient) && serializer != null) {
       return new ElasticSearchRestClient(hostNames, serializer);
     }

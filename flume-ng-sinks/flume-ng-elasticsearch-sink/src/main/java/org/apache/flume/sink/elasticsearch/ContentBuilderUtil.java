@@ -17,12 +17,11 @@
  * under the License.
  */
 package org.apache.flume.sink.elasticsearch;
-import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 
-import org.elasticsearch.common.jackson.core.JsonParseException;
+import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
@@ -64,16 +63,18 @@ public class ContentBuilderUtil {
       // elasticsearch.
       // If validation fails then the incoming event is submitted to
       // elasticsearch as plain text.
-      parser = XContentFactory.xContent(contentType).createParser(data);
+      parser = XContentFactory.xContent(contentType)
+          .createParser(NamedXContentRegistry.EMPTY, data);
       while (parser.nextToken() != null) {};
 
       // If the JSON is valid then include it
-      parser = XContentFactory.xContent(contentType).createParser(data);
+      parser = XContentFactory.xContent(contentType)
+          .createParser(NamedXContentRegistry.EMPTY, data);
       // Add the field name, but not the value.
       builder.field(fieldName);
       // This will add the whole parsed content as the value of the field.
       builder.copyCurrentStructure(parser);
-    } catch (JsonParseException ex) {
+    } catch (IOException ex) {
       // If we get an exception here the most likely cause is nested JSON that
       // can't be figured out in the body. At this point just push it through
       // as is

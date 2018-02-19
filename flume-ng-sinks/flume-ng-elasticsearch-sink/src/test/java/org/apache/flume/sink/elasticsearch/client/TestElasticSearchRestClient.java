@@ -23,6 +23,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
+import org.apache.flume.sink.elasticsearch.ContentBuilderUtil;
 import org.apache.flume.sink.elasticsearch.ElasticSearchEventSerializer;
 import org.apache.flume.sink.elasticsearch.IndexNameBuilder;
 import org.apache.http.HttpEntity;
@@ -33,9 +34,10 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.util.EntityUtils;
-import org.elasticsearch.common.bytes.BytesArray;
+import org.apache.lucene.util.BytesRef;
 import org.elasticsearch.common.bytes.BytesReference;
-import org.elasticsearch.common.io.BytesStream;
+import org.elasticsearch.common.io.stream.BytesStream;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -47,6 +49,7 @@ import java.util.List;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.isA;
 import static org.mockito.Mockito.mock;
@@ -83,57 +86,22 @@ public class TestElasticSearchRestClient {
   private static final String INDEX_NAME = "foo_index";
   private static final String MESSAGE_CONTENT = "{\"body\":\"test\"}";
   private static final String[] HOSTS = {"host1", "host2"};
+  private static final byte[] FAKE_BYTES = new byte[]{9, 8, 7, 6};
 
   @Before
   public void setUp() throws IOException {
     initMocks(this);
     BytesReference bytesReference = mock(BytesReference.class);
     BytesStream bytesStream = mock(BytesStream.class);
+    XContentBuilder builder = jsonBuilder().startObject();
+    ContentBuilderUtil.appendField(builder, "@message", FAKE_BYTES);
+    builder.endObject();
 
     when(nameBuilder.getIndexName(any(Event.class))).thenReturn(INDEX_NAME);
-    when(bytesReference.toBytesArray()).thenReturn(new BytesArray(MESSAGE_CONTENT));
+    when(bytesReference.toBytesRef()).thenReturn(new BytesRef(MESSAGE_CONTENT));
     when(bytesStream.bytes()).thenReturn(bytesReference);
-    when(serializer.getContentBuilder(any(Event.class))).thenReturn(bytesStream);
+    when(serializer.getContentBuilder(any(Event.class))).thenReturn(builder);
     fixture = new ElasticSearchRestClient(HOSTS, serializer, httpClient);
-  }
-
-  @Test
-  public void shouldAddNewEventWithoutTTL() throws Exception {
-    ArgumentCaptor<HttpPost> argument = ArgumentCaptor.forClass(HttpPost.class);
-
-    when(httpStatus.getStatusCode()).thenReturn(HttpStatus.SC_OK);
-    when(httpResponse.getStatusLine()).thenReturn(httpStatus);
-    when(httpClient.execute(any(HttpUriRequest.class))).thenReturn(httpResponse);
-    
-    fixture.addEvent(event, nameBuilder, "bar_type", -1);
-    fixture.execute();
-
-    verify(httpClient).execute(isA(HttpUriRequest.class));
-    verify(httpClient).execute(argument.capture());
-
-    assertEquals("http://host1/_bulk", argument.getValue().getURI().toString());
-    assertTrue(verifyJsonEvents("{\"index\":{\"_type\":\"bar_type\", \"_index\":\"foo_index\"}}\n",
-            MESSAGE_CONTENT, EntityUtils.toString(argument.getValue().getEntity())));
-  }
-
-  @Test
-  public void shouldAddNewEventWithTTL() throws Exception {
-    ArgumentCaptor<HttpPost> argument = ArgumentCaptor.forClass(HttpPost.class);
-
-    when(httpStatus.getStatusCode()).thenReturn(HttpStatus.SC_OK);
-    when(httpResponse.getStatusLine()).thenReturn(httpStatus);
-    when(httpClient.execute(any(HttpUriRequest.class))).thenReturn(httpResponse);
-
-    fixture.addEvent(event, nameBuilder, "bar_type", 123);
-    fixture.execute();
-
-    verify(httpClient).execute(isA(HttpUriRequest.class));
-    verify(httpClient).execute(argument.capture());
-
-    assertEquals("http://host1/_bulk", argument.getValue().getURI().toString());
-    assertTrue(verifyJsonEvents(
-        "{\"index\":{\"_type\":\"bar_type\",\"_index\":\"foo_index\",\"_ttl\":\"123\"}}\n",
-        MESSAGE_CONTENT, EntityUtils.toString(argument.getValue().getEntity())));
   }
 
   private boolean verifyJsonEvents(String expectedIndex, String expectedBody, String actual) {
@@ -154,7 +122,7 @@ public class TestElasticSearchRestClient {
     when(httpResponse.getStatusLine()).thenReturn(httpStatus);
     when(httpClient.execute(any(HttpUriRequest.class))).thenReturn(httpResponse);
 
-    fixture.addEvent(event, nameBuilder, "bar_type", 123);
+    fixture.addEvent(event, nameBuilder, "bar_type");
     fixture.execute();
   }
 
@@ -167,7 +135,7 @@ public class TestElasticSearchRestClient {
     when(httpResponse.getStatusLine()).thenReturn(httpStatus);
     when(httpClient.execute(any(HttpUriRequest.class))).thenReturn(httpResponse);
 
-    fixture.addEvent(event, nameBuilder, "bar_type", 123);
+    fixture.addEvent(event, nameBuilder, "bar_type");
     fixture.execute();
 
     verify(httpClient, times(2)).execute(isA(HttpUriRequest.class));

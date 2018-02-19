@@ -54,12 +54,6 @@ public class ElasticSearchSinkConstants {
   public static final String BATCH_SIZE = "batchSize";
 
   /**
-   * TTL in days, when set will cause the expired documents to be deleted
-   * automatically, if not set documents will never be automatically deleted
-   */
-  public static final String TTL = "ttl";
-
-  /**
    * The fully qualified class name of the serializer the sink should use.
    */
   public static final String SERIALIZER = "serializer";
@@ -94,16 +88,20 @@ public class ElasticSearchSinkConstants {
   public static final String CLIENT_PREFIX = CLIENT_TYPE + ".";
 
   /**
+   * Set to true to enable compression (LZF) between all nodes
+   */
+  public static final String COMPRESS = "compress";
+
+  /**
    * DEFAULTS USED BY THE SINK
    */
 
   public static final int DEFAULT_PORT = 9300;
-  public static final int DEFAULT_TTL = -1;
   public static final String DEFAULT_INDEX_NAME = "flume";
   public static final String DEFAULT_INDEX_TYPE = "log";
   public static final String DEFAULT_CLUSTER_NAME = "elasticsearch";
   public static final String DEFAULT_CLIENT_TYPE = "transport";
-  public static final String TTL_REGEX = "^(\\d+)(\\D*)";
+  public static final String DEFAULT_COMPRESS = "true";
   public static final String DEFAULT_SERIALIZER_CLASS = "org.apache.flume." +
           "sink.elasticsearch.ElasticSearchLogStashEventSerializer";
   public static final String DEFAULT_INDEX_NAME_BUILDER_CLASS =
