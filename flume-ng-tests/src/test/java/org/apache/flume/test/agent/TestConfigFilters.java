@@ -112,7 +112,7 @@ public class TestConfigFilters {
     agentProps.put("agent.sinks.roll-02.channel", "mem-02");
     agentProps.put("agent.sinks.roll-02.type", "FILE_ROLL");
     agentProps.put("agent.sinks.roll-02.sink.directory",
-        "${filter-02[' " + sinkOutputDir2.getAbsolutePath() + "']}");
+        sinkOutputDir2.getParentFile().getAbsolutePath() + "/${filter-02['out2']}");
     agentProps.put("agent.sinks.roll-02.sink.rollInterval", "0");
     agentProps.put("agent.sinks.roll-03.channel", "mem-03");
     agentProps.put("agent.sinks.roll-03.type", "FILE_ROLL");
@@ -121,7 +121,7 @@ public class TestConfigFilters {
 
     agentProps.put("agent.configfilters.filter-01.type", "env");
     agentProps.put("agent.configfilters.filter-02.type", "external");
-    agentProps.put("agent.configfilters.filter-02.command", "echo ");
+    agentProps.put("agent.configfilters.filter-02.command", "echo");
     agentProps.put("agent.configfilters.filter-03.type", "hadoop");
     agentProps.put("agent.configfilters.filter-03.credential.provider.path", providerPath);
 

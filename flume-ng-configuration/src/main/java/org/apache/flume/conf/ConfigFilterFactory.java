@@ -29,13 +29,13 @@ import java.util.Locale;
 
 public class ConfigFilterFactory {
 
-  private static final Logger logger = LoggerFactory
+  private static final Logger LOGGER = LoggerFactory
       .getLogger(ConfigFilterFactory.class);
 
   public static ConfigFilter create(String name, String type) throws FlumeException {
     Preconditions.checkNotNull(name, "name");
     Preconditions.checkNotNull(type, "type");
-    logger.info("Creating instance of configfilter {}, type {}", name, type);
+    LOGGER.info("Creating instance of configfilter {}, type {}", name, type);
     Class<? extends ConfigFilter> aClass = getClass(type);
     try {
       ConfigFilter configFilter = aClass.newInstance();
@@ -53,7 +53,7 @@ public class ConfigFilterFactory {
     try {
       srcType = ConfigFilterType.valueOf(type.toUpperCase(Locale.ENGLISH));
     } catch (IllegalArgumentException ex) {
-      logger.debug("Configfilter type {} is a custom type", type);
+      LOGGER.debug("Configfilter type {} is a custom type", type);
     }
     if (srcType != ConfigFilterType.OTHER) {
       classname = srcType.getClassName();

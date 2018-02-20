@@ -4298,6 +4298,8 @@ it is currently not a fully working EL expression parser, just a format that loo
   <agent_name>.<component_type>.<component_name>.parameter = ${<filter_name>["<key_for_sensitive_or_generated_data>"]}
   #or
   <agent_name>.<component_type>.<component_name>.parameter = ${<filter_name>[<key_for_sensitive_or_generated_data>]}
+  #or
+  <agent_name>.<component_type>.<component_name>.parameter = some_constant_data${<filter_name>[<key_for_sensitive_or_generated_data>]}
 
 
 Environment Variable Config Filter
@@ -4366,6 +4368,33 @@ In this example flume will run the following command to get the value
 ``$ /usr/bin/passwordResolver.sh my_keystore_password``
 
 The ``passwordResolver.sh`` will return ``Secret123`` with an exit code ``0``.
+
+Example 2
+~~~~~~~~~
+To generate a part of the directory for rolling file sink set its value as in the following example.
+
+.. code-block:: properties
+
+  a1.sources = r1
+  a1.channels = c1
+  a1.configfilters = f1
+
+  a1.configfilters.f1.type = external
+  a1.configfilters.f1.command = /usr/bin/generateUniqId.sh
+  a1.configfilters.f1.charset = UTF-8
+
+  a1.sinks = k1
+  a1.sinks.k1.type = file_roll
+  a1.sinks.k1.channel = c1
+  a1.sinks.k1.sink.directory = /var/log/flume/agent_${f1['agent_name']} # will be /var/log/flume/agent_1234
+
+In this example flume will run the following command to get the value
+
+``$ /usr/bin/generateUniqId.sh agent_name``
+
+The ``generateUniqId.sh`` will return ``1234`` with an exit code ``0``.
+
+
 
 Hadoop Credential Store Config Filter
 -------------------------------------

@@ -92,7 +92,18 @@ public class ExternalProcessConfigFilter extends AbstractConfigFilter {
 
   private String getResultFromStream(InputStream inputStream) {
     try (Scanner scanner = new Scanner(inputStream, charset.name())) {
-      return scanner.useDelimiter("\\A").next().trim();
+      String result = null;
+      if (scanner.hasNextLine()) {
+        result = scanner.nextLine();
+        if (scanner.hasNextLine()) {
+          LOGGER.warn("External process has more than one line of output. " +
+              "Only the first line is used.");
+        }
+      } else {
+        LOGGER.warn("External process has not produced any output.");
+      }
+
+      return result;
     }
   }
 }

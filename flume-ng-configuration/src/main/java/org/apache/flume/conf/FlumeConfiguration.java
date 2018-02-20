@@ -46,6 +46,8 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.apache.flume.conf.BasicConfigurationConstants.CONFIG_CHANNELS;
 import static org.apache.flume.conf.BasicConfigurationConstants.CONFIG_CHANNELS_PREFIX;
@@ -252,6 +254,7 @@ public class FlumeConfiguration {
 
     private final List<FlumeConfigurationError> errorList;
     private List<ConfigFilter> configFiltersInstances;
+    private Map<String, Pattern> configFilterPatternCache;
 
     private AgentConfiguration(String agentName,
                                List<FlumeConfigurationError> errorList) {
@@ -268,7 +271,7 @@ public class FlumeConfiguration {
       channelContextMap = new HashMap<>();
       sinkGroupContextMap = new HashMap<>();
       configFiltersInstances = new ArrayList<>();
-
+      configFilterPatternCache = new HashMap<>();
     }
 
     public Map<String, ComponentConfiguration> getChannelConfigMap() {
@@ -418,9 +421,9 @@ public class FlumeConfiguration {
 
     private void runFiltersOnContextMaps(Map<String, Context>... maps) {
       for (Map<String, Context> map: maps) {
-        for (Context c : map.values()) {
-          for (Entry<String, String> k : c.getParameters().entrySet()) {
-            c.put(k.getKey(), filterValue(k.getValue()));
+        for (Context context : map.values()) {
+          for (String key : context.getParameters().keySet()) {
+            filterValue(context, key);
           }
         }
       }
@@ -431,18 +434,21 @@ public class FlumeConfiguration {
         Context context = configFilterContextMap.get(name);
         ComponentConfiguration componentConfiguration = configFilterConfigMap.get(name);
         try {
-
           if (context != null) {
             ConfigFilter configFilter = ConfigFilterFactory.create(
                 name, context.getString(BasicConfigurationConstants.CONFIG_TYPE)
             );
             configFilter.initializeWithConfiguration(context.getParameters());
             configFiltersInstances.add(configFilter);
+            configFilterPatternCache.put(configFilter.getName(),
+                createConfigFilterPattern(configFilter));
           } else if (componentConfiguration != null) {
             ConfigFilter configFilter = ConfigFilterFactory.create(
                 componentConfiguration.getComponentName(), componentConfiguration.getType()
             );
             configFiltersInstances.add(configFilter);
+            configFilterPatternCache.put(configFilter.getName(), 
+                createConfigFilterPattern(configFilter));
           }
         } catch (Exception e) {
           LOGGER.error("Error while creating config filter {}", name, e);
@@ -450,27 +456,44 @@ public class FlumeConfiguration {
       }
     }
 
-    private String filterValue(String value) {
-      for (ConfigFilter configFilter : configFiltersInstances) {
-        //JAVA EL expression style ${myFilterName['my_key']} or
-        //JAVA EL expression style ${myFilterName["my_key"]} or
-        //JAVA EL expression style ${myFilterName[my_key]}
-        List<String> delimiters = Arrays.asList("'", "\"", "");
-        for (String delimiter: delimiters) {
-          String prefix = "${" + configFilter.getName() + "[" + delimiter;
-          String suffix = delimiter + "]}";
-          boolean matchesWithDelimiter = value.startsWith(prefix) && value.endsWith(suffix);
+    private Pattern createConfigFilterPattern(ConfigFilter configFilter) {
+      //JAVA EL expression style ${myFilterName['my_key']} or
+      //JAVA EL expression style ${myFilterName["my_key"]} or
+      //JAVA EL expression style ${myFilterName[my_key]}
+      return Pattern.compile(
+          "\\$\\{" +  // ${
+              Pattern.quote(configFilter.getName()) + //<filterComponentName>
+              "\\[(|'|\")" +  // delimiter :'," or nothing
+              "(?<key>[-_a-zA-Z0-9]+)" + // key
+              "\\1\\]" + // matching delimiter
+              "\\}" // }
+      );
+    }
 
-          if (matchesWithDelimiter) {
-            String filteredValue = configFilter.filter(value.substring(
-                configFilter.getName().length() + delimiter.length() + 3,
-                value.length() - delimiter.length() - 2
-            ));
-            return filteredValue == null ? value : filteredValue;
+    private void filterValue(Context c, String contextKey) {
+      for (ConfigFilter configFilter : configFiltersInstances) {
+        try {
+          Pattern pattern = configFilterPatternCache.get(configFilter.getName());
+          String currentValue = c.getString(contextKey);
+          Matcher matcher = pattern.matcher(currentValue);
+          String filteredValue = currentValue;
+          while (matcher.find()) {
+            String key = matcher.group("key");
+            LOGGER.debug("Replacing {} from config filter {}", key, configFilter.getName());
+            String filtered = configFilter.filter(key);
+            if (filtered == null) {
+              continue;
+            }
+            String fullMatch = matcher.group();
+            filteredValue = filteredValue.replace(fullMatch, filtered);
           }
+          c.put(contextKey, filteredValue);
+        } catch (Exception e) {
+          e.printStackTrace();
+          LOGGER.error("Error while matching and filtering configFilter: {} and key: {}",
+              new Object[]{configFilter.getName(), contextKey, e});
         }
       }
-      return value;
     }
 
     private void addError(String key, FlumeConfigurationErrorType errorType, ErrorOrWarning level) {

@@ -75,7 +75,7 @@ limitations under the License.
                                          SRC="${basedir}/src/test/resources"
                                          DST="${project.build.directory}/test-classes"
 
-                                         find "$$SRC" -printf "%P\0" | xargs --verbose -0 -I {} chmod --reference="$$SRC/{}" -f "$$DST/{}"
+                                         find "$$SRC" -printf "%P\0" | xargs -0 -I {} chmod --reference="$$SRC/{}" -f "$$DST/{}"
                                      </argument>
                                  </arguments>
                              </configuration>
