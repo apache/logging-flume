@@ -18,6 +18,9 @@ package org.apache.flume.conf;
 
 public final class BasicConfigurationConstants {
 
+  public static final String CONFIG_CONFIGFILTERS = "configfilters";
+  public static final String CONFIG_CONFIGFILTERS_PREFIX = CONFIG_CONFIGFILTERS + ".";
+
   public static final String CONFIG_SOURCES = "sources";
   public static final String CONFIG_SOURCES_PREFIX = CONFIG_SOURCES + ".";
   public static final String CONFIG_SOURCE_CHANNELSELECTOR_PREFIX = "selector.";

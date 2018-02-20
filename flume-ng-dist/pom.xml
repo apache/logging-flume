@@ -197,6 +197,22 @@
       <artifactId>flume-taildir-source</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-ng-environment-variable-config-filter</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-ng-hadoop-credential-store-config-filter</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-ng-external-process-config-filter</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-ng-config-filter-api</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.apache.flume.flume-ng-clients</groupId>
       <artifactId>flume-ng-log4jappender</artifactId>
       <exclusions>

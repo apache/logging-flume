@@ -18,10 +18,12 @@
  */
 package org.apache.flume.conf.source;
 
+import org.apache.flume.conf.ComponentWithClassName;
+
 /**
  * Enumeration of built in source types available in the system.
  */
-public enum SourceType {
+public enum SourceType implements ComponentWithClassName {
 
   /**
    * Place holder for custom sources not part of this enumeration.
@@ -126,7 +128,13 @@ public enum SourceType {
     this.sourceClassName = sourceClassName;
   }
 
+  @Deprecated
   public String getSourceClassName() {
+    return sourceClassName;
+  }
+
+  @Override
+  public String getClassName() {
     return sourceClassName;
   }
 }

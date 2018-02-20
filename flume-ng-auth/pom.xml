@@ -103,7 +103,6 @@ limitations under the License.
         </exclusion>
       </exclusions>
     </dependency>
-
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
