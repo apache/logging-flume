@@ -18,10 +18,12 @@
  */
 package org.apache.flume.conf.sink;
 
+import org.apache.flume.conf.ComponentWithClassName;
+
 /**
  * Enumeration of built in sink types available in the system.
  */
-public enum SinkType {
+public enum SinkType implements ComponentWithClassName {
 
   /**
    * Place holder for custom sinks not part of this enumeration.
@@ -120,8 +122,14 @@ public enum SinkType {
     this.sinkClassName = sinkClassName;
   }
 
+  @Deprecated
   public String getSinkClassName() {
     return sinkClassName;
   }
 
+
+  @Override
+  public String getClassName() {
+    return sinkClassName;
+  }
 }
