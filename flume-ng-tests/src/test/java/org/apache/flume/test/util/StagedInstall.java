@@ -35,6 +35,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -120,7 +121,12 @@ public class StagedInstall {
     return port;
   }
 
-  public synchronized void startAgent(String name, Properties properties)
+  public synchronized void startAgent(String name, Properties properties) throws Exception {
+    startAgent(name, properties, new HashMap<>());
+  }
+
+  public synchronized void startAgent(
+      String name, Properties properties,  Map<String, String> environmentVariables)
       throws Exception {
     Preconditions.checkArgument(!name.isEmpty(), "agent name must not be empty");
     Preconditions.checkNotNull(properties, "properties object must not be null");
@@ -159,6 +165,7 @@ public class StagedInstall {
     ProcessBuilder pb = new ProcessBuilder(cmdArgs);
 
     Map<String, String> env = pb.environment();
+    env.putAll(environmentVariables);
 
     LOGGER.debug("process environment: " + env);
 

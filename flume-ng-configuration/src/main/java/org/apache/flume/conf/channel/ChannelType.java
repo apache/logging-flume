@@ -18,10 +18,12 @@
  */
 package org.apache.flume.conf.channel;
 
+import org.apache.flume.conf.ComponentWithClassName;
+
 /**
  * Enumeration of built in channel types available in the system.
  */
-public enum ChannelType {
+public enum ChannelType implements ComponentWithClassName {
 
   /**
    * Place holder for custom channels not part of this enumeration.
@@ -59,7 +61,13 @@ public enum ChannelType {
     this.channelClassName = channelClassName;
   }
 
+  @Deprecated
   public String getChannelClassName() {
+    return channelClassName;
+  }
+
+  @Override
+  public String getClassName() {
     return channelClassName;
   }
 }

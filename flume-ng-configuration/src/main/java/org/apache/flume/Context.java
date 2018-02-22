@@ -22,6 +22,7 @@ package org.apache.flume;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -88,10 +89,11 @@ public class Context {
         "The given prefix does not end with a period (" + prefix + ")");
     Map<String, String> result = Maps.newHashMap();
     synchronized (parameters) {
-      for (String key : parameters.keySet()) {
+      for (Entry<String, String> entry : parameters.entrySet()) {
+        String key = entry.getKey();
         if (key.startsWith(prefix)) {
           String name = key.substring(prefix.length());
-          result.put(name, parameters.get(key));
+          result.put(name, entry.getValue());
         }
       }
     }
@@ -131,7 +133,7 @@ public class Context {
   public Boolean getBoolean(String key, Boolean defaultValue) {
     String value = get(key);
     if (value != null) {
-      return Boolean.parseBoolean(value.trim());
+      return Boolean.valueOf(Boolean.parseBoolean(value.trim()));
     }
     return defaultValue;
   }
@@ -160,7 +162,7 @@ public class Context {
   public Integer getInteger(String key, Integer defaultValue) {
     String value = get(key);
     if (value != null) {
-      return Integer.parseInt(value.trim());
+      return Integer.valueOf(Integer.parseInt(value.trim()));
     }
     return defaultValue;
   }
@@ -189,7 +191,7 @@ public class Context {
   public Long getLong(String key, Long defaultValue) {
     String value = get(key);
     if (value != null) {
-      return Long.parseLong(value.trim());
+      return Long.valueOf(Long.parseLong(value.trim()));
     }
     return defaultValue;
   }
