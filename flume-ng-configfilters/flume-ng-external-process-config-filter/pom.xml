@@ -44,46 +44,4 @@ limitations under the License.
             <scope>test</scope>
         </dependency>
     </dependencies>
- <profiles>
-     <!-- workaround fro test resource permission errors -->
-     <profile>
-         <id>unix</id>
-         <activation>
-             <os>
-                 <family>unix</family>
-             </os>
-         </activation>
-         <build>
-             <plugins>
-                 <plugin>
-                     <groupId>org.codehaus.mojo</groupId>
-                     <artifactId>exec-maven-plugin</artifactId>
-                     <executions>
-                         <execution>
-                             <id>fix-resource-permissions</id>
-                             <goals>
-                                 <goal>exec</goal>
-                             </goals>
-                             <phase>process-test-resources</phase>
-                             <configuration>
-                                 <executable>/bin/sh</executable>
-                                 <arguments>
-                                     <argument>-c</argument>
-                                     <argument>
-                                         set -x
-
-                                         SRC="${basedir}/src/test/resources"
-                                         DST="${project.build.directory}/test-classes"
-
-                                         find "$$SRC" -printf "%P\0" | xargs -0 -I {} chmod --reference="$$SRC/{}" -f "$$DST/{}"
-                                     </argument>
-                                 </arguments>
-                             </configuration>
-                         </execution>
-                     </executions>
-                 </plugin>
-             </plugins>
-         </build>
-     </profile>
- </profiles>
 </project>

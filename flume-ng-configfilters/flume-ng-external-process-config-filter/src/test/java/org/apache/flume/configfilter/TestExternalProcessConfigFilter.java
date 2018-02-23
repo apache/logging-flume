@@ -22,6 +22,7 @@ import org.apache.flume.configfilter.ExternalProcessConfigFilter;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.HashMap;
 
 import static org.junit.Assert.assertEquals;
@@ -45,19 +46,23 @@ public class TestExternalProcessConfigFilter {
     String file = Thread.currentThread().getContextClassLoader()
         .getResource("test.sh").getFile();
 
+    File testExecutable = new File(file);
+    testExecutable.setExecutable(true);
 
     HashMap<String, String> configuration = new HashMap<>();
     configuration.put("command", file);
     configFilter.initializeWithConfiguration(configuration);
     assertEquals(FILTERED, configFilter.filter(MY_PASSWORD_KEY));
     assertEquals(FILTERED_2, configFilter.filter(MY_PASSWORD_KEY_2));
-
   }
 
   @Test
   public void filterError() {
     String file = Thread.currentThread().getContextClassLoader()
         .getResource("test_error.sh").getFile();
+
+    File testExecutable = new File(file);
+    testExecutable.setExecutable(true);
 
     HashMap<String, String> configuration = new HashMap<>();
     configuration.put("command", file);
