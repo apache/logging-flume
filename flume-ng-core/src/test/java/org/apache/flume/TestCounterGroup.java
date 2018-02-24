@@ -19,13 +19,11 @@
 
 package org.apache.flume;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 import junit.framework.Assert;
-
-import org.apache.flume.CounterGroup;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.concurrent.atomic.LongAdder;
 
 public class TestCounterGroup {
 
@@ -38,10 +36,10 @@ public class TestCounterGroup {
 
   @Test
   public void testGetCounter() {
-    AtomicLong counter = counterGroup.getCounter("test");
+    LongAdder counter = counterGroup.getCounter("test");
 
     Assert.assertNotNull(counter);
-    Assert.assertEquals(0, counter.get());
+    Assert.assertEquals(0, counter.sum());
   }
 
   @Test

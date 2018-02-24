@@ -19,9 +19,9 @@
 
 package org.apache.flume;
 
-import java.util.HashMap;
-import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  * Used for counting events, collecting metrics, etc.
@@ -29,65 +29,65 @@ import java.util.concurrent.atomic.AtomicLong;
 public class CounterGroup {
 
   private String name;
-  private HashMap<String, AtomicLong> counters;
+  private volatile ConcurrentHashMap<String, LongAdder> counters;
 
   public CounterGroup() {
-    counters = new HashMap<String, AtomicLong>();
+    counters = new ConcurrentHashMap<>();
   }
 
-  public synchronized Long get(String name) {
-    return getCounter(name).get();
+  public Long get(String name) {
+    return getCounter(name).sum();
   }
 
-  public synchronized Long incrementAndGet(String name) {
-    return getCounter(name).incrementAndGet();
+  public Long incrementAndGet(String name) {
+    LongAdder counter = getCounter(name);
+    counter.increment();
+    return counter.sum();
   }
 
-  public synchronized Long addAndGet(String name, Long delta) {
-    return getCounter(name).addAndGet(delta);
+  public Long addAndGet(String name, Long delta) {
+    LongAdder counter = getCounter(name);
+    counter.add(delta);
+    return counter.sum();
   }
 
-  public synchronized void add(CounterGroup counterGroup) {
-    synchronized (counterGroup) {
-      for (Entry<String, AtomicLong> entry : counterGroup.getCounters()
-          .entrySet()) {
-
-        addAndGet(entry.getKey(), entry.getValue().get());
-      }
+  public void add(CounterGroup counterGroup) {
+    for (Map.Entry<String, LongAdder> entry : counterGroup.getCounters().entrySet()) {
+      addAndGet(entry.getKey(), entry.getValue().sum());
     }
   }
 
-  public synchronized void set(String name, Long value) {
-    getCounter(name).set(value);
+  public void set(String name, Long value) {
+    LongAdder counter = getCounter(name);
+    counter.reset();
+    counter.add(value);
   }
 
-  public synchronized AtomicLong getCounter(String name) {
+  public LongAdder getCounter(String name) {
     if (!counters.containsKey(name)) {
-      counters.put(name, new AtomicLong());
+      counters.put(name, new LongAdder());
     }
-
     return counters.get(name);
   }
 
-  @Override
-  public synchronized String toString() {
-    return "{ name:" + name + " counters:" + counters + " }";
-  }
-
-  public synchronized String getName() {
+  public String getName() {
     return name;
   }
 
-  public synchronized void setName(String name) {
+  public void setName(String name) {
     this.name = name;
   }
 
-  public synchronized HashMap<String, AtomicLong> getCounters() {
+  public ConcurrentHashMap<String, LongAdder> getCounters() {
     return counters;
   }
 
-  public synchronized void setCounters(HashMap<String, AtomicLong> counters) {
+  public void setCounters(ConcurrentHashMap<String, LongAdder> counters) {
     this.counters = counters;
   }
 
+  @Override
+  public String toString() {
+    return "{ name:" + name + " counters:" + counters + " }";
+  }
 }
