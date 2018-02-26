@@ -67,7 +67,7 @@ public class KafkaSourceEmbeddedKafka {
     }
     Properties props = new Properties();
     props.put("zookeeper.connect",zookeeper.getConnectString());
-    props.put("broker.id","1");
+    props.put("broker.id","-1");
     props.put("offsets.topic.replication.factor", "1");
     props.put("host.name", "localhost");
     props.put("port", String.valueOf(serverPort));

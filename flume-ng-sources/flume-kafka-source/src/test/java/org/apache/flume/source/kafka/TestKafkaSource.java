@@ -64,20 +64,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import static org.apache.flume.source.kafka.KafkaSourceConstants.AVRO_EVENT;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.BATCH_DURATION_MS;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.BATCH_SIZE;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.BOOTSTRAP_SERVERS;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_AUTO_COMMIT;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_TOPIC_HEADER;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.KAFKA_CONSUMER_PREFIX;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.OLD_GROUP_ID;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.PARTITION_HEADER;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.TIMESTAMP_HEADER;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPIC;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPICS;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPICS_REGEX;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.ZOOKEEPER_CONNECT_FLUME_KEY;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.*;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
