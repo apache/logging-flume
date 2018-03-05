@@ -52,6 +52,10 @@ import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Application {
 
@@ -65,6 +69,8 @@ public class Application {
   private final LifecycleSupervisor supervisor;
   private MaterializedConfiguration materializedConfiguration;
   private MonitorService monitorServer;
+  private final Lock lock;
+  private final AtomicBoolean beingStopped;
 
   public Application() {
     this(new ArrayList<LifecycleAware>(0));
@@ -73,25 +79,54 @@ public class Application {
   public Application(List<LifecycleAware> components) {
     this.components = components;
     supervisor = new LifecycleSupervisor();
+    lock = new ReentrantLock();
+    beingStopped = new AtomicBoolean(false);
   }
 
-  public synchronized void start() {
-    for (LifecycleAware component : components) {
-      supervisor.supervise(component,
-          new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
+  public void start() {
+    lock.lock();
+    try {
+      for (LifecycleAware component : components) {
+        supervisor.supervise(component,
+            new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
+      }
+    } finally {
+      lock.unlock();
     }
   }
 
   @Subscribe
-  public synchronized void handleConfigurationEvent(MaterializedConfiguration conf) {
-    stopAllComponents();
-    startAllComponents(conf);
+  public void handleConfigurationEvent(MaterializedConfiguration conf) {
+    while (!beingStopped.get()) {
+      try {
+        if (lock.tryLock(500, TimeUnit.MILLISECONDS)) {
+          try {
+            stopAllComponents();
+            startAllComponents(conf);
+          } finally {
+            lock.unlock();
+          }
+          return;
+        }
+      } catch (InterruptedException e) {
+        logger.warn("Interrupted while waiting to acquiring application lock.");
+        Thread.currentThread().interrupt();
+      }
+    }
+    logger.error("Error handling configuration event"
+        + " due to application being stopped.");
   }
 
-  public synchronized void stop() {
-    supervisor.stop();
-    if (monitorServer != null) {
-      monitorServer.stop();
+  public void stop() {
+    beingStopped.set(true);
+    lock.lock();
+    try {
+      supervisor.stop();
+      if (monitorServer != null) {
+        monitorServer.stop();
+      }
+    } finally {
+      lock.unlock();
     }
   }
 
@@ -349,3 +384,4 @@ public class Application {
     }
   }
 }
+

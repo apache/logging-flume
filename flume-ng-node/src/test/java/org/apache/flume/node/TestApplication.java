@@ -24,6 +24,8 @@ import static org.mockito.Mockito.*;
 import java.io.File;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.io.FileUtils;
@@ -152,5 +154,41 @@ public class TestApplication {
       Thread.sleep(random.nextInt(10000));
       application.stop();
     }
+  }
+
+  @SuppressWarnings("ConstantConditions")
+  @Test(timeout = 10000L)
+  public void testFLUME2786() throws Exception {
+    final String agentName = "test";
+    final long intervalMs = 1000L;
+
+    File configFile = new File(baseDir, "flume-conf.properties");
+    Files.copy(new File(getClass().getClassLoader()
+        .getResource("flume-conf.properties.2786").getFile()), configFile);
+    File mockConfigFile = spy(configFile);
+    when(mockConfigFile.lastModified()).then(invocation -> {
+      Thread.sleep(intervalMs); // suspend acquiring 2nd lock
+      return System.currentTimeMillis();
+    });
+
+    EventBus eventBus = new EventBus(agentName + "-event-bus");
+    PollingPropertiesFileConfigurationProvider configurationProvider =
+        new PollingPropertiesFileConfigurationProvider(agentName,
+            mockConfigFile, eventBus, 1);
+    PollingPropertiesFileConfigurationProvider mockConfigurationProvider =
+        spy(configurationProvider);
+    doAnswer(invocation -> {
+      Thread.sleep(intervalMs); // suspend acquiring 2nd lock
+      invocation.callRealMethod();
+      return null; // void
+    }).when(mockConfigurationProvider).stop();
+
+    List<LifecycleAware> components = Lists.newArrayList();
+    components.add(mockConfigurationProvider);
+    Application application = new Application(components);
+    eventBus.register(application);
+    application.start();
+    Thread.sleep(intervalMs + intervalMs / 2);
+    application.stop();
   }
 }
