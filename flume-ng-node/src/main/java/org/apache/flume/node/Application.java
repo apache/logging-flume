@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map.Entry;
@@ -296,27 +297,21 @@ public class Application {
       if (commandLine.hasOption('z') || commandLine.hasOption("zkConnString")) {
         isZkConfigured = true;
       }
-      Application application = null;
+      ConfigurationProvider configurationProvider = null;
       if (isZkConfigured) {
         // get options
         String zkConnectionStr = commandLine.getOptionValue('z');
         String baseZkPath = commandLine.getOptionValue('p');
 
         if (reload) {
-          EventBus eventBus = new EventBus(agentName + "-event-bus");
           List<LifecycleAware> components = Lists.newArrayList();
-          PollingZooKeeperConfigurationProvider zookeeperConfigurationProvider =
+          configurationProvider =
               new PollingZooKeeperConfigurationProvider(
-                  agentName, zkConnectionStr, baseZkPath, eventBus);
-          components.add(zookeeperConfigurationProvider);
-          application = new Application(components);
-          eventBus.register(application);
+                  agentName, zkConnectionStr, baseZkPath);
         } else {
-          StaticZooKeeperConfigurationProvider zookeeperConfigurationProvider =
+          configurationProvider =
               new StaticZooKeeperConfigurationProvider(
                   agentName, zkConnectionStr, baseZkPath);
-          application = new Application();
-          application.handleConfigurationEvent(zookeeperConfigurationProvider.getConfiguration());
         }
       } else {
         File configurationFile = new File(commandLine.getOptionValue('f'));
@@ -340,23 +335,18 @@ public class Application {
                 "The specified configuration file does not exist: " + path);
           }
         }
-        List<LifecycleAware> components = Lists.newArrayList();
 
         if (reload) {
-          EventBus eventBus = new EventBus(agentName + "-event-bus");
-          PollingPropertiesFileConfigurationProvider configurationProvider =
+          configurationProvider =
               new PollingPropertiesFileConfigurationProvider(
-                  agentName, configurationFile, eventBus, 30);
-          components.add(configurationProvider);
-          application = new Application(components);
-          eventBus.register(application);
+                  agentName, configurationFile, 30);
         } else {
-          PropertiesFileConfigurationProvider configurationProvider =
+          configurationProvider =
               new PropertiesFileConfigurationProvider(agentName, configurationFile);
-          application = new Application();
-          application.handleConfigurationEvent(configurationProvider.getConfiguration());
         }
       }
+      Application application = new Application(Collections.singletonList(configurationProvider));
+      configurationProvider.registerConfigurationConsumer(application::handleConfigurationEvent);
       application.start();
 
       final Application appReference = application;

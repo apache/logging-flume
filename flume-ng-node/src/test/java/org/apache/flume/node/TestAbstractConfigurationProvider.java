@@ -35,6 +35,11 @@ import org.apache.flume.source.AbstractSource;
 import org.junit.Test;
 
 import java.util.Map;
+import java.util.function.Consumer;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 public class TestAbstractConfigurationProvider {
 
@@ -183,6 +188,22 @@ public class TestAbstractConfigurationProvider {
     Assert.assertTrue(config.getSourceRunners().size() == 0);
     Assert.assertTrue(config.getChannels().size() == 0);
     Assert.assertTrue(config.getSinkRunners().size() == 0);
+  }
+
+  @Test
+  public void testRegisterConfigurationConsumer() {
+    String agentName = "agent1";
+    String sourceType = "seq";
+    String channelType = "memory";
+    String sinkType = "null";
+    Map<String, String> properties = getProperties(agentName, sourceType,
+            channelType, sinkType);
+    MemoryConfigurationProvider provider =
+            new MemoryConfigurationProvider(agentName, properties);
+    @SuppressWarnings("unchecked")
+    Consumer<MaterializedConfiguration> mockConfigurationConsumer = mock(Consumer.class);
+    provider.registerConfigurationConsumer(mockConfigurationConsumer);
+    verify(mockConfigurationConsumer).accept(any(MaterializedConfiguration.class));
   }
 
   private Map<String, String> getProperties(String agentName,
