@@ -333,7 +333,7 @@ public class ExecSource extends AbstractSource implements EventDrivenSource, Con
           while ((line = reader.readLine()) != null) {
             sourceCounter.incrementEventReceivedCount();
             synchronized (eventList) {
-              eventList.add(EventBuilder.withBody(line.getBytes(charset)));
+              eventList.add(EventBuilder.withBody(line.getBytes("UTF-8")));
               if (eventList.size() >= bufferCount || timeout()) {
                 flushEventBatch(eventList);
               }
