@@ -26,7 +26,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import junit.framework.Assert;
@@ -34,11 +33,11 @@ import junit.framework.TestCase;
 
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
-import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.PollableSource.Status;
 import org.apache.flume.channel.ChannelProcessor;
+import org.apache.flume.instrumentation.SourceCounter;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -62,8 +61,8 @@ public class TestStressSource {
     return field("eventBatchListToProcess").ofType(List.class).in(source).get();
   }
 
-  private CounterGroup getCounterGroup(StressSource source) {
-    return field("counterGroup").ofType(CounterGroup.class).in(source).get();
+  private SourceCounter getSourceCounter(StressSource source) {
+    return field("sourceCounter").ofType(SourceCounter.class).in(source).get();
   }
 
 
@@ -81,6 +80,22 @@ public class TestStressSource {
       source.process();
     }
     verify(mockProcessor, times(35)).processEvent(getEvent(source));
+
+    long successfulEvents = getSourceCounter(source).getEventAcceptedCount();
+    TestCase.assertTrue("Number of successful events should be 35 but was " +
+        successfulEvents, successfulEvents == 35);
+    long failedEvents = getSourceCounter(source).getEventReceivedCount() -
+        getSourceCounter(source).getEventAcceptedCount();
+    TestCase.assertTrue("Number of failure events should be 0 but was " +
+        failedEvents, failedEvents == 0);
+    long successfulBatches = getSourceCounter(source)
+        .getAppendBatchAcceptedCount();
+    TestCase.assertTrue("Number of successful batches should be 35 but was " +
+        successfulBatches, successfulBatches == 35);
+    long totalBatches = getSourceCounter(source)
+        .getAppendBatchReceivedCount();
+    TestCase.assertTrue("Number of total batches should be 35 but was " +
+        totalBatches, totalBatches == 35);
   }
 
   @Test
@@ -96,7 +111,8 @@ public class TestStressSource {
 
     for (int i = 0; i < 50; i++) {
       if (source.process() == Status.BACKOFF) {
-        TestCase.assertTrue("Source should have sent all events in 4 batches", i == 4);
+        TestCase.assertTrue("Source should have sent all events in 4 batches",
+            i == 4);
         break;
       }
       if (i < 3) {
@@ -107,16 +123,25 @@ public class TestStressSource {
             times(1)).processEventBatch(getLastProcessedEventList(source));
       }
     }
-    long successfulEvents = getCounterGroup(source).get("events.successful");
+    long successfulEvents = getSourceCounter(source).getEventAcceptedCount();
     TestCase.assertTrue("Number of successful events should be 35 but was " +
         successfulEvents, successfulEvents == 35);
-    long failedEvents = getCounterGroup(source).get("events.failed");
+    long failedEvents = getSourceCounter(source).getEventReceivedCount() -
+        getSourceCounter(source).getEventAcceptedCount();
     TestCase.assertTrue("Number of failure events should be 0 but was " +
         failedEvents, failedEvents == 0);
+    long successfulBatches = getSourceCounter(source)
+        .getAppendBatchAcceptedCount();
+    TestCase.assertTrue("Number of successful batches should be 4 but was " +
+        successfulBatches, successfulBatches == 4);
+    long totalBatches = getSourceCounter(source)
+        .getAppendBatchReceivedCount();
+    TestCase.assertTrue("Number of total batches should be 4 but was " +
+        totalBatches, totalBatches == 4);
   }
 
   @Test
-  public void testBatchEventsWithoutMatTotalEvents() throws InterruptedException,
+  public void testBatchEventsWithoutMaxTotalEvents() throws InterruptedException,
       EventDeliveryException {
     StressSource source = new StressSource();
     source.setChannelProcessor(mockProcessor);
@@ -132,13 +157,21 @@ public class TestStressSource {
     verify(mockProcessor,
         times(10)).processEventBatch(getLastProcessedEventList(source));
 
-    long successfulEvents = getCounterGroup(source).get("events.successful");
+    long successfulEvents = getSourceCounter(source).getEventAcceptedCount();
     TestCase.assertTrue("Number of successful events should be 100 but was " +
         successfulEvents, successfulEvents == 100);
-
-    long failedEvents = getCounterGroup(source).get("events.failed");
+    long failedEvents = getSourceCounter(source).getEventReceivedCount() -
+        getSourceCounter(source).getEventAcceptedCount();
     TestCase.assertTrue("Number of failure events should be 0 but was " +
         failedEvents, failedEvents == 0);
+    long successfulBatches = getSourceCounter(source)
+        .getAppendBatchAcceptedCount();
+    TestCase.assertTrue("Number of successful batches should be 10 but was " +
+        successfulBatches, successfulBatches == 10);
+    long totalBatches = getSourceCounter(source)
+        .getAppendBatchReceivedCount();
+    TestCase.assertTrue("Number of total batches should be 10 but was " +
+        totalBatches, totalBatches == 10);
   }
 
   @Test
@@ -176,5 +209,21 @@ public class TestStressSource {
     // We should have called processEvent(evt) 37 times, twice for failures
     // and twice for successful events.
     verify(mockProcessor, times(37)).processEvent(getEvent(source));
+
+    long successfulEvents = getSourceCounter(source).getEventAcceptedCount();
+    TestCase.assertTrue("Number of successful events should be 35 but was " +
+        successfulEvents, successfulEvents == 35);
+    long failedEvents = getSourceCounter(source).getEventReceivedCount() -
+        getSourceCounter(source).getEventAcceptedCount();
+    TestCase.assertTrue("Number of failure events should be 2 but was " +
+        failedEvents, failedEvents == 2);
+    long successfulBatches = getSourceCounter(source)
+        .getAppendBatchAcceptedCount();
+    TestCase.assertTrue("Number of successful batches should be 35 but was " +
+        successfulBatches, successfulBatches == 35);
+    long totalBatches = getSourceCounter(source)
+        .getAppendBatchReceivedCount();
+    TestCase.assertTrue("Number of total batches should be 37 but was " +
+        totalBatches, totalBatches == 37);
   }
 }
