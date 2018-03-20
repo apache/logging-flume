@@ -74,11 +74,11 @@ public class TestRateLimiter extends TestCase {
     try {
       limiter.setRate(0.0);
       fail();
-    } catch (IllegalArgumentException expected) {}
+    } catch (IllegalArgumentException expected) { }
     try {
       limiter.setRate(-10.0);
       fail();
-    } catch (IllegalArgumentException expected) {}
+    } catch (IllegalArgumentException expected) { }
   }
 
   public void testAcquireParameterValidation() {

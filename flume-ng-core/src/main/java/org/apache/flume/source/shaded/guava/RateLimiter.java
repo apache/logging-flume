@@ -384,7 +384,7 @@ public abstract class RateLimiter {
    */
   abstract long queryEarliestAvailable(long nowMicros);
 
-    /**
+  /**
    * Reserves the requested number of permits and returns the time that those permits can be used
    * (with one caveat).
      *

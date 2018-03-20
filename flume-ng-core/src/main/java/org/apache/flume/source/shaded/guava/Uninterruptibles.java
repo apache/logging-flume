@@ -117,6 +117,35 @@ public final class Uninterruptibles {
   }
 
   /**
+   * Invokes
+   * {@code unit.}{@link TimeUnit#timedJoin(Thread, long)
+   * timedJoin(toJoin, timeout)} uninterruptibly.
+   */
+  public static void joinUninterruptibly(Thread toJoin,
+      long timeout, TimeUnit unit) {
+    Preconditions.checkNotNull(toJoin);
+    boolean interrupted = false;
+    try {
+      long remainingNanos = unit.toNanos(timeout);
+      long end = System.nanoTime() + remainingNanos;
+      while (true) {
+        try {
+          // TimeUnit.timedJoin() treats negative timeouts just like zero.
+          NANOSECONDS.timedJoin(toJoin, remainingNanos);
+          return;
+        } catch (InterruptedException e) {
+          interrupted = true;
+          remainingNanos = end - System.nanoTime();
+        }
+      }
+    } finally {
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
+    }
+  }
+
+  /**
    * Invokes {@code future.}{@link Future#get() get()} uninterruptibly.
    * To get uninterruptibility and remove checked exceptions, see
    * {@link Futures#getUnchecked}.
@@ -171,35 +200,6 @@ public final class Uninterruptibles {
         try {
           // Future treats negative timeouts just like zero.
           return future.get(remainingNanos, NANOSECONDS);
-        } catch (InterruptedException e) {
-          interrupted = true;
-          remainingNanos = end - System.nanoTime();
-        }
-      }
-    } finally {
-      if (interrupted) {
-        Thread.currentThread().interrupt();
-      }
-    }
-  }
-
-  /**
-   * Invokes
-   * {@code unit.}{@link TimeUnit#timedJoin(Thread, long)
-   * timedJoin(toJoin, timeout)} uninterruptibly.
-   */
-  public static void joinUninterruptibly(Thread toJoin,
-      long timeout, TimeUnit unit) {
-    Preconditions.checkNotNull(toJoin);
-    boolean interrupted = false;
-    try {
-      long remainingNanos = unit.toNanos(timeout);
-      long end = System.nanoTime() + remainingNanos;
-      while (true) {
-        try {
-          // TimeUnit.timedJoin() treats negative timeouts just like zero.
-          NANOSECONDS.timedJoin(toJoin, remainingNanos);
-          return;
         } catch (InterruptedException e) {
           interrupted = true;
           remainingNanos = end - System.nanoTime();
