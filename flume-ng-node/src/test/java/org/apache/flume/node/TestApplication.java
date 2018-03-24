@@ -169,7 +169,7 @@ public class TestApplication {
     EventBus eventBus = new EventBus(agentName + "-event-bus");
     PollingPropertiesFileConfigurationProvider configurationProvider =
         new PollingPropertiesFileConfigurationProvider(agentName,
-            mockConfigFile, eventBus, interval);
+            mockConfigFile, interval);
     PollingPropertiesFileConfigurationProvider mockConfigurationProvider =
         spy(configurationProvider);
     doAnswer(new Answer<Void>() {
@@ -184,7 +184,7 @@ public class TestApplication {
     List<LifecycleAware> components = Lists.newArrayList();
     components.add(mockConfigurationProvider);
     Application application = new Application(components);
-    eventBus.register(application);
+    mockConfigurationProvider.registerConfigurationConsumer(application::handleConfigurationEvent);
     application.start();
     Thread.sleep(1500L);
     application.stop();
