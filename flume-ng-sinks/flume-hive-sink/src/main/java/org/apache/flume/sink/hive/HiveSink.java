@@ -312,13 +312,13 @@ public class HiveSink extends AbstractSink implements Configurable {
 
 
       // 5) Flush all Writers
-      for (HiveWriter writer : activeWriters.values()) {
-        writer.flush(true);
+      for (HiveWriter writer : allWriters.values()) {
+        writer.flush(activeWriters.containsValue(writer));
       }
 
       sinkCounter.addToEventDrainSuccessCount(txnEventCount);
       return txnEventCount;
-    } catch (HiveWriter.Failure e) {
+    } catch (Exception e) {
       // in case of error we close all TxnBatches to start clean next time
       LOG.warn(getName() + " : " + e.getMessage(), e);
       abortAllWriters();
@@ -438,7 +438,13 @@ public class HiveSink extends AbstractSink implements Configurable {
   private void closeAllWriters() throws InterruptedException {
     //1) Retire writers
     for (Entry<HiveEndPoint,HiveWriter> entry : allWriters.entrySet()) {
-      entry.getValue().close();
+      try {
+        entry.getValue().close();
+      } catch (InterruptedException err) {
+        throw err;
+      } catch (Throwable t) {
+        LOG.warn(getName() + ": threw at closing writer", t);
+      }
     }
 
     //2) Clear cache
@@ -451,7 +457,13 @@ public class HiveSink extends AbstractSink implements Configurable {
    */
   private void abortAllWriters() throws InterruptedException {
     for (Entry<HiveEndPoint,HiveWriter> entry : allWriters.entrySet()) {
-      entry.getValue().abort();
+      try {
+        entry.getValue().abort();
+      } catch (InterruptedException err) {
+        throw err;
+      } catch (Throwable t) {
+        LOG.warn(getName() + ": threw at aborting writer", t);
+      }
     }
   }
 
