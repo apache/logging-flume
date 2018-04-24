@@ -192,8 +192,12 @@ class HiveWriter {
       hearbeatNeeded = false;
       heartBeat();
     }
-    lastUsed = System.currentTimeMillis();
 
+    // update lastUsed only if something written
+    if (rollToNext) {
+      lastUsed = System.currentTimeMillis();
+    }
+    
     try {
       //1 commit txn & close batch if needed
       commitTxn();
