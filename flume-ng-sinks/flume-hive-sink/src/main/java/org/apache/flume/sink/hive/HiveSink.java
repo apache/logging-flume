@@ -254,6 +254,9 @@ public class HiveSink extends AbstractSink implements Configurable {
       transaction.commit();
       success = true;
 
+      // & close idle writers
+      closeIdleWriters();
+      
       // 3 Update Counters
       if (txnEventCount < 1) {
         return Status.BACKOFF;
