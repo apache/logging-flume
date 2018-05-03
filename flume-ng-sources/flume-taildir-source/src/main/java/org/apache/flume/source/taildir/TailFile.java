@@ -202,7 +202,10 @@ public class TailFile {
         }
       }
       for (int i = bufferPos; i < buffer.length; i++) {
-        if (buffer[i] == BYTE_NL) {
+        // linux file end with BYTE_NL,
+        // but windows file end with BYTE_NL , we can check filePointer == fileLength
+        // otherwise windows file may lost last end line
+        if (buffer[i] == BYTE_NL || (i == buffer.length - 1 && raf.getFilePointer() == raf.length())) {
           int oldLen = oldBuffer.length;
           // Don't copy last byte(NEW_LINE)
           int lineLen = i - bufferPos;
