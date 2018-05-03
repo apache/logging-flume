@@ -108,6 +108,7 @@ public class Application {
 
   public void stop() {
     lifecycleLock.lock();
+    stopAllComponents();
     try {
       supervisor.stop();
       if (monitorServer != null) {
