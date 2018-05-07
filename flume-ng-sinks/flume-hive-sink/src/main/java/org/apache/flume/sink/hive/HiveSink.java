@@ -58,7 +58,7 @@ public class HiveSink extends AbstractSink implements Configurable {
   private static final int DEFAULT_TXNSPERBATCH = 100;
   private static final int DEFAULT_BATCHSIZE = 15000;
   private static final int DEFAULT_CALLTIMEOUT = 10000;
-  private static final int DEFAULT_IDLETIMEOUT = 0;
+  private static final int DEFAULT_IDLETIMEOUT = 10000;
   private static final int DEFAULT_HEARTBEATINTERVAL = 240; // seconds
 
   private Map<HiveEndPoint, HiveWriter> allWriters;
