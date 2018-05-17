@@ -200,11 +200,10 @@ class HiveWriter {
     
     try {
       //1 commit txn & close batch if needed
-      commitTxn();
-      if (txnBatch.remainingTransactions() == 0) {
-        closeTxnBatch();
-        txnBatch = null;
-        if (rollToNext) {
+      if (rollToNext) {
+        commitTxn();
+        if (txnBatch.remainingTransactions() == 0) {
+          closeTxnBatch();
           txnBatch = nextTxnBatch(recordWriter);
         }
       }
