@@ -134,7 +134,7 @@ public class TestHiveWriter {
                                        serializer, sinkCounter);
 
     writeEvents(writer,3);
-    writer.flush(false);
+    writer.flush(true);
     writer.close();
     checkRecordCountInTable(3);
   }
@@ -240,7 +240,7 @@ public class TestHiveWriter {
     writer.write(event);
     event.setBody("3,Hello world 3".getBytes());
     writer.write(event);
-    writer.flush(false);
+    writer.flush(true);
     writer.close();
   }
 
@@ -302,9 +302,9 @@ public class TestHiveWriter {
     HiveWriter writer2 = new HiveWriter(endPoint2, 10, true, timeout, callTimeoutPool, "flumetest",
                                         serializer, sinkCounter2);
     writeEvents(writer2, 3);
-    writer2.flush(false); // commit
+    writer2.flush(true); // commit
 
-    writer1.flush(false); // commit
+    writer1.flush(true); // commit
     writer1.close();
 
     writer2.close();
@@ -327,13 +327,13 @@ public class TestHiveWriter {
 
     writeEvents(writer1, 3);
 
-    writer1.flush(false); // commit
+    writer1.flush(true); // commit
 
 
     HiveWriter writer2 = new HiveWriter(endPoint2, 10, true, timeout, callTimeoutPool, "flumetest",
                                         serializer, sinkCounter2);
     writeEvents(writer2, 3);
-    writer2.flush(false); // commit
+    writer2.flush(true); // commit
 
 
     writer1.close();
