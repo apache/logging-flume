@@ -69,7 +69,8 @@ public class TestTaildirEventReader {
   }
 
   private ReliableTaildirEventReader getReader(Map<String, String> filePaths,
-      Table<String, String, String> headerTable, boolean addByteOffset) {
+      Table<String, String, String> headerTable, boolean addByteOffset,
+                                               boolean cachedPatternMatching) {
     ReliableTaildirEventReader reader;
     try {
       reader = new ReliableTaildirEventReader.Builder()
@@ -78,6 +79,7 @@ public class TestTaildirEventReader {
           .positionFilePath(posFilePath)
           .skipToEnd(false)
           .addByteOffset(addByteOffset)
+          .cachePatternMatching(cachedPatternMatching)
           .build();
       reader.updateTailFiles();
     } catch (IOException ioe) {
@@ -86,15 +88,16 @@ public class TestTaildirEventReader {
     return reader;
   }
 
-  private ReliableTaildirEventReader getReader(boolean addByteOffset) {
+  private ReliableTaildirEventReader getReader(boolean addByteOffset,
+                                               boolean cachedPatternMatching) {
     Map<String, String> filePaths = ImmutableMap.of("testFiles",
                                                     tmpDir.getAbsolutePath() + "/file.*");
     Table<String, String, String> headerTable = HashBasedTable.create();
-    return getReader(filePaths, headerTable, addByteOffset);
+    return getReader(filePaths, headerTable, addByteOffset, cachedPatternMatching);
   }
 
   private ReliableTaildirEventReader getReader() {
-    return getReader(false);
+    return getReader(false, false);
   }
 
   @Before
@@ -154,6 +157,23 @@ public class TestTaildirEventReader {
     assertEquals(8, out.size());
     assertTrue(out.contains("file3line3"));
     assertTrue(out.contains("file3line4"));
+  }
+
+  @Test
+  // Tests deleting a file
+  public void testDeleteFiles() throws IOException {
+    File f1 = new File(tmpDir, "file1");
+    Files.write("file1line1\nfile1line2\n", f1, Charsets.UTF_8);
+
+    // Caching is used to be able to reproduce the problem when a file is deleted
+    // right before the inode is fetched
+    ReliableTaildirEventReader reader = getReader(false, true);
+
+    File dir = f1.getParentFile();
+    long lastModified = dir.lastModified();
+    f1.delete();
+    dir.setLastModified(lastModified - 1000); //substract a second to be sure the cache is used
+    reader.updateTailFiles();
   }
 
   @Test
@@ -459,7 +479,7 @@ public class TestTaildirEventReader {
     String line3 = "file1line3\n";
     Files.write(line1 + line2 + line3, f1, Charsets.UTF_8);
 
-    ReliableTaildirEventReader reader = getReader(true);
+    ReliableTaildirEventReader reader = getReader(true, false);
     List<String> headers = null;
     for (TailFile tf : reader.getTailFiles().values()) {
       headers = headersAsStrings(reader.readEvents(tf, 5), BYTE_OFFSET_HEADER_KEY);
