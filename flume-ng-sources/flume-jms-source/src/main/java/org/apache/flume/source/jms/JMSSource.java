@@ -133,7 +133,7 @@ public class JMSSource extends AbstractPollableSource {
     String passwordFile = context.getString(JMSSourceConfiguration.PASSWORD_FILE, "").trim();
 
     if (passwordFile.isEmpty()) {
-      password = Optional.of("");
+      password = Optional.absent();
     } else {
       try {
         password = Optional.of(Files.toString(new File(passwordFile),
