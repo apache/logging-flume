@@ -1005,7 +1005,8 @@ This source will watch the specified directory for new files, and will parse
 events out of new files as they appear.
 The event parsing logic is pluggable.
 After a given file has been fully read
-into the channel, it is renamed to indicate completion (or optionally deleted).
+into the channel, completion by default is indicated by renaming the file or it can be deleted or the trackerDir is used
+to keep track of processed files.
 
 Unlike the Exec source, this source is reliable and will not miss data, even if
 Flume is restarted or killed. In exchange for this reliability, only immutable,
@@ -1047,6 +1048,11 @@ ignorePattern             ^$              Regular expression specifying which fi
                                           the file is ignored.
 trackerDir                .flumespool     Directory to store metadata related to processing of files.
                                           If this path is not an absolute path, then it is interpreted as relative to the spoolDir.
+trackingPolicy            rename          The tracking policy defines how file processign is tracked. It can be "rename" or
+                                          "tracker_dir". This parameter is only effective if the deletePolicy is "never".
+                                          "rename" - After processing files they get renamed according to the fileSuffix parameter.
+                                          "tracker_dir" - Files are not renemad but a new empty file is created in the trackerDir.
+                                          The new tracker file name is derived from the ingested one plus the fileSuffix.
 consumeOrder              oldest          In which order files in the spooling directory will be consumed ``oldest``,
                                           ``youngest`` and ``random``. In case of ``oldest`` and ``youngest``, the last modified
                                           time of the files will be used to compare the files. In case of a tie, the file

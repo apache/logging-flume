@@ -17,6 +17,8 @@
 
 package org.apache.flume.source;
 
+import org.apache.flume.client.avro.ReliableSpoolingFileEventReader;
+import org.apache.flume.client.avro.ReliableSpoolingFileEventReader.TrackingPolicy;
 import org.apache.flume.serialization.DecodeErrorPolicy;
 
 public class SpoolDirectorySourceConfigurationConstants {
@@ -77,6 +79,9 @@ public class SpoolDirectorySourceConfigurationConstants {
 
   public static final String DELETE_POLICY = "deletePolicy";
   public static final String DEFAULT_DELETE_POLICY = "never";
+
+  public static final String TRACKING_POLICY = "trackingPolicy";
+  public static final String DEFAULT_TRACKING_POLICY = TrackingPolicy.RENAME.name();
 
   /** Character set used when reading the input. */
   public static final String INPUT_CHARSET = "inputCharset";
