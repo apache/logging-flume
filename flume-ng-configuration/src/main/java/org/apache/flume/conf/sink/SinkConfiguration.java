@@ -140,7 +140,7 @@ public class SinkConfiguration extends ComponentConfiguration {
      *
      * @see org.apache.flume.sink.hbase2.HBase2Sink
      */
-    HBASE2("org.apache.flume.sink.hbase2.HBase2Sink"),
+    HBASE2("org.apache.flume.sink.hbase2.HBase2SinkConfiguration"),
 
     /**
      * MorphlineSolr sink
