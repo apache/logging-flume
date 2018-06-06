@@ -154,6 +154,10 @@
     </dependency>
     <dependency>
       <groupId>org.apache.flume.flume-ng-sinks</groupId>
+      <artifactId>flume-ng-hbase2-sink</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flume.flume-ng-sinks</groupId>
       <artifactId>flume-http-sink</artifactId>
     </dependency>
     <dependency>
