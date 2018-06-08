@@ -2532,6 +2532,46 @@ Example for agent named a1:
   a1.sinks.k1.serializer = org.apache.flume.sink.hbase.RegexHbaseEventSerializer
   a1.sinks.k1.channel = c1
 
+HBase2Sink
+''''''''''
+
+HBase2Sink is the equivalent of HBaseSink for HBase version 2.
+The provided functionality and the configuration parameters are the same as in case of HBaseSink (except the hbase2 tag in the sink type and the package/class names).
+
+The type is the FQCN: org.apache.flume.sink.hbase2.HBase2Sink.
+
+Required properties are in **bold**.
+
+==================  ========================================================  ==============================================================================
+Property Name       Default                                                   Description
+==================  ========================================================  ==============================================================================
+**channel**         --
+**type**            --                                                        The component type name, needs to be ``hbase2``
+**table**           --                                                        The name of the table in HBase to write to.
+**columnFamily**    --                                                        The column family in HBase to write to.
+zookeeperQuorum     --                                                        The quorum spec. This is the value for the property ``hbase.zookeeper.quorum`` in hbase-site.xml
+znodeParent         /hbase                                                    The base path for the znode for the -ROOT- region. Value of ``zookeeper.znode.parent`` in hbase-site.xml
+batchSize           100                                                       Number of events to be written per txn.
+coalesceIncrements  false                                                     Should the sink coalesce multiple increments to a cell per batch. This might give
+                                                                              better performance if there are multiple increments to a limited number of cells.
+serializer          org.apache.flume.sink.hbase2.SimpleHBase2EventSerializer  Default increment column = "iCol", payload column = "pCol".
+serializer.*        --                                                        Properties to be passed to the serializer.
+kerberosPrincipal   --                                                        Kerberos user principal for accessing secure HBase
+kerberosKeytab      --                                                        Kerberos keytab for accessing secure HBase
+==================  ========================================================  ==============================================================================
+
+Example for agent named a1:
+
+.. code-block:: properties
+
+  a1.channels = c1
+  a1.sinks = k1
+  a1.sinks.k1.type = hbase2
+  a1.sinks.k1.table = foo_table
+  a1.sinks.k1.columnFamily = bar_cf
+  a1.sinks.k1.serializer = org.apache.flume.sink.hbase2.RegexHBase2EventSerializer
+  a1.sinks.k1.channel = c1
+
 AsyncHBaseSink
 ''''''''''''''
 
@@ -2542,6 +2582,7 @@ to HBase. This sink uses the `Asynchbase API <https://github.com/OpenTSDB/asynch
 HBase. This sink provides the same consistency guarantees as HBase,
 which is currently row-wise atomicity. In the event of Hbase failing to
 write certain events, the sink will replay all events in that transaction.
+AsyncHBaseSink can only be used with HBase 1.x. The async client library used by AsyncHBaseSink is not available for HBase 2.
 The type is the FQCN: org.apache.flume.sink.hbase.AsyncHBaseSink.
 Required properties are in **bold**.
 
@@ -4990,6 +5031,7 @@ org.apache.flume.Sink                                         logger            
 org.apache.flume.Sink                                         avro                    org.apache.flume.sink.AvroSink
 org.apache.flume.Sink                                         hdfs                    org.apache.flume.sink.hdfs.HDFSEventSink
 org.apache.flume.Sink                                         hbase                   org.apache.flume.sink.hbase.HBaseSink
+org.apache.flume.Sink                                         hbase2                  org.apache.flume.sink.hbase2.HBase2Sink
 org.apache.flume.Sink                                         asynchbase              org.apache.flume.sink.hbase.AsyncHBaseSink
 org.apache.flume.Sink                                         elasticsearch           org.apache.flume.sink.elasticsearch.ElasticSearchSink
 org.apache.flume.Sink                                         file_roll               org.apache.flume.sink.RollingFileSink
