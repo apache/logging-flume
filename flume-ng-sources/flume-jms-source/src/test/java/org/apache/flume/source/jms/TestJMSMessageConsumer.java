@@ -175,4 +175,68 @@ public class TestJMSMessageConsumer extends JMSMessageConsumerTestBase {
     verify(session, times(1)).createDurableSubscriber(topic, name, messageSelector, true);
   }
 
+  @Test(expected = JMSException.class)
+  public void testTakeFailsDueToJMSExceptionFromReceive() throws JMSException {
+    when(messageConsumer.receive(anyLong())).thenThrow(new JMSException(""));
+    consumer = create();
+
+    consumer.take();
+  }
+
+  @Test(expected = JMSException.class)
+  public void testTakeFailsDueToRuntimeExceptionFromReceive() throws JMSException {
+    when(messageConsumer.receive(anyLong())).thenThrow(new RuntimeException());
+    consumer = create();
+
+    consumer.take();
+  }
+
+  @Test(expected = JMSException.class)
+  public void testTakeFailsDueToJMSExceptionFromReceiveNoWait() throws JMSException {
+    when(messageConsumer.receiveNoWait()).thenThrow(new JMSException(""));
+    consumer = create();
+
+    consumer.take();
+  }
+
+  @Test(expected = JMSException.class)
+  public void testTakeFailsDueToRuntimeExceptionFromReceiveNoWait() throws JMSException {
+    when(messageConsumer.receiveNoWait()).thenThrow(new RuntimeException());
+    consumer = create();
+
+    consumer.take();
+  }
+
+  @Test
+  public void testCommitFailsDueToJMSException() throws JMSException {
+    doThrow(new JMSException("")).when(session).commit();
+    consumer = create();
+
+    consumer.commit();
+  }
+
+  @Test
+  public void testCommitFailsDueToRuntimeException() throws JMSException {
+    doThrow(new RuntimeException()).when(session).commit();
+    consumer = create();
+
+    consumer.commit();
+  }
+
+  @Test
+  public void testRollbackFailsDueToJMSException() throws JMSException {
+    doThrow(new JMSException("")).when(session).rollback();
+    consumer = create();
+
+    consumer.rollback();
+  }
+
+  @Test
+  public void testRollbackFailsDueToRuntimeException() throws JMSException {
+    doThrow(new RuntimeException()).when(session).rollback();
+    consumer = create();
+
+    consumer.rollback();
+  }
+
 }
