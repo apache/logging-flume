@@ -19,6 +19,7 @@ package org.apache.flume.sink.kite;
 
 import org.apache.flume.auth.FlumeAuthenticationUtil;
 import org.apache.flume.auth.PrivilegedExecutor;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.sink.kite.parser.EntityParserFactory;
 import org.apache.flume.sink.kite.parser.EntityParser;
 import org.apache.flume.sink.kite.policy.FailurePolicy;
@@ -69,7 +70,7 @@ import org.kitesdk.data.Formats;
  * and loading a Dataset by name, {@code kite.dataset.name}, and namespace,
  * {@code kite.dataset.namespace}.
  */
-public class DatasetSink extends AbstractSink implements Configurable {
+public class DatasetSink extends AbstractSink implements Configurable, BatchSizeSupported {
 
   private static final Logger LOG = LoggerFactory.getLogger(DatasetSink.class);
 
@@ -578,5 +579,10 @@ public class DatasetSink extends AbstractSink implements Configurable {
   private static String uriToName(URI uri) {
     return Registration.lookupDatasetUri(URI.create(
         uri.getRawSchemeSpecificPart())).second().get("dataset");
+  }
+
+  @Override
+  public long getBatchSize() {
+    return batchSize;
   }
 }

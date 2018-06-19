@@ -40,6 +40,7 @@ import org.apache.flume.channel.file.encryption.EncryptionConfiguration;
 import org.apache.flume.channel.file.encryption.KeyProvider;
 import org.apache.flume.channel.file.encryption.KeyProviderFactory;
 import org.apache.flume.channel.file.instrumentation.FileChannelCounter;
+import org.apache.flume.conf.TransactionCapacitySupported;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,7 +74,7 @@ import java.util.concurrent.TimeUnit;
 @InterfaceAudience.Private
 @InterfaceStability.Stable
 @Disposable
-public class FileChannel extends BasicChannelSemantics {
+public class FileChannel extends BasicChannelSemantics implements TransactionCapacitySupported {
 
   private static final Logger LOG = LoggerFactory.getLogger(FileChannel.class);
 
@@ -442,6 +443,11 @@ public class FileChannel extends BasicChannelSemantics {
   @VisibleForTesting
   FileChannelCounter getChannelCounter() {
     return channelCounter;
+  }
+
+  @Override
+  public long getTransactionCapacity() {
+    return transactionCapacity;
   }
 
   /**

@@ -29,6 +29,7 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Transaction;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.conf.LogPrivacyUtil;
@@ -102,7 +103,7 @@ import static org.apache.flume.sink.kafka.KafkaSinkConstants.MESSAGE_SERIALIZER_
  * topic
  * key
  */
-public class KafkaSink extends AbstractSink implements Configurable {
+public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSupported {
 
   private static final Logger logger = LoggerFactory.getLogger(KafkaSink.class);
 
@@ -136,7 +137,7 @@ public class KafkaSink extends AbstractSink implements Configurable {
     return topic;
   }
 
-  public int getBatchSize() {
+  public long getBatchSize() {
     return batchSize;
   }
 

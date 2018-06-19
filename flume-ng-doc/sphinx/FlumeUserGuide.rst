@@ -2440,7 +2440,7 @@ sink.pathManager.extension  --       The file extension if the default PathManag
 sink.pathManager.prefix     --       A character string to add to the beginning of the file name if the default PathManager is used
 sink.rollInterval           30       Roll the file every 30 seconds. Specifying 0 will disable rolling and cause all events to be written to a single file.
 sink.serializer             TEXT     Other possible options include ``avro_event`` or the FQCN of an implementation of EventSerializer.Builder interface.
-batchSize                   100
+sink.batchSize              100
 ==========================  =======  ======================================================================================================================
 
 Example for agent named a1:
