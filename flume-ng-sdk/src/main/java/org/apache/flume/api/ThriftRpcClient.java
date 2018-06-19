@@ -72,7 +72,6 @@ public class ThriftRpcClient extends AbstractRpcClient {
   public static final String BINARY_PROTOCOL = "binary";
   public static final String COMPACT_PROTOCOL = "compact";
 
-  private int batchSize;
   private long requestTimeout;
   private final Lock stateLock;
   private State connState;
@@ -105,12 +104,6 @@ public class ThriftRpcClient extends AbstractRpcClient {
         return t;
       }
     });
-  }
-
-
-  @Override
-  public int getBatchSize() {
-    return batchSize;
   }
 
   @Override
@@ -299,9 +292,7 @@ public class ThriftRpcClient extends AbstractRpcClient {
             + "choose from. Defaulting to 'compact'.");
         protocol = COMPACT_PROTOCOL;
       }
-      batchSize = Integer.parseInt(properties.getProperty(
-          RpcClientConfigurationConstants.CONFIG_BATCH_SIZE,
-          RpcClientConfigurationConstants.DEFAULT_BATCH_SIZE.toString()));
+      batchSize = parseBatchSize(properties);
       requestTimeout = Long.parseLong(properties.getProperty(
           RpcClientConfigurationConstants.CONFIG_REQUEST_TIMEOUT,
           String.valueOf(

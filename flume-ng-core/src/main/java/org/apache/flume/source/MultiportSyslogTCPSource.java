@@ -34,6 +34,7 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.channel.ChannelProcessor;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.LogPrivacyUtil;
 import org.apache.flume.event.EventBuilder;
@@ -50,7 +51,7 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class MultiportSyslogTCPSource extends AbstractSource implements
-        EventDrivenSource, Configurable {
+        EventDrivenSource, Configurable, BatchSizeSupported {
 
   public static final Logger logger = LoggerFactory.getLogger(
           MultiportSyslogTCPSource.class);
@@ -206,6 +207,11 @@ public class MultiportSyslogTCPSource extends AbstractSource implements
   @Override
   public String toString() {
     return "Multiport Syslog TCP source " + getName();
+  }
+
+  @Override
+  public long getBatchSize() {
+    return batchSize;
   }
 
   static class MultiportSyslogHandler extends IoHandlerAdapter {

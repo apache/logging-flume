@@ -25,6 +25,7 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.instrumentation.SourceCounter;
@@ -35,7 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SequenceGeneratorSource extends AbstractPollableSource implements
-        Configurable {
+        Configurable, BatchSizeSupported {
 
   private static final Logger logger = LoggerFactory
       .getLogger(SequenceGeneratorSource.class);
@@ -115,4 +116,8 @@ public class SequenceGeneratorSource extends AbstractPollableSource implements
     logger.info("Sequence generator source do stopped. Metrics:{}",getName(), sourceCounter);
   }
 
+  @Override
+  public long getBatchSize() {
+    return batchSize;
+  }
 }

@@ -492,24 +492,7 @@ public class NettyAvroRpcClient extends AbstractRpcClient implements RpcClient {
       stateLock.unlock();
     }
 
-    // batch size
-    String strBatchSize = properties.getProperty(
-        RpcClientConfigurationConstants.CONFIG_BATCH_SIZE);
-    logger.debug("Batch size string = " + strBatchSize);
-    batchSize = RpcClientConfigurationConstants.DEFAULT_BATCH_SIZE;
-    if (strBatchSize != null && !strBatchSize.isEmpty()) {
-      try {
-        int parsedBatch = Integer.parseInt(strBatchSize);
-        if (parsedBatch < 1) {
-          logger.warn("Invalid value for batchSize: {}; Using default value.", parsedBatch);
-        } else {
-          batchSize = parsedBatch;
-        }
-      } catch (NumberFormatException e) {
-        logger.warn("Batchsize is not valid for RpcClient: " + strBatchSize +
-            ". Default value assigned.", e);
-      }
-    }
+    batchSize = parseBatchSize(properties);
 
     // host and port
     String hostNames = properties.getProperty(
