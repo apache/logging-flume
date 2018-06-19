@@ -44,10 +44,12 @@ import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.ChannelSelectorFactory;
 import org.apache.flume.channel.DefaultChannelFactory;
 import org.apache.flume.conf.BasicConfigurationConstants;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.ComponentConfiguration;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.conf.FlumeConfiguration;
 import org.apache.flume.conf.FlumeConfiguration.AgentConfiguration;
+import org.apache.flume.conf.TransactionCapacitySupported;
 import org.apache.flume.conf.channel.ChannelSelectorConfiguration;
 import org.apache.flume.conf.sink.SinkConfiguration;
 import org.apache.flume.conf.sink.SinkGroupConfiguration;
@@ -278,7 +280,12 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
           for (String chName : channelNames) {
             ChannelComponent channelComponent = channelComponentMap.get(chName);
             if (channelComponent != null) {
-              sourceChannels.add(channelComponent.channel);
+              try {
+                checkSourceChannelCompatibility(source, channelComponent.channel);
+                sourceChannels.add(channelComponent.channel);
+              } catch (InstantiationException e) {
+                LOGGER.error("Source - channel compatibility problem", e);
+              }
             }
           }
           if (sourceChannels.isEmpty()) {
@@ -330,7 +337,12 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
           for (String chName : channelNames) {
             ChannelComponent channelComponent = channelComponentMap.get(chName);
             if (channelComponent != null) {
-              sourceChannels.add(channelComponent.channel);
+              try {
+                checkSourceChannelCompatibility(source, channelComponent.channel);
+                sourceChannels.add(channelComponent.channel);
+              } catch (InstantiationException e) {
+                LOGGER.error("Source - channel compatibility problem", e);
+              }
             }
           }
           if (sourceChannels.isEmpty()) {
@@ -364,6 +376,40 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
     }
   }
 
+  private void checkSourceChannelCompatibility(Source source, Channel channel)
+      throws InstantiationException {
+    if (source instanceof BatchSizeSupported && channel instanceof TransactionCapacitySupported) {
+      long transCap = ((TransactionCapacitySupported) channel).getTransactionCapacity();
+      long batchSize = ((BatchSizeSupported) source).getBatchSize();
+      if (transCap < batchSize) {
+        String msg = String.format(
+            "Incompatible source and channel settings defined. " +
+                "source's batch size is greater than the channels transaction capacity. " +
+                "Source: %s, batch size = %d, channel %s, transaction capacity = %d",
+            source.getName(), batchSize,
+            channel.getName(), transCap);
+        throw new InstantiationException(msg);
+      }
+    }
+  }
+
+  private void checkSinkChannelCompatibility(Sink sink, Channel channel)
+      throws InstantiationException {
+    if (sink instanceof BatchSizeSupported && channel instanceof TransactionCapacitySupported) {
+      long transCap = ((TransactionCapacitySupported) channel).getTransactionCapacity();
+      long batchSize = ((BatchSizeSupported) sink).getBatchSize();
+      if (transCap < batchSize) {
+        String msg = String.format(
+            "Incompatible sink and channel settings defined. " +
+                "sink's batch size is greater than the channels transaction capacity. " +
+                "Sink: %s, batch size = %d, channel %s, transaction capacity = %d",
+            sink.getName(), batchSize,
+            channel.getName(), transCap);
+        throw new InstantiationException(msg);
+      }
+    }
+  }
+
   private void loadSinks(AgentConfiguration agentConf,
       Map<String, ChannelComponent> channelComponentMap, Map<String, SinkRunner> sinkRunnerMap)
       throws InstantiationException {
@@ -387,6 +433,7 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
                 "channel",  sinkName);
             throw new IllegalStateException(msg);
           }
+          checkSinkChannelCompatibility(sink, channelComponent.channel);
           sink.setChannel(channelComponent.channel);
           sinks.put(comp.getComponentName(), sink);
           channelComponent.components.add(sinkName);
@@ -417,6 +464,7 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
                 "channel",  sinkName);
             throw new IllegalStateException(msg);
           }
+          checkSinkChannelCompatibility(sink, channelComponent.channel);
           sink.setChannel(channelComponent.channel);
           sinks.put(sinkName, sink);
           channelComponent.components.add(sinkName);

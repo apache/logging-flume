@@ -33,6 +33,7 @@ import org.apache.flume.Transaction;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.auth.FlumeAuthenticationUtil;
 import org.apache.flume.auth.PrivilegedExecutor;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.instrumentation.SinkCounter;
@@ -90,7 +91,7 @@ import java.util.NavigableMap;
  * multiple increments are returned by the serializer, then HBase failure
  * will cause them to be re-written, when HBase comes back up.
  */
-public class HBaseSink extends AbstractSink implements Configurable {
+public class HBaseSink extends AbstractSink implements Configurable, BatchSizeSupported {
   private String tableName;
   private byte[] columnFamily;
   private HTable table;
@@ -553,6 +554,11 @@ public class HBaseSink extends AbstractSink implements Configurable {
   @InterfaceAudience.Private
   HbaseEventSerializer getSerializer() {
     return serializer;
+  }
+
+  @Override
+  public long getBatchSize() {
+    return batchSize;
   }
 
   @VisibleForTesting

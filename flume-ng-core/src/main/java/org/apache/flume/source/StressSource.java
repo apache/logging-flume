@@ -29,6 +29,7 @@ import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.event.EventBuilder;
 import org.slf4j.Logger;
@@ -53,7 +54,8 @@ import org.slf4j.LoggerFactory;
  *
  * See {@link StressSource#configure(Context)} for configuration options.
  */
-public class StressSource extends AbstractPollableSource implements Configurable {
+public class StressSource extends AbstractPollableSource
+        implements Configurable, BatchSizeSupported {
 
   private static final Logger logger = LoggerFactory.getLogger(StressSource.class);
 
@@ -152,5 +154,10 @@ public class StressSource extends AbstractPollableSource implements Configurable
   @Override
   protected void doStop() throws FlumeException {
     logger.info("Stress source do stop. Metrics:{}", counterGroup);
+  }
+
+  @Override
+  public long getBatchSize() {
+    return batchSize;
   }
 }

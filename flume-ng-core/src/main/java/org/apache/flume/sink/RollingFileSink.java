@@ -31,6 +31,7 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Transaction;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.formatter.output.PathManager;
 import org.apache.flume.formatter.output.PathManagerFactory;
@@ -43,7 +44,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.flume.serialization.EventSerializer;
 import org.apache.flume.serialization.EventSerializerFactory;
 
-public class RollingFileSink extends AbstractSink implements Configurable {
+public class RollingFileSink extends AbstractSink implements Configurable, BatchSizeSupported {
 
   private static final Logger logger = LoggerFactory
       .getLogger(RollingFileSink.class);
@@ -283,4 +284,8 @@ public class RollingFileSink extends AbstractSink implements Configurable {
     this.rollInterval = rollInterval;
   }
 
+  @Override
+  public long getBatchSize() {
+    return batchSize;
+  }
 }

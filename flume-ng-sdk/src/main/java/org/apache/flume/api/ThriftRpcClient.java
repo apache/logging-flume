@@ -107,12 +107,6 @@ public class ThriftRpcClient extends AbstractRpcClient {
     });
   }
 
-
-  @Override
-  public int getBatchSize() {
-    return batchSize;
-  }
-
   @Override
   public void append(Event event) throws EventDeliveryException {
     // Thrift IPC client is not thread safe, so don't allow state changes or
@@ -299,9 +293,7 @@ public class ThriftRpcClient extends AbstractRpcClient {
             + "choose from. Defaulting to 'compact'.");
         protocol = COMPACT_PROTOCOL;
       }
-      batchSize = Integer.parseInt(properties.getProperty(
-          RpcClientConfigurationConstants.CONFIG_BATCH_SIZE,
-          RpcClientConfigurationConstants.DEFAULT_BATCH_SIZE.toString()));
+      batchSize = parseBatchSize(properties);
       requestTimeout = Long.parseLong(properties.getProperty(
           RpcClientConfigurationConstants.CONFIG_REQUEST_TIMEOUT,
           String.valueOf(

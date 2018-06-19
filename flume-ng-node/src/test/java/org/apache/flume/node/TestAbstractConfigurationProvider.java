@@ -185,6 +185,36 @@ public class TestAbstractConfigurationProvider {
     Assert.assertTrue(config.getSinkRunners().size() == 0);
   }
 
+  @Test
+  public void testSinkSourceMismatchDuringConfiguration() throws Exception {
+    String agentName = "agent1";
+    String sourceType = "seq";
+    String channelType = "memory";
+    String sinkType = "avro";
+    Map<String, String> properties = getProperties(agentName, sourceType,
+        channelType, sinkType);
+    properties.put(agentName + ".sources.source1.batchSize", "100");
+    properties.put(agentName + ".sinks.sink1.batch-size", "100");
+    properties.put(agentName + ".sinks.sink1.hostname", "10.10.10.10");
+    properties.put(agentName + ".sinks.sink1.port", "1010");
+
+    MemoryConfigurationProvider provider =
+        new MemoryConfigurationProvider(agentName, properties);
+    MaterializedConfiguration config = provider.getConfiguration();
+    Assert.assertTrue(config.getSourceRunners().size() == 1);
+    Assert.assertTrue(config.getChannels().size() == 1);
+    Assert.assertTrue(config.getSinkRunners().size() == 1);
+
+    properties.put(agentName + ".sources.source1.batchSize", "1001");
+    properties.put(agentName + ".sinks.sink1.batch-size", "1001");
+
+    provider = new MemoryConfigurationProvider(agentName, properties);
+    config = provider.getConfiguration();
+    Assert.assertTrue(config.getSourceRunners().size() == 0);
+    Assert.assertTrue(config.getChannels().size() == 0);
+    Assert.assertTrue(config.getSinkRunners().size() == 0);
+  }
+
   private Map<String, String> getProperties(String agentName,
                                             String sourceType, String channelType,
                                             String sinkType) {

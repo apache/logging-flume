@@ -30,8 +30,10 @@ import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
 import org.apache.flume.Transaction;
+import org.apache.flume.api.AbstractRpcClient;
 import org.apache.flume.api.RpcClient;
 import org.apache.flume.api.RpcClientConfigurationConstants;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.instrumentation.SinkCounter;
 import org.slf4j.Logger;
@@ -141,7 +143,8 @@ import java.util.concurrent.locks.ReentrantLock;
  * This method will be called whenever this sink needs to create a new
  * connection to the source.
  */
-public abstract class AbstractRpcSink extends AbstractSink implements Configurable {
+public abstract class AbstractRpcSink extends AbstractSink implements Configurable,
+    BatchSizeSupported {
 
   private static final Logger logger = LoggerFactory.getLogger(AbstractRpcSink.class);
   private String hostname;
@@ -155,6 +158,8 @@ public abstract class AbstractRpcSink extends AbstractSink implements Configurab
   private final ScheduledExecutorService cxnResetExecutor =
       Executors.newSingleThreadScheduledExecutor(
           new ThreadFactoryBuilder().setNameFormat("Rpc Sink Reset Thread").build());
+  private int batchSize;
+
 
   @Override
   public void configure(Context context) {
@@ -173,6 +178,8 @@ public abstract class AbstractRpcSink extends AbstractSink implements Configurab
     for (Entry<String, String> entry: context.getParameters().entrySet()) {
       clientProps.setProperty(entry.getKey(), entry.getValue());
     }
+
+    batchSize = AbstractRpcClient.parseBatchSize(clientProps);
 
     if (sinkCounter == null) {
       sinkCounter = new SinkCounter(getName());
@@ -398,5 +405,10 @@ public abstract class AbstractRpcSink extends AbstractSink implements Configurab
   @VisibleForTesting
   RpcClient getUnderlyingClient() {
     return client;
+  }
+
+  @Override
+  public long getBatchSize() {
+    return batchSize;
   }
 }

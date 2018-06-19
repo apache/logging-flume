@@ -41,6 +41,7 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.conf.LogPrivacyUtil;
@@ -94,7 +95,7 @@ import static scala.collection.JavaConverters.asJavaListConverter;
  * <p>
  */
 public class KafkaSource extends AbstractPollableSource
-        implements Configurable {
+        implements Configurable, BatchSizeSupported {
   private static final Logger log = LoggerFactory.getLogger(KafkaSource.class);
 
   // Constants used only for offset migration zookeeper connections
@@ -129,6 +130,11 @@ public class KafkaSource extends AbstractPollableSource
   private boolean migrateZookeeperOffsets = DEFAULT_MIGRATE_ZOOKEEPER_OFFSETS;
   private String topicHeader = null;
   private boolean setTopicHeader;
+
+  @Override
+  public long getBatchSize() {
+    return batchUpperLimit;
+  }
 
   /**
    * This class is a helper to subscribe for topics by using

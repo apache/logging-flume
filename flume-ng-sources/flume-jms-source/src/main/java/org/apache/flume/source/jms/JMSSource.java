@@ -36,6 +36,7 @@ import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.source.AbstractPollableSource;
@@ -50,7 +51,7 @@ import com.google.common.io.Files;
 
 @InterfaceAudience.Private
 @InterfaceStability.Unstable
-public class JMSSource extends AbstractPollableSource {
+public class JMSSource extends AbstractPollableSource implements BatchSizeSupported {
   private static final Logger logger = LoggerFactory.getLogger(JMSSource.class);
 
   // setup by constructor
@@ -354,5 +355,10 @@ public class JMSSource extends AbstractPollableSource {
         createDurableSubscription, durableSubscriptionName);
     jmsExceptionCounter = 0;
     return consumer;
+  }
+
+  @Override
+  public long getBatchSize() {
+    return batchSize;
   }
 }

@@ -39,6 +39,7 @@ import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.source.AbstractSource;
@@ -68,7 +69,7 @@ import twitter4j.auth.AccessToken;
 @InterfaceStability.Unstable
 public class TwitterSource
     extends AbstractSource
-    implements EventDrivenSource, Configurable, StatusListener {
+    implements EventDrivenSource, Configurable, StatusListener, BatchSizeSupported {
 
   private TwitterStream twitterStream;
   private Schema avroSchema;
@@ -324,5 +325,10 @@ public class TwitterSource
 
   public void onException(Exception e) {
     LOGGER.error("Exception while streaming tweets", e);
+  }
+
+  @Override
+  public long getBatchSize() {
+    return maxBatchSize;
   }
 }

@@ -43,6 +43,7 @@ import org.apache.flume.SystemClock;
 import org.apache.flume.Transaction;
 import org.apache.flume.auth.FlumeAuthenticationUtil;
 import org.apache.flume.auth.PrivilegedExecutor;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.formatter.output.BucketPath;
 import org.apache.flume.instrumentation.SinkCounter;
@@ -58,7 +59,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-public class HDFSEventSink extends AbstractSink implements Configurable {
+public class HDFSEventSink extends AbstractSink implements Configurable, BatchSizeSupported {
   public interface WriterCallback {
     public void run(String filePath);
   }
@@ -557,4 +558,10 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   int getTryCount() {
     return tryCount;
   }
+
+  @Override
+  public long getBatchSize() {
+    return batchSize;
+  }
+
 }

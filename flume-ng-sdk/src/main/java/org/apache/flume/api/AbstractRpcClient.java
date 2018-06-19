@@ -24,8 +24,11 @@ import java.util.Properties;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class AbstractRpcClient implements RpcClient {
+  private static Logger logger = LoggerFactory.getLogger(AbstractRpcClient.class);
 
   protected int batchSize =
       RpcClientConfigurationConstants.DEFAULT_BATCH_SIZE;
@@ -60,5 +63,27 @@ public abstract class AbstractRpcClient implements RpcClient {
    */
   protected abstract void configure(Properties properties)
       throws FlumeException;
+
+  public static int parseBatchSize(Properties properties) {
+    String strBatchSize = properties.getProperty(
+        RpcClientConfigurationConstants.CONFIG_BATCH_SIZE);
+    logger.debug("Batch size string = " + strBatchSize);
+    int _batchSize = RpcClientConfigurationConstants.DEFAULT_BATCH_SIZE;
+    if (strBatchSize != null && !strBatchSize.isEmpty()) {
+      try {
+        int parsedBatch = Integer.parseInt(strBatchSize);
+        if (parsedBatch < 1) {
+          logger.warn("Invalid value for batchSize: {}; Using default value.", parsedBatch);
+        } else {
+          _batchSize = parsedBatch;
+        }
+      } catch (NumberFormatException e) {
+        logger.warn("Batchsize is not valid for RpcClient: " + strBatchSize +
+            ". Default value assigned.", e);
+      }
+    }
+
+    return _batchSize;
+  }
 
 }
