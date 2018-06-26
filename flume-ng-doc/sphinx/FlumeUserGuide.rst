@@ -14,9 +14,9 @@
    limitations under the License.
 
 
-======================================
+===============================
 Flume 1.9.0-SNAPSHOT User Guide
-======================================
+===============================
 
 Introduction
 ============
@@ -926,7 +926,7 @@ invoked directly.  Common values for 'shell' :  '/bin/sh -c', '/bin/ksh -c',
   a1.sources.tailsource-1.command = for i in /path/*.txt; do cat $i; done
 
 JMS Source
-~~~~~~~~~~~
+~~~~~~~~~~
 
 JMS Source reads messages from a JMS destination such as a queue or topic. Being a JMS
 application it should work with any JMS provider but has only been tested with ActiveMQ.
@@ -964,7 +964,7 @@ durableSubscriptionName     --           Name used to identify the durable subsc
 
 
 Converter
-'''''''''''
+'''''''''
 The JMS source allows pluggable converters, though it's likely the default converter will work
 for most purposes. The default converter is able to convert Bytes, Text, and Object messages
 to FlumeEvents. In all cases, the properties in the message are added as headers to the
@@ -1152,7 +1152,7 @@ deserializer.maxBlobLength  100000000           The maximum number of bytes to r
 ==========================  ==================  =======================================================================
 
 Taildir Source
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 .. note:: **This source is provided as a preview feature. It does not work on Windows.**
 
 Watch the specified files, and tail them in nearly real-time once detected new lines appended to the each files.
@@ -1253,7 +1253,7 @@ Example for agent named a1:
   a1.sources.r1.maxBatchDurationMillis = 200
 
 Kafka Source
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~
 
 Kafka Source is an Apache Kafka consumer that reads messages from Kafka topics.
 If you have multiple Kafka sources running, you can configure them with the same Consumer Group
@@ -2531,6 +2531,46 @@ Example for agent named a1:
   a1.sinks.k1.serializer = org.apache.flume.sink.hbase.RegexHbaseEventSerializer
   a1.sinks.k1.channel = c1
 
+HBase2Sink
+''''''''''
+
+HBase2Sink is the equivalent of HBaseSink for HBase version 2.
+The provided functionality and the configuration parameters are the same as in case of HBaseSink (except the hbase2 tag in the sink type and the package/class names).
+
+The type is the FQCN: org.apache.flume.sink.hbase2.HBase2Sink.
+
+Required properties are in **bold**.
+
+==================  ========================================================  ==============================================================================
+Property Name       Default                                                   Description
+==================  ========================================================  ==============================================================================
+**channel**         --
+**type**            --                                                        The component type name, needs to be ``hbase2``
+**table**           --                                                        The name of the table in HBase to write to.
+**columnFamily**    --                                                        The column family in HBase to write to.
+zookeeperQuorum     --                                                        The quorum spec. This is the value for the property ``hbase.zookeeper.quorum`` in hbase-site.xml
+znodeParent         /hbase                                                    The base path for the znode for the -ROOT- region. Value of ``zookeeper.znode.parent`` in hbase-site.xml
+batchSize           100                                                       Number of events to be written per txn.
+coalesceIncrements  false                                                     Should the sink coalesce multiple increments to a cell per batch. This might give
+                                                                              better performance if there are multiple increments to a limited number of cells.
+serializer          org.apache.flume.sink.hbase2.SimpleHBase2EventSerializer  Default increment column = "iCol", payload column = "pCol".
+serializer.*        --                                                        Properties to be passed to the serializer.
+kerberosPrincipal   --                                                        Kerberos user principal for accessing secure HBase
+kerberosKeytab      --                                                        Kerberos keytab for accessing secure HBase
+==================  ========================================================  ==============================================================================
+
+Example for agent named a1:
+
+.. code-block:: properties
+
+  a1.channels = c1
+  a1.sinks = k1
+  a1.sinks.k1.type = hbase2
+  a1.sinks.k1.table = foo_table
+  a1.sinks.k1.columnFamily = bar_cf
+  a1.sinks.k1.serializer = org.apache.flume.sink.hbase2.RegexHBase2EventSerializer
+  a1.sinks.k1.channel = c1
+
 AsyncHBaseSink
 ''''''''''''''
 
@@ -2541,6 +2581,7 @@ to HBase. This sink uses the `Asynchbase API <https://github.com/OpenTSDB/asynch
 HBase. This sink provides the same consistency guarantees as HBase,
 which is currently row-wise atomicity. In the event of Hbase failing to
 write certain events, the sink will replay all events in that transaction.
+AsyncHBaseSink can only be used with HBase 1.x. The async client library used by AsyncHBaseSink is not available for HBase 2.
 The type is the FQCN: org.apache.flume.sink.hbase.AsyncHBaseSink.
 Required properties are in **bold**.
 
@@ -4067,7 +4108,7 @@ Example for agent named a1:
 
 
 Remove Header Interceptor
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This interceptor manipulates Flume event headers, by removing one or many headers. It can remove a statically defined header, headers based on a regular expression or headers in a list. If none of these is defined, or if no header matches the criteria, the Flume events are not modified.
 
@@ -4085,7 +4126,7 @@ matching               --           All the headers which names match this regul
 
 
 UUID Interceptor
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 This interceptor sets a universally unique identifier on all events that are intercepted. An example UUID is ``b5755073-77a9-43c1-8fad-b7a586fc1b97``, which represents a 128-bit value.
 
@@ -4101,7 +4142,7 @@ prefix            ""       The prefix string constant to prepend to each generat
 ================  =======  ========================================================================
 
 Morphline Interceptor
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 This interceptor filters the events through a `morphline configuration file <http://cloudera.github.io/cdk/docs/current/cdk-morphlines/index.html>`_ that defines a chain of transformation commands that pipe records from one command to another.
 For example the morphline can ignore certain events or alter or insert certain event headers via regular expression based pattern matching, or it can auto-detect and set a MIME type via Apache Tika on events that are intercepted. For example, this kind of packet sniffing can be used for content based dynamic routing in a Flume topology.
@@ -4272,6 +4313,160 @@ immediately terminates. ...OR... 2. When the agent polls a non-existent
 config file and this is not the first time the file is polled, then the
 agent makes no config changes for this polling period. The agent continues
 polling rather than terminating.
+
+Configuration Filters
+=====================
+
+Flume provides a tool for injecting sensitive or generated data into the configuration
+in the form of configuration filters. A configuration key can be set as the value of configuration properties
+and it will be replaced by the configuration filter with the value it represents.
+
+Common usage of config filters
+------------------------------
+
+The format is similar to the Java Expression Language, however
+it is currently not a fully working EL expression parser, just a format that looks like it.
+
+.. code-block:: properties
+
+  <agent_name>.configfilters = <filter_name>
+  <agent_name>.configfilters.<filter_name>.type = <filter_type>
+
+  <agent_name>.sources.<source_name>.parameter = ${<filter_name>['<key_for_sensitive_or_generated_data>']}
+  <agent_name>.sinks.<sink_name>.parameter = ${<filter_name>['<key_for_sensitive_or_generated_data>']}
+  <agent_name>.<component_type>.<component_name>.parameter = ${<filter_name>['<key_for_sensitive_or_generated_data>']}
+  #or
+  <agent_name>.<component_type>.<component_name>.parameter = ${<filter_name>["<key_for_sensitive_or_generated_data>"]}
+  #or
+  <agent_name>.<component_type>.<component_name>.parameter = ${<filter_name>[<key_for_sensitive_or_generated_data>]}
+  #or
+  <agent_name>.<component_type>.<component_name>.parameter = some_constant_data${<filter_name>[<key_for_sensitive_or_generated_data>]}
+
+
+Environment Variable Config Filter
+----------------------------------
+
+================================ ========== ==============================================
+Property Name                    Default                        Description
+================================ ========== ==============================================
+**type**                         --         The component type name has to be ``env``
+================================ ========== ==============================================
+
+Example
+~~~~~~~
+To hide a password in the configuration set its value as in the following example.
+
+.. code-block:: properties
+
+  a1.sources = r1
+  a1.channels = c1
+  a1.configfilters = f1
+
+  a1.configfilters.f1.type = env
+
+  a1.sources.r1.channels =  c1
+  a1.sources.r1.type = http
+  a1.sources.r1.keystorePassword = ${f1['my_keystore_password']} #will get the value Secret123
+
+Here the ``a1.sources.r1.keystorePassword`` configuration property will get the value of the ``my_keystore_password``
+environment variable. One way to set the environment variable is to run flume agent like this:
+
+``$ my_keystore_password=Secret123 bin/flume-ng agent --conf conf --conf-file example.conf ...``
+
+
+
+External Process Config Filter
+------------------------------
+
+================================ ========== ==============================================
+Property Name                    Default                        Description
+================================ ========== ==============================================
+**type**                         --         The component type name has to be ``external``
+**command**                      --         The command that will be executed to get the value for the given key. The command will be called like: ``<command> <key>`` And expected to return a single line value with exit code ``0``.
+charset                          UTF-8      The characterset of the returned string.
+================================ ========== ==============================================
+
+Example
+~~~~~~~
+To hide a password in the configuration set its value as in the following example.
+
+.. code-block:: properties
+
+  a1.sources = r1
+  a1.channels = c1
+  a1.configfilters = f1
+
+  a1.configfilters.f1.type = external
+  a1.configfilters.f1.command = /usr/bin/passwordResolver.sh
+  a1.configfilters.f1.charset = UTF-8
+
+  a1.sources.r1.channels =  c1
+  a1.sources.r1.type = http
+  a1.sources.r1.keystorePassword = ${f1['my_keystore_password']} #will get the value Secret123
+
+In this example flume will run the following command to get the value
+
+``$ /usr/bin/passwordResolver.sh my_keystore_password``
+
+The ``passwordResolver.sh`` will return ``Secret123`` with an exit code ``0``.
+
+Example 2
+~~~~~~~~~
+To generate a part of the directory for rolling file sink set its value as in the following example.
+
+.. code-block:: properties
+
+  a1.sources = r1
+  a1.channels = c1
+  a1.configfilters = f1
+
+  a1.configfilters.f1.type = external
+  a1.configfilters.f1.command = /usr/bin/generateUniqId.sh
+  a1.configfilters.f1.charset = UTF-8
+
+  a1.sinks = k1
+  a1.sinks.k1.type = file_roll
+  a1.sinks.k1.channel = c1
+  a1.sinks.k1.sink.directory = /var/log/flume/agent_${f1['agent_name']} # will be /var/log/flume/agent_1234
+
+In this example flume will run the following command to get the value
+
+``$ /usr/bin/generateUniqId.sh agent_name``
+
+The ``generateUniqId.sh`` will return ``1234`` with an exit code ``0``.
+
+
+
+Hadoop Credential Store Config Filter
+-------------------------------------
+
+=============================================== ========== ==============================================
+Property Name                                   Default                        Description
+=============================================== ========== ==============================================
+**type**                                        --         The component type name has to be ``hadoop``
+**credential.provider.path**                    --         The provider path. See hadoop documentation _here: https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-common/CredentialProviderAPI.html#Configuring_the_Provider_Path
+credstore.java-keystore-provider.password-file  --         The name of the password file if a file is used to store the password. The file must e on the classpath.
+                                                           Provider password can be set with the HADOOP_CREDSTORE_PASSWORD environment variable or left empty.
+=============================================== ========== ==============================================
+
+Example
+~~~~~~~
+To hide a password in the configuration set its value as in the following example.
+
+.. code-block:: properties
+
+  a1.sources = r1
+  a1.channels = c1
+  a1.configfilters = f1
+
+  a1.configfilters.f1.type = hadoop
+  a1.configfilters.f1.credential.provider.path = jceks://file/<path_to_jceks file>
+
+  a1.sources.r1.channels =  c1
+  a1.sources.r1.type = http
+  a1.sources.r1.keystorePassword = ${f1['my_keystore_password']} #will get the value from the credential store
+
+
 
 Log4J Appender
 ==============
@@ -4835,6 +5030,7 @@ org.apache.flume.Sink                                         logger            
 org.apache.flume.Sink                                         avro                    org.apache.flume.sink.AvroSink
 org.apache.flume.Sink                                         hdfs                    org.apache.flume.sink.hdfs.HDFSEventSink
 org.apache.flume.Sink                                         hbase                   org.apache.flume.sink.hbase.HBaseSink
+org.apache.flume.Sink                                         hbase2                  org.apache.flume.sink.hbase2.HBase2Sink
 org.apache.flume.Sink                                         asynchbase              org.apache.flume.sink.hbase.AsyncHBaseSink
 org.apache.flume.Sink                                         elasticsearch           org.apache.flume.sink.elasticsearch.ElasticSearchSink
 org.apache.flume.Sink                                         file_roll               org.apache.flume.sink.RollingFileSink

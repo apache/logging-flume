@@ -91,7 +91,7 @@ public class SinkGroupConfiguration extends ComponentConfiguration {
     SinkProcessorType[] values = SinkProcessorType.values();
     for (SinkProcessorType value : values) {
       if (value.toString().equalsIgnoreCase(type)) return value;
-      String sinkProcessClassName = value.getSinkProcessorClassName();
+      String sinkProcessClassName = value.getClassName();
       if (sinkProcessClassName != null && sinkProcessClassName.equalsIgnoreCase(type)) {
         return value;
       }

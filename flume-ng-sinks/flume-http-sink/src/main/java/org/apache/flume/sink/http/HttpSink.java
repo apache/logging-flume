@@ -18,7 +18,6 @@
  */
 package org.apache.flume.sink.http;
 
-import com.google.common.collect.ImmutableMap;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -27,7 +26,8 @@ import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.sink.AbstractSink;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -48,7 +48,7 @@ import java.util.Map;
 public class HttpSink extends AbstractSink implements Configurable {
 
   /** Class logger. */
-  private static final Logger LOG = Logger.getLogger(HttpSink.class);
+  private static final Logger LOG = LogManager.getLogger(HttpSink.class);
 
   /** Lowest valid HTTP status code. */
   private static final int HTTP_STATUS_CONTINUE = 100;
@@ -322,7 +322,7 @@ public class HttpSink extends AbstractSink implements Configurable {
                                     final Context context,
                                     final Map<String, Boolean> override) {
 
-    ImmutableMap<String, String> config = context.getSubProperties(
+    Map<String, String> config = context.getSubProperties(
         propertyName + ".");
 
     if (config != null) {

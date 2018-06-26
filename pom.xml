@@ -61,7 +61,7 @@ limitations under the License.
     <commons-io.version>2.1</commons-io.version>
     <commons-lang.version>2.5</commons-lang.version>
     <curator.version>2.6.0</curator.version>
-    <derby.version>10.11.1.1</derby.version>
+    <derby.version>10.14.1.0</derby.version>
     <elasticsearch.version>0.90.1</elasticsearch.version>
     <fasterxml.jackson.version>2.8.9</fasterxml.jackson.version>
     <fest-reflect.version>1.4</fest-reflect.version>
@@ -69,7 +69,9 @@ limitations under the License.
     <gson.version>2.2.2</gson.version>
     <guava.version>18.0</guava.version>
     <guava-old.version>11.0.2</guava-old.version>
-    <hadoop2.version>2.4.0</hadoop2.version>
+    <hadoop2.version>2.9.0</hadoop2.version>
+    <hbase2.jetty.version>9.3.19.v20170502</hbase2.jetty.version>
+    <hbase2.version>2.0.0</hbase2.version>
     <httpcore.version>4.4.6</httpcore.version>
     <httpclient.version>4.5.3</httpclient.version>
     <irclib.version>1.10</irclib.version>
@@ -81,8 +83,7 @@ limitations under the License.
     <kite.version>1.0.0</kite.version>
     <hive.version>1.0.0</hive.version>
     <lifecycle-mapping.version>1.0.0</lifecycle-mapping.version>
-    <log4j-extras.version>1.1</log4j-extras.version>
-    <log4j-log4j.version>1.2.17</log4j-log4j.version>
+    <log4j.version>2.10.0</log4j.version>
     <mapdb.version>0.9.9</mapdb.version>
     <mina.version>2.0.4</mina.version>
     <mockito.version>1.9.0</mockito.version>
@@ -96,10 +97,9 @@ limitations under the License.
     <mvn-project-info-reports-plugin.version>2.4</mvn-project-info-reports-plugin.version>
     <mvn-site-plugin.version>3.3</mvn-site-plugin.version>
     <mvn-sphinx-plugin>1.0.2</mvn-sphinx-plugin>
-    <mvn-surefire-plugin.version>2.14.1</mvn-surefire-plugin.version>
-    <mvn-surefire-plugin-old.version>2.12.3</mvn-surefire-plugin-old.version>
-    <mvn-surefire-plugin-old-morphline.version>2.12.4</mvn-surefire-plugin-old-morphline.version>
-    <netty.version>3.9.4.Final</netty.version>
+    <mvn-surefire-plugin.version>2.20.1</mvn-surefire-plugin.version>
+    <netty.version>3.10.6.Final</netty.version>
+    <netty-all.version>4.1.17.Final</netty-all.version>
     <protobuf.version>2.5.0</protobuf.version>
     <rat.version>0.11</rat.version>
     <snappy-java.version>1.1.4</snappy-java.version>
@@ -131,6 +131,7 @@ limitations under the License.
     <module>flume-tools</module>
     <module>flume-ng-auth</module>
     <module>flume-shared</module>
+      <module>flume-ng-configfilters</module>
   </modules>
 
   <profiles>
@@ -203,6 +204,16 @@ limitations under the License.
             <groupId>org.apache.hadoop</groupId>
             <artifactId>${hadoop.common.artifact.id}</artifactId>
             <version>${hadoop.version}</version>
+            <exclusions>
+              <exclusion>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+              </exclusion>
+            </exclusions>
           </dependency>
           <dependency>
             <groupId>org.apache.hadoop</groupId>
@@ -216,6 +227,14 @@ limitations under the License.
               <exclusion>
                 <groupId>tomcat</groupId>
                 <artifactId>jasper-runtime</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
               </exclusion>
             </exclusions>
           </dependency>
@@ -237,6 +256,14 @@ limitations under the License.
                 <groupId>tomcat</groupId>
                 <artifactId>jasper-runtime</artifactId>
               </exclusion>
+              <exclusion>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+              </exclusion>
             </exclusions>
           </dependency>
           <dependency>
@@ -253,6 +280,16 @@ limitations under the License.
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-auth</artifactId>
             <version>${hadoop.version}</version>
+            <exclusions>
+              <exclusion>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+              </exclusion>
+            </exclusions>
           </dependency>
 
           <dependency>
@@ -282,6 +319,17 @@ limitations under the License.
             <artifactId>flume-dataset-sink</artifactId>
             <version>${project.version}</version>
           </dependency>
+          <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.17</version>
+            <scope>test</scope>
+          </dependency>
+          <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <scope>test</scope>
+          </dependency>
         </dependencies>
       </dependencyManagement>
     </profile>
@@ -304,6 +352,16 @@ limitations under the License.
             <groupId>org.apache.hadoop</groupId>
             <artifactId>${hadoop.common.artifact.id}</artifactId>
             <version>${hadoop.version}</version>
+            <exclusions>
+              <exclusion>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+              </exclusion>
+            </exclusions>
           </dependency>
           <dependency>
             <groupId>org.apache.hadoop</groupId>
@@ -317,6 +375,14 @@ limitations under the License.
               <exclusion>
                 <groupId>tomcat</groupId>
                 <artifactId>jasper-runtime</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
               </exclusion>
             </exclusions>
           </dependency>
@@ -349,6 +415,16 @@ limitations under the License.
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-auth</artifactId>
             <version>${hadoop.version}</version>
+            <exclusions>
+              <exclusion>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+              </exclusion>
+            </exclusions>
           </dependency>
 
           <!-- Ideally this should be optional, but making it optional causes
@@ -408,6 +484,14 @@ limitations under the License.
                 <groupId>tomcat</groupId>
                 <artifactId>jasper-runtime</artifactId>
               </exclusion>
+              <exclusion>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+              </exclusion>
             </exclusions>
           </dependency>
 
@@ -426,6 +510,14 @@ limitations under the License.
                 <groupId>tomcat</groupId>
                 <artifactId>jasper-runtime</artifactId>
               </exclusion>
+              <exclusion>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+              </exclusion>
+              <exclusion>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+              </exclusion>
             </exclusions>
           </dependency>
 
@@ -441,6 +533,17 @@ limitations under the License.
             <groupId>org.apache.flume.flume-ng-sinks</groupId>
             <artifactId>flume-dataset-sink</artifactId>
             <version>${project.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.17</version>
+            <scope>test</scope>
+          </dependency>
+          <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <scope>test</scope>
           </dependency>
         </dependencies>
       </dependencyManagement>
@@ -817,9 +920,11 @@ limitations under the License.
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>${mvn-surefire-plugin-old.version}</version>
+          <version>${mvn-surefire-plugin.version}</version>
           <configuration>
-            <forkMode>always</forkMode>
+            <reuseForks>false</reuseForks>
+            <forkCount>1</forkCount>
+            <rerunFailingTestsCount>10</rerunFailingTestsCount>
             <forkedProcessTimeoutInSeconds>900</forkedProcessTimeoutInSeconds>
             <redirectTestOutputToFile>true</redirectTestOutputToFile>
             <includes>
@@ -991,25 +1096,33 @@ limitations under the License.
       </dependency>
 
       <dependency>
-        <groupId>log4j</groupId>
-        <artifactId>log4j</artifactId>
-        <version>${log4j-log4j.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>com.sun.jdmk</groupId>
-            <artifactId>jmxtools</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.sun.jmx</groupId>
-            <artifactId>jmxri</artifactId>
-          </exclusion>
-        </exclusions>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-api</artifactId>
+        <version>${log4j.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>log4j</groupId>
-        <artifactId>apache-log4j-extras</artifactId>
-        <version>${log4j-extras.version}</version>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-core</artifactId>
+        <version>${log4j.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-slf4j-impl</artifactId>
+        <version>${log4j.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-1.2-api</artifactId>
+        <version>${log4j.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-jcl</artifactId>
+        <version>${log4j.version}</version>
       </dependency>
 
       <dependency>
@@ -1019,9 +1132,16 @@ limitations under the License.
       </dependency>
 
       <dependency>
+        <groupId>log4j</groupId>
+        <artifactId>log4j</artifactId>
+        <version>1.2.17</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-log4j12</artifactId>
         <version>${slf4j.version}</version>
+        <scope>test</scope>
       </dependency>
 
       <dependency>
@@ -1134,6 +1254,14 @@ limitations under the License.
             <groupId>tomcat</groupId>
             <artifactId>jasper-runtime</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
 
@@ -1216,6 +1344,12 @@ limitations under the License.
         <groupId>org.apache.zookeeper</groupId>
         <artifactId>zookeeper</artifactId>
         <version>${zookeeper.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+          </exclusion>
+        </exclusions>
        </dependency>
 
       <dependency>
@@ -1351,6 +1485,12 @@ limitations under the License.
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
+        <artifactId>flume-ng-hbase2-sink</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-ng-elasticsearch-sink</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -1449,6 +1589,30 @@ limitations under the License.
       </dependency>
 
       <dependency>
+        <groupId>org.apache.flume</groupId>
+        <artifactId>flume-ng-environment-variable-config-filter</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.flume</groupId>
+        <artifactId>flume-ng-hadoop-credential-store-config-filter</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.flume</groupId>
+        <artifactId>flume-ng-external-process-config-filter</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.flume</groupId>
+        <artifactId>flume-ng-config-filter-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
         <groupId>com.sun.jersey</groupId>
         <artifactId>jersey-core</artifactId>
         <version>${jersey.version}</version>
@@ -1489,6 +1653,12 @@ limitations under the License.
       </dependency>
 
       <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-all</artifactId>
+        <version>${netty-all.version}</version>
+      </dependency>
+
+      <dependency>
         <groupId>org.apache.solr</groupId>
         <artifactId>solr-cell</artifactId>
         <version>${solr-global.version}</version>
@@ -1516,6 +1686,16 @@ limitations under the License.
         <groupId>org.apache.kafka</groupId>
         <artifactId>kafka_2.10</artifactId>
         <version>${kafka.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.kafka</groupId>
@@ -1546,11 +1726,31 @@ limitations under the License.
         <groupId>org.apache.hive</groupId>
         <artifactId>hive-exec</artifactId>
         <version>${hive.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.hive</groupId>
         <artifactId>hive-metastore</artifactId>
         <version>${hive.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>
@@ -1563,6 +1763,16 @@ limitations under the License.
         <groupId>org.apache.hive.hcatalog</groupId>
         <artifactId>hive-hcatalog-streaming</artifactId>
         <version>${hive.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>
