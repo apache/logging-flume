@@ -219,7 +219,7 @@ public class TailFile {
       if (buffer[i] == BYTE_NL || nonEOF) {           
         int oldLen = oldBuffer.length;
         int lineLen;
-        if(nonEOF) {
+        if (nonEOF) {
           lineLen = i - bufferPos + 1;
         } else {
         // Don't copy last byte(NEW_LINE)
@@ -247,14 +247,6 @@ public class TailFile {
     return lineResult;
   }
   
- /**
-  * [FLUME-3235] 
-  * 		On taildir source, if there is not explicit \n or \r\n 
-  * 		the line it is not included as event. 
-  * 		That function solves the problem.
-  * @param i
-  * @return
-  */
   private boolean nonEOF(int i) throws IOException {
     if (i == buffer.length - 1 && raf.getFilePointer() == raf.length()) {
       return Boolean.TRUE;
