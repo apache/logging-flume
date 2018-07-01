@@ -30,8 +30,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.collect.Lists;
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Files;
 
 public class TestPollingPropertiesFileConfigurationProvider  {
@@ -43,7 +41,6 @@ public class TestPollingPropertiesFileConfigurationProvider  {
   private PollingPropertiesFileConfigurationProvider provider;
   private File baseDir;
   private File configFile;
-  private EventBus eventBus;
 
   @Before
   public void setUp() throws Exception {
@@ -53,10 +50,9 @@ public class TestPollingPropertiesFileConfigurationProvider  {
     configFile = new File(baseDir, TESTFILE.getName());
     Files.copy(TESTFILE, configFile);
 
-    eventBus = new EventBus("test");
     provider =
         new PollingPropertiesFileConfigurationProvider("host1",
-            configFile, eventBus, 1);
+            configFile, 1);
     provider.start();
     LifecycleController.waitForOneOf(provider, LifecycleState.START_OR_ERROR);
   }
@@ -75,13 +71,7 @@ public class TestPollingPropertiesFileConfigurationProvider  {
 
     final List<MaterializedConfiguration> events = Lists.newArrayList();
 
-    Object eventHandler = new Object() {
-      @Subscribe
-      public synchronized void handleConfigurationEvent(MaterializedConfiguration event) {
-        events.add(event);
-      }
-    };
-    eventBus.register(eventHandler);
+    provider.registerConfigurationConsumer(event -> events.add(event));
     configFile.setLastModified(System.currentTimeMillis());
 
     // now wait for second event to fire

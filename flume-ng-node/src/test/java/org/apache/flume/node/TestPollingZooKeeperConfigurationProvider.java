@@ -26,13 +26,8 @@ import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.junit.Test;
 
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
-
 public class TestPollingZooKeeperConfigurationProvider extends
     TestAbstractZooKeeperConfigurationProvider {
-
-  private EventBus eb;
 
   private EventSync es;
 
@@ -40,9 +35,8 @@ public class TestPollingZooKeeperConfigurationProvider extends
 
   private class EventSync {
 
-    private boolean notified;
+    private volatile boolean notified;
 
-    @Subscribe
     public synchronized void notifyEvent(MaterializedConfiguration mConfig) {
       notified = true;
       notifyAll();
@@ -61,12 +55,11 @@ public class TestPollingZooKeeperConfigurationProvider extends
 
   @Override
   protected void doSetUp() throws Exception {
-    eb = new EventBus("test");
     es = new EventSync();
     es.reset();
-    eb.register(es);
     cp = new PollingZooKeeperConfigurationProvider(AGENT_NAME, "localhost:"
-        + zkServer.getPort(), null, eb);
+        + zkServer.getPort(), null);
+    cp.registerConfigurationConsumer(es::notifyEvent);
     cp.start();
     LifecycleController.waitForOneOf(cp, LifecycleState.START_OR_ERROR);
   }

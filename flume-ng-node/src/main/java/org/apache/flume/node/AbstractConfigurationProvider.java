@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelFactory;
@@ -52,6 +53,7 @@ import org.apache.flume.conf.channel.ChannelSelectorConfiguration;
 import org.apache.flume.conf.sink.SinkConfiguration;
 import org.apache.flume.conf.sink.SinkGroupConfiguration;
 import org.apache.flume.conf.source.SourceConfiguration;
+import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.sink.DefaultSinkFactory;
 import org.apache.flume.sink.DefaultSinkProcessor;
 import org.apache.flume.sink.SinkGroup;
@@ -73,8 +75,10 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
   private final SourceFactory sourceFactory;
   private final SinkFactory sinkFactory;
   private final ChannelFactory channelFactory;
-
+  private LifecycleState lifecycleState = LifecycleState.IDLE;
+  
   private final Map<Class<? extends Channel>, Map<String, Channel>> channelCache;
+  private Consumer<MaterializedConfiguration> configurationConsumer;
 
   public AbstractConfigurationProvider(String agentName) {
     super();
@@ -511,4 +515,43 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
     }
     return result;
   }
+
+  @Override
+  public void registerConfigurationConsumer(
+          Consumer<MaterializedConfiguration> configurationConsumer) {
+    setConfigurationConsumer(configurationConsumer);
+    notifyConfigurationConsumer(getConfiguration());
+  }
+
+  void setConfigurationConsumer(Consumer<MaterializedConfiguration> configurationConsumer) {
+    this.configurationConsumer = configurationConsumer;
+  }
+
+  protected void notifyConfigurationConsumer(MaterializedConfiguration materializedConfiguration) {
+    if (this.configurationConsumer == null) {
+      throw new IllegalStateException(
+              "Can not notify configuration consumer because there is none set.");
+    }
+    this.configurationConsumer.accept(materializedConfiguration);
+  }
+
+  @Override
+  public void start() {
+    lifecycleState = LifecycleState.START;
+  }
+
+  @Override
+  public void stop() {
+    lifecycleState = LifecycleState.STOP;
+  }
+
+  public void error() {
+    lifecycleState = LifecycleState.ERROR;
+  }
+
+  @Override
+  public synchronized  LifecycleState getLifecycleState() {
+    return lifecycleState;
+  }
+
 }

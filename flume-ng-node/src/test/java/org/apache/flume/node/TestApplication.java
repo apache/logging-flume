@@ -109,13 +109,8 @@ public class TestApplication {
     Channel channel = mockLifeCycle(Channel.class);
     materializedConfiguration.addChannel("test", channel);
 
-
-    ConfigurationProvider configurationProvider = mock(ConfigurationProvider.class);
-    when(configurationProvider.getConfiguration()).thenReturn(materializedConfiguration);
-
     Application application = new Application();
-    eventBus.register(application);
-    eventBus.post(materializedConfiguration);
+    application.handleConfigurationEvent(materializedConfiguration);
     application.start();
 
     Thread.sleep(1000L);
@@ -140,14 +135,13 @@ public class TestApplication {
         .getResource("flume-conf.properties").getFile()), configFile);
     Random random = new Random();
     for (int i = 0; i < 3; i++) {
-      EventBus eventBus = new EventBus("test-event-bus");
       PollingPropertiesFileConfigurationProvider configurationProvider =
           new PollingPropertiesFileConfigurationProvider("host1",
-              configFile, eventBus, 1);
+              configFile, 1);
       List<LifecycleAware> components = Lists.newArrayList();
       components.add(configurationProvider);
       Application application = new Application(components);
-      eventBus.register(application);
+      configurationProvider.registerConfigurationConsumer(application::handleConfigurationEvent);
       application.start();
       Thread.sleep(random.nextInt(10000));
       application.stop();
@@ -175,7 +169,7 @@ public class TestApplication {
     EventBus eventBus = new EventBus(agentName + "-event-bus");
     PollingPropertiesFileConfigurationProvider configurationProvider =
         new PollingPropertiesFileConfigurationProvider(agentName,
-            mockConfigFile, eventBus, interval);
+            mockConfigFile, interval);
     PollingPropertiesFileConfigurationProvider mockConfigurationProvider =
         spy(configurationProvider);
     doAnswer(new Answer<Void>() {
@@ -190,7 +184,7 @@ public class TestApplication {
     List<LifecycleAware> components = Lists.newArrayList();
     components.add(mockConfigurationProvider);
     Application application = new Application(components);
-    eventBus.register(application);
+    mockConfigurationProvider.registerConfigurationConsumer(application::handleConfigurationEvent);
     application.start();
     Thread.sleep(1500L);
     application.stop();

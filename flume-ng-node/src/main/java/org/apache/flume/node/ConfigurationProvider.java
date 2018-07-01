@@ -19,6 +19,15 @@
 
 package org.apache.flume.node;
 
-public interface ConfigurationProvider {
-  MaterializedConfiguration getConfiguration();
+import org.apache.flume.lifecycle.LifecycleAware;
+
+import java.util.function.Consumer;
+
+public interface ConfigurationProvider extends LifecycleAware {
+  /**
+   * Registers a MaterializedConfiguration Consumer that will be notified when
+   * this ConfigurationProvider finds new configuration.
+   */
+  void registerConfigurationConsumer(Consumer<MaterializedConfiguration> configurationConsumer);
+
 }

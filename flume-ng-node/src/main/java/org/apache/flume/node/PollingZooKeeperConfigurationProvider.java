@@ -19,6 +19,7 @@
 package org.apache.flume.node;
 
 import java.io.IOException;
+import java.util.function.Consumer;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.ChildData;
@@ -26,20 +27,15 @@ import org.apache.curator.framework.recipes.cache.NodeCache;
 import org.apache.curator.framework.recipes.cache.NodeCacheListener;
 import org.apache.flume.FlumeException;
 import org.apache.flume.conf.FlumeConfiguration;
-import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.eventbus.EventBus;
-
 public class PollingZooKeeperConfigurationProvider extends
-    AbstractZooKeeperConfigurationProvider implements LifecycleAware {
+    AbstractZooKeeperConfigurationProvider {
 
   private static final Logger LOGGER = LoggerFactory
       .getLogger(PollingZooKeeperConfigurationProvider.class);
-
-  private final EventBus eventBus;
 
   private final CuratorFramework client;
 
@@ -47,16 +43,18 @@ public class PollingZooKeeperConfigurationProvider extends
 
   private FlumeConfiguration flumeConfiguration;
 
-  private LifecycleState lifecycleState;
-
   public PollingZooKeeperConfigurationProvider(String agentName,
-      String zkConnString, String basePath, EventBus eventBus) {
+      String zkConnString, String basePath) {
     super(agentName, zkConnString, basePath);
-    this.eventBus = eventBus;
     client = createClient();
     agentNodeCache = null;
     flumeConfiguration = null;
-    lifecycleState = LifecycleState.IDLE;
+  }
+
+  @Override
+  public void registerConfigurationConsumer(
+          Consumer<MaterializedConfiguration> configurationConsumer) {
+    setConfigurationConsumer(configurationConsumer);
   }
 
   @Override
@@ -83,14 +81,14 @@ public class PollingZooKeeperConfigurationProvider extends
         throw e;
       }
     } catch (Exception e) {
-      lifecycleState = LifecycleState.ERROR;
+      super.error();
       if (e instanceof RuntimeException) {
         throw (RuntimeException) e;
       } else {
         throw new FlumeException(e);
       }
     }
-    lifecycleState = LifecycleState.START;
+    super.start();
   }
 
   private void refreshConfiguration() throws IOException {
@@ -101,7 +99,7 @@ public class PollingZooKeeperConfigurationProvider extends
       data = childData.getData();
     }
     flumeConfiguration = configFromBytes(data);
-    eventBus.post(getConfiguration());
+    notifyConfigurationConsumer(getConfiguration());
   }
 
   @Override
@@ -112,7 +110,7 @@ public class PollingZooKeeperConfigurationProvider extends
         agentNodeCache.close();
       } catch (IOException e) {
         LOGGER.warn("Encountered exception while stopping", e);
-        lifecycleState = LifecycleState.ERROR;
+        super.error();
       }
     }
 
@@ -120,16 +118,12 @@ public class PollingZooKeeperConfigurationProvider extends
       client.close();
     } catch (Exception e) {
       LOGGER.warn("Error stopping Curator client", e);
-      lifecycleState = LifecycleState.ERROR;
+      super.error();
     }
 
-    if (lifecycleState != LifecycleState.ERROR) {
-      lifecycleState = LifecycleState.STOP;
+    if (getLifecycleState() != LifecycleState.ERROR) {
+      super.stop();
     }
   }
 
-  @Override
-  public LifecycleState getLifecycleState() {
-    return lifecycleState;
-  }
 }
