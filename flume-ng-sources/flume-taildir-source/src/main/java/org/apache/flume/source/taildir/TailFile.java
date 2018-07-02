@@ -219,7 +219,7 @@ public class TailFile {
       if (buffer[i] == BYTE_NL || nonEOF) {           
         int oldLen = oldBuffer.length;
         int lineLen;
-        if (nonEOF) {
+        if (buffer[i] == BYTE_NL || nonEOF) {
           lineLen = i - bufferPos + 1;
         } else {
         // Don't copy last byte(NEW_LINE)
