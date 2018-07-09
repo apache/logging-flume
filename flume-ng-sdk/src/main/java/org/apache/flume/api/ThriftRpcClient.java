@@ -72,7 +72,6 @@ public class ThriftRpcClient extends AbstractRpcClient {
   public static final String BINARY_PROTOCOL = "binary";
   public static final String COMPACT_PROTOCOL = "compact";
 
-  private int batchSize;
   private long requestTimeout;
   private final Lock stateLock;
   private State connState;
