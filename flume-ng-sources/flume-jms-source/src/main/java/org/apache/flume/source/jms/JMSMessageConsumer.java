@@ -129,12 +129,12 @@ class JMSMessageConsumer {
   List<Event> take() throws JMSException {
     List<Event> result = new ArrayList<Event>(batchSize);
     Message message;
-    message = messageConsumer.receive(pollTimeout);
+    message = receive();
     if (message != null) {
       result.addAll(messageConverter.convert(message));
       int max = batchSize - 1;
       for (int i = 0; i < max; i++) {
-        message = messageConsumer.receiveNoWait();
+        message = receiveNoWait();
         if (message == null) {
           break;
         }
@@ -147,11 +147,35 @@ class JMSMessageConsumer {
     return result;
   }
 
+  private Message receive() throws JMSException {
+    try {
+      return messageConsumer.receive(pollTimeout);
+    } catch (RuntimeException runtimeException) {
+      JMSException jmsException = new JMSException("JMS provider has thrown runtime exception: "
+              + runtimeException.getMessage());
+      jmsException.setLinkedException(runtimeException);
+      throw jmsException;
+    }
+  }
+
+  private Message receiveNoWait() throws JMSException {
+    try {
+      return messageConsumer.receiveNoWait();
+    } catch (RuntimeException runtimeException) {
+      JMSException jmsException = new JMSException("JMS provider has thrown runtime exception: "
+              + runtimeException.getMessage());
+      jmsException.setLinkedException(runtimeException);
+      throw jmsException;
+    }
+  }
+
   void commit() {
     try {
       session.commit();
     } catch (JMSException jmsException) {
       logger.warn("JMS Exception processing commit", jmsException);
+    } catch (RuntimeException runtimeException) {
+      logger.warn("Runtime Exception processing commit", runtimeException);
     }
   }
 
@@ -160,6 +184,8 @@ class JMSMessageConsumer {
       session.rollback();
     } catch (JMSException jmsException) {
       logger.warn("JMS Exception processing rollback", jmsException);
+    } catch (RuntimeException runtimeException) {
+      logger.warn("Runtime Exception processing rollback", runtimeException);
     }
   }
 
