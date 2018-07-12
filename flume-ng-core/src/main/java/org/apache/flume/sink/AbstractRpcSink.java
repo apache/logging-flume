@@ -158,6 +158,9 @@ public abstract class AbstractRpcSink extends AbstractSink implements Configurab
   private final ScheduledExecutorService cxnResetExecutor =
       Executors.newSingleThreadScheduledExecutor(
           new ThreadFactoryBuilder().setNameFormat("Rpc Sink Reset Thread").build());
+
+  // batchSize is used in the clients, here it is only used for config validation
+  // before the client is configured
   private int batchSize;
 
 

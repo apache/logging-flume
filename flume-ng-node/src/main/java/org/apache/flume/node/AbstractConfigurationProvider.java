@@ -18,6 +18,8 @@
 package org.apache.flume.node;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -276,18 +278,8 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
         try {
           Configurables.configure(source, config);
           Set<String> channelNames = config.getChannels();
-          List<Channel> sourceChannels = new ArrayList<Channel>();
-          for (String chName : channelNames) {
-            ChannelComponent channelComponent = channelComponentMap.get(chName);
-            if (channelComponent != null) {
-              try {
-                checkSourceChannelCompatibility(source, channelComponent.channel);
-                sourceChannels.add(channelComponent.channel);
-              } catch (InstantiationException e) {
-                LOGGER.error("Source - channel compatibility problem", e);
-              }
-            }
-          }
+          List<Channel> sourceChannels =
+                  getSourceChannels(channelComponentMap, source, channelNames);
           if (sourceChannels.isEmpty()) {
             String msg = String.format("Source %s is not connected to a " +
                 "channel",  sourceName);
@@ -331,20 +323,10 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
                                  context.getString(BasicConfigurationConstants.CONFIG_TYPE));
         try {
           Configurables.configure(source, context);
-          List<Channel> sourceChannels = new ArrayList<Channel>();
           String[] channelNames = context.getString(
               BasicConfigurationConstants.CONFIG_CHANNELS).split("\\s+");
-          for (String chName : channelNames) {
-            ChannelComponent channelComponent = channelComponentMap.get(chName);
-            if (channelComponent != null) {
-              try {
-                checkSourceChannelCompatibility(source, channelComponent.channel);
-                sourceChannels.add(channelComponent.channel);
-              } catch (InstantiationException e) {
-                LOGGER.error("Source - channel compatibility problem", e);
-              }
-            }
-          }
+          List<Channel> sourceChannels =
+                  getSourceChannels(channelComponentMap, source, Arrays.asList(channelNames));
           if (sourceChannels.isEmpty()) {
             String msg = String.format("Source %s is not connected to a " +
                 "channel",  sourceName);
@@ -374,6 +356,23 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
         }
       }
     }
+  }
+
+  private List<Channel> getSourceChannels(Map<String, ChannelComponent> channelComponentMap,
+                                          Source source, Collection<String> channelNames) {
+    List<Channel> sourceChannels = new ArrayList<Channel>();
+    for (String chName : channelNames) {
+      ChannelComponent channelComponent = channelComponentMap.get(chName);
+      if (channelComponent != null) {
+        try {
+          checkSourceChannelCompatibility(source, channelComponent.channel);
+          sourceChannels.add(channelComponent.channel);
+        } catch (InstantiationException e) {
+          LOGGER.error("Source - channel compatibility problem", e);
+        }
+      }
+    }
+    return sourceChannels;
   }
 
   private void checkSourceChannelCompatibility(Source source, Channel channel)

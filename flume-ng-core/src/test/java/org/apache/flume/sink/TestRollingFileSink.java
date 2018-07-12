@@ -290,7 +290,7 @@ public class TestRollingFileSink {
    * problems
    */
   @Test(expected = EventDeliveryException.class)
-  public void testTrans() throws EventDeliveryException {
+  public void testTransCapBatchSizeCompatibility() throws EventDeliveryException {
 
     Context context = new Context();
 

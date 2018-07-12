@@ -64,18 +64,23 @@ public abstract class AbstractRpcClient implements RpcClient {
   protected abstract void configure(Properties properties)
       throws FlumeException;
 
+  /**
+   * This is to parse the batch size config for rpc clients
+   * @param properties config
+   * @return batch size
+   */
   public static int parseBatchSize(Properties properties) {
     String strBatchSize = properties.getProperty(
         RpcClientConfigurationConstants.CONFIG_BATCH_SIZE);
     logger.debug("Batch size string = " + strBatchSize);
-    int _batchSize = RpcClientConfigurationConstants.DEFAULT_BATCH_SIZE;
+    int batchSize = RpcClientConfigurationConstants.DEFAULT_BATCH_SIZE;
     if (strBatchSize != null && !strBatchSize.isEmpty()) {
       try {
         int parsedBatch = Integer.parseInt(strBatchSize);
         if (parsedBatch < 1) {
           logger.warn("Invalid value for batchSize: {}; Using default value.", parsedBatch);
         } else {
-          _batchSize = parsedBatch;
+          batchSize = parsedBatch;
         }
       } catch (NumberFormatException e) {
         logger.warn("Batchsize is not valid for RpcClient: " + strBatchSize +
@@ -83,7 +88,7 @@ public abstract class AbstractRpcClient implements RpcClient {
       }
     }
 
-    return _batchSize;
+    return batchSize;
   }
 
 }
