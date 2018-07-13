@@ -37,6 +37,7 @@ import org.apache.flume.SinkRunner;
 import org.apache.flume.SourceRunner;
 import org.apache.flume.instrumentation.MonitorService;
 import org.apache.flume.instrumentation.MonitoringType;
+import org.apache.flume.register.service.RegisterService;
 import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.lifecycle.LifecycleSupervisor;
@@ -50,6 +51,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
@@ -152,6 +154,12 @@ public class Application {
           logger.error("Error while stopping {}", entry.getValue(), e);
         }
       }
+
+      for (Entry<String, RegisterService> entry:
+          this.materializedConfiguration.getRegisterServices().entrySet()) {
+        logger.info("Stopping RegisterService" + entry.getKey());
+        entry.getValue().stop();
+      }
     }
     if (monitorServer != null) {
       monitorServer.stop();
@@ -211,8 +219,25 @@ public class Application {
         logger.error("Error while starting {}", entry.getValue(), e);
       }
     }
-
+    this.loadRegisterService(materializedConfiguration);
     this.loadMonitoring();
+  }
+
+  private void loadRegisterService(
+      MaterializedConfiguration materializedConfiguration) {
+    logger.info("Loading register serviece");
+    Map<String, RegisterService> registerServiceMap =
+        materializedConfiguration.getRegisterServices();
+    for (Entry<String, RegisterService> entry : registerServiceMap.entrySet()) {
+      String registerServiceName = entry.getKey();
+      RegisterService registerService = entry.getValue();
+      try {
+        registerService.start();
+        logger.info("Started register service:" + registerServiceName);
+      } catch (Exception ex) {
+        logger.error("Start register service failed:" + registerServiceName, ex);
+      }
+    }
   }
 
   @SuppressWarnings("unchecked")

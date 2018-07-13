@@ -308,6 +308,57 @@ Argument Name        Default           Description
 **p**                /flume            Base Path in Zookeeper to store Agent configurations
 ==================   ================  =========================================================================
 
+
+Register agent to Zookeeper
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Flume supports Agent registeration to Zookeeper with hostname and server port. *This is an experimental feature.*
+We introduce a new component called register service to implement the feature. The process will register a Ephemeral node in Zookeeper while the process is alive. Only digest ACL is supported now.
+
+Here's an example configuration:
+
+.. code-block:: properties
+
+agent.agent1.registerservices= scribeSource kafkaSource
+agent.agent1.registerservices.scribeSource.tier=scribeSourceGroup1 scribeSourceGroup2
+agent.agent1.registerservices.scribeSource.type=zookeeper
+agent.agent1.registerservices.scribeSource.zkhost=zookeeper.myhost.com
+agent.agent1.registerservices.scribeSource.zkport=2181
+agent.agent1.registerservices.scribeSource.zkendpointport=1477
+agent.agent1.registerservices.scribeSource.zkpathprefix=/flumecluster1
+agent.agent1.registerservices.scribeSource.zkauth=flumeuser:passwd
+agent.agent1.registerservices.kafkaSource.type=zookeeper
+agent.agent1.registerservices.kafkaSource.tier=kafkaTier
+agent.agent1.registerservices.kafkaSource.zkhost=zookeeper.myhost.com
+agent.agent1.registerservices.kafkaSource.zkport=2181
+agent.agent1.registerservices.kafkaSource.zkendpointport=2477
+agent.agent1.registerservices.kafkaSource.zkpathprefix=/flumecluster1
+agent.agent1.registerservices.kafkaSource.zkauth=flumeuser:passwd
+
+
+The zk path will be $zkpathprefix/$tier/$HOSTNAME:$zkendpointport
+.. code-block:: properties
+/flumecluster1/scribeSourceGroup1/$HOSTNAME:1477
+/flumecluster1/scribeSourceGroup1/$HOSTNAME:1477
+/flumecluster1/kafkaTier/$HOSTNAME:2477
+
+Here're the configuration items needed to be configured to use this feature.
+
+==================   ================  =========================================================================
+Property Name        Default           Description
+==================   ================  =========================================================================
+type                 --                Should always be zookeeper
+zkhost               --                Zookeeper host name
+zkport               --                Zookeeper server host
+zkendpointport       --                The port of flume agent to serve. The name of Zookeeper node will be $HOSTNAME:zkendpointport
+zkpathprefix         --                Zk prefix path to register the ephemeral node.
+tier                 --                The parent folder of the ZooKeeper node, multiple args are supported.
+zkauth               --                Auth to connect to the Zookeeper, only digest ACL is supported now.
+zkmaxretry           3                 Zookeeper rpc max retry times
+zkbasesleepms        1000              Zookeeper base sleep time used in curator lib.
+==================   ================  =========================================================================
+
+
 Installing third-party plugins
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

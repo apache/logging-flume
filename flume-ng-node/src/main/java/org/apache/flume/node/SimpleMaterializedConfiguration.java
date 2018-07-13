@@ -25,6 +25,7 @@ import java.util.Map;
 import org.apache.flume.Channel;
 import org.apache.flume.SinkRunner;
 import org.apache.flume.SourceRunner;
+import org.apache.flume.register.service.RegisterService;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -33,17 +34,19 @@ public class SimpleMaterializedConfiguration implements MaterializedConfiguratio
   private final Map<String, Channel> channels;
   private final Map<String, SourceRunner> sourceRunners;
   private final Map<String, SinkRunner> sinkRunners;
+  private final Map<String, RegisterService> registerServiceMap;
 
   public SimpleMaterializedConfiguration() {
     channels = new HashMap<String, Channel>();
     sourceRunners = new HashMap<String, SourceRunner>();
     sinkRunners = new HashMap<String, SinkRunner>();
+    registerServiceMap = new HashMap<String, RegisterService>();
   }
 
   @Override
   public String toString() {
     return "{ sourceRunners:" + sourceRunners + " sinkRunners:" + sinkRunners
-        + " channels:" + channels + " }";
+        + " channels:" + channels + " registerService: " + registerServiceMap + " }";
   }
   @Override
   public void addSourceRunner(String name, SourceRunner sourceRunner) {
@@ -58,6 +61,16 @@ public class SimpleMaterializedConfiguration implements MaterializedConfiguratio
   @Override
   public void addChannel(String name, Channel channel) {
     channels.put(name, channel);
+  }
+
+  @Override
+  public void addRegisterService(String name, RegisterService value) {
+    registerServiceMap.put(name, value);
+  }
+
+  @Override
+  public ImmutableMap<String, RegisterService> getRegisterServices() {
+    return ImmutableMap.copyOf(registerServiceMap);
   }
 
   @Override

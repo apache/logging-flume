@@ -33,6 +33,7 @@ import org.apache.flume.SourceRunner;
 import org.apache.flume.event.SimpleEvent;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.node.MaterializedConfiguration;
+import org.apache.flume.register.service.RegisterService;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -107,6 +108,16 @@ public class TestEmbeddedAgentEmbeddedSource {
 
       @Override
       public void addChannel(String name, Channel channel) {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void addRegisterService(String name, RegisterService service) {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public Map<String, RegisterService> getRegisterServices() {
         throw new UnsupportedOperationException();
       }
     };

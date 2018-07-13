@@ -70,6 +70,147 @@ public class TestFlumeConfiguration {
   }
 
   @Test
+  public void testGeneralRegisterServiceConfig() {
+    Properties properties = new Properties();
+    properties.put("agent1.channels", "ch0");
+    properties.put("agent1.channels.ch0.type", "memory");
+
+    properties.put("agent1.sources", "src0");
+    properties.put("agent1.sources.src0.type", "multiport_syslogtcp");
+    properties.put("agent1.sources.src0.channels", "ch0");
+    properties.put("agent1.sources.src0.host", "localhost");
+    properties.put("agent1.sources.src0.ports", "10001 10002 10003");
+    properties.put("agent1.sources.src0.portHeader", "port");
+
+    properties.put("agent1.sinks", "sink0");
+    properties.put("agent1.sinks.sink0.type", "null");
+    properties.put("agent1.sinks.sink0.channel", "ch0");
+
+    properties.put("agent1.registerservices", "zkreg0 zkreg1 ");
+    properties.put("agent1.registerservices.zkreg0.type", "zookeeper");
+    properties.put("agent1.registerservices.zkreg0.zkhost", "host1");
+    properties.put("agent1.registerservices.zkreg1.type", "zookeeper");
+    properties.put("agent1.registerservices.zkreg1.zkhost", "host1");
+
+    properties.put("agent1.configfilters", "f1");
+    properties.put("agent1.configfilters.f1.type", "env");
+
+    FlumeConfiguration conf = new FlumeConfiguration(properties);
+    AgentConfiguration agentConfiguration = conf.getConfigurationFor("agent1");
+    Assert.assertEquals(String.valueOf(agentConfiguration.getSourceSet()), 1,
+        agentConfiguration.getSourceSet().size());
+    Assert.assertEquals(String.valueOf(agentConfiguration.getChannelSet()), 1,
+        agentConfiguration.getChannelSet().size());
+    Assert.assertEquals(String.valueOf(agentConfiguration.getSinkSet()), 1,
+        agentConfiguration.getSinkSet().size());
+    Assert.assertTrue(agentConfiguration.getSourceSet().contains("src0"));
+    Assert.assertTrue(agentConfiguration.getChannelSet().contains("ch0"));
+    Assert.assertTrue(agentConfiguration.getSinkSet().contains("sink0"));
+    Assert.assertTrue(agentConfiguration.getConfigFilterSet().contains("f1"));
+
+    // Register Service related
+    Assert.assertEquals(agentConfiguration.getRegisterServiceSet().size(), 2);
+    Assert.assertTrue(agentConfiguration.getRegisterServiceSet().contains("zkreg0"));
+    Assert.assertTrue(agentConfiguration.getRegisterServiceSet().contains("zkreg1"));
+    Assert.assertEquals(agentConfiguration.getRegisterServiceContextMap().size(), 2);
+    Assert.assertTrue(agentConfiguration.getRegisterServiceContextMap().containsKey("zkreg0"));
+    Assert.assertTrue(agentConfiguration.getRegisterServiceContextMap().containsKey("zkreg1"));
+  }
+
+  @Test
+  public void testRegisterServiceWithUselessConfig() {
+    Properties properties = new Properties();
+    properties.put("agent1.channels", "ch0");
+    properties.put("agent1.channels.ch0.type", "memory");
+
+    properties.put("agent1.sources", "src0");
+    properties.put("agent1.sources.src0.type", "multiport_syslogtcp");
+    properties.put("agent1.sources.src0.channels", "ch0");
+    properties.put("agent1.sources.src0.host", "localhost");
+    properties.put("agent1.sources.src0.ports", "10001 10002 10003");
+    properties.put("agent1.sources.src0.portHeader", "port");
+
+    properties.put("agent1.sinks", "sink0");
+    properties.put("agent1.sinks.sink0.type", "null");
+    properties.put("agent1.sinks.sink0.channel", "ch0");
+
+    properties.put("agent1.registerservices", "zkreg ");
+    properties.put("agent1.registerservices.zkreg.type", "zookeeper");
+    properties.put("agent1.registerservices.zkreg.zkhost", "host1");
+    properties.put("agent1.registerservices.zkreg1.type", "zookeeper");
+    properties.put("agent1.registerservices.zkreg1.zkhost", "host1");
+
+    properties.put("agent1.configfilters", "f1");
+    properties.put("agent1.configfilters.f1.type", "env");
+
+    FlumeConfiguration conf = new FlumeConfiguration(properties);
+    AgentConfiguration agentConfiguration = conf.getConfigurationFor("agent1");
+    Assert.assertEquals(String.valueOf(agentConfiguration.getSourceSet()), 1,
+        agentConfiguration.getSourceSet().size());
+    Assert.assertEquals(String.valueOf(agentConfiguration.getChannelSet()), 1,
+        agentConfiguration.getChannelSet().size());
+    Assert.assertEquals(String.valueOf(agentConfiguration.getSinkSet()), 1,
+        agentConfiguration.getSinkSet().size());
+    Assert.assertTrue(agentConfiguration.getSourceSet().contains("src0"));
+    Assert.assertTrue(agentConfiguration.getChannelSet().contains("ch0"));
+    Assert.assertTrue(agentConfiguration.getSinkSet().contains("sink0"));
+    Assert.assertTrue(agentConfiguration.getConfigFilterSet().contains("f1"));
+
+    // Register Service related
+    Assert.assertEquals(agentConfiguration.getRegisterServiceSet().size(), 1);
+    Assert.assertTrue(agentConfiguration.getRegisterServiceSet().contains("zkreg"));
+    Assert.assertEquals(agentConfiguration.getRegisterServiceContextMap().size(), 1);
+    Assert.assertTrue(agentConfiguration.getRegisterServiceContextMap().containsKey("zkreg"));
+  }
+
+  @Test
+  public void testRegisterServiceWithUnkownType() {
+    Properties properties = new Properties();
+    properties.put("agent1.channels", "ch0");
+    properties.put("agent1.channels.ch0.type", "memory");
+
+    properties.put("agent1.sources", "src0");
+    properties.put("agent1.sources.src0.type", "multiport_syslogtcp");
+    properties.put("agent1.sources.src0.channels", "ch0");
+    properties.put("agent1.sources.src0.host", "localhost");
+    properties.put("agent1.sources.src0.ports", "10001 10002 10003");
+    properties.put("agent1.sources.src0.portHeader", "port");
+
+    properties.put("agent1.sinks", "sink0");
+    properties.put("agent1.sinks.sink0.type", "null");
+    properties.put("agent1.sinks.sink0.channel", "ch0");
+
+    properties.put("agent1.registerservices", "zkreg zkreg1");
+    properties.put("agent1.registerservices.zkreg.type", "zookeeper");
+    properties.put("agent1.registerservices.zkreg.zkhost", "host1");
+    properties.put("agent1.registerservices.zkreg1.type", "ddd");
+    properties.put("agent1.registerservices.zkreg1.zkhost", "host1");
+
+    properties.put("agent1.configfilters", "f1");
+    properties.put("agent1.configfilters.f1.type", "env");
+
+    FlumeConfiguration conf = new FlumeConfiguration(properties);
+    AgentConfiguration agentConfiguration = conf.getConfigurationFor("agent1");
+    Assert.assertEquals(String.valueOf(agentConfiguration.getSourceSet()), 1,
+        agentConfiguration.getSourceSet().size());
+    Assert.assertEquals(String.valueOf(agentConfiguration.getChannelSet()), 1,
+        agentConfiguration.getChannelSet().size());
+    Assert.assertEquals(String.valueOf(agentConfiguration.getSinkSet()), 1,
+        agentConfiguration.getSinkSet().size());
+    Assert.assertTrue(agentConfiguration.getSourceSet().contains("src0"));
+    Assert.assertTrue(agentConfiguration.getChannelSet().contains("ch0"));
+    Assert.assertTrue(agentConfiguration.getSinkSet().contains("sink0"));
+    Assert.assertTrue(agentConfiguration.getConfigFilterSet().contains("f1"));
+
+    // Register Service related
+    Assert.assertEquals(agentConfiguration.getRegisterServiceSet().size(), 1);
+    Assert.assertTrue(agentConfiguration.getRegisterServiceSet().contains("zkreg"));
+    Assert.assertEquals(agentConfiguration.getRegisterServiceContextMap().size(), 1);
+    Assert.assertTrue(agentConfiguration.getRegisterServiceContextMap().containsKey("zkreg"));
+    Assert.assertEquals(conf.getConfigurationErrors().size(), 1);
+  }
+
+  @Test
   public void testFlumeConfigAdsErrorOnNullName() {
     HashMap<String, String> properties = new HashMap<>();
     properties.put(null, "something");

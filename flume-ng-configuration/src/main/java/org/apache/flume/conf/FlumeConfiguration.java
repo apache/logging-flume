@@ -21,6 +21,8 @@ import org.apache.flume.conf.ComponentConfiguration.ComponentType;
 import org.apache.flume.conf.FlumeConfigurationError.ErrorOrWarning;
 import org.apache.flume.conf.channel.ChannelConfiguration;
 import org.apache.flume.conf.channel.ChannelType;
+import org.apache.flume.conf.register.service.RegisterServiceConfiguration;
+import org.apache.flume.conf.register.service.RegisterServiceType;
 import org.apache.flume.configfilter.ConfigFilter;
 import org.apache.flume.conf.configfilter.ConfigFilterConfiguration;
 import org.apache.flume.conf.configfilter.ConfigFilterType;
@@ -54,6 +56,8 @@ import static org.apache.flume.conf.BasicConfigurationConstants.CONFIG_CHANNELS_
 import static org.apache.flume.conf.BasicConfigurationConstants.CONFIG_CONFIG;
 import static org.apache.flume.conf.BasicConfigurationConstants.CONFIG_CONFIGFILTERS;
 import static org.apache.flume.conf.BasicConfigurationConstants.CONFIG_CONFIGFILTERS_PREFIX;
+import static org.apache.flume.conf.BasicConfigurationConstants.CONFIG_REGISTER_SERVICES;
+import static org.apache.flume.conf.BasicConfigurationConstants.CONFIG_REGISTER_SERVICES_PREFIX;
 import static org.apache.flume.conf.BasicConfigurationConstants.CONFIG_SINKGROUPS;
 import static org.apache.flume.conf.BasicConfigurationConstants.CONFIG_SINKGROUPS_PREFIX;
 import static org.apache.flume.conf.BasicConfigurationConstants.CONFIG_SINKS;
@@ -214,8 +218,8 @@ public class FlumeConfiguration {
       agentConfigMap.put(agentName, aconf);
     }
 
-    // Each configuration key must begin with one of the three prefixes:
-    // sources, sinks, or channels.
+    // Each configuration key must begin with one of the four prefixes:
+    // sources, sinks, channels or registerservices.
     return aconf.addProperty(configKey, value);
   }
 
@@ -233,6 +237,7 @@ public class FlumeConfiguration {
     private String sinks;
     private String channels;
     private String sinkgroups;
+    private String registerServices;
 
     private final Map<String, ComponentConfiguration> sourceConfigMap;
     private final Map<String, ComponentConfiguration> sinkConfigMap;
@@ -245,12 +250,14 @@ public class FlumeConfiguration {
     private Map<String, Context> sinkContextMap;
     private Map<String, Context> channelContextMap;
     private Map<String, Context> sinkGroupContextMap;
+    private Map<String, Context> registerServiceContextMap;
 
     private Set<String> sinkSet;
     private Set<String> configFilterSet;
     private Set<String> sourceSet;
     private Set<String> channelSet;
     private Set<String> sinkgroupSet;
+    private Set<String> registerServiceSet;
 
     private final List<FlumeConfigurationError> errorList;
     private List<ConfigFilter> configFiltersInstances;
@@ -260,6 +267,7 @@ public class FlumeConfiguration {
                                List<FlumeConfigurationError> errorList) {
       this.agentName = agentName;
       this.errorList = errorList;
+      this.registerServices = "";
       configFilterConfigMap = new HashMap<>();
       sourceConfigMap = new HashMap<>();
       sinkConfigMap = new HashMap<>();
@@ -272,6 +280,7 @@ public class FlumeConfiguration {
       sinkGroupContextMap = new HashMap<>();
       configFiltersInstances = new ArrayList<>();
       configFilterPatternCache = new HashMap<>();
+      registerServiceContextMap = new HashMap<>();
     }
 
     public Map<String, ComponentConfiguration> getChannelConfigMap() {
@@ -310,6 +319,10 @@ public class FlumeConfiguration {
       return channelContextMap;
     }
 
+    public Map<String, Context> getRegisterServiceContextMap() {
+      return registerServiceContextMap;
+    }
+
     public Set<String> getSinkSet() {
       return sinkSet;
     }
@@ -330,6 +343,9 @@ public class FlumeConfiguration {
       return sinkgroupSet;
     }
 
+    public Set<String> getRegisterServiceSet() {
+      return registerServiceSet;
+    }
 
     /**
      * <p>
@@ -382,6 +398,13 @@ public class FlumeConfiguration {
       sourceSet = validateSources(channelSet);
       sinkSet = validateSinks(channelSet);
       sinkgroupSet = validateGroups(sinkSet);
+
+      if (registerServices.isEmpty()) {
+        registerServiceSet = new HashSet<>();
+      } else {
+        registerServiceSet = new HashSet<>(Arrays.asList(registerServices.split("\\s+")));
+      }
+      registerServiceSet = validateRegisterServices(registerServiceSet);
 
       // If no sources or sinks are present, then this is invalid
       if (sourceSet.isEmpty() && sinkSet.isEmpty()) {
@@ -525,6 +548,9 @@ public class FlumeConfiguration {
       return null;
     }
 
+    private RegisterServiceType getKnownConfigRegisterService(String type) {
+      return getKnownComponent(type, RegisterServiceType.values());
+    }
 
     /**
      * If it is a known component it will do the full validation required for
@@ -1005,6 +1031,55 @@ public class FlumeConfiguration {
       return groupSinks;
     }
 
+    private Set<String> validateRegisterServices(Set<String> registerServiceSet) {
+      Iterator<String> iter = registerServiceSet.iterator();
+      Map<String, Context> newContextMap = new HashMap<>();
+      while (iter.hasNext()) {
+        String registerServiceName = iter.next();
+        LOGGER.error("Register service name is :" + registerServiceName);
+        Context registerServiceContext = registerServiceContextMap.get(registerServiceName);
+        if (registerServiceContext == null) {
+          iter.remove();
+          LOGGER.error(registerServiceName + "'s context is not set");
+          addError(registerServiceName, CONFIG_ERROR, ERROR);
+          continue;
+        }
+        RegisterServiceType regSrvType = getKnownConfigRegisterService(
+            registerServiceContext.getString(BasicConfigurationConstants.CONFIG_TYPE));
+        if (regSrvType == null) {
+          iter.remove();
+          LOGGER.error(registerServiceName + " has wrong config type:" + regSrvType);
+          addError(registerServiceName, CONFIG_ERROR, ERROR);
+          continue;
+        }
+
+        RegisterServiceConfiguration conf = null;
+        String config = regSrvType.toString().toUpperCase(Locale.ENGLISH);
+        try {
+          conf = (RegisterServiceConfiguration) ComponentConfigurationFactory.create(
+                  registerServiceName, config, ComponentType.REGISTER_SERVICE);
+
+        } catch (ConfigurationException e) {
+          LOGGER.error("Could not configure register service {} due to: {}",
+              new Object[]{registerServiceName, e.getMessage(), e});
+        }
+        if (conf == null) {
+          iter.remove();
+          LOGGER.error(registerServiceName + " is not well configured");
+          addError(registerServiceName, CONFIG_ERROR, ERROR);
+          continue;
+        }
+        conf.configure(registerServiceContext);
+        errorList.addAll(conf.getErrors());
+        newContextMap.put(registerServiceName, registerServiceContext);
+      }
+      registerServiceContextMap = newContextMap;
+      Set<String> tempRegisterServiceSet = new HashSet<String>();
+      tempRegisterServiceSet.addAll(registerServiceContextMap.keySet());
+      registerServiceSet.retainAll(tempRegisterServiceSet);
+      return registerServiceSet;
+    }
+
     private String getSpaceDelimitedList(Set<String> entries) {
       if (entries.isEmpty()) {
         return null;
@@ -1140,11 +1215,22 @@ public class FlumeConfiguration {
       if (CONFIG_SINKGROUPS.equals(key)) {
         if (sinkgroups == null) {
           sinkgroups = value;
-
           return true;
         } else {
           LOGGER.warn("Duplicate sinkgroup list specfied for agent: {}", agentName);
           addError(CONFIG_SINKGROUPS, DUPLICATE_PROPERTY, ERROR);
+          return false;
+        }
+      }
+
+      // Check for register services
+      if (CONFIG_REGISTER_SERVICES.equals(key)) {
+        if (registerServices == null || registerServices.isEmpty()) {
+          registerServices = value;
+          return true;
+        } else {
+          LOGGER.warn("Duplicate register service list specfied for agent: {}", agentName);
+          addError(CONFIG_REGISTER_SERVICES, DUPLICATE_PROPERTY, ERROR);
           return false;
         }
       }
@@ -1154,6 +1240,7 @@ public class FlumeConfiguration {
           || addAsSinkConfig(key, value)
           || addAsSinkGroupConfig(key, value)
           || addAsConfigFilterConfig(key, value)
+          || addAsRegisterServiceConfig(key, value)
       ) {
         return true;
       }
@@ -1191,6 +1278,11 @@ public class FlumeConfiguration {
       return addComponentConfig(
           key, value, CONFIG_SOURCES_PREFIX, sourceContextMap
       );
+    }
+
+    private boolean addAsRegisterServiceConfig(String key, String value) {
+      return addComponentConfig(
+          key, value, CONFIG_REGISTER_SERVICES_PREFIX, registerServiceContextMap);
     }
 
     private boolean addComponentConfig(

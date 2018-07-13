@@ -22,6 +22,7 @@ import org.apache.flume.conf.ComponentConfiguration.ComponentType;
 import org.apache.flume.conf.channel.ChannelConfiguration.ChannelConfigurationType;
 import org.apache.flume.conf.channel.ChannelSelectorConfiguration.ChannelSelectorConfigurationType;
 import org.apache.flume.conf.configfilter.ConfigFilterConfiguration.ConfigFilterConfigurationType;
+import org.apache.flume.conf.register.service.RegisterServiceConfiguration;
 import org.apache.flume.conf.sink.SinkConfiguration.SinkConfigurationType;
 import org.apache.flume.conf.sink.SinkGroupConfiguration;
 import org.apache.flume.conf.sink.SinkProcessorConfiguration.SinkProcessorConfigurationType;
@@ -65,6 +66,8 @@ public class ComponentConfigurationFactory {
                 .getConfiguration(name);
           case SINKGROUP:
             return new SinkGroupConfiguration(name);
+          case REGISTER_SERVICE:
+            return new RegisterServiceConfiguration(name);
           default:
             throw new ConfigurationException(
                 "Cannot create configuration. Unknown Type specified: " + type);
