@@ -207,7 +207,7 @@ limitations under the License.
                     <mkdir dir="${project.build.directory}/generated-sources/java/org/apache/flume"/>
                     <exec executable="powershell">
                       <arg
-                              line = "-executionpolicy unrestricted -file ${basedir}\scripts\saveVersion.ps1  ${project.version} ${project.build.directory}" />
+                              line="-executionpolicy unrestricted -file ${basedir}\scripts\saveVersion.ps1  ${project.version} ${project.build.directory}"/>
                     </exec>
                   </target>
                 </configuration>
@@ -238,6 +238,71 @@ limitations under the License.
             </executions>
           </plugin>
 
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>compileThrift</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>compileThrift</id>
+                <phase>generate-sources</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <echo file="target/compile-thrift.sh">
+                      LICENSE=src/main/thrift/aslv2
+                      THRIFT_DIR=src/main/thrift
+                      JAVA_DIR=target/generated-sources/thrift
+                      mkdir -p $JAVA_DIR 2&gt; /dev/null
+                      JSTATUS=$?
+                      if [ $JSTATUS -ne 0 ] ; then
+                      echo "Could not create $JAVA_DIR. Will not generate thrift files."
+                      exit $JSTATUS
+                      fi
+                      for THRIFT_FILE in `ls $THRIFT_DIR/*.thrift 2&gt; /dev/null`
+                      do
+                      thrift --gen java:hashcode -o $JAVA_DIR $THRIFT_FILE
+                      done
+                      SRC_DIR=$JAVA_DIR/gen-java/org/apache/flume/thrift/
+                      DEST_DIR=src/main/java/org/apache/flume/thrift
+                      if [ ! -d $DEST_DIR ] ; then
+                      mkdir $DEST_DIR 2&gt; /dev/null
+                      STATUS=$?
+                      if [ $STATUS -ne 0 ] ; then
+                      echo "Could not create $DEST_DIR. Will not generate thrift files."
+                      exit $STATUS
+                      fi
+                      fi
+                      for JAVA_FILE in `ls $SRC_DIR/*.java 2&gt; /dev/null`
+                      do
+                      echo $JAVA_FILE
+                      cat $LICENSE > $JAVA_FILE.tmp
+                      cat $JAVA_FILE >> $JAVA_FILE.tmp
+                      mv $JAVA_FILE.tmp $JAVA_FILE
+                      cp $JAVA_FILE $DEST_DIR
+                      done
+                      rm -rf $JAVA_DIR
+                    </echo>
+                    <exec executable="sh" dir="${basedir}" failonerror="true">
+                      <arg line="target/compile-thrift.sh"/>
+                    </exec>
+                  </target>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
         </plugins>
       </build>
     </profile>

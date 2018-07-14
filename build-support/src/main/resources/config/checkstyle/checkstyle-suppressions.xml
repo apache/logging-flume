@@ -29,7 +29,7 @@ under the License.
 
     <!-- Suppress all style checks for generated code -->
     <suppress checks=".*"
-              files="generated-sources|com[/\\]cloudera[/\\]flume[/\\]handlers[/\\]thrift|org[/\\]apache[/\\]flume[/\\]thrift[/\\]|org[/\\]apache[/\\]flume[/\\]source[/\\]scribe|ProtosFactory.java"/>
+              files="generated-sources|com[/\\]cloudera[/\\]flume[/\\]handlers[/\\]thrift|org[/\\]apache[/\\]flume[/\\]thrift[/\\]|org[/\\]apache[/\\]flume[/\\]client[/\\]scribe/(Scribe.java|LogEntry.java|ResultCode.java)|org[/\\]apache[/\\]flume[/\\]source[/\\]scribe|ProtosFactory.java"/>
 
     <!-- The "legacy" sources have a weird camelCaps package name -->
     <suppress checks="PackageName"

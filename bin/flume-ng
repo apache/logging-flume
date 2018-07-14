@@ -25,6 +25,7 @@
 
 FLUME_AGENT_CLASS="org.apache.flume.node.Application"
 FLUME_AVRO_CLIENT_CLASS="org.apache.flume.client.avro.AvroCLIClient"
+FLUME_SCRIBE_CLIENT_CLASS="org.apache.flume.client.scribe.ScribeCLIClient"
 FLUME_VERSION_CLASS="org.apache.flume.tools.VersionInfo"
 FLUME_TOOLS_CLASS="org.apache.flume.tools.FlumeToolsMain"
 
@@ -161,6 +162,7 @@ commands:
   help                      display this help text
   agent                     run a Flume agent
   avro-client               run an avro Flume client
+  scribe-client             run scribe client against scribe source
   version                   show Flume version info
 
 global options:
@@ -189,6 +191,20 @@ avro-client options:
   --filename,-F <file>   text file to stream to avro source (default: std input)
   --headerFile,-R <file> File containing event headers as key/value pairs on each new line
   --help,-h              display help text
+
+scribe-client options:
+  --server, -s <host>               hostname of server where scribe source is running
+  --port, -p <port>                 port on which scribe source is listening on
+  --iodepth, -q <iodepth>           io depth of the CLI client
+  --eventnumtosent, -n <num>        specify the event number to send, 0 means this flag won't work
+  --eventlength, -l <eventLegth>    event length of the scribe event
+  --categoryname, -c <categoryname> Scribe category name
+  --batchrpcsize, -b <rpcBatchSize> event number per thrift request
+  --rpcmode, -r <sync/async>        Using sync or async thrift client.
+  --runtimeseconds, -t <runtime>    run time of CLI client
+  --eventsperminute, -e <epm>       number of events per minute per thread (default 1M epm) only for sync client mode now.
+  --help, -h                        display help text
+
 
   Either --rpcProps or both --host and --port must be specified.
 
@@ -249,6 +265,9 @@ case "$mode" in
     ;;
   avro-client)
     opt_avro_client=1
+    ;;
+  scribe-client)
+    opt_scribe_client=1
     ;;
   tool)
     opt_tool=1
@@ -433,6 +452,8 @@ if [ -n "$opt_agent" ] ; then
   run_flume $FLUME_AGENT_CLASS $args
 elif [ -n "$opt_avro_client" ] ; then
   run_flume $FLUME_AVRO_CLIENT_CLASS $args
+elif [ -n "$opt_scribe_client" ] ; then
+  run_flume $FLUME_SCRIBE_CLIENT_CLASS $args
 elif [ -n "${opt_version}" ] ; then
   run_flume $FLUME_VERSION_CLASS $args
 elif [ -n "${opt_tool}" ] ; then
