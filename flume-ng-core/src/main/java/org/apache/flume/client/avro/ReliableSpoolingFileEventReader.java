@@ -29,6 +29,7 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.event.EventBuilder;
+import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.serialization.DecodeErrorPolicy;
 import org.apache.flume.serialization.DurablePositionTracker;
 import org.apache.flume.serialization.EventDeserializer;
@@ -104,6 +105,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
   private final DecodeErrorPolicy decodeErrorPolicy;
   private final ConsumeOrder consumeOrder;
   private final boolean recursiveDirectorySearch;
+  private final SourceCounter sourceCounter;
 
   private Optional<FileInfo> currentFile = Optional.absent();
   /** Always contains the last file from which lines have been read. */
@@ -125,8 +127,8 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       String deserializerType, Context deserializerContext,
       String deletePolicy, String inputCharset,
       DecodeErrorPolicy decodeErrorPolicy,
-      ConsumeOrder consumeOrder,
-      boolean recursiveDirectorySearch) throws IOException {
+      ConsumeOrder consumeOrder, boolean recursiveDirectorySearch,
+                                          SourceCounter sourceCounter) throws IOException {
 
     // Sanity checks
     Preconditions.checkNotNull(spoolDirectory);
@@ -138,6 +140,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     Preconditions.checkNotNull(deserializerContext);
     Preconditions.checkNotNull(deletePolicy);
     Preconditions.checkNotNull(inputCharset);
+    Preconditions.checkNotNull(sourceCounter);
 
     // validate delete policy
     if (!deletePolicy.equalsIgnoreCase(DeletePolicy.NEVER.name()) &&
@@ -192,6 +195,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     this.decodeErrorPolicy = Preconditions.checkNotNull(decodeErrorPolicy);
     this.consumeOrder = Preconditions.checkNotNull(consumeOrder);
     this.recursiveDirectorySearch = recursiveDirectorySearch;
+    this.sourceCounter = sourceCounter;
 
     File trackerDirectory = new File(trackerDirPath);
 
@@ -299,6 +303,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
   public List<Event> readEvents(int numEvents) throws IOException {
     if (!committed) {
       if (!currentFile.isPresent()) {
+        sourceCounter.incrementReadFail();
         throw new IllegalStateException("File should not roll when " +
             "commit is outstanding.");
       }
@@ -403,10 +408,12 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     // Verify that spooling assumptions hold
     if (fileToRoll.lastModified() != currentFile.get().getLastModified()) {
       String message = "File has been modified since being read: " + fileToRoll;
+      sourceCounter.incrementFileHandlingFail();
       throw new IllegalStateException(message);
     }
     if (fileToRoll.length() != currentFile.get().getLength()) {
       String message = "File has changed size since being read: " + fileToRoll;
+      sourceCounter.incrementFileHandlingFail();
       throw new IllegalStateException(message);
     }
 
@@ -453,6 +460,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       } else {
         String message = "File name has been re-used with different" +
             " files. Spooling assumptions violated for " + dest;
+        sourceCounter.incrementFileHandlingFail();
         throw new IllegalStateException(message);
       }
 
@@ -460,6 +468,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     } else if (dest.exists()) {
       String message = "File name has been re-used with different" +
           " files. Spooling assumptions violated for " + dest;
+      sourceCounter.incrementFileHandlingFail();
       throw new IllegalStateException(message);
 
       // Destination file does not already exist. We are good to go!
@@ -477,6 +486,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
         String message = "Unable to move " + fileToRoll + " to " + dest +
             ". This will likely cause duplicate events. Please verify that " +
             "flume has sufficient permissions to perform these operations.";
+        sourceCounter.incrementFileHandlingFail();
         throw new FlumeException(message);
       }
     }
@@ -495,6 +505,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       return;
     }
     if (!fileToDelete.delete()) {
+      sourceCounter.incrementFileHandlingFail();
       throw new IOException("Unable to delete spool file: " + fileToDelete);
     }
     // now we no longer need the meta file
@@ -690,6 +701,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
         SpoolDirectorySourceConfigurationConstants.DEFAULT_CONSUME_ORDER;
     private boolean recursiveDirectorySearch =
         SpoolDirectorySourceConfigurationConstants.DEFAULT_RECURSIVE_DIRECTORY_SEARCH;
+    private SourceCounter sourceCounter;
 
     public Builder spoolDirectory(File directory) {
       this.spoolDirectory = directory;
@@ -771,12 +783,17 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       return this;
     }
 
+    public Builder sourceCounter(SourceCounter sourceCounter) {
+      this.sourceCounter = sourceCounter;
+      return this;
+    }
+
     public ReliableSpoolingFileEventReader build() throws IOException {
       return new ReliableSpoolingFileEventReader(spoolDirectory, completedSuffix,
           includePattern, ignorePattern, trackerDirPath, annotateFileName, fileNameHeader,
           annotateBaseName, baseNameHeader, deserializerType,
           deserializerContext, deletePolicy, inputCharset, decodeErrorPolicy,
-          consumeOrder, recursiveDirectorySearch);
+          consumeOrder, recursiveDirectorySearch, sourceCounter);
     }
   }
 

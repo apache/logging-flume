@@ -320,6 +320,7 @@ public class MultiportSyslogTCPSource extends AbstractSource implements
           sourceCounter.addToEventAcceptedCount(numEvents);
         } catch (Throwable t) {
           logger.error("Error writing to channel, event dropped", t);
+          sourceCounter.incrementReadFail();
           if (t instanceof Error) {
             Throwables.propagate(t);
           }

@@ -252,29 +252,34 @@ public class TaildirSource extends AbstractSource implements
   private void tailFileProcess(TailFile tf, boolean backoffWithoutNL)
       throws IOException, InterruptedException {
     while (true) {
-      reader.setCurrentFile(tf);
-      List<Event> events = reader.readEvents(batchSize, backoffWithoutNL);
-      if (events.isEmpty()) {
-        break;
-      }
-      sourceCounter.addToEventReceivedCount(events.size());
-      sourceCounter.incrementAppendBatchReceivedCount();
       try {
-        getChannelProcessor().processEventBatch(events);
-        reader.commit();
-      } catch (ChannelException ex) {
-        logger.warn("The channel is full or unexpected failure. " +
-            "The source will try again after " + retryInterval + " ms");
-        TimeUnit.MILLISECONDS.sleep(retryInterval);
-        retryInterval = retryInterval << 1;
-        retryInterval = Math.min(retryInterval, maxRetryInterval);
-        continue;
-      }
-      retryInterval = 1000;
-      sourceCounter.addToEventAcceptedCount(events.size());
-      sourceCounter.incrementAppendBatchAcceptedCount();
-      if (events.size() < batchSize) {
-        break;
+        reader.setCurrentFile(tf);
+        List<Event> events = reader.readEvents(batchSize, backoffWithoutNL);
+        if (events.isEmpty()) {
+          break;
+        }
+        sourceCounter.addToEventReceivedCount(events.size());
+        sourceCounter.incrementAppendBatchReceivedCount();
+        try {
+          getChannelProcessor().processEventBatch(events);
+          reader.commit();
+        } catch (ChannelException ex) {
+          logger.warn("The channel is full or unexpected failure. " +
+              "The source will try again after " + retryInterval + " ms");
+          TimeUnit.MILLISECONDS.sleep(retryInterval);
+          retryInterval = retryInterval << 1;
+          retryInterval = Math.min(retryInterval, maxRetryInterval);
+          continue;
+        }
+        retryInterval = 1000;
+        sourceCounter.addToEventAcceptedCount(events.size());
+        sourceCounter.incrementAppendBatchAcceptedCount();
+        if (events.size() < batchSize) {
+          break;
+        }
+      } catch (IOException e){
+        sourceCounter.incrementReadFail();
+        throw e;
       }
     }
   }

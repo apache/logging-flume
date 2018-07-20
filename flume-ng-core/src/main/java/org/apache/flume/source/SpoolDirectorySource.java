@@ -104,6 +104,7 @@ public class SpoolDirectorySource extends AbstractSource
           .decodeErrorPolicy(decodeErrorPolicy)
           .consumeOrder(consumeOrder)
           .recursiveDirectorySearch(recursiveDirectorySearch)
+          .sourceCounter(sourceCounter)
           .build();
     } catch (IOException ioe) {
       throw new FlumeException("Error instantiating spooling event parser",

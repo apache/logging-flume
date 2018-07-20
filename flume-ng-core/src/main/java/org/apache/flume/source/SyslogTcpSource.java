@@ -96,8 +96,10 @@ public class SyslogTcpSource extends AbstractSource
           sourceCounter.incrementEventAcceptedCount();
         } catch (ChannelException ex) {
           logger.error("Error writting to channel, event dropped", ex);
+          sourceCounter.incrementChannelWriteFail();
         } catch (RuntimeException ex) {
           logger.error("Error parsing event from syslog stream, event dropped", ex);
+          sourceCounter.incrementReadFail();
           return;
         }
       }

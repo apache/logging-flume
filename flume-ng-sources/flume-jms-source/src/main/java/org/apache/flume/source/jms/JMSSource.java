@@ -295,11 +295,13 @@ public class JMSSource extends AbstractPollableSource {
       logger.warn("Error appending event to channel. "
           + "Channel might be full. Consider increasing the channel "
           + "capacity or make sure the sinks perform faster.", channelException);
+      sourceCounter.incrementChannelWriteFail();
     } catch (JMSException jmsException) {
       logger.warn("JMSException consuming events", jmsException);
       if (++jmsExceptionCounter > errorThreshold) {
         if (consumer != null) {
           logger.warn("Exceeded JMSException threshold, closing consumer");
+          sourceCounter.incrementReadFail();
           consumer.rollback();
           consumer.close();
           consumer = null;
@@ -307,6 +309,7 @@ public class JMSSource extends AbstractPollableSource {
       }
     } catch (Throwable throwable) {
       logger.error("Unexpected error processing events", throwable);
+      sourceCounter.incrementReadFail();
       if (throwable instanceof Error) {
         throw (Error) throwable;
       }
