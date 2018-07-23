@@ -25,12 +25,12 @@ import java.util.List;
 
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
-import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.event.EventBuilder;
+import org.apache.flume.instrumentation.SourceCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +57,7 @@ public class StressSource extends AbstractPollableSource implements Configurable
 
   private static final Logger logger = LoggerFactory.getLogger(StressSource.class);
 
-  private CounterGroup counterGroup;
+  private SourceCounter sourceCounter = null;
   private byte[] buffer;
   private long maxTotalEvents;
   private long maxSuccessfulEvents;
@@ -66,10 +66,6 @@ public class StressSource extends AbstractPollableSource implements Configurable
   private Event event;
   private List<Event> eventBatchList;
   private List<Event> eventBatchListToProcess;
-
-  public StressSource() {
-    counterGroup = new CounterGroup();
-  }
 
   /**
    * Read parameters from context
@@ -88,6 +84,10 @@ public class StressSource extends AbstractPollableSource implements Configurable
     batchSize = context.getInteger("batchSize", 1);
     /* Size of events to be generated. */
     int size = context.getInteger("size", 500);
+
+    if (sourceCounter == null) {
+      sourceCounter = new SourceCounter(getName());
+    }
 
     prepEventData(size);
   }
@@ -111,19 +111,22 @@ public class StressSource extends AbstractPollableSource implements Configurable
 
   @Override
   protected Status doProcess() throws EventDeliveryException {
-    long totalEventSent = counterGroup.addAndGet("events.total", lastSent);
+    long totalEventSent = sourceCounter.getEventReceivedCount();
 
     if ((maxTotalEvents >= 0 &&
             totalEventSent >= maxTotalEvents) ||
             (maxSuccessfulEvents >= 0 &&
-                    counterGroup.get("events.successful") >= maxSuccessfulEvents)) {
+              sourceCounter.getEventAcceptedCount() >= maxSuccessfulEvents)) {
       return Status.BACKOFF;
     }
     try {
       lastSent = batchSize;
 
+      sourceCounter.incrementAppendBatchReceivedCount();
       if (batchSize == 1) {
+        sourceCounter.incrementEventReceivedCount();
         getChannelProcessor().processEvent(event);
+        sourceCounter.incrementEventAcceptedCount();
       } else {
         long eventsLeft = maxTotalEvents - totalEventSent;
 
@@ -133,12 +136,14 @@ public class StressSource extends AbstractPollableSource implements Configurable
           eventBatchListToProcess = eventBatchList;
         }
         lastSent = eventBatchListToProcess.size();
+
+        sourceCounter.addToEventReceivedCount(lastSent);
         getChannelProcessor().processEventBatch(eventBatchListToProcess);
+        sourceCounter.addToEventAcceptedCount(lastSent);
       }
 
-      counterGroup.addAndGet("events.successful", lastSent);
+      sourceCounter.incrementAppendBatchAcceptedCount();
     } catch (ChannelException ex) {
-      counterGroup.addAndGet("events.failed", lastSent);
       return Status.BACKOFF;
     }
     return Status.READY;
@@ -147,10 +152,11 @@ public class StressSource extends AbstractPollableSource implements Configurable
   @Override
   protected void doStart() throws FlumeException {
     logger.info("Stress source doStart finished");
+    sourceCounter.start();
   }
 
   @Override
   protected void doStop() throws FlumeException {
-    logger.info("Stress source do stop. Metrics:{}", counterGroup);
+    logger.info("Stress source do stop. Metrics:{}", sourceCounter);
   }
 }
