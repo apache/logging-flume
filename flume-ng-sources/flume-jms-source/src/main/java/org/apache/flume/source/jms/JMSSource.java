@@ -301,7 +301,7 @@ public class JMSSource extends AbstractPollableSource {
       if (++jmsExceptionCounter > errorThreshold) {
         if (consumer != null) {
           logger.warn("Exceeded JMSException threshold, closing consumer");
-          sourceCounter.incrementReadFail();
+          sourceCounter.incrementEventReadFail();
           consumer.rollback();
           consumer.close();
           consumer = null;
@@ -309,7 +309,7 @@ public class JMSSource extends AbstractPollableSource {
       }
     } catch (Throwable throwable) {
       logger.error("Unexpected error processing events", throwable);
-      sourceCounter.incrementReadFail();
+      sourceCounter.incrementEventReadFail();
       if (throwable instanceof Error) {
         throw (Error) throwable;
       }
@@ -357,5 +357,10 @@ public class JMSSource extends AbstractPollableSource {
         createDurableSubscription, durableSubscriptionName);
     jmsExceptionCounter = 0;
     return consumer;
+  }
+
+  @VisibleForTesting
+  SourceCounter getSourceCounter() {
+    return sourceCounter;
   }
 }

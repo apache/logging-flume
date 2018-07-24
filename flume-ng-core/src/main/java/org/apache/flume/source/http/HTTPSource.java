@@ -265,14 +265,14 @@ public class HTTPSource extends AbstractSource implements
         events = handler.getEvents(request);
       } catch (HTTPBadRequestException ex) {
         LOG.warn("Received bad request from client. ", ex);
-        sourceCounter.incrementReadFail();
+        sourceCounter.incrementEventReadFail();
         response.sendError(HttpServletResponse.SC_BAD_REQUEST,
                 "Bad request from client. "
                 + ex.getMessage());
         return;
       } catch (Exception ex) {
         LOG.warn("Deserializer threw unexpected exception. ", ex);
-        sourceCounter.incrementReadFail();
+        sourceCounter.incrementEventReadFail();
         response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                 "Deserializer threw unexpected exception. "
                 + ex.getMessage());

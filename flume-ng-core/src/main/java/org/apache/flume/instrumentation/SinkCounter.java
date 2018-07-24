@@ -18,6 +18,7 @@
 package org.apache.flume.instrumentation;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.flume.ChannelException;
 
 public class SinkCounter extends MonitoredCounterGroup implements
     SinkCounterMBean {
@@ -46,11 +47,22 @@ public class SinkCounter extends MonitoredCounterGroup implements
   private static final String COUNTER_EVENT_DRAIN_SUCCESS =
       "sink.event.drain.sucess";
 
+  private static final String COUNTER_EVENT_WRITE_FAIL =
+      "sink.event.write.fail";
+
+  private static final String COUNTER_FILE_HANDLING_FAIL =
+      "sink.file.handling.fail";
+
+  private static final String COUNTER_CHANNEL_READ_FAIL =
+      "sink.channel.write.fail";
+
   private static final String[] ATTRIBUTES = {
     COUNTER_CONNECTION_CREATED, COUNTER_CONNECTION_CLOSED,
     COUNTER_CONNECTION_FAILED, COUNTER_BATCH_EMPTY,
     COUNTER_BATCH_UNDERFLOW, COUNTER_BATCH_COMPLETE,
-    COUNTER_EVENT_DRAIN_ATTEMPT, COUNTER_EVENT_DRAIN_SUCCESS
+    COUNTER_EVENT_DRAIN_ATTEMPT, COUNTER_EVENT_DRAIN_SUCCESS,
+    COUNTER_EVENT_WRITE_FAIL, COUNTER_FILE_HANDLING_FAIL,
+    COUNTER_CHANNEL_READ_FAIL
   };
 
   public SinkCounter(String name) {
@@ -141,4 +153,36 @@ public class SinkCounter extends MonitoredCounterGroup implements
   public long addToEventDrainSuccessCount(long delta) {
     return addAndGet(COUNTER_EVENT_DRAIN_SUCCESS, delta);
   }
+
+  public long incrementEventWriteFail() {
+    return increment(COUNTER_EVENT_WRITE_FAIL);
+  }
+
+  public long incrementChannelReadFail() {
+    return increment(COUNTER_CHANNEL_READ_FAIL);
+  }
+
+  public long incrementFileHandlingFail() {
+    return increment(COUNTER_FILE_HANDLING_FAIL);
+  }
+
+  public long incrementFail(Throwable t) {
+    if (t instanceof ChannelException) {
+      return incrementChannelReadFail();
+    }
+    return incrementEventWriteFail();
+  }
+
+  public long getEventWriteFail() {
+    return get(COUNTER_EVENT_WRITE_FAIL);
+  }
+
+  public long getChannelReadFail() {
+    return get(COUNTER_CHANNEL_READ_FAIL);
+  }
+
+  public long getFileHandlingFail() {
+    return get(COUNTER_FILE_HANDLING_FAIL);
+  }
+
 }

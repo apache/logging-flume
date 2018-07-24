@@ -303,7 +303,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
   public List<Event> readEvents(int numEvents) throws IOException {
     if (!committed) {
       if (!currentFile.isPresent()) {
-        sourceCounter.incrementReadFail();
+        sourceCounter.incrementEventReadFail();
         throw new IllegalStateException("File should not roll when " +
             "commit is outstanding.");
       }

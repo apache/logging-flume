@@ -48,4 +48,11 @@ public interface SinkCounterMBean {
   long getStopTime();
 
   String getType();
+
+  long getEventWriteFail();
+
+  long getChannelReadFail();
+
+  long getFileHandlingFail();
+
 }

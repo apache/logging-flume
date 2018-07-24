@@ -338,7 +338,27 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
       Assert.assertEquals(Status.BACKOFF, source.process());
     }
     Assert.assertEquals(Status.BACKOFF, source.process());
+    Assert.assertEquals(1, source.getSourceCounter().getEventReadFail());
     verify(consumer, times(attempts + 1)).rollback();
     verify(consumer, times(1)).close();
   }
+
+  @Test
+  public void testErrorCounterEventReadFail() throws Exception {
+    source.configure(context);
+    source.start();
+    when(consumer.take()).thenThrow(new RuntimeException("dummy"));
+    source.process();
+    Assert.assertEquals(1, source.getSourceCounter().getEventReadFail());
+  }
+
+  @Test
+  public void testErrorCounterChannelWriteFail() throws Exception {
+    source.configure(context);
+    source.start();
+    when(source.getChannelProcessor()).thenThrow(new ChannelException("dummy"));
+    source.process();
+    Assert.assertEquals(1, source.getSourceCounter().getChannelWriteFail());
+  }
+
 }

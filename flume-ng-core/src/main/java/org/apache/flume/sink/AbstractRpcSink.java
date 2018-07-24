@@ -383,8 +383,10 @@ public abstract class AbstractRpcSink extends AbstractSink implements Configurab
       } else if (t instanceof ChannelException) {
         logger.error("Rpc Sink " + getName() + ": Unable to get event from" +
             " channel " + channel.getName() + ". Exception follows.", t);
+        sinkCounter.incrementChannelReadFail();
         status = Status.BACKOFF;
       } else {
+        sinkCounter.incrementEventWriteFail();
         destroyConnection();
         throw new EventDeliveryException("Failed to send events", t);
       }

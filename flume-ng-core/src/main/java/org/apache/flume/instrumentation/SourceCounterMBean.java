@@ -45,4 +45,11 @@ public interface SourceCounterMBean {
   String getType();
 
   long getOpenConnectionCount();
+
+  long getEventReadFail();
+
+  long getChannelWriteFail();
+
+  long getFileHandlingFail();
+
 }

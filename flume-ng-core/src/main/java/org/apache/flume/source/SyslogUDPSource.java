@@ -95,7 +95,7 @@ public class SyslogUDPSource extends AbstractSource
         return;
       } catch (RuntimeException ex) {
         logger.error("Error parsing event from syslog stream, event dropped", ex);
-        sourceCounter.incrementReadFail();
+        sourceCounter.incrementEventReadFail();
         return;
       }
     }

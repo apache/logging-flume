@@ -19,6 +19,7 @@
 package org.apache.flume.instrumentation;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.flume.ChannelException;
 
 public class SourceCounter extends MonitoredCounterGroup implements
     SourceCounterMBean {
@@ -41,8 +42,8 @@ public class SourceCounter extends MonitoredCounterGroup implements
   private static final String COUNTER_OPEN_CONNECTION_COUNT =
           "src.open-connection.count";
 
-  private static final String COUNTER_READ_FAIL =
-      "src.file.read.fail";
+  private static final String COUNTER_EVENT_READ_FAIL =
+      "src.event.read.fail";
 
   private static final String COUNTER_FILE_HANDLING_FAIL =
       "src.file.handling.fail";
@@ -54,8 +55,8 @@ public class SourceCounter extends MonitoredCounterGroup implements
     COUNTER_EVENTS_RECEIVED, COUNTER_EVENTS_ACCEPTED,
     COUNTER_APPEND_RECEIVED, COUNTER_APPEND_ACCEPTED,
     COUNTER_APPEND_BATCH_RECEIVED, COUNTER_APPEND_BATCH_ACCEPTED,
-    COUNTER_OPEN_CONNECTION_COUNT, COUNTER_READ_FAIL,
-    COUNTER_FILE_HANDLING_FAIL
+    COUNTER_OPEN_CONNECTION_COUNT, COUNTER_EVENT_READ_FAIL,
+    COUNTER_FILE_HANDLING_FAIL, COUNTER_CHANNEL_WRITE_FAIL
   };
 
   public SourceCounter(String name) {
@@ -137,8 +138,8 @@ public class SourceCounter extends MonitoredCounterGroup implements
     set(COUNTER_OPEN_CONNECTION_COUNT, openConnectionCount);
   }
 
-  public long incrementReadFail() {
-    return increment(COUNTER_READ_FAIL);
+  public long incrementEventReadFail() {
+    return increment(COUNTER_EVENT_READ_FAIL);
   }
 
   public long incrementChannelWriteFail() {
@@ -147,5 +148,27 @@ public class SourceCounter extends MonitoredCounterGroup implements
 
   public long incrementFileHandlingFail() {
     return increment(COUNTER_FILE_HANDLING_FAIL);
+  }
+
+  public long incrementFail(Throwable t) {
+    if (t instanceof ChannelException) {
+      return incrementChannelWriteFail();
+    }
+    return incrementEventReadFail();
+  }
+
+  @Override
+  public long getEventReadFail() {
+    return get(COUNTER_EVENT_READ_FAIL);
+  }
+
+  @Override
+  public long getChannelWriteFail() {
+    return get(COUNTER_CHANNEL_WRITE_FAIL);
+  }
+
+  @Override
+  public long getFileHandlingFail() {
+    return get(COUNTER_FILE_HANDLING_FAIL);
   }
 }

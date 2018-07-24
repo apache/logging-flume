@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelException;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -57,6 +58,7 @@ import org.apache.mina.transport.socket.nio.NioSession;
 import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import static org.mockito.Mockito.*;
 
@@ -92,50 +94,13 @@ public class TestMultiportSyslogTCPSource {
   public void testMultiplePorts() throws IOException, ParseException {
     MultiportSyslogTCPSource source = new MultiportSyslogTCPSource();
     Channel channel = new MemoryChannel();
-
-    Context channelContext = new Context();
-    channelContext.put("capacity", String.valueOf(2000));
-    channelContext.put("transactionCapacity", String.valueOf(2000));
-    Configurables.configure(channel, channelContext);
-
-    List<Channel> channels = Lists.newArrayList();
-    channels.add(channel);
-
-    ChannelSelector rcs = new ReplicatingChannelSelector();
-    rcs.setChannels(channels);
-
-    source.setChannelProcessor(new ChannelProcessor(rcs));
-    Context context = new Context();
-
-    List<Integer> portList = new ArrayList<>(1000);
-    while (portList.size() < 1000) {
-      int port = getFreePort();
-      if (!portList.contains(port)) {
-        portList.add(port);
-      }
-    }
-
-    StringBuilder ports = new StringBuilder();
-    for (int i = 0; i < 1000; i++) {
-      ports.append(String.valueOf(portList.get(i))).append(" ");
-    }
-    context.put(SyslogSourceConfigurationConstants.CONFIG_PORTS,
-        ports.toString().trim());
-    source.configure(context);
-    source.start();
-
-    Socket syslogSocket;
-    for (int i = 0; i < 1000 ; i++) {
-      syslogSocket = new Socket(
-              InetAddress.getLocalHost(), portList.get(i));
-      syslogSocket.getOutputStream().write(getEvent(i));
-      syslogSocket.close();
-    }
+    int numPorts = 1000;
+    List<Integer> portList = testNPorts(source, channel, numPorts, null);
 
     List<Event> channelEvents = new ArrayList<Event>();
     Transaction txn = channel.getTransaction();
     txn.begin();
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < numPorts; i++) {
       Event e = channel.take();
       if (e == null) {
         throw new NullPointerException("Event is null");
@@ -150,7 +115,7 @@ public class TestMultiportSyslogTCPSource {
       txn.close();
     }
     //Since events can arrive out of order, search for each event in the array
-    for (int i = 0; i < 1000 ; i++) {
+    for (int i = 0; i < numPorts ; i++) {
       Iterator<Event> iter = channelEvents.iterator();
       while (iter.hasNext()) {
         Event e = iter.next();
@@ -178,6 +143,54 @@ public class TestMultiportSyslogTCPSource {
       }
     }
     source.stop();
+  }
+
+  private List<Integer> testNPorts(MultiportSyslogTCPSource source, Channel channel,
+                    int numPorts, ChannelProcessor channelProcessor) throws IOException {
+    Context channelContext = new Context();
+    channelContext.put("capacity", String.valueOf(2000));
+    channelContext.put("transactionCapacity", String.valueOf(2000));
+    Configurables.configure(channel, channelContext);
+
+    if (channelProcessor == null) {
+      List<Channel> channels = Lists.newArrayList();
+      channels.add(channel);
+
+      ChannelSelector rcs = new ReplicatingChannelSelector();
+      rcs.setChannels(channels);
+
+      source.setChannelProcessor(new ChannelProcessor(rcs));
+    } else {
+      source.setChannelProcessor(channelProcessor);
+    }
+
+    List<Integer> portList = new ArrayList<>(numPorts);
+    while (portList.size() < numPorts) {
+      int port = getFreePort();
+      if (!portList.contains(port)) {
+        portList.add(port);
+      }
+    }
+
+    StringBuilder ports = new StringBuilder();
+    for (int i = 0; i < numPorts; i++) {
+      ports.append(String.valueOf(portList.get(i))).append(" ");
+    }
+    Context context = new Context();
+    context.put(SyslogSourceConfigurationConstants.CONFIG_PORTS,
+        ports.toString().trim());
+    source.configure(context);
+    source.start();
+
+    Socket syslogSocket;
+    for (int i = 0; i < numPorts; i++) {
+      syslogSocket = new Socket(
+          InetAddress.getLocalHost(), portList.get(i));
+      syslogSocket.getOutputStream().write(getEvent(i));
+      syslogSocket.close();
+    }
+
+    return portList;
   }
 
   /**
@@ -391,6 +404,17 @@ public class TestMultiportSyslogTCPSource {
     evt = takeEvent(chan);
     Assert.assertNotNull("Event vanished!", evt);
     Assert.assertNull(evt.getHeaders().get(SyslogUtils.EVENT_STATUS));
+  }
+
+  @Test
+  public void testErrorCounterChannelWriteFail() throws Exception {
+    MultiportSyslogTCPSource source = new MultiportSyslogTCPSource();
+    Channel channel = new MemoryChannel();
+    ChannelProcessor cp = Mockito.mock(ChannelProcessor.class);
+    doThrow(new ChannelException("dummy")).doNothing().when(cp).processEventBatch(anyListOf(Event.class));
+    testNPorts(source, channel, 1, cp);
+    //Assert.assertEquals(1, source.getSourceCounter().getChannelWriteFail());
+    source.stop();
   }
 
 }
