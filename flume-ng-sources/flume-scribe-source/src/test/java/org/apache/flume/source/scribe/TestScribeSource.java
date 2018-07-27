@@ -30,19 +30,15 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 import org.mockito.internal.util.reflection.Whitebox;
 
-import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyList;
+import static org.apache.flume.source.scribe.TestUtils.findFreePort;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -55,24 +51,17 @@ public class TestScribeSource {
   private static int port;
   private static Channel memoryChannel;
   private static ScribeSource scribeSource;
+  private static ChannelProcessor channelProcessor;
+  private static Context context;
 
-  private static int findFreePort() throws IOException {
-    ServerSocket socket = new ServerSocket(0);
-    int port = socket.getLocalPort();
-    socket.close();
-    return port;
-  }
-
-  @BeforeClass
-  public static void setUpClass() throws Exception {
+  @Before
+  public void setUp() throws Exception {
     port = findFreePort();
-    Context context = new Context();
+    context = new Context();
     context.put("port", String.valueOf(port));
 
     scribeSource = new ScribeSource();
     scribeSource.setName("Scribe Source");
-
-    Configurables.configure(scribeSource, context);
 
     memoryChannel = new MemoryChannel();
     Configurables.configure(memoryChannel, context);
@@ -85,13 +74,11 @@ public class TestScribeSource {
 
     memoryChannel.start();
 
-    scribeSource.setChannelProcessor(new ChannelProcessor(rcs));
-    scribeSource.start();
+    channelProcessor = new ChannelProcessor(rcs);
   }
 
   private void sendSingle() throws org.apache.thrift.TException {
     TTransport transport = new TFramedTransport(new TSocket("localhost", port));
-
     TProtocol protocol = new TBinaryProtocol(transport);
     Scribe.Client client = new Scribe.Client(protocol);
     transport.open();
@@ -99,10 +86,48 @@ public class TestScribeSource {
     List<LogEntry> logEntries = new ArrayList<LogEntry>(1);
     logEntries.add(logEntry);
     client.Log(logEntries);
+    transport.close();
   }
 
   @Test
-  public void testScribeMessage() throws Exception {
+  public void testScribeWithThshaServer() throws Exception {
+    context.put(
+        "thriftServer", ScribeSourceConfiguration.ThriftServerType.THSHA_SERVER.getValue());
+    Configurables.configure(scribeSource, context);
+    scribeSource.setChannelProcessor(channelProcessor);
+    scribeSource.start();
+    testScribeMessage();
+    testScribeMultipleMessages();
+    testErrorCounter();
+  }
+
+  @Test
+  public void testScribeWithThreadedSelectorServer() throws Exception {
+    context.put(
+        "thriftServer",
+        ScribeSourceConfiguration.ThriftServerType.TTHREADED_SELECTOR_SERVER.getValue());
+    Configurables.configure(scribeSource, context);
+    scribeSource.setChannelProcessor(channelProcessor);
+    scribeSource.start();
+    testScribeMessage();
+    testScribeMultipleMessages();
+    testErrorCounter();
+  }
+
+  @Test
+  public void testScribeWithThreadPoolServer() throws Exception {
+    context.put(
+        "thriftServer",
+        ScribeSourceConfiguration.ThriftServerType.TTHREADPOOL_SERVER.getValue());
+    Configurables.configure(scribeSource, context);
+    scribeSource.setChannelProcessor(channelProcessor);
+    scribeSource.start();
+    testScribeMessage();
+    testScribeMultipleMessages();
+    testErrorCounter();
+  }
+
+  private void testScribeMessage() throws Exception {
     sendSingle();
 
     // try to get it from Channels
@@ -115,8 +140,7 @@ public class TestScribeSource {
     tx.close();
   }
 
-  @Test
-  public void testScribeMultipleMessages() throws Exception {
+  private void testScribeMultipleMessages() throws Exception {
     TTransport transport = new TFramedTransport(new TSocket("localhost", port));
 
     TProtocol protocol = new TBinaryProtocol(transport);
@@ -142,10 +166,10 @@ public class TestScribeSource {
     }
     tx.commit();
     tx.close();
+    transport.close();
   }
 
-  @Test
-  public void testErrorCounter() throws Exception {
+  private void testErrorCounter() throws Exception {
     ChannelProcessor cp = mock(ChannelProcessor.class);
     doThrow(new ChannelException("dummy")).when(cp).processEventBatch(anyListOf(Event.class));
     ChannelProcessor origCp = scribeSource.getChannelProcessor();
@@ -159,8 +183,8 @@ public class TestScribeSource {
     org.junit.Assert.assertEquals(1, sc.getChannelWriteFail());
   }
 
-  @AfterClass
-  public static void cleanup() {
+  @After
+  public void tearDown() {
     memoryChannel.stop();
     scribeSource.stop();
   }
