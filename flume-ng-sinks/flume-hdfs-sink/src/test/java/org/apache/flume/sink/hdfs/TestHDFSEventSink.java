@@ -1648,27 +1648,8 @@ public class TestHDFSEventSink {
     Configurables.configure(sink, context);
     Channel channel = Mockito.mock(Channel.class);
     Mockito.when(channel.take()).thenThrow(new ChannelException("dummy"));
-    Mockito.when(channel.getTransaction()).thenReturn(new BasicTransactionSemantics() {
-      @Override
-      protected void doPut(Event event) throws InterruptedException {
-
-      }
-
-      @Override
-      protected Event doTake() throws InterruptedException {
-        return null;
-      }
-
-      @Override
-      protected void doCommit() throws InterruptedException {
-
-      }
-
-      @Override
-      protected void doRollback() throws InterruptedException {
-
-      }
-    });
+    Mockito.when(channel.getTransaction())
+        .thenReturn(Mockito.mock(BasicTransactionSemantics.class));
     sink.setChannel(channel);
     sink.start();
     try {

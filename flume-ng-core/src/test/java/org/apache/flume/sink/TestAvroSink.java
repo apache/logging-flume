@@ -187,27 +187,7 @@ public class TestAvroSink {
     sink.start();
     Channel channel = Mockito.mock(Channel.class);
     Mockito.when(channel.take()).thenThrow(new ChannelException("dummy"));
-    Transaction transaction = new BasicTransactionSemantics() {
-      @Override
-      protected void doPut(Event event) throws InterruptedException {
-
-      }
-
-      @Override
-      protected Event doTake() throws InterruptedException {
-        return null;
-      }
-
-      @Override
-      protected void doCommit() throws InterruptedException {
-
-      }
-
-      @Override
-      protected void doRollback() throws InterruptedException {
-
-      }
-    };
+    Transaction transaction = Mockito.mock(BasicTransactionSemantics.class);
     Mockito.when(channel.getTransaction()).thenReturn(transaction);
     sink.setChannel(channel);
 
