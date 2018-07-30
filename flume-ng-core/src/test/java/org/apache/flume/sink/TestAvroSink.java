@@ -25,6 +25,7 @@ import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.Server;
 import org.apache.avro.ipc.specific.SpecificResponder;
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelException;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -32,11 +33,13 @@ import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Sink;
 import org.apache.flume.Transaction;
 import org.apache.flume.api.RpcClient;
+import org.apache.flume.channel.BasicTransactionSemantics;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
+import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.source.AvroSource;
@@ -50,6 +53,8 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.handler.ssl.SslHandler;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.mockito.internal.util.reflection.Whitebox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -173,6 +178,49 @@ public class TestAvroSink {
   }
 
   @Test
+  public void testChannelException() throws InterruptedException,
+          EventDeliveryException, InstantiationException, IllegalAccessException {
+    setUp();
+
+    Server server = createServer(new MockAvroServer());
+    server.start();
+    sink.start();
+    Channel channel = Mockito.mock(Channel.class);
+    Mockito.when(channel.take()).thenThrow(new ChannelException("dummy"));
+    Transaction transaction = new BasicTransactionSemantics() {
+      @Override
+      protected void doPut(Event event) throws InterruptedException {
+
+      }
+
+      @Override
+      protected Event doTake() throws InterruptedException {
+        return null;
+      }
+
+      @Override
+      protected void doCommit() throws InterruptedException {
+
+      }
+
+      @Override
+      protected void doRollback() throws InterruptedException {
+
+      }
+    };
+    Mockito.when(channel.getTransaction()).thenReturn(transaction);
+    sink.setChannel(channel);
+
+    Sink.Status status = sink.process();
+
+    sink.stop();
+    server.close();
+
+    SinkCounter sinkCounter = (SinkCounter) Whitebox.getInternalState(sink, "sinkCounter");
+    Assert.assertEquals(1, sinkCounter.getChannelReadFail());
+  }
+
+  @Test
   public void testTimeout() throws InterruptedException,
       EventDeliveryException, InstantiationException, IllegalAccessException {
     setUp();
@@ -226,6 +274,9 @@ public class TestAvroSink {
     Assert.assertTrue(LifecycleController.waitForOneOf(sink,
         LifecycleState.STOP_OR_ERROR, 5000));
     server.close();
+
+    SinkCounter sinkCounter = (SinkCounter) Whitebox.getInternalState(sink, "sinkCounter");
+    Assert.assertEquals(2, sinkCounter.getEventWriteFail());
   }
 
   @Test
@@ -280,6 +331,10 @@ public class TestAvroSink {
     Assert.assertTrue(LifecycleController.waitForOneOf(sink,
         LifecycleState.STOP_OR_ERROR, 5000));
     server.close();
+
+    SinkCounter sinkCounter = (SinkCounter) Whitebox.getInternalState(sink, "sinkCounter");
+    Assert.assertEquals(5, sinkCounter.getEventWriteFail());
+    Assert.assertEquals(4, sinkCounter.getConnectionFailedCount());
   }
 
   @Test
@@ -608,6 +663,9 @@ public class TestAvroSink {
     if (failed) {
       Assert.fail("SSL-enabled sink successfully connected to a non-SSL-enabled server, that's wrong.");
     }
+
+    SinkCounter sinkCounter = (SinkCounter) Whitebox.getInternalState(sink, "sinkCounter");
+    Assert.assertEquals(1, sinkCounter.getEventWriteFail());
   }
 
   @Test
@@ -664,6 +722,8 @@ public class TestAvroSink {
     if (failed) {
       Assert.fail("SSL-enabled sink successfully connected to a server with an untrusted certificate when it should have failed");
     }
+    SinkCounter sinkCounter = (SinkCounter) Whitebox.getInternalState(sink, "sinkCounter");
+    Assert.assertEquals(1, sinkCounter.getEventWriteFail());
   }
 
   @Test

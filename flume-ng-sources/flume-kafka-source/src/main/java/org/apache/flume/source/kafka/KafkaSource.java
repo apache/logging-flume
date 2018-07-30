@@ -315,7 +315,7 @@ public class KafkaSource extends AbstractPollableSource
       return Status.BACKOFF;
     } catch (Exception e) {
       log.error("KafkaSource EXCEPTION, {}", e);
-      counter.incrementFail(e);
+      counter.incrementReadOrChannelFail(e);
       return Status.BACKOFF;
     }
   }

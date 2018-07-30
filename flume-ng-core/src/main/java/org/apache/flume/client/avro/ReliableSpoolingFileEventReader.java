@@ -408,12 +408,12 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     // Verify that spooling assumptions hold
     if (fileToRoll.lastModified() != currentFile.get().getLastModified()) {
       String message = "File has been modified since being read: " + fileToRoll;
-      sourceCounter.incrementFileHandlingFail();
+      sourceCounter.incrementGenericProcessingFail();
       throw new IllegalStateException(message);
     }
     if (fileToRoll.length() != currentFile.get().getLength()) {
       String message = "File has changed size since being read: " + fileToRoll;
-      sourceCounter.incrementFileHandlingFail();
+      sourceCounter.incrementGenericProcessingFail();
       throw new IllegalStateException(message);
     }
 
@@ -460,7 +460,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       } else {
         String message = "File name has been re-used with different" +
             " files. Spooling assumptions violated for " + dest;
-        sourceCounter.incrementFileHandlingFail();
+        sourceCounter.incrementGenericProcessingFail();
         throw new IllegalStateException(message);
       }
 
@@ -468,7 +468,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     } else if (dest.exists()) {
       String message = "File name has been re-used with different" +
           " files. Spooling assumptions violated for " + dest;
-      sourceCounter.incrementFileHandlingFail();
+      sourceCounter.incrementGenericProcessingFail();
       throw new IllegalStateException(message);
 
       // Destination file does not already exist. We are good to go!
@@ -486,7 +486,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
         String message = "Unable to move " + fileToRoll + " to " + dest +
             ". This will likely cause duplicate events. Please verify that " +
             "flume has sufficient permissions to perform these operations.";
-        sourceCounter.incrementFileHandlingFail();
+        sourceCounter.incrementGenericProcessingFail();
         throw new FlumeException(message);
       }
     }
@@ -505,7 +505,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       return;
     }
     if (!fileToDelete.delete()) {
-      sourceCounter.incrementFileHandlingFail();
+      sourceCounter.incrementGenericProcessingFail();
       throw new IOException("Unable to delete spool file: " + fileToDelete);
     }
     // now we no longer need the meta file

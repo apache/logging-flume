@@ -35,7 +35,6 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.flume.Channel;
-import org.apache.flume.ChannelException;
 import org.apache.flume.Clock;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -447,7 +446,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     } catch (Throwable th) {
       transaction.rollback();
       LOG.error("process failed", th);
-      sinkCounter.incrementFail(th);
+      sinkCounter.incrementWriteOrChannelFail(th);
       if (th instanceof Error) {
         throw (Error) th;
       } else {

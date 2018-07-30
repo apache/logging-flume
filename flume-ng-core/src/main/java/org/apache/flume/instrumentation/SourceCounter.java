@@ -45,8 +45,8 @@ public class SourceCounter extends MonitoredCounterGroup implements
   private static final String COUNTER_EVENT_READ_FAIL =
       "src.event.read.fail";
 
-  private static final String COUNTER_FILE_HANDLING_FAIL =
-      "src.file.handling.fail";
+  private static final String COUNTER_GENERIC_PROCESSING_FAIL =
+      "src.generic.processing.fail";
 
   private static final String COUNTER_CHANNEL_WRITE_FAIL =
       "src.channel.write.fail";
@@ -56,7 +56,8 @@ public class SourceCounter extends MonitoredCounterGroup implements
     COUNTER_APPEND_RECEIVED, COUNTER_APPEND_ACCEPTED,
     COUNTER_APPEND_BATCH_RECEIVED, COUNTER_APPEND_BATCH_ACCEPTED,
     COUNTER_OPEN_CONNECTION_COUNT, COUNTER_EVENT_READ_FAIL,
-    COUNTER_FILE_HANDLING_FAIL, COUNTER_CHANNEL_WRITE_FAIL
+    COUNTER_CHANNEL_WRITE_FAIL,
+      COUNTER_GENERIC_PROCESSING_FAIL
   };
 
   public SourceCounter(String name) {
@@ -146,11 +147,11 @@ public class SourceCounter extends MonitoredCounterGroup implements
     return increment(COUNTER_CHANNEL_WRITE_FAIL);
   }
 
-  public long incrementFileHandlingFail() {
-    return increment(COUNTER_FILE_HANDLING_FAIL);
+  public long incrementGenericProcessingFail() {
+    return increment(COUNTER_GENERIC_PROCESSING_FAIL);
   }
 
-  public long incrementFail(Throwable t) {
+  public long incrementReadOrChannelFail(Throwable t) {
     if (t instanceof ChannelException) {
       return incrementChannelWriteFail();
     }
@@ -168,7 +169,7 @@ public class SourceCounter extends MonitoredCounterGroup implements
   }
 
   @Override
-  public long getFileHandlingFail() {
-    return get(COUNTER_FILE_HANDLING_FAIL);
+  public long getGenericProcessingFail() {
+    return get(COUNTER_GENERIC_PROCESSING_FAIL);
   }
 }

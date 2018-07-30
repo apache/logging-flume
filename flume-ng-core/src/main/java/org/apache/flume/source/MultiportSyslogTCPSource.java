@@ -243,6 +243,7 @@ public class MultiportSyslogTCPSource extends AbstractSource implements
     public void exceptionCaught(IoSession session, Throwable cause)
         throws Exception {
       logger.error("Error in syslog message handler", cause);
+      sourceCounter.incrementGenericProcessingFail();
       if (cause instanceof Error) {
         Throwables.propagate(cause);
       }
@@ -320,7 +321,7 @@ public class MultiportSyslogTCPSource extends AbstractSource implements
           sourceCounter.addToEventAcceptedCount(numEvents);
         } catch (Throwable t) {
           logger.error("Error writing to channel, event dropped", t);
-          sourceCounter.incrementFail(t);
+          sourceCounter.incrementReadOrChannelFail(t);
           if (t instanceof Error) {
             Throwables.propagate(t);
           }
@@ -342,6 +343,7 @@ public class MultiportSyslogTCPSource extends AbstractSource implements
       } catch (Throwable t) {
         logger.info("Error decoding line with charset (" + decoder.charset() +
             "). Exception follows.", t);
+        sourceCounter.incrementEventReadFail();
 
         if (t instanceof Error) {
           Throwables.propagate(t);
@@ -378,6 +380,7 @@ public class MultiportSyslogTCPSource extends AbstractSource implements
         event.getHeaders().put(SyslogUtils.EVENT_STATUS,
             SyslogUtils.SyslogStatus.INVALID.getSyslogStatus());
         logger.debug("Error parsing syslog event", ex);
+        sourceCounter.incrementEventReadFail();
       }
 
       return event;

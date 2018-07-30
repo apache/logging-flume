@@ -50,6 +50,6 @@ public interface SourceCounterMBean {
 
   long getChannelWriteFail();
 
-  long getFileHandlingFail();
+  long getGenericProcessingFail();
 
 }

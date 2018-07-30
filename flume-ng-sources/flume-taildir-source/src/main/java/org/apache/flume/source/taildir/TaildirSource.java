@@ -312,7 +312,7 @@ public class TaildirSource extends AbstractSource implements
         }
       } catch (Throwable t) {
         logger.error("Uncaught exception in IdleFileChecker thread", t);
-        sourceCounter.incrementFileHandlingFail();
+        sourceCounter.incrementGenericProcessingFail();
       }
     }
   }
@@ -339,7 +339,7 @@ public class TaildirSource extends AbstractSource implements
       }
     } catch (Throwable t) {
       logger.error("Failed writing positionFile", t);
-      sourceCounter.incrementFileHandlingFail();
+      sourceCounter.incrementGenericProcessingFail();
     } finally {
       try {
         if (writer != null) writer.close();

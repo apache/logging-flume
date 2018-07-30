@@ -17,9 +17,9 @@
 
 package org.apache.flume.source.taildir;
 
-import static org.mockito.Mockito.*;
-import static org.mockito.Matchers.*;
-
+import static org.mockito.Mockito.anyListOf;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
@@ -32,27 +32,21 @@ import org.apache.flume.Event;
 import org.apache.flume.Transaction;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
-import org.apache.flume.channel.MultiplexingChannelSelector;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
-import org.apache.flume.event.SimpleEvent;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.mockito.internal.util.reflection.Whitebox;
-import org.mockito.stubbing.OngoingStubbing;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.FILE_GROUPS;
@@ -369,7 +363,7 @@ public class TestTaildirSource {
     when(reader.getTailFiles()).thenThrow(new RuntimeException("hello"));
     Whitebox.setInternalState(source, "reader", reader);
     TimeUnit.MILLISECONDS.sleep(200);
-    assertTrue(0 < source.getSourceCounter().getFileHandlingFail());
+    assertTrue(0 < source.getSourceCounter().getGenericProcessingFail());
     source.stop();
   }
 
@@ -378,7 +372,8 @@ public class TestTaildirSource {
     prepareFileConsumeOrder();
     ChannelProcessor cp = Mockito.mock(ChannelProcessor.class);
     source.setChannelProcessor(cp);
-    doThrow(new ChannelException("dummy")).doNothing().when(cp).processEventBatch(anyListOf(Event.class));
+    doThrow(new ChannelException("dummy")).doNothing().when(cp)
+        .processEventBatch(anyListOf(Event.class));
     source.start();
     source.process();
     assertEquals(1, source.getSourceCounter().getChannelWriteFail());

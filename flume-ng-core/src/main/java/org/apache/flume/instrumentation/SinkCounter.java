@@ -166,7 +166,7 @@ public class SinkCounter extends MonitoredCounterGroup implements
     return increment(COUNTER_FILE_HANDLING_FAIL);
   }
 
-  public long incrementFail(Throwable t) {
+  public long incrementWriteOrChannelFail(Throwable t) {
     if (t instanceof ChannelException) {
       return incrementChannelReadFail();
     }
