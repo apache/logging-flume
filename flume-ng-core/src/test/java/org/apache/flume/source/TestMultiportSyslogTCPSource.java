@@ -88,50 +88,6 @@ public class TestMultiportSyslogTCPSource {
     return msg1.getBytes();
   }
 
-  /**
-   * Basic test to exercise multiple-port parsing.
-   */
-  @Test
-  public void testMultiplePorts() throws IOException, ParseException {
-    MultiportSyslogTCPSource source = new MultiportSyslogTCPSource();
-    Channel channel = new MemoryChannel();
-    List<Event> channelEvents = new ArrayList<>();
-    int numPorts = 1000;
-
-    List<Integer> portList = testNPorts(source, channel, channelEvents,
-        numPorts, null);
-
-    //Since events can arrive out of order, search for each event in the array
-    for (int i = 0; i < numPorts ; i++) {
-      Iterator<Event> iter = channelEvents.iterator();
-      while (iter.hasNext()) {
-        Event e = iter.next();
-        Map<String, String> headers = e.getHeaders();
-        // rely on port to figure out which event it is
-        Integer port = null;
-        if (headers.containsKey(
-            SyslogSourceConfigurationConstants.DEFAULT_PORT_HEADER)) {
-          port = Integer.parseInt(headers.get(
-                SyslogSourceConfigurationConstants.DEFAULT_PORT_HEADER));
-        }
-        iter.remove();
-
-        Assert.assertEquals("Timestamps must match",
-            String.valueOf(time.getMillis()), headers.get("timestamp"));
-
-        String host2 = headers.get("host");
-        Assert.assertEquals(host1, host2);
-
-        if (port != null) {
-          int num = portList.indexOf(port);
-          Assert.assertEquals(data1 + " " + String.valueOf(num),
-              new String(e.getBody()));
-        }
-      }
-    }
-    source.stop();
-  }
-
   private List<Integer> testNPorts(MultiportSyslogTCPSource source, Channel channel,
                                    List<Event> channelEvents, int numPorts,
                                    ChannelProcessor channelProcessor) throws IOException {
@@ -197,6 +153,50 @@ public class TestMultiportSyslogTCPSource {
 
 
     return portList;
+  }
+
+  /**
+   * Basic test to exercise multiple-port parsing.
+   */
+  @Test
+  public void testMultiplePorts() throws IOException, ParseException {
+    MultiportSyslogTCPSource source = new MultiportSyslogTCPSource();
+    Channel channel = new MemoryChannel();
+    List<Event> channelEvents = new ArrayList<>();
+    int numPorts = 1000;
+
+    List<Integer> portList = testNPorts(source, channel, channelEvents,
+        numPorts, null);
+
+    //Since events can arrive out of order, search for each event in the array
+    for (int i = 0; i < numPorts ; i++) {
+      Iterator<Event> iter = channelEvents.iterator();
+      while (iter.hasNext()) {
+        Event e = iter.next();
+        Map<String, String> headers = e.getHeaders();
+        // rely on port to figure out which event it is
+        Integer port = null;
+        if (headers.containsKey(
+            SyslogSourceConfigurationConstants.DEFAULT_PORT_HEADER)) {
+          port = Integer.parseInt(headers.get(
+                SyslogSourceConfigurationConstants.DEFAULT_PORT_HEADER));
+        }
+        iter.remove();
+
+        Assert.assertEquals("Timestamps must match",
+            String.valueOf(time.getMillis()), headers.get("timestamp"));
+
+        String host2 = headers.get("host");
+        Assert.assertEquals(host1, host2);
+
+        if (port != null) {
+          int num = portList.indexOf(port);
+          Assert.assertEquals(data1 + " " + String.valueOf(num),
+              new String(e.getBody()));
+        }
+      }
+    }
+    source.stop();
   }
 
   /**
