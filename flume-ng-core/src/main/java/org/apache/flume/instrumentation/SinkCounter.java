@@ -50,9 +50,6 @@ public class SinkCounter extends MonitoredCounterGroup implements
   private static final String COUNTER_EVENT_WRITE_FAIL =
       "sink.event.write.fail";
 
-  private static final String COUNTER_FILE_HANDLING_FAIL =
-      "sink.file.handling.fail";
-
   private static final String COUNTER_CHANNEL_READ_FAIL =
       "sink.channel.write.fail";
 
@@ -61,8 +58,7 @@ public class SinkCounter extends MonitoredCounterGroup implements
     COUNTER_CONNECTION_FAILED, COUNTER_BATCH_EMPTY,
     COUNTER_BATCH_UNDERFLOW, COUNTER_BATCH_COMPLETE,
     COUNTER_EVENT_DRAIN_ATTEMPT, COUNTER_EVENT_DRAIN_SUCCESS,
-    COUNTER_EVENT_WRITE_FAIL, COUNTER_FILE_HANDLING_FAIL,
-    COUNTER_CHANNEL_READ_FAIL
+    COUNTER_EVENT_WRITE_FAIL, COUNTER_CHANNEL_READ_FAIL
   };
 
   public SinkCounter(String name) {
@@ -162,11 +158,7 @@ public class SinkCounter extends MonitoredCounterGroup implements
     return increment(COUNTER_CHANNEL_READ_FAIL);
   }
 
-  public long incrementFileHandlingFail() {
-    return increment(COUNTER_FILE_HANDLING_FAIL);
-  }
-
-  public long incrementWriteOrChannelFail(Throwable t) {
+  public long incrementEventWriteOrChannelFail(Throwable t) {
     if (t instanceof ChannelException) {
       return incrementChannelReadFail();
     }
@@ -179,10 +171,6 @@ public class SinkCounter extends MonitoredCounterGroup implements
 
   public long getChannelReadFail() {
     return get(COUNTER_CHANNEL_READ_FAIL);
-  }
-
-  public long getFileHandlingFail() {
-    return get(COUNTER_FILE_HANDLING_FAIL);
   }
 
 }

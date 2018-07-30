@@ -293,7 +293,7 @@ public class HTTPSource extends AbstractSource implements
         return;
       } catch (Exception ex) {
         LOG.warn("Unexpected error appending event to channel. ", ex);
-        sourceCounter.incrementChannelWriteFail();
+        sourceCounter.incrementGenericProcessingFail();
         response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                 "Unexpected error while appending event to channel. "
                 + ex.getMessage());

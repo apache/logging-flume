@@ -220,7 +220,7 @@ public class RollingFileSink extends AbstractSink implements Configurable {
       transaction.commit();
       sinkCounter.addToEventDrainSuccessCount(eventAttemptCounter);
     } catch (Exception ex) {
-      sinkCounter.incrementWriteOrChannelFail(ex);
+      sinkCounter.incrementEventWriteOrChannelFail(ex);
       transaction.rollback();
       throw new EventDeliveryException("Failed to process transaction", ex);
     } finally {

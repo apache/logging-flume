@@ -53,6 +53,4 @@ public interface SinkCounterMBean {
 
   long getChannelReadFail();
 
-  long getFileHandlingFail();
-
 }

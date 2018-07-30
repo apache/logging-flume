@@ -368,7 +368,7 @@ public class HBase2Sink extends AbstractSink implements Configurable {
       }
       logger.error("Failed to commit transaction." +
           "Transaction rolled back.", e);
-      sinkCounter.incrementWriteOrChannelFail(e);
+      sinkCounter.incrementEventWriteOrChannelFail(e);
       if (e instanceof Error || e instanceof RuntimeException) {
         logger.error("Failed to commit transaction." +
             "Transaction rolled back.", e);

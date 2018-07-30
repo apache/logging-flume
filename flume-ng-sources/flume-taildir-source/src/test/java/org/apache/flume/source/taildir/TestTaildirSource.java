@@ -211,29 +211,6 @@ public class TestTaildirSource {
     }
   }
 
-  @Test
-  public void testFileConsumeOrder() throws IOException {
-    ArrayList<String> consumedOrder = Lists.newArrayList();
-    ArrayList<String> expected = prepareFileConsumeOrder();
-
-    source.start();
-    source.process();
-    Transaction txn = channel.getTransaction();
-    txn.begin();
-    for (int i = 0; i < 12; i++) {
-      Event e = channel.take();
-      String body = new String(e.getBody(), Charsets.UTF_8);
-      consumedOrder.add(body);
-    }
-    txn.commit();
-    txn.close();
-
-    System.out.println(consumedOrder);
-
-    assertArrayEquals("Files not consumed in expected order", expected.toArray(),
-                      consumedOrder.toArray());
-  }
-
   private ArrayList<String> prepareFileConsumeOrder() throws IOException {
     System.out.println(tmpDir.toString());
     // 1) Create 1st file
@@ -309,19 +286,26 @@ public class TestTaildirSource {
   }
 
   @Test
-  public void testPutFilenameHeader() throws IOException {
-    File f1 = configureSource();
+  public void testFileConsumeOrder() throws IOException {
+    ArrayList<String> consumedOrder = Lists.newArrayList();
+    ArrayList<String> expected = prepareFileConsumeOrder();
+
     source.start();
     source.process();
     Transaction txn = channel.getTransaction();
     txn.begin();
-    Event e = channel.take();
+    for (int i = 0; i < 12; i++) {
+      Event e = channel.take();
+      String body = new String(e.getBody(), Charsets.UTF_8);
+      consumedOrder.add(body);
+    }
     txn.commit();
     txn.close();
 
-    assertNotNull(e.getHeaders().get("path"));
-    assertEquals(f1.getAbsolutePath(),
-            e.getHeaders().get("path"));
+    System.out.println(consumedOrder);
+
+    assertArrayEquals("Files not consumed in expected order", expected.toArray(),
+                      consumedOrder.toArray());
   }
 
   private File configureSource()  throws IOException {
@@ -338,6 +322,22 @@ public class TestTaildirSource {
     Configurables.configure(source, context);
 
     return f1;
+  }
+
+  @Test
+  public void testPutFilenameHeader() throws IOException {
+    File f1 = configureSource();
+    source.start();
+    source.process();
+    Transaction txn = channel.getTransaction();
+    txn.begin();
+    Event e = channel.take();
+    txn.commit();
+    txn.close();
+
+    assertNotNull(e.getHeaders().get("path"));
+    assertEquals(f1.getAbsolutePath(),
+            e.getHeaders().get("path"));
   }
 
   @Test

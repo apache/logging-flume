@@ -253,34 +253,30 @@ public class TaildirSource extends AbstractSource implements
   private void tailFileProcess(TailFile tf, boolean backoffWithoutNL)
       throws IOException, InterruptedException {
     while (true) {
+      reader.setCurrentFile(tf);
+      List<Event> events = reader.readEvents(batchSize, backoffWithoutNL);
+      if (events.isEmpty()) {
+        break;
+      }
+      sourceCounter.addToEventReceivedCount(events.size());
+      sourceCounter.incrementAppendBatchReceivedCount();
       try {
-        reader.setCurrentFile(tf);
-        List<Event> events = reader.readEvents(batchSize, backoffWithoutNL);
-        if (events.isEmpty()) {
-          break;
-        }
-        sourceCounter.addToEventReceivedCount(events.size());
-        sourceCounter.incrementAppendBatchReceivedCount();
-        try {
-          getChannelProcessor().processEventBatch(events);
-          reader.commit();
-        } catch (ChannelException ex) {
-          logger.warn("The channel is full or unexpected failure. " +
-              "The source will try again after " + retryInterval + " ms");
-          sourceCounter.incrementChannelWriteFail();
-          TimeUnit.MILLISECONDS.sleep(retryInterval);
-          retryInterval = retryInterval << 1;
-          retryInterval = Math.min(retryInterval, maxRetryInterval);
-          continue;
-        }
-        retryInterval = 1000;
-        sourceCounter.addToEventAcceptedCount(events.size());
-        sourceCounter.incrementAppendBatchAcceptedCount();
-        if (events.size() < batchSize) {
-          break;
-        }
-      } catch (IOException e) {
-        throw e;
+        getChannelProcessor().processEventBatch(events);
+        reader.commit();
+      } catch (ChannelException ex) {
+        logger.warn("The channel is full or unexpected failure. " +
+            "The source will try again after " + retryInterval + " ms");
+        sourceCounter.incrementChannelWriteFail();
+        TimeUnit.MILLISECONDS.sleep(retryInterval);
+        retryInterval = retryInterval << 1;
+        retryInterval = Math.min(retryInterval, maxRetryInterval);
+        continue;
+      }
+      retryInterval = 1000;
+      sourceCounter.addToEventAcceptedCount(events.size());
+      sourceCounter.incrementAppendBatchAcceptedCount();
+      if (events.size() < batchSize) {
+        break;
       }
     }
   }
@@ -345,6 +341,7 @@ public class TaildirSource extends AbstractSource implements
         if (writer != null) writer.close();
       } catch (IOException e) {
         logger.error("Error: " + e.getMessage(), e);
+        sourceCounter.incrementGenericProcessingFail();
       }
     }
   }

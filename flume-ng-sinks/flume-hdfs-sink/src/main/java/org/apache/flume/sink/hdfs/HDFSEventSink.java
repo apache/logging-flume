@@ -446,7 +446,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     } catch (Throwable th) {
       transaction.rollback();
       LOG.error("process failed", th);
-      sinkCounter.incrementWriteOrChannelFail(th);
+      sinkCounter.incrementEventWriteOrChannelFail(th);
       if (th instanceof Error) {
         throw (Error) th;
       } else {

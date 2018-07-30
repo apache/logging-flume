@@ -56,8 +56,7 @@ public class SourceCounter extends MonitoredCounterGroup implements
     COUNTER_APPEND_RECEIVED, COUNTER_APPEND_ACCEPTED,
     COUNTER_APPEND_BATCH_RECEIVED, COUNTER_APPEND_BATCH_ACCEPTED,
     COUNTER_OPEN_CONNECTION_COUNT, COUNTER_EVENT_READ_FAIL,
-    COUNTER_CHANNEL_WRITE_FAIL,
-      COUNTER_GENERIC_PROCESSING_FAIL
+    COUNTER_CHANNEL_WRITE_FAIL, COUNTER_GENERIC_PROCESSING_FAIL
   };
 
   public SourceCounter(String name) {
@@ -151,7 +150,7 @@ public class SourceCounter extends MonitoredCounterGroup implements
     return increment(COUNTER_GENERIC_PROCESSING_FAIL);
   }
 
-  public long incrementReadOrChannelFail(Throwable t) {
+  public long incrementEventReadOrChannelFail(Throwable t) {
     if (t instanceof ChannelException) {
       return incrementChannelWriteFail();
     }

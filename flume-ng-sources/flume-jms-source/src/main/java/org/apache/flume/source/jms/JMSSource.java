@@ -358,9 +358,4 @@ public class JMSSource extends AbstractPollableSource {
     jmsExceptionCounter = 0;
     return consumer;
   }
-
-  @VisibleForTesting
-  SourceCounter getSourceCounter() {
-    return sourceCounter;
-  }
 }

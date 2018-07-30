@@ -41,7 +41,9 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.PollableSource.Status;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.conf.Configurable;
+import org.apache.flume.instrumentation.SourceCounter;
 import org.junit.Test;
+import org.mockito.internal.util.reflection.Whitebox;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -338,7 +340,8 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
       Assert.assertEquals(Status.BACKOFF, source.process());
     }
     Assert.assertEquals(Status.BACKOFF, source.process());
-    Assert.assertEquals(1, source.getSourceCounter().getEventReadFail());
+    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(source, "sourceCounter");
+    Assert.assertEquals(1, sc.getEventReadFail());
     verify(consumer, times(attempts + 1)).rollback();
     verify(consumer, times(1)).close();
   }
@@ -349,7 +352,8 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
     source.start();
     when(consumer.take()).thenThrow(new RuntimeException("dummy"));
     source.process();
-    Assert.assertEquals(1, source.getSourceCounter().getEventReadFail());
+    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(source, "sourceCounter");
+    Assert.assertEquals(1, sc.getEventReadFail());
   }
 
   @Test
@@ -358,7 +362,8 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
     source.start();
     when(source.getChannelProcessor()).thenThrow(new ChannelException("dummy"));
     source.process();
-    Assert.assertEquals(1, source.getSourceCounter().getChannelWriteFail());
+    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(source, "sourceCounter");
+    Assert.assertEquals(1, sc.getChannelWriteFail());
   }
 
 }

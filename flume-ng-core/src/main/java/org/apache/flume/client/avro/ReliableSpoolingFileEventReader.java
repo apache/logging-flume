@@ -268,6 +268,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     } catch (IOException e) {
       logger.error("I/O exception occurred while listing directories. " +
                    "Files already matched will be returned. " + directory, e);
+      sourceCounter.incrementGenericProcessingFail();
     }
 
     return candidateFiles;
@@ -456,6 +457,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
         if (!deleted) {
           logger.error("Unable to delete file " + fileToRoll.getAbsolutePath() +
               ". It will likely be ingested another time.");
+          sourceCounter.incrementGenericProcessingFail();
         }
       } else {
         String message = "File name has been re-used with different" +
@@ -615,6 +617,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       return Optional.absent();
     } catch (IOException e) {
       logger.error("Exception opening file: " + file, e);
+      sourceCounter.incrementGenericProcessingFail();
       return Optional.absent();
     }
   }
