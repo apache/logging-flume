@@ -51,7 +51,7 @@ public class SinkCounter extends MonitoredCounterGroup implements
       "sink.event.write.fail";
 
   private static final String COUNTER_CHANNEL_READ_FAIL =
-      "sink.channel.write.fail";
+      "sink.channel.read.fail";
 
   private static final String[] ATTRIBUTES = {
     COUNTER_CONNECTION_CREATED, COUNTER_CONNECTION_CLOSED,

@@ -22,6 +22,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import junit.framework.Assert;
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelException;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -31,6 +32,7 @@ import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.JSONEvent;
+import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPost;
@@ -44,6 +46,8 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.mockito.internal.util.reflection.Whitebox;
 
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
@@ -78,6 +82,8 @@ import java.util.Random;
 import java.util.Set;
 
 import static org.fest.reflect.core.Reflection.field;
+import static org.mockito.Matchers.anyListOf;
+import static org.mockito.Mockito.doThrow;
 
 /**
  *
@@ -204,7 +210,6 @@ public class TestHTTPSource {
     doTestForbidden(new HttpOptions("http://0.0.0.0:" + selectedPort));
   }
 
-
   private void doTestForbidden(HttpRequestBase request) throws Exception {
     HttpResponse response = httpClient.execute(request);
     Assert.assertEquals(HttpServletResponse.SC_FORBIDDEN,
@@ -248,6 +253,8 @@ public class TestHTTPSource {
 
     Assert.assertEquals(HttpServletResponse.SC_BAD_REQUEST,
             response.getStatusLine().getStatusCode());
+    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(source, "sourceCounter");
+    Assert.assertEquals(1, sc.getEventReadFail());
 
   }
 
@@ -265,6 +272,17 @@ public class TestHTTPSource {
   public void testBigBatchDeserializarionUTF32() throws Exception {
     testBatchWithVariousEncoding("UTF-32");
   }
+
+  @Test
+  public void testCounterGenericFail() throws Exception {
+    ChannelProcessor cp = Mockito.mock(ChannelProcessor.class);
+    doThrow(new RuntimeException("dummy")).when(cp).processEventBatch(anyListOf(Event.class));
+    source.setChannelProcessor(cp);
+    testBatchWithVariousEncoding("UTF-8");
+    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(source, "sourceCounter");
+    Assert.assertEquals(1, sc.getGenericProcessingFail());
+  }
+
   @Test
   public void testSingleEvent() throws Exception {
     StringEntity input = new StringEntity("[{\"headers\" : {\"a\": \"b\"},\"body\":"
@@ -370,6 +388,8 @@ public class TestHTTPSource {
     HttpResponse response = putWithEncoding("UTF-8", 150).response;
     Assert.assertEquals(HttpServletResponse.SC_SERVICE_UNAVAILABLE,
             response.getStatusLine().getStatusCode());
+    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(source, "sourceCounter");
+    Assert.assertEquals(1, sc.getChannelWriteFail());
   }
 
   @Test
