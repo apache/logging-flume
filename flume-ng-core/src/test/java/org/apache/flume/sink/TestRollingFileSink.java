@@ -160,15 +160,15 @@ public class TestRollingFileSink {
 
     try {
       doTest(context, channel);
-    } catch (EventDeliveryException e){
+    } catch (EventDeliveryException e) {
       //
     }
     SinkCounter sinkCounter = (SinkCounter) Whitebox.getInternalState(sink, "sinkCounter");
     Assert.assertEquals(1, sinkCounter.getChannelReadFail());
   }
 
-  private void doTest(Context context) throws EventDeliveryException, InterruptedException
-      , IOException {
+  private void doTest(Context context) throws EventDeliveryException, InterruptedException,
+      IOException {
     doTest(context, null);
   }
 

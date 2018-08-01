@@ -314,21 +314,20 @@ public class TestThriftSource {
     source.setChannelProcessor(cp);
     source.start();
     Event event = EventBuilder.withBody("hello".getBytes());
-    try{
+    try {
       client.append(event);
-    } catch (EventDeliveryException e){
+    } catch (EventDeliveryException e) {
       //
     }
-    try{
+    try {
       client.appendBatch(Arrays.asList(event));
-    } catch (EventDeliveryException e){
+    } catch (EventDeliveryException e) {
       //
     }
     SourceCounter sc = (SourceCounter) Whitebox.getInternalState(source, "sourceCounter");
     Assert.assertEquals(2, sc.getChannelWriteFail());
     source.stop();
   }
-
 
   private class SubmitHelper implements Runnable {
     private final int i;
