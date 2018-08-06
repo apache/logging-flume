@@ -199,7 +199,7 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
           batchSize = parsedBatch;
         }
       } catch (NumberFormatException e) {
-    	LOGGER.warn("Batchsize is not valid for RpcClient: " + strBatchSize +
+        LOGGER.warn("Batchsize is not valid for RpcClient: " + strBatchSize +
             ". Default value assigned.", e);
       }
     }
