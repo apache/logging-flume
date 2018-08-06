@@ -166,6 +166,7 @@ public class MorphlineSink extends AbstractSink implements Configurable {
       // Ooops - need to rollback and back off
       LOGGER.error("Morphline Sink " + getName() + ": Unable to process event from channel " +
           myChannel.getName() + ". Exception follows.", t);
+      sinkCounter.incrementEventWriteOrChannelFail(t);
       try {
         if (!isMorphlineTransactionCommitted) {
           handler.rollbackTransaction();
