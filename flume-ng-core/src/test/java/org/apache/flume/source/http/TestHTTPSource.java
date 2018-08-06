@@ -277,10 +277,12 @@ public class TestHTTPSource {
   public void testCounterGenericFail() throws Exception {
     ChannelProcessor cp = Mockito.mock(ChannelProcessor.class);
     doThrow(new RuntimeException("dummy")).when(cp).processEventBatch(anyListOf(Event.class));
+    ChannelProcessor oldCp = source.getChannelProcessor();
     source.setChannelProcessor(cp);
     testBatchWithVariousEncoding("UTF-8");
     SourceCounter sc = (SourceCounter) Whitebox.getInternalState(source, "sourceCounter");
     Assert.assertEquals(1, sc.getGenericProcessingFail());
+    source.setChannelProcessor(oldCp);
   }
 
   @Test

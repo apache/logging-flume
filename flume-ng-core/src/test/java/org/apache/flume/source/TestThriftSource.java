@@ -38,7 +38,6 @@ import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
 
 import org.apache.flume.instrumentation.SourceCounter;
-import org.apache.flume.thrift.ThriftFlumeEvent;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -54,7 +53,6 @@ import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
