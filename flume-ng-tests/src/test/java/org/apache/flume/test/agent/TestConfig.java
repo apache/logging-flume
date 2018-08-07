@@ -18,6 +18,7 @@
  */
 package org.apache.flume.test.agent;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.flume.test.util.StagedInstall;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.alias.CredentialShell;
@@ -43,9 +44,9 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class TestConfigFilters {
+public class TestConfig {
   private static final Logger LOGGER =
-      LoggerFactory.getLogger(TestConfigFilters.class);
+      LoggerFactory.getLogger(TestConfig.class);
 
   @ClassRule
   public static final EnvironmentVariables environmentVariables
@@ -64,7 +65,10 @@ public class TestConfigFilters {
     File agentDir = StagedInstall.getInstance().getStageDir();
     LOGGER.debug("Using agent stage dir: {}", agentDir);
 
-    File testDir = new File(agentDir, TestConfigFilters.class.getName());
+    File testDir = new File(agentDir, TestConfig.class.getName());
+    if (testDir.exists()){
+      FileUtils.deleteDirectory(testDir);
+    }
     assertTrue(testDir.mkdirs());
 
     agentProps = new Properties();
@@ -169,6 +173,35 @@ public class TestConfigFilters {
     validateSeenEvents(sinkOutputDir2, 1, 100);
     validateSeenEvents(sinkOutputDir3, 1, 100);
     LOGGER.debug("Processed all the events!");
+
+    LOGGER.debug("testConfigReplacement() ended.");
+  }
+
+  @Test
+  public void testConfigReload() throws Exception {
+    LOGGER.debug("testConfigReplacement() started.");
+
+    agentProps.put("agent.channels.mem-01.transactionCapacity", "10");
+    agentProps.put("agent.sinks.roll-01.sink.batchSize", "20");
+    StagedInstall.getInstance().startAgent("agent", agentProps, agentEnv);
+
+    TimeUnit.SECONDS.sleep(10); // Wait for sources and sink to process files
+
+    // This directory is empty due to misconfiguration
+    validateSeenEvents(sinkOutputDir1, 0, 0);
+
+    // These are well configured
+    validateSeenEvents(sinkOutputDir2, 1, 100);
+    validateSeenEvents(sinkOutputDir3, 1, 100);
+    LOGGER.debug("Processed all the events!");
+
+    //repair the config
+    agentProps.put("agent.channels.mem-01.transactionCapacity", "20");
+    StagedInstall.getInstance().reconfigure(agentProps);
+
+    TimeUnit.SECONDS.sleep(40); // Wait for sources and sink to process files
+    // Ensure we received all events.
+    validateSeenEvents(sinkOutputDir1, 1, 100);
 
     LOGGER.debug("testConfigReplacement() ended.");
   }
