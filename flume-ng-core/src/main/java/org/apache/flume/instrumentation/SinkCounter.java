@@ -154,8 +154,18 @@ public class SinkCounter extends MonitoredCounterGroup implements
     return increment(COUNTER_EVENT_WRITE_FAIL);
   }
 
+  @Override
+  public long getEventWriteFail() {
+    return get(COUNTER_EVENT_WRITE_FAIL);
+  }
+
   public long incrementChannelReadFail() {
     return increment(COUNTER_CHANNEL_READ_FAIL);
+  }
+
+  @Override
+  public long getChannelReadFail() {
+    return get(COUNTER_CHANNEL_READ_FAIL);
   }
 
   public long incrementEventWriteOrChannelFail(Throwable t) {
@@ -163,14 +173,6 @@ public class SinkCounter extends MonitoredCounterGroup implements
       return incrementChannelReadFail();
     }
     return incrementEventWriteFail();
-  }
-
-  public long getEventWriteFail() {
-    return get(COUNTER_EVENT_WRITE_FAIL);
-  }
-
-  public long getChannelReadFail() {
-    return get(COUNTER_CHANNEL_READ_FAIL);
   }
 
 }

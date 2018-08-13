@@ -142,12 +142,27 @@ public class SourceCounter extends MonitoredCounterGroup implements
     return increment(COUNTER_EVENT_READ_FAIL);
   }
 
+  @Override
+  public long getEventReadFail() {
+    return get(COUNTER_EVENT_READ_FAIL);
+  }
+
   public long incrementChannelWriteFail() {
     return increment(COUNTER_CHANNEL_WRITE_FAIL);
   }
 
+  @Override
+  public long getChannelWriteFail() {
+    return get(COUNTER_CHANNEL_WRITE_FAIL);
+  }
+
   public long incrementGenericProcessingFail() {
     return increment(COUNTER_GENERIC_PROCESSING_FAIL);
+  }
+
+  @Override
+  public long getGenericProcessingFail() {
+    return get(COUNTER_GENERIC_PROCESSING_FAIL);
   }
 
   public long incrementEventReadOrChannelFail(Throwable t) {
@@ -157,18 +172,4 @@ public class SourceCounter extends MonitoredCounterGroup implements
     return incrementEventReadFail();
   }
 
-  @Override
-  public long getEventReadFail() {
-    return get(COUNTER_EVENT_READ_FAIL);
-  }
-
-  @Override
-  public long getChannelWriteFail() {
-    return get(COUNTER_CHANNEL_WRITE_FAIL);
-  }
-
-  @Override
-  public long getGenericProcessingFail() {
-    return get(COUNTER_GENERIC_PROCESSING_FAIL);
-  }
 }
