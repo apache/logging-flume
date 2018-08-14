@@ -583,10 +583,12 @@ public class TestReliableSpoolingFileEventReader {
       }
 
       int expNum = expectedColl.size();
+      int actualNum = 0;
       for (int i = 0; i < expNum; i++) {
         List<Event> events;
         events = reader.readEvents(10);
         for (Event e : events) {
+          actualNum++;
           if (order == ConsumeOrder.RANDOM) {
             Assert.assertTrue(expectedColl.remove(new String(e.getBody())));
           } else {
@@ -598,6 +600,7 @@ public class TestReliableSpoolingFileEventReader {
         }
         reader.commit();
       }
+      Assert.assertEquals(expNum, actualNum);
     } finally {
       deleteDir(dir);
     }
