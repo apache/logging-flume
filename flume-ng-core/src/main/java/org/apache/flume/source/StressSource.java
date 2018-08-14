@@ -145,6 +145,12 @@ public class StressSource extends AbstractPollableSource implements Configurable
           eventBatchListToProcess = eventBatchList;
         }
         lastSent = eventBatchListToProcess.size();
+
+        if (limiter != null) {
+          //Cast is safe because eventsLeft must be <= batchSize which is an int
+          limiter.acquire((int)lastSent);
+        }
+
         getChannelProcessor().processEventBatch(eventBatchListToProcess);
       }
 

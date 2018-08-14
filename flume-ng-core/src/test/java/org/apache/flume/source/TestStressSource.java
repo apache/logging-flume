@@ -84,7 +84,7 @@ public class TestStressSource {
   }
   
   @Test
-  public void testRateLimitedEvents() throws InterruptedException,
+  public void testRateLimitedEventsNoBatch() throws InterruptedException,
       EventDeliveryException {
     StressSource source = new StressSource();
     source.setChannelProcessor(mockProcessor);
@@ -99,31 +99,88 @@ public class TestStressSource {
     for (int i = 0; i < 20; i++) {
       source.process();
     }
-    
+
     long finishTime = System.currentTimeMillis();
-    
-    //Expecting to see within a second +/- 10% for 20 events
-    Assert.assertTrue(finishTime - startTime < 1100);
-    Assert.assertTrue(finishTime - startTime > 900);
-    
+
+    //Expecting to see within a second +/- 30% for 20 events
+    Assert.assertTrue(finishTime - startTime < 1300);
+    Assert.assertTrue(finishTime - startTime > 700);
     source.stop();
-    
+  }
+  
+  @Test
+  public void testNonRateLimitedEventsNoBatch() throws InterruptedException,
+      EventDeliveryException {
+    StressSource source = new StressSource();
+    source.setChannelProcessor(mockProcessor);
+    Context context = new Context();
+
     //Test with no limit - expect to see very fast performance
     context = new Context();
     context.put("maxTotalEvents", "20");
     context.put("maxEventsPerSecond", "0");
     source.configure(context);
 
-    startTime = System.currentTimeMillis();
+    long startTime = System.currentTimeMillis();
     source.start();
 
     for (int i = 0; i <= 20; i++) {
       source.process();
     }
 
-    finishTime = System.currentTimeMillis();
+    long finishTime = System.currentTimeMillis();
 
-    Assert.assertTrue(finishTime - startTime < 90);
+    Assert.assertTrue(finishTime - startTime < 70);
+  }
+  
+  @Test
+  public void testRateLimitedEventsBatch() throws InterruptedException,
+      EventDeliveryException {
+    StressSource source = new StressSource();
+    source.setChannelProcessor(mockProcessor);
+    Context context = new Context();
+    context.put("maxTotalEvents", "20");
+    context.put("maxEventsPerSecond", "20");
+    context.put("batchSize", "3");
+    source.configure(context);
+
+    long startTime = System.currentTimeMillis();
+    source.start();
+
+    for (int i = 0; i < 20; i++) {
+      source.process();
+    }
+
+    long finishTime = System.currentTimeMillis();
+
+    //Expecting to see within a second +/- 30% for 20 events
+    Assert.assertTrue(finishTime - startTime < 1300);
+    Assert.assertTrue(finishTime - startTime > 700);
+    source.stop();
+  }
+  
+  @Test
+  public void testNonRateLimitedEventsBatch() throws InterruptedException,
+      EventDeliveryException {
+    StressSource source = new StressSource();
+    source.setChannelProcessor(mockProcessor);
+    Context context = new Context();
+
+    //Test with no limit - expect to see very fast performance
+    context.put("maxTotalEvents", "20");
+    context.put("maxEventsPerSecond", "0");
+    source.configure(context);
+
+    long startTime = System.currentTimeMillis();
+    source.start();
+
+    for (int i = 0; i <= 20; i++) {
+      source.process();
+    }
+
+    long finishTime = System.currentTimeMillis();
+
+    Assert.assertTrue(finishTime - startTime < 70);
   }
 
   @Test

@@ -409,14 +409,6 @@ public class TestRateLimiter extends TestCase {
     }
   }
 
-  /*public void testNulls() {
-    NullPointerTester tester = new NullPointerTester()
-        .setDefault(SleepingStopwatch.class, stopwatch)
-        .setDefault(int.class, 1);
-    tester.testStaticMethods(RateLimiter.class, Visibility.PACKAGE);
-    tester.testInstanceMethods(RateLimiter.create(stopwatch, 5.0), Visibility.PACKAGE);
-  }
-  */
   private long measureTotalTimeMillis(RateLimiter rateLimiter, int permits, Random random) {
     long startTime = stopwatch.instant;
     while (permits > 0) {
@@ -473,40 +465,4 @@ public class TestRateLimiter extends TestCase {
       return events.toString();
     }
   }
-
-  /*public void testMocking() throws Exception {
-    RateLimiter mockito = Mockito.mock(RateLimiter.class);
-    RateLimiter easyMock = EasyMock.createNiceMock(RateLimiter.class);
-    EasyMock.replay(easyMock);
-    for (Method method : RateLimiter.class.getMethods()) {
-      if (!isStatic(method.getModifiers())
-          && !NOT_WORKING_ON_MOCKS.contains(method.getName())
-          && !method.getDeclaringClass().equals(Object.class)) {
-        method.invoke(mockito, arbitraryParameters(method));
-        method.invoke(easyMock, arbitraryParameters(method));
-      }
-    }
-  }
-
-  private static Object[] arbitraryParameters(Method method) {
-    Class<?>[] parameterTypes = method.getParameterTypes();
-    Object[] params = new Object[parameterTypes.length];
-    for (int i = 0; i < parameterTypes.length; i++) {
-      params[i] = PARAMETER_VALUES.get(parameterTypes[i]);
-    }
-    return params;
-  }
-
-  private static final ImmutableSet<String> NOT_WORKING_ON_MOCKS =
-      ImmutableSet.of("latestPermitAgeSec", "setRate");
-
-  // We would use ArbitraryInstances, but it returns 0, invalid for many RateLimiter methods.
-  private static final ImmutableClassToInstanceMap<Object> PARAMETER_VALUES =
-      ImmutableClassToInstanceMap.builder()
-          .put(int.class, 1)
-          .put(long.class, 1L)
-          .put(double.class, 1.0)
-          .put(TimeUnit.class, SECONDS)
-          .build();
-   */
 }

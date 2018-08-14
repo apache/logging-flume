@@ -1845,6 +1845,7 @@ size                 500          Payload size of each Event. Unit:**byte**
 maxTotalEvents       -1           Maximum number of Events to be sent
 maxSuccessfulEvents  -1           Maximum number of Events successfully sent
 batchSize            1            Number of Events to be sent in one batch
+maxEventsPerSecond   0            When set to an integer greater than zero, enforces a rate limiter onto the source.
 ===================  ===========  ===================================================
 
 Example for agent named **a1**:
