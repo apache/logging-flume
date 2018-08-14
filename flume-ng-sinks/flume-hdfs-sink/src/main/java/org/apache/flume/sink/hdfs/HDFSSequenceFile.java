@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@
 package org.apache.flume.sink.hdfs;
 
 import java.io.IOException;
+
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.hadoop.conf.Configuration;
@@ -53,13 +54,13 @@ public class HDFSSequenceFile extends AbstractHDFSWriter {
 
     // use binary writable serialize by default
     writeFormat = context.getString("hdfs.writeFormat",
-      SequenceFileSerializerType.Writable.name());
+        SequenceFileSerializerType.Writable.name());
     useRawLocalFileSystem = context.getBoolean("hdfs.useRawLocalFileSystem",
         false);
     serializerContext = new Context(
-            context.getSubProperties(SequenceFileSerializerFactory.CTX_PREFIX));
+        context.getSubProperties(SequenceFileSerializerFactory.CTX_PREFIX));
     serializer = SequenceFileSerializerFactory
-            .getSerializer(writeFormat, serializerContext);
+        .getSerializer(writeFormat, serializerContext);
     logger.info("writeFormat = " + writeFormat + ", UseRawLocalFileSystem = "
         + useRawLocalFileSystem);
   }
@@ -71,7 +72,7 @@ public class HDFSSequenceFile extends AbstractHDFSWriter {
 
   @Override
   public void open(String filePath, CompressionCodec codeC,
-      CompressionType compType) throws IOException {
+                   CompressionType compType) throws IOException {
     Configuration conf = new Configuration();
     Path dstPath = new Path(filePath);
     FileSystem hdfs = dstPath.getFileSystem(conf);
@@ -79,11 +80,11 @@ public class HDFSSequenceFile extends AbstractHDFSWriter {
   }
 
   protected void open(Path dstPath, CompressionCodec codeC,
-      CompressionType compType, Configuration conf, FileSystem hdfs)
-          throws IOException {
+                      CompressionType compType, Configuration conf, FileSystem hdfs)
+      throws IOException {
     if (useRawLocalFileSystem) {
       if (hdfs instanceof LocalFileSystem) {
-        hdfs = ((LocalFileSystem)hdfs).getRaw();
+        hdfs = ((LocalFileSystem) hdfs).getRaw();
       } else {
         logger.warn("useRawLocalFileSystem is set to true but file system " +
             "is not of type LocalFileSystem: " + hdfs.getClass().getName());
@@ -102,8 +103,16 @@ public class HDFSSequenceFile extends AbstractHDFSWriter {
 
   @Override
   public void append(Event e) throws IOException {
-    for (SequenceFileSerializer.Record record : serializer.serialize(e)) {
-      writer.append(record.getKey(), record.getValue());
+    appendBatch(new Event[]{e}, 1);
+  }
+
+  @Override
+  public void appendBatch(Event[] events, int len) throws IOException {
+    for (int i = 0; i < len; i++) {
+      for (SequenceFileSerializer.Record record :
+          serializer.serialize(events[i])) {
+        writer.append(record.getKey(), record.getValue());
+      }
     }
   }
 

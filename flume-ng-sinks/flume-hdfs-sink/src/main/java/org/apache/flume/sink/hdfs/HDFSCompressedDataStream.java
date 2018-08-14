@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@
 package org.apache.flume.sink.hdfs;
 
 import java.io.IOException;
+
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.serialization.EventSerializer;
@@ -74,13 +75,13 @@ public class HDFSCompressedDataStream extends AbstractHDFSWriter {
 
   @Override
   public void open(String filePath, CompressionCodec codec,
-      CompressionType cType) throws IOException {
+                   CompressionType cType) throws IOException {
     Configuration conf = new Configuration();
     Path dstPath = new Path(filePath);
     FileSystem hdfs = dstPath.getFileSystem(conf);
     if (useRawLocalFileSystem) {
       if (hdfs instanceof LocalFileSystem) {
-        hdfs = ((LocalFileSystem)hdfs).getRaw();
+        hdfs = ((LocalFileSystem) hdfs).getRaw();
       } else {
         logger.warn("useRawLocalFileSystem is set to true but file system " +
             "is not of type LocalFileSystem: " + hdfs.getClass().getName());
@@ -118,11 +119,18 @@ public class HDFSCompressedDataStream extends AbstractHDFSWriter {
 
   @Override
   public void append(Event e) throws IOException {
+    appendBatch(new Event[]{e}, 1);
+  }
+
+  @Override
+  public void appendBatch(Event[] events, int len) throws IOException {
     if (isFinished) {
       cmpOut.resetState();
       isFinished = false;
     }
-    serializer.write(e);
+    for (int i = 0; i < len; i++) {
+      serializer.write(events[i]);
+    }
   }
 
   @Override

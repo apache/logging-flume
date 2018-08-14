@@ -220,6 +220,12 @@ public class TestBucketWriter {
         // we just re-open in append if closed
         open = true;
       }
+
+      @Override
+      public void appendBatch(Event[] events, int len) throws IOException {
+        // we just re-open in append if closed
+        open = true;
+      }
     };
 
     HDFSTextSerializer serializer = new HDFSTextSerializer();
@@ -473,7 +479,7 @@ public class TestBucketWriter {
     // Fail the next write.
     IOException expectedIOException = new IOException("Test injected IOException");
     Mockito.doThrow(expectedIOException).when(hdfsWriter)
-        .append(Mockito.any(Event.class));
+        .appendBatch(Mockito.any(Event[].class), Mockito.anyInt());
 
     // The second time we try to write we should get an IOException.
     try {

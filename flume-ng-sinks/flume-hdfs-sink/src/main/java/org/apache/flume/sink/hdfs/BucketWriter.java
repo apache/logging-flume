@@ -502,10 +502,30 @@ class BucketWriter {
    * mechanism will never roll an empty file. This also ensures that the file
    * creation time reflects when the first event was written.
    *
+   * This method appends one event at a time,
+   * for batched appends check {@link #appendBatch(Event[] events, int len)}
+   *
    * @throws IOException
    * @throws InterruptedException
    */
   public synchronized void append(final Event event)
+      throws IOException, InterruptedException {
+    appendBatch(new Event[]{event}, 1);
+  }
+
+  /**
+   * Open file handles, write data, update stats, handle file rolling and
+   * batching / flushing. <br />
+   * If the write fails, the file is implicitly closed and then the IOException
+   * is rethrown. <br />
+   * We rotate before append, and not after, so that the active file rolling
+   * mechanism will never roll an empty file. This also ensures that the file
+   * creation time reflects when the first event was written.
+   *
+   * @throws IOException
+   * @throws InterruptedException
+   */
+  public synchronized void appendBatch(final Event[] eventRefs, final int length)
           throws IOException, InterruptedException {
     checkAndThrowInterruptedException();
     // If idleFuture is not null, cancel it before we move forward to avoid a
@@ -574,7 +594,7 @@ class BucketWriter {
       callWithTimeout(new CallRunner<Void>() {
         @Override
         public Void call() throws Exception {
-          writer.append(event); // could block
+          writer.appendBatch(eventRefs, length); // could block
           return null;
         }
       });
@@ -592,9 +612,11 @@ class BucketWriter {
     }
 
     // update statistics
-    processSize += event.getBody().length;
-    eventCounter++;
-    batchCounter++;
+    for (int i = 0; i < length ; i++) {
+      processSize += eventRefs[i].getBody().length;
+      eventCounter++;
+      batchCounter++;
+    }
 
     if (batchCounter == batchSize) {
       flush();

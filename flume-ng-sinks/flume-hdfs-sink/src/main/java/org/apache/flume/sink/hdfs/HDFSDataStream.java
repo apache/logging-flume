@@ -116,7 +116,14 @@ public class HDFSDataStream extends AbstractHDFSWriter {
 
   @Override
   public void append(Event e) throws IOException {
-    serializer.write(e);
+    appendBatch(new Event[]{e}, 1);
+  }
+
+  @Override
+  public void appendBatch(Event[] events, int len) throws IOException {
+    for (int i = 0; i < len; i++) {
+      serializer.write(events[i]);
+    }
   }
 
   @Override

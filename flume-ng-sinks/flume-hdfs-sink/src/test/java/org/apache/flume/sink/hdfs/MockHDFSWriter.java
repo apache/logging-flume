@@ -19,6 +19,7 @@
 package org.apache.flume.sink.hdfs;
 
 import java.io.IOException;
+
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
@@ -77,6 +78,13 @@ public class MockHDFSWriter implements HDFSWriter {
   public void append(Event e) throws IOException {
     eventsWritten++;
     bytesWritten += e.getBody().length;
+  }
+
+  public void appendBatch(Event[] events, int len) throws IOException {
+    for (int i = 0; i < len; i++) {
+      eventsWritten++;
+      bytesWritten += events[i].getBody().length;
+    }
   }
 
   public void sync() throws IOException {

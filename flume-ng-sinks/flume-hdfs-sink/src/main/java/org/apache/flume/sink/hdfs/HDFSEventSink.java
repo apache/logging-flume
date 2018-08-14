@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,8 +19,10 @@
 package org.apache.flume.sink.hdfs;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -34,6 +36,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.annotations.VisibleForTesting;
+
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.flume.Channel;
 import org.apache.flume.Clock;
 import org.apache.flume.Context;
@@ -75,6 +79,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   private static final String defaultInUsePrefix = "";
   private static final String defaultInUseSuffix = ".tmp";
   private static final long defaultBatchSize = 100;
+  private static final int defaultBatchInTransactionSize = 100;
   private static final String defaultFileType = HDFSWriterFactory.SequenceFileType;
   private static final int defaultMaxOpenFiles = 5000;
   // Time between close retries, in seconds
@@ -104,6 +109,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   private long rollSize;
   private long rollCount;
   private long batchSize;
+  private int batchInTransactionSize;
   private int threadsPoolSize;
   private int rollTimerPoolSize;
   private CompressionCodec codeC;
@@ -202,6 +208,8 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     rollSize = context.getLong("hdfs.rollSize", defaultRollSize);
     rollCount = context.getLong("hdfs.rollCount", defaultRollCount);
     batchSize = context.getLong("hdfs.batchSize", defaultBatchSize);
+    batchInTransactionSize = context.getInteger(
+        "hdfs.batchInTransactionSize", defaultBatchInTransactionSize);
     idleTimeout = context.getInteger("hdfs.idleTimeout", 0);
     String codecName = context.getString("hdfs.codeC");
     fileType = context.getString("hdfs.fileType", defaultFileType);
@@ -230,6 +238,14 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     }
 
     Preconditions.checkArgument(batchSize > 0, "batchSize must be greater than 0");
+    if (batchInTransactionSize > batchSize) {
+      batchInTransactionSize = (int) batchSize;
+    }
+    Preconditions.checkArgument((batchInTransactionSize > 0)
+            && (batchInTransactionSize <= batchSize),
+        "batchInTransactionSize must be greater "
+            + "than 0 and less than batchSize");
+
     if (codecName == null) {
       codeC = null;
       compType = CompressionType.NONE;
@@ -254,7 +270,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
 
     // get the appropriate executor
     this.privExecutor = FlumeAuthenticationUtil.getAuthenticator(
-            kerbConfPrincipal, kerbKeytab).proxyAs(proxyUser);
+        kerbConfPrincipal, kerbKeytab).proxyAs(proxyUser);
 
     needRounding = context.getBoolean("hdfs.round", false);
 
@@ -275,11 +291,11 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
       if (roundUnit == Calendar.SECOND || roundUnit == Calendar.MINUTE) {
         Preconditions.checkArgument(roundValue > 0 && roundValue <= 60,
             "Round value" +
-            "must be > 0 and <= 60");
+                "must be > 0 and <= 60");
       } else if (roundUnit == Calendar.HOUR_OF_DAY) {
         Preconditions.checkArgument(roundValue > 0 && roundValue <= 24,
             "Round value" +
-            "must be > 0 and <= 24");
+                "must be > 0 and <= 24");
       }
     }
 
@@ -343,6 +359,58 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     return codec;
   }
 
+  private void streamEventsToHdfs(
+      Set<BucketWriter> writers, List<Event> eventList, String lookupPath)
+      throws IOException, InterruptedException {
+    org.apache.hadoop.fs.Path path = new org.apache.hadoop.fs.Path(lookupPath);
+    String realPath = path.getParent().toString();
+    String realName = path.getName();
+
+    BucketWriter bucketWriter;
+    HDFSWriter hdfsWriter = null;
+    // Callback to remove the reference to the bucket writer from the
+    // sfWriters map so that all buffers used by the HDFS file
+    // handles are garbage collected.
+    WriterCallback closeCallback = new WriterCallback() {
+      @Override
+      public void run(String bucketPath) {
+        LOG.info("Writer callback called.");
+        synchronized (sfWritersLock) {
+          sfWriters.remove(bucketPath);
+        }
+      }
+    };
+    synchronized (sfWritersLock) {
+      bucketWriter = sfWriters.get(lookupPath);
+      // we haven't seen this file yet, so open it and cache the handle
+      if (bucketWriter == null) {
+        hdfsWriter = writerFactory.getWriter(fileType);
+        bucketWriter = initializeBucketWriter(realPath, realName,
+            lookupPath, hdfsWriter, closeCallback);
+        sfWriters.put(lookupPath, bucketWriter);
+      }
+    }
+
+    // Write the data to HDFS
+    try {
+      bucketWriter.appendBatch(eventList.toArray(new Event[eventList.size()]), eventList.size());
+    } catch (BucketClosedException ex) {
+      LOG.info("Bucket was closed while trying to append, " +
+          "reinitializing bucket and writing event.", ex);
+      hdfsWriter = writerFactory.getWriter(fileType);
+      bucketWriter = initializeBucketWriter(realPath, realName,
+          lookupPath, hdfsWriter, closeCallback);
+      synchronized (sfWritersLock) {
+        sfWriters.put(lookupPath, bucketWriter);
+      }
+      bucketWriter.appendBatch(eventList.toArray(new Event[eventList.size()]), eventList.size());
+    }
+
+    // track the buckets getting written in this transaction
+    if (!writers.contains(bucketWriter)) {
+      writers.add(bucketWriter);
+    }
+  }
 
   /**
    * Pull events out of channel and send it to HDFS. Take at most batchSize
@@ -358,68 +426,46 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     try {
       Set<BucketWriter> writers = new LinkedHashSet<>();
       int txnEventCount = 0;
-      for (txnEventCount = 0; txnEventCount < batchSize; txnEventCount++) {
+      List<String> lookUpPathList = new ArrayList<>();
+      List<List<Event>> eventArrList = new ArrayList<>();
+      String curLookPath = null;
+      List<Event> eventList = null;
+      for (txnEventCount = 0; txnEventCount < batchSize; ++txnEventCount) {
         Event event = channel.take();
         if (event == null) {
           break;
         }
-
-        // reconstruct the path name by substituting place holders
         String realPath = BucketPath.escapeString(filePath, event.getHeaders(),
             timeZone, needRounding, roundUnit, roundValue, useLocalTime);
         String realName = BucketPath.escapeString(fileName, event.getHeaders(),
             timeZone, needRounding, roundUnit, roundValue, useLocalTime);
-
         String lookupPath = realPath + DIRECTORY_DELIMITER + realName;
-        BucketWriter bucketWriter;
-        HDFSWriter hdfsWriter = null;
-        // Callback to remove the reference to the bucket writer from the
-        // sfWriters map so that all buffers used by the HDFS file
-        // handles are garbage collected.
-        WriterCallback closeCallback = new WriterCallback() {
-          @Override
-          public void run(String bucketPath) {
-            LOG.info("Writer callback called.");
-            synchronized (sfWritersLock) {
-              sfWriters.remove(bucketPath);
-            }
-          }
-        };
-        synchronized (sfWritersLock) {
-          bucketWriter = sfWriters.get(lookupPath);
-          // we haven't seen this file yet, so open it and cache the handle
-          if (bucketWriter == null) {
-            hdfsWriter = writerFactory.getWriter(fileType);
-            bucketWriter = initializeBucketWriter(realPath, realName,
-              lookupPath, hdfsWriter, closeCallback);
-            sfWriters.put(lookupPath, bucketWriter);
-          }
+        if (curLookPath == null
+            || !lookupPath.equals(curLookPath)
+            || event == null
+            || eventList.size() >= batchInTransactionSize) {
+          eventList = new ArrayList<>();
+          eventList.add(event);
+          eventArrList.add(eventList);
+          lookUpPathList.add(lookupPath);
+          curLookPath = lookupPath;
+          continue;
         }
-
-        // Write the data to HDFS
-        try {
-          bucketWriter.append(event);
-        } catch (BucketClosedException ex) {
-          LOG.info("Bucket was closed while trying to append, " +
-                   "reinitializing bucket and writing event.");
-          hdfsWriter = writerFactory.getWriter(fileType);
-          bucketWriter = initializeBucketWriter(realPath, realName,
-            lookupPath, hdfsWriter, closeCallback);
-          synchronized (sfWritersLock) {
-            sfWriters.put(lookupPath, bucketWriter);
-          }
-          bucketWriter.append(event);
-        }
-
-        // track the buckets getting written in this transaction
-        if (!writers.contains(bucketWriter)) {
-          writers.add(bucketWriter);
-        }
+        eventList.add(event);
       }
 
-      if (txnEventCount == 0) {
+      int totalSentEventCount = 0;
+      int i = 0;
+      for (List<Event> events : eventArrList) {
+        String lookupPath = lookUpPathList.get(i);
+        streamEventsToHdfs(writers, events, lookupPath);
+        totalSentEventCount += events.size();
+        ++i;
+      }
+
+      if (totalSentEventCount == 0) {
         sinkCounter.incrementBatchEmptyCount();
-      } else if (txnEventCount == batchSize) {
+      } else if (totalSentEventCount == batchSize) {
         sinkCounter.incrementBatchCompleteCount();
       } else {
         sinkCounter.incrementBatchUnderflowCount();
@@ -432,10 +478,10 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
 
       transaction.commit();
 
-      if (txnEventCount < 1) {
+      if (totalSentEventCount < 1) {
         return Status.BACKOFF;
       } else {
-        sinkCounter.addToEventDrainSuccessCount(txnEventCount);
+        sinkCounter.addToEventDrainSuccessCount(totalSentEventCount);
         return Status.READY;
       }
     } catch (IOException eIO) {
@@ -446,8 +492,10 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
       transaction.rollback();
       LOG.error("process failed", th);
       if (th instanceof Error) {
+        LOG.error(ExceptionUtils.getStackTrace(th));
         throw (Error) th;
       } else {
+        LOG.error(ExceptionUtils.getStackTrace(th));
         throw new EventDeliveryException(th);
       }
     } finally {
@@ -457,8 +505,8 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
 
   @VisibleForTesting
   BucketWriter initializeBucketWriter(String realPath,
-      String realName, String lookupPath, HDFSWriter hdfsWriter,
-      WriterCallback closeCallback) {
+                                      String realName, String lookupPath, HDFSWriter hdfsWriter,
+                                      WriterCallback closeCallback) {
     BucketWriter bucketWriter = new BucketWriter(rollInterval,
         rollSize, rollCount,
         batchSize, context, realPath, realName, inUsePrefix, inUseSuffix,
@@ -484,7 +532,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
           entry.getValue().close();
         } catch (Exception ex) {
           LOG.warn("Exception while closing " + entry.getKey() + ". " +
-                  "Exception follows.", ex);
+              "Exception follows.", ex);
           if (ex instanceof InterruptedException) {
             Thread.currentThread().interrupt();
           }
@@ -493,13 +541,13 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     }
 
     // shut down all our thread pools
-    ExecutorService[] toShutdown = { callTimeoutPool, timedRollerPool };
+    ExecutorService[] toShutdown = {callTimeoutPool, timedRollerPool};
     for (ExecutorService execService : toShutdown) {
       execService.shutdown();
       try {
         while (execService.isTerminated() == false) {
           execService.awaitTermination(
-                  Math.max(defaultCallTimeout, callTimeout), TimeUnit.MILLISECONDS);
+              Math.max(defaultCallTimeout, callTimeout), TimeUnit.MILLISECONDS);
         }
       } catch (InterruptedException ex) {
         LOG.warn("shutdown interrupted on " + execService, ex);
@@ -521,11 +569,11 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   public void start() {
     String timeoutName = "hdfs-" + getName() + "-call-runner-%d";
     callTimeoutPool = Executors.newFixedThreadPool(threadsPoolSize,
-            new ThreadFactoryBuilder().setNameFormat(timeoutName).build());
+        new ThreadFactoryBuilder().setNameFormat(timeoutName).build());
 
     String rollerName = "hdfs-" + getName() + "-roll-timer-%d";
     timedRollerPool = Executors.newScheduledThreadPool(rollTimerPoolSize,
-            new ThreadFactoryBuilder().setNameFormat(rollerName).build());
+        new ThreadFactoryBuilder().setNameFormat(rollerName).build());
 
     this.sfWriters = new WriterLinkedHashMap(maxOpenFiles);
     sinkCounter.start();
@@ -535,7 +583,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   @Override
   public String toString() {
     return "{ Sink type:" + getClass().getSimpleName() + ", name:" + getName() +
-            " }";
+        " }";
   }
 
   @VisibleForTesting
