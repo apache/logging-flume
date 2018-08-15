@@ -93,6 +93,7 @@ public class SequenceGeneratorSource extends AbstractPollableSource implements
       eventsSent = eventsSentTX;
     } catch (ChannelException ex) {
       logger.error( getName() + " source could not write to channel.", ex);
+      sourceCounter.incrementChannelWriteFail();
     }
 
     return status;

@@ -75,7 +75,6 @@ import org.slf4j.LoggerFactory;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
 
 public class TestAvroSource {
 
