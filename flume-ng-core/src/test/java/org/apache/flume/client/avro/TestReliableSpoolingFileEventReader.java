@@ -491,13 +491,8 @@ public class TestReliableSpoolingFileEventReader {
   }
 
   @Test public void testLargeNumberOfFilesYOUNGEST() throws IOException {
-    templateTestForRecursiveDirs(ConsumeOrder.YOUNGEST, new Comparator<Long>() {
-
-      @Override
-      public int compare(Long o1, Long o2) {
-        return o2.compareTo(o1);
-      }
-    }, 3, 3, 37, TrackingPolicy.RENAME);
+    templateTestForRecursiveDirs(ConsumeOrder.YOUNGEST, Comparator.reverseOrder(),
+        3, 3, 37, TrackingPolicy.RENAME);
   }
 
   @Test public void testLargeNumberOfFilesRANDOM() throws IOException {
@@ -509,12 +504,8 @@ public class TestReliableSpoolingFileEventReader {
   }
 
   @Test public void testLargeNumberOfFilesYOUNGESTTrackerDir() throws IOException {
-    templateTestForRecursiveDirs(ConsumeOrder.YOUNGEST, new Comparator<Long>() {
-      @Override
-      public int compare(Long o1, Long o2) {
-        return o2.compareTo(o1);
-      }
-    }, 3, 3, 10, TrackingPolicy.TRACKER_DIR);
+    templateTestForRecursiveDirs(ConsumeOrder.YOUNGEST, Comparator.reverseOrder(),
+        3, 3, 10, TrackingPolicy.TRACKER_DIR);
   }
 
   @Test public void testLargeNumberOfFilesRANDOMTrackerDir() throws IOException {
@@ -619,8 +610,8 @@ public class TestReliableSpoolingFileEventReader {
     }
   }
 
-  private void createFiles(File dir, int N, Map<Long, List<String>> expected, MutableLong id) throws IOException {
-    for (int i = 0; i < N; i++) {
+  private void createFiles(File dir, int fileNum, Map<Long, List<String>> expected, MutableLong id) throws IOException {
+    for (int i = 0; i < fileNum; i++) {
       File f = new File(dir, "file-" + id);
       String data = f.getPath();
       Files.write(data, f, Charsets.UTF_8);

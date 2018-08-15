@@ -298,7 +298,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       return completedFiles;
     }
 
-    Path trackerDirPath = Paths.get(trackerDirectory.getPath());
+    Path trackerDirPath = trackerDirectory.toPath();
     Files.walkFileTree(trackerDirPath, new SimpleFileVisitor<Path>() {
 
       @Override
@@ -542,7 +542,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
   }
 
   private void rollCurrentFileInTrackerDir(File fileToRoll) throws IOException {
-    Path path = Paths.get(fileToRoll.getPath());
+    Path path = fileToRoll.toPath();
     Path relToRoll = getRelPathToSpoolDir(path);
 
     File dest = new File(trackerDirectory.getPath(), relToRoll + completedSuffix);

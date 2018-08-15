@@ -1048,10 +1048,10 @@ ignorePattern             ^$              Regular expression specifying which fi
                                           the file is ignored.
 trackerDir                .flumespool     Directory to store metadata related to processing of files.
                                           If this path is not an absolute path, then it is interpreted as relative to the spoolDir.
-trackingPolicy            rename          The tracking policy defines how file processign is tracked. It can be "rename" or
+trackingPolicy            rename          The tracking policy defines how file processing is tracked. It can be "rename" or
                                           "tracker_dir". This parameter is only effective if the deletePolicy is "never".
                                           "rename" - After processing files they get renamed according to the fileSuffix parameter.
-                                          "tracker_dir" - Files are not renemad but a new empty file is created in the trackerDir.
+                                          "tracker_dir" - Files are not renamed but a new empty file is created in the trackerDir.
                                           The new tracker file name is derived from the ingested one plus the fileSuffix.
 consumeOrder              oldest          In which order files in the spooling directory will be consumed ``oldest``,
                                           ``youngest`` and ``random``. In case of ``oldest`` and ``youngest``, the last modified
