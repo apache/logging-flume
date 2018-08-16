@@ -1010,6 +1010,10 @@ It should work with any JMS provider and has been tested with ActiveMQ, IBM MQ a
 The JSSE Java system properties can either be passed on the command line or by setting the ``JAVA_OPTS`` environment
 variable in *conf/flume-env.sh* (the examples below show the second approach).
 
+The following sections only describe the SSL configuration steps needed on the Flume side. You can find more detailed
+descriptions about the server side setup of the different JMS providers and also full working configuration examples on
+Flume Wiki.
+
 **SSL transport / server authentication:**
 
 If the JMS server uses self-signed certificate or its certificate is signed by a non-trusted CA (eg. the company's own
@@ -1043,8 +1047,7 @@ The keystore should contain only one key (if multiple keys are present, then the
 The key password must be the same as the keystore password.
 
 In case of client certificate authentication, it is not needed to specify the ``userName`` / ``passwordFile`` properties
-for the JMS Source in the Flume agent config file (however some JMS client implementations - like Oracle WebLogic -
-might need an empty username to be passed).
+for the JMS Source in the Flume agent config file.
 
 
 Spooling Directory Source
