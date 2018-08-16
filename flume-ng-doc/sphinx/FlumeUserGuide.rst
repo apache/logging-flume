@@ -1010,7 +1010,7 @@ It should work with any JMS provider and has been tested with ActiveMQ, IBM MQ a
 The JSSE Java system properties can either be passed on the command line or by setting the ``JAVA_OPTS`` environment
 variable in *conf/flume-env.sh* (the examples below show the second approach).
 
-The following sections only describe the SSL configuration steps needed on the Flume side. You can find more detailed
+The following sections describe the SSL configuration steps needed on the Flume side only. You can find more detailed
 descriptions about the server side setup of the different JMS providers and also full working configuration examples on
 Flume Wiki.
 
