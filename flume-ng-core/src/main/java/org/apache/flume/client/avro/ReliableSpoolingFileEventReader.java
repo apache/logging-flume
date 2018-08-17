@@ -34,7 +34,7 @@ import org.apache.flume.serialization.DurablePositionTracker;
 import org.apache.flume.serialization.EventDeserializer;
 import org.apache.flume.serialization.EventDeserializerFactory;
 import org.apache.flume.serialization.PositionTracker;
-import org.apache.flume.serialization.ResettableFileInputStream;
+import org.apache.flume.serialization.NonSyncResettableFileInputStream;
 import org.apache.flume.serialization.ResettableInputStream;
 import org.apache.flume.source.SpoolDirectorySourceConfigurationConstants;
 import org.apache.flume.source.SpoolDirectorySourceConfigurationConstants.ConsumeOrder;
@@ -591,8 +591,8 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
           tracker.getTarget(), nextPath);
 
       ResettableInputStream in =
-          new ResettableFileInputStream(file, tracker,
-              ResettableFileInputStream.DEFAULT_BUF_SIZE, inputCharset,
+          new NonSyncResettableFileInputStream(file, tracker,
+              NonSyncResettableFileInputStream.DEFAULT_BUF_SIZE, inputCharset,
               decodeErrorPolicy);
       EventDeserializer deserializer =
           EventDeserializerFactory.getInstance(deserializerType, deserializerContext, in);
