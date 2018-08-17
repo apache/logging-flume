@@ -85,6 +85,11 @@ public class ThriftSource extends AbstractSource implements Configurable, EventD
    */
   public static final String CONFIG_THREADS = "threads";
   /**
+   * Thrift Default FrameBuffer Size
+   */
+  public static final String MAX_READ_BUFFER_BYTES = "maxReadBufferBytes";
+  public static final int DEFAULT_MAX_READ_BUFFER_BYTES = 16384000;
+  /**
    * Config param for the hostname to listen on.
    */
   public static final String CONFIG_BIND = "bind";
@@ -112,6 +117,7 @@ public class ThriftSource extends AbstractSource implements Configurable, EventD
   private Integer port;
   private String bindAddress;
   private int maxThreads = 0;
+  private int maxReadBufferBytes;
   private SourceCounter sourceCounter;
   private TServer server;
   private ExecutorService servingExecutor;
@@ -141,6 +147,17 @@ public class ThriftSource extends AbstractSource implements Configurable, EventD
     } catch (NumberFormatException e) {
       logger.warn("Thrift source\'s \"threads\" property must specify an " +
                   "integer value: " + context.getString(CONFIG_THREADS));
+    }
+
+    try {
+      maxReadBufferBytes = context.getInteger(MAX_READ_BUFFER_BYTES, DEFAULT_MAX_READ_BUFFER_BYTES);
+      maxReadBufferBytes = (maxReadBufferBytes <= 0) ?
+          DEFAULT_MAX_READ_BUFFER_BYTES : maxReadBufferBytes;
+    } catch (NumberFormatException e) {
+      logger.warn("Thrift source\'s \"maxReadBufferBytes\" property must specify an " +
+          "integer value: " + context.getString(MAX_READ_BUFFER_BYTES) +
+          ". setting to default value: " + DEFAULT_MAX_READ_BUFFER_BYTES);
+      maxReadBufferBytes = DEFAULT_MAX_READ_BUFFER_BYTES;
     }
 
     if (sourceCounter == null) {
@@ -306,7 +323,7 @@ public class ThriftSource extends AbstractSource implements Configurable, EventD
     }
     Class<?> serverClass;
     Class<?> argsClass;
-    TServer.AbstractServerArgs args;
+    TNonblockingServer.AbstractNonblockingServerArgs args;
     try {
       serverClass = Class.forName("org.apache.thrift" +
               ".server.TThreadedSelectorServer");
@@ -331,6 +348,7 @@ public class ThriftSource extends AbstractSource implements Configurable, EventD
               ExecutorService.class);
       m.invoke(args, sourceService);
 
+      args.maxReadBufferBytes = maxReadBufferBytes;
       populateServerParams(args);
 
       /*
@@ -365,7 +383,6 @@ public class ThriftSource extends AbstractSource implements Configurable, EventD
   private void populateServerParams(TServer.AbstractServerArgs args) {
     //populate the ProtocolFactory
     args.protocolFactory(getProtocolFactory());
-
     //populate the transportFactory
     if (enableKerberos) {
       args.transportFactory(getSASLTransportFactory());
