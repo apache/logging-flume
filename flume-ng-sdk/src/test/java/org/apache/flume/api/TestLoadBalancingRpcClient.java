@@ -674,6 +674,34 @@ public class TestLoadBalancingRpcClient {
     Assert.assertEquals(1 + (numEvents / 3), hosts.get(2).getAppendCount());
   }
 
+  @Test
+  public void testBatchSize() throws Exception {
+    Server s1 = null;
+    Server s2 = null;
+    RpcClient c = null;
+    try {
+      LoadBalancedAvroHandler h1 = new LoadBalancedAvroHandler();
+      LoadBalancedAvroHandler h2 = new LoadBalancedAvroHandler();
+
+      s1 = RpcTestUtils.startServer(h1);
+      s2 = RpcTestUtils.startServer(h2);
+
+      Properties p = new Properties();
+      p.put("hosts", "h1 h2");
+      p.put("client.type", "default_loadbalance");
+      p.put("hosts.h1", "127.0.0.1:" + s1.getPort());
+      p.put("hosts.h2", "127.0.0.1:" + s2.getPort());
+      p.put("batch-size", "55");
+      
+      c = RpcClientFactory.getInstance(p);
+      Assert.assertEquals(55, c.getBatchSize());
+    } finally {
+      if (s1 != null) s1.close();
+      if (s2 != null) s2.close();
+      if (c != null) c.close();
+    }
+  }
+  
   private List<Event> getBatchedEvent(int index) {
     List<Event> result = new ArrayList<Event>();
     result.add(getEvent(index));

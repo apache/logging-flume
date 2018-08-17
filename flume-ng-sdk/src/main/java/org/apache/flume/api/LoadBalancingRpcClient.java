@@ -185,6 +185,25 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
     }
 
     selector.setHosts(hosts);
+    
+    String strBatchSize = properties.getProperty(
+        RpcClientConfigurationConstants.CONFIG_BATCH_SIZE);
+    LOGGER.debug("Batch size string = " + strBatchSize);
+    batchSize = RpcClientConfigurationConstants.DEFAULT_BATCH_SIZE;
+    if (strBatchSize != null && !strBatchSize.isEmpty()) {
+      try {
+        int parsedBatch = Integer.parseInt(strBatchSize);
+        if (parsedBatch < 1) {
+          LOGGER.warn("Invalid value for batchSize: {}; Using default value.", parsedBatch);
+        } else {
+          batchSize = parsedBatch;
+        }
+      } catch (NumberFormatException e) {
+        LOGGER.warn("Batchsize is not valid for RpcClient: " + strBatchSize +
+            ". Default value assigned.", e);
+      }
+    }
+    
     isOpen = true;
   }
 
