@@ -78,6 +78,9 @@ public class SpoolDirectorySourceConfigurationConstants {
   public static final String DELETE_POLICY = "deletePolicy";
   public static final String DEFAULT_DELETE_POLICY = "never";
 
+  public static final String TRACKING_POLICY = "trackingPolicy";
+  public static final String DEFAULT_TRACKING_POLICY = "rename";
+
   /** Character set used when reading the input. */
   public static final String INPUT_CHARSET = "inputCharset";
   public static final String DEFAULT_INPUT_CHARSET = "UTF-8";
