@@ -115,62 +115,34 @@ class BucketWriter {
   protected boolean closed = false;
   AtomicInteger renameTries = new AtomicInteger(0);
 
-  BucketWriter(long rollInterval, long rollSize, long rollCount, long batchSize,
-      Context context, String filePath, String fileName, String inUsePrefix,
-      String inUseSuffix, String fileSuffix, CompressionCodec codeC,
-      CompressionType compType, HDFSWriter writer,
-      ScheduledExecutorService timedRollerPool, PrivilegedExecutor proxyUser,
-      SinkCounter sinkCounter, int idleTimeout, WriterCallback onCloseCallback,
-      String onCloseCallbackPath, long callTimeout,
-      ExecutorService callTimeoutPool, long retryInterval,
-      int maxCloseTries) {
-    this(rollInterval, rollSize, rollCount, batchSize,
-            context, filePath, fileName, inUsePrefix,
-            inUseSuffix, fileSuffix, codeC,
-            compType, writer,
-            timedRollerPool, proxyUser,
-            sinkCounter, idleTimeout, onCloseCallback,
-            onCloseCallbackPath, callTimeout,
-            callTimeoutPool, retryInterval,
-            maxCloseTries, new SystemClock());
-  }
+  BucketWriter(BucketWriterOptions options) {
+    this.rollInterval = options.rollInterval;
+    this.rollSize = options.rollSize;
+    this.rollCount = options.rollCount;
+    this.batchSize = options.batchSize;
+    this.filePath = options.filePath;
+    this.fileName = options.fileName;
+    this.inUsePrefix = options.inUsePrefix;
+    this.inUseSuffix = options.inUseSuffix;
+    this.fileSuffix = options.fileSuffix;
+    this.codeC = options.compressionCodec;
+    this.compType = options.compressionType;
+    this.writer = options.hdfsWriter;
+    this.timedRollerPool = options.timedRollerPool;
+    this.proxyUser = options.proxyUser;
+    this.sinkCounter = options.sinkCounter;
+    this.idleTimeout = options.idleTimeout;
+    this.onCloseCallback = options.onCloseCallback;
+    this.onCloseCallbackPath = options.onCloseCallbackPath;
+    this.callTimeout = options.callTimeout;
+    this.callTimeoutPool = options.callTimeoutPool;
+    fileExtensionCounter = new AtomicLong(options.clock.currentTimeMillis());
 
-  BucketWriter(long rollInterval, long rollSize, long rollCount, long batchSize,
-           Context context, String filePath, String fileName, String inUsePrefix,
-           String inUseSuffix, String fileSuffix, CompressionCodec codeC,
-           CompressionType compType, HDFSWriter writer,
-           ScheduledExecutorService timedRollerPool, PrivilegedExecutor proxyUser,
-           SinkCounter sinkCounter, int idleTimeout, WriterCallback onCloseCallback,
-           String onCloseCallbackPath, long callTimeout,
-           ExecutorService callTimeoutPool, long retryInterval,
-           int maxCloseTries, Clock clock) {
-    this.rollInterval = rollInterval;
-    this.rollSize = rollSize;
-    this.rollCount = rollCount;
-    this.batchSize = batchSize;
-    this.filePath = filePath;
-    this.fileName = fileName;
-    this.inUsePrefix = inUsePrefix;
-    this.inUseSuffix = inUseSuffix;
-    this.fileSuffix = fileSuffix;
-    this.codeC = codeC;
-    this.compType = compType;
-    this.writer = writer;
-    this.timedRollerPool = timedRollerPool;
-    this.proxyUser = proxyUser;
-    this.sinkCounter = sinkCounter;
-    this.idleTimeout = idleTimeout;
-    this.onCloseCallback = onCloseCallback;
-    this.onCloseCallbackPath = onCloseCallbackPath;
-    this.callTimeout = callTimeout;
-    this.callTimeoutPool = callTimeoutPool;
-    fileExtensionCounter = new AtomicLong(clock.currentTimeMillis());
-
-    this.retryInterval = retryInterval;
-    this.maxRenameTries = maxCloseTries;
+    this.retryInterval = options.retryInterval;
+    this.maxRenameTries = options.maxCloseTries;
     isOpen = false;
     isUnderReplicated = false;
-    this.writer.configure(context);
+    this.writer.configure(options.context);
   }
 
   @VisibleForTesting
