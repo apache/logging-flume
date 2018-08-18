@@ -442,8 +442,8 @@ public class TestReliableSpoolingFileEventReader {
     FileUtils.write(file3, "New file3 created.\n");
     FileUtils.write(file2, "New file2 created.\n");
     FileUtils.write(file1, "New file1 created.\n");
-    file1.setLastModified(file3.lastModified());
-    file1.setLastModified(file2.lastModified());
+    file2.setLastModified(file1.lastModified());
+    file3.setLastModified(file1.lastModified());
     // file ages are same now they need to be ordered
     // lexicographically (file1, file2, file3).
     List<String> actual = Lists.newLinkedList();
@@ -471,8 +471,8 @@ public class TestReliableSpoolingFileEventReader {
     FileUtils.write(file1, "New file1 created.\n");
     FileUtils.write(file2, "New file2 created.\n");
     FileUtils.write(file3, "New file3 created.\n");
-    file1.setLastModified(file3.lastModified());
-    file1.setLastModified(file2.lastModified());
+    file2.setLastModified(file1.lastModified());
+    file3.setLastModified(file1.lastModified());
     // file ages are same now they need to be ordered
     // lexicographically (file1, file2, file3).
     List<String> actual = Lists.newLinkedList();
