@@ -40,7 +40,6 @@ public abstract class AbstractHDFSWriter implements HDFSWriter {
   private static final Logger logger =
       LoggerFactory.getLogger(AbstractHDFSWriter.class);
 
-  private static final String quotaExceed = "DSQuotaExceededException";
   private FSDataOutputStream outputStream;
   private FileSystem fs;
   private Path destPath;
@@ -268,9 +267,6 @@ public abstract class AbstractHDFSWriter implements HDFSWriter {
       String msg = "Error while trying to hflushOrSync!";
       logger.error(msg);
       Throwable cause = e.getCause();
-      if (cause.toString().contains(quotaExceed) && fs.exists(destPath)) {
-        fs.delete(destPath, false);
-      }
       if (cause != null && cause instanceof IOException) {
         throw (IOException)cause;
       }
