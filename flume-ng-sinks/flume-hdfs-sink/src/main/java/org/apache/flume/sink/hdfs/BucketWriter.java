@@ -538,6 +538,9 @@ class BucketWriter {
         throw new BucketClosedException("This bucket writer was closed and " +
           "this handle is thus no longer valid");
       }
+      if (checkQuota(event)) {
+        throw new IOException("This bucket has reached the expected quota"); 
+      }
       open();
     }
 
@@ -574,6 +577,9 @@ class BucketWriter {
       callWithTimeout(new CallRunner<Void>() {
         @Override
         public Void call() throws Exception {
+          if (checkQuota(event)) {
+            throw new IOException("This bucket has reached the expected quota"); 
+          }
           writer.append(event); // could block
           return null;
         }
@@ -683,6 +689,30 @@ class BucketWriter {
               + "Your hdfs.callTimeout might be set too low or HDFS calls are "
               + "taking too long.");
     }
+  }
+  
+  private boolean checkQuota(Event event) {
+    if (filePath != null) {
+      final Path quotaPath = new Path(filePath);
+      final Configuration config = new Configuration();
+      config.setBoolean("fs.automatic.close", false); 
+
+      ContentSummary cSumm;
+      try {
+        cSumm = fsCheckQuota(quotaPath.getFileSystem(config),quotaPath);
+        long quota = cSumm.getSpaceQuota();
+        long spaceConsumed = cSumm.getSpaceConsumed();
+        long block = quotaPath.getFileSystem(config).getDefaultBlockSize(quotaPath);
+        long quotaCondition = block + spaceConsumed + event.getBody().length;
+          
+        if (quota != -1 && (quotaCondition >= quota)) {
+          return Boolean.TRUE;
+        }
+      } catch (IOException e) {
+        LOG.error("Error on getting quota from " + filePath,e);
+      }
+    }
+    return Boolean.FALSE;
   }
 
   /**
