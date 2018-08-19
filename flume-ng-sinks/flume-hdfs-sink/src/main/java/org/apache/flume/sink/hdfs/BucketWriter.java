@@ -692,6 +692,15 @@ class BucketWriter {
     }
   }
   
+  private ContentSummary fsCheckQuota(FileSystem fs, Path path) {
+    try {            
+      return fs.getContentSummary(path);
+    } catch (IOException e) {
+      LOG.error("Unexpected error while checking quota", e);
+    }
+    return null;
+  }
+  
   private boolean checkQuota(Event event) {
     if (filePath != null) {
       final Path quotaPath = new Path(filePath);
