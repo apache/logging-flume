@@ -696,7 +696,6 @@ class BucketWriter {
       final Path quotaPath = new Path(filePath);
       final Configuration config = new Configuration();
       config.setBoolean("fs.automatic.close", false); 
-
       ContentSummary cSumm;
       try {
         cSumm = fsCheckQuota(quotaPath.getFileSystem(config),quotaPath);
@@ -704,7 +703,6 @@ class BucketWriter {
         long spaceConsumed = cSumm.getSpaceConsumed();
         long block = quotaPath.getFileSystem(config).getDefaultBlockSize(quotaPath);
         long quotaCondition = block + spaceConsumed + event.getBody().length;
-          
         if (quota != -1 && (quotaCondition >= quota)) {
           return Boolean.TRUE;
         }
