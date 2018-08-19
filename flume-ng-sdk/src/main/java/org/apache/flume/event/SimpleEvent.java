@@ -64,4 +64,17 @@ public class SimpleEvent implements Event {
     return "[Event headers = " + headers + ", body.length = " + bodyLen + " ]";
   }
 
+  /**
+   * Notify the source side to update event transfer information if necessary.
+   * For now, it's designed for updating position info in TaildirSource.
+   */
+  public void notifySource() {}
+
+  /**
+   * Notify the source side to commit if necessary.
+   * For now, it's designed for writing position info to file in TaildirSource
+   * when events are consumed properly from the sink side. In this way, we can
+   * ensure TaildirSource maintains reliability using MemoryChannel.
+   */
+  public void commit() {}
 }

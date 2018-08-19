@@ -27,6 +27,7 @@ import org.apache.flume.Event;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.annotations.Recyclable;
+import org.apache.flume.event.SimpleEvent;
 import org.apache.flume.instrumentation.ChannelCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -132,6 +133,12 @@ public class MemoryChannel extends BasicChannelSemantics {
       int puts = putList.size();
       int takes = takeList.size();
       synchronized (queueLock) {
+        if (takes > 0 && takeList.getFirst() instanceof SimpleEvent) {
+          for (Event event : takeList) {
+            ((SimpleEvent) event).notifySource();
+          }
+          ((SimpleEvent) takeList.getLast()).commit();
+        }
         if (puts > 0) {
           while (!putList.isEmpty()) {
             if (!queue.offer(putList.removeFirst())) {

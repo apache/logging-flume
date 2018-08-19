@@ -314,6 +314,32 @@ public class TestTaildirSource {
 
     assertNotNull(e.getHeaders().get("path"));
     assertEquals(f1.getAbsolutePath(),
-            e.getHeaders().get("path"));
+        e.getHeaders().get("path"));
+  }
+
+  @Test
+  public void testNotifyEvent() throws IOException {
+    File f1 = new File(tmpDir, "file1");
+    Files.write("f1\n", f1, Charsets.UTF_8);
+    Files.write("f2\n", f1, Charsets.UTF_8);
+
+    Context context = new Context();
+    context.put(POSITION_FILE, posFilePath);
+    context.put(FILE_GROUPS, "fg");
+    context.put(FILE_GROUPS_PREFIX + "fg", tmpDir.getAbsolutePath() + "/file.*");
+
+    Configurables.configure(source, context);
+    source.start();
+    source.process();
+    Transaction txn = channel.getTransaction();
+    txn.begin();
+    Event e = channel.take();
+    txn.commit();
+    txn.close();
+
+    assertEquals(e.getHeaders().get("pos"), "3");
+    assertEquals(source.getInodePositionMap().get(e.getHeaders().get("inode")), "3");
+    assertEquals(source.getInodePathMap().get(e.getHeaders().get("inode")),
+        e.getHeaders().get("path"));
   }
 }
