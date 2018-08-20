@@ -568,6 +568,9 @@ class BucketWriter {
 
       if (doRotate) {
         close();
+        if (checkQuota(event)) {
+          throw new IOException("This bucket has reached the expected quota"); 
+        }
         open();
       }
     }
