@@ -77,6 +77,7 @@ public class SpoolDirectorySource extends AbstractSource
   private ConsumeOrder consumeOrder;
   private int pollDelay;
   private boolean recursiveDirectorySearch;
+  private String trackingPolicy;
 
   @Override
   public synchronized void start() {
@@ -104,6 +105,7 @@ public class SpoolDirectorySource extends AbstractSource
           .decodeErrorPolicy(decodeErrorPolicy)
           .consumeOrder(consumeOrder)
           .recursiveDirectorySearch(recursiveDirectorySearch)
+          .trackingPolicy(trackingPolicy)
           .sourceCounter(sourceCounter)
           .build();
     } catch (IOException ioe) {
@@ -194,6 +196,7 @@ public class SpoolDirectorySource extends AbstractSource
     if (sourceCounter == null) {
       sourceCounter = new SourceCounter(getName());
     }
+    trackingPolicy = context.getString(TRACKING_POLICY, DEFAULT_TRACKING_POLICY);
   }
 
   @VisibleForTesting

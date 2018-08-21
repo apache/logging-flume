@@ -50,13 +50,16 @@ import java.nio.charset.Charset;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -90,17 +93,20 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
 
   static final String metaFileName = ".flumespool-main.meta";
   private final File spoolDirectory;
+  private final Path spoolDirPath;
   private final String completedSuffix;
   private final String deserializerType;
   private final Context deserializerContext;
   private final Pattern includePattern;
   private final Pattern ignorePattern;
   private final File metaFile;
+  private File trackerDirectory;
   private final boolean annotateFileName;
   private final boolean annotateBaseName;
   private final String fileNameHeader;
   private final String baseNameHeader;
   private final String deletePolicy;
+  private final TrackingPolicy trackingPolicy;
   private final Charset inputCharset;
   private final DecodeErrorPolicy decodeErrorPolicy;
   private final ConsumeOrder consumeOrder;
@@ -117,6 +123,8 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
   private Iterator<File> candidateFileIter = null;
   private int listFilesCount = 0;
 
+  private String trackerDirectoryAbsolutePath;
+
   /**
    * Create a ReliableSpoolingFileEventReader to watch the given directory.
    */
@@ -125,7 +133,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       boolean annotateFileName, String fileNameHeader,
       boolean annotateBaseName, String baseNameHeader,
       String deserializerType, Context deserializerContext,
-      String deletePolicy, String inputCharset,
+      String deletePolicy, String trackingPolicy, String inputCharset,
       DecodeErrorPolicy decodeErrorPolicy,
       ConsumeOrder consumeOrder, boolean recursiveDirectorySearch,
                                           SourceCounter sourceCounter) throws IOException {
@@ -139,6 +147,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     Preconditions.checkNotNull(deserializerType);
     Preconditions.checkNotNull(deserializerContext);
     Preconditions.checkNotNull(deletePolicy);
+    Preconditions.checkNotNull(trackingPolicy);
     Preconditions.checkNotNull(inputCharset);
     Preconditions.checkNotNull(sourceCounter);
 
@@ -147,6 +156,13 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
         !deletePolicy.equalsIgnoreCase(DeletePolicy.IMMEDIATE.name())) {
       throw new IllegalArgumentException("Delete policies other than " +
           "NEVER and IMMEDIATE are not yet supported");
+    }
+
+    // validate tracking policy
+    if (!trackingPolicy.equalsIgnoreCase(TrackingPolicy.RENAME.name()) &&
+            !trackingPolicy.equalsIgnoreCase(TrackingPolicy.TRACKER_DIR.name())) {
+      throw new IllegalArgumentException("Tracking policies other than " +
+              "RENAME and TRACKER_DIR are not supported");
     }
 
     if (logger.isDebugEnabled()) {
@@ -191,13 +207,14 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     this.includePattern = Pattern.compile(includePattern);
     this.ignorePattern = Pattern.compile(ignorePattern);
     this.deletePolicy = deletePolicy;
+    this.trackingPolicy = TrackingPolicy.valueOf(trackingPolicy.toUpperCase());
     this.inputCharset = Charset.forName(inputCharset);
     this.decodeErrorPolicy = Preconditions.checkNotNull(decodeErrorPolicy);
     this.consumeOrder = Preconditions.checkNotNull(consumeOrder);
     this.recursiveDirectorySearch = recursiveDirectorySearch;
     this.sourceCounter = sourceCounter;
 
-    File trackerDirectory = new File(trackerDirPath);
+    trackerDirectory = new File(trackerDirPath);
 
     // if relative path, treat as relative to spool directory
     if (!trackerDirectory.isAbsolute()) {
@@ -223,6 +240,10 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     if (metaFile.exists() && metaFile.length() == 0) {
       deleteMetaFile();
     }
+
+    spoolDirPath = Paths.get(spoolDirectory.getAbsolutePath());
+    trackerDirectoryAbsolutePath = trackerDirectory.getAbsolutePath();
+
   }
 
   /**
@@ -235,6 +256,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     Preconditions.checkNotNull(directory);
     final List<File> candidateFiles = new ArrayList<>();
     try {
+      final Set<Path> trackerDirCompletedFiles = getTrackerDirCompletedFiles();
       Files.walkFileTree(directory, new SimpleFileVisitor<Path>() {
         @Override
         public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
@@ -256,6 +278,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
             throws IOException {
           String fileName = candidate.getFileName().toString();
           if (!fileName.endsWith(completedSuffix) &&
+              !isFileInTrackerDir(trackerDirCompletedFiles, candidate) &&
               !fileName.startsWith(".") &&
               includePattern.matcher(fileName).matches() &&
               !ignorePattern.matcher(fileName).matches()) {
@@ -272,6 +295,38 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     }
 
     return candidateFiles;
+  }
+
+  private Set<Path> getTrackerDirCompletedFiles() throws IOException {
+    final Set<Path> completedFiles = new HashSet<>();
+    if (TrackingPolicy.TRACKER_DIR != trackingPolicy) {
+      return completedFiles;
+    }
+
+    Path trackerDirPath = trackerDirectory.toPath();
+    Files.walkFileTree(trackerDirPath, new SimpleFileVisitor<Path>() {
+
+      @Override
+      public FileVisitResult visitFile(Path candidate, BasicFileAttributes attrs)
+              throws IOException {
+        String fileName = candidate.getFileName().toString();
+        if (fileName.endsWith(completedSuffix)) {
+          completedFiles.add(candidate.toAbsolutePath());
+        }
+        return FileVisitResult.CONTINUE;
+      }
+    });
+    return completedFiles;
+  }
+
+  private boolean isFileInTrackerDir(Set<Path> completedFiles, Path path) {
+    Path relPath = getRelPathToSpoolDir(path);
+    Path trackerPath = Paths.get(trackerDirectoryAbsolutePath, relPath.toString() + completedSuffix);
+    return completedFiles.contains(trackerPath);
+  }
+
+  private Path getRelPathToSpoolDir(Path path) {
+    return spoolDirPath.relativize(path.toAbsolutePath());
   }
 
   @VisibleForTesting
@@ -419,7 +474,11 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     }
 
     if (deletePolicy.equalsIgnoreCase(DeletePolicy.NEVER.name())) {
-      rollCurrentFile(fileToRoll);
+      if (trackingPolicy == TrackingPolicy.RENAME) {
+        rollCurrentFile(fileToRoll);
+      } else {
+        rollCurrentFileInTrackerDir(fileToRoll);
+      }
     } else if (deletePolicy.equalsIgnoreCase(DeletePolicy.IMMEDIATE.name())) {
       deleteCurrentFile(fileToRoll);
     } else {
@@ -491,6 +550,24 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
         sourceCounter.incrementGenericProcessingFail();
         throw new FlumeException(message);
       }
+    }
+  }
+
+  private void rollCurrentFileInTrackerDir(File fileToRoll) throws IOException {
+    Path path = fileToRoll.toPath();
+    Path relToRoll = getRelPathToSpoolDir(path);
+
+    File dest = new File(trackerDirectory.getPath(), relToRoll + completedSuffix);
+    logger.info("Preparing to create tracker file for {} at {}", fileToRoll, dest);
+    if (dest.exists()) {
+      String message = "File name has been re-used with different" +
+              " files. Spooling assumptions violated for " + dest;
+      throw new IllegalStateException(message);
+    }
+    //Create an empty file as an indicator
+    dest.getParentFile().mkdirs(); //create the parent dirs first
+    if (!dest.createNewFile()) {
+      throw new IOException("Could not create tracker file: " + dest);
     }
   }
 
@@ -663,11 +740,19 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
 
   @InterfaceAudience.Private
   @InterfaceStability.Unstable
-  static enum DeletePolicy {
+  enum DeletePolicy {
     NEVER,
     IMMEDIATE,
     DELAY
   }
+
+  @InterfaceAudience.Private
+  @InterfaceStability.Unstable
+  public enum TrackingPolicy {
+    RENAME,
+    TRACKER_DIR
+  }
+
 
   /**
    * Special builder class for ReliableSpoolingFileEventReader
@@ -695,6 +780,8 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     private Context deserializerContext = new Context();
     private String deletePolicy =
         SpoolDirectorySourceConfigurationConstants.DEFAULT_DELETE_POLICY;
+    private String trackingPolicy =
+            SpoolDirectorySourceConfigurationConstants.DEFAULT_TRACKING_POLICY;
     private String inputCharset =
         SpoolDirectorySourceConfigurationConstants.DEFAULT_INPUT_CHARSET;
     private DecodeErrorPolicy decodeErrorPolicy = DecodeErrorPolicy.valueOf(
@@ -766,6 +853,11 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       return this;
     }
 
+    public Builder trackingPolicy(String trackingPolicy) {
+      this.trackingPolicy = trackingPolicy;
+      return this;
+    }
+
     public Builder inputCharset(String inputCharset) {
       this.inputCharset = inputCharset;
       return this;
@@ -795,7 +887,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       return new ReliableSpoolingFileEventReader(spoolDirectory, completedSuffix,
           includePattern, ignorePattern, trackerDirPath, annotateFileName, fileNameHeader,
           annotateBaseName, baseNameHeader, deserializerType,
-          deserializerContext, deletePolicy, inputCharset, decodeErrorPolicy,
+          deserializerContext, deletePolicy, trackingPolicy, inputCharset, decodeErrorPolicy,
           consumeOrder, recursiveDirectorySearch, sourceCounter);
     }
   }
