@@ -696,8 +696,10 @@ class BucketWriter {
   }
   
   private ContentSummary fsCheckQuota(FileSystem fs, Path path) {
-    try {            
-      return fs.getContentSummary(path);
+    try {
+      if (fs instanceof DistributedFileSystem) {
+        return fs.getContentSummary(path);
+      }  
     } catch (IOException e) {
       LOG.error("Unexpected error while checking quota", e);
     }
@@ -712,13 +714,16 @@ class BucketWriter {
       ContentSummary cSumm;
       try {
         cSumm = fsCheckQuota(quotaPath.getFileSystem(config),quotaPath);
-        long quota = cSumm.getSpaceQuota();
-        long spaceConsumed = cSumm.getSpaceConsumed();
-        long block = quotaPath.getFileSystem(config).getDefaultBlockSize(quotaPath);
-        long quotaCondition = block + spaceConsumed + event.getBody().length;
-        if (quota != -1 && (quotaCondition >= quota)) {
-          return Boolean.TRUE;
-        }
+        if (cSumm != null) {
+          long quota = cSumm.getSpaceQuota();
+          long spaceConsumed = cSumm.getSpaceConsumed();
+          long block = quotaPath.getFileSystem(config).getDefaultBlockSize(quotaPath);
+          long quotaCondition = block + spaceConsumed + event.getBody().length;
+        
+          if (quota != -1 && (quotaCondition >= quota)) {
+            return Boolean.TRUE;
+          }
+        }  
       } catch (IOException e) {
         LOG.error("Error on getting quota from " + filePath,e);
       }
