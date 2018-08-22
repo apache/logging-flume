@@ -38,6 +38,7 @@ import org.apache.flume.Transaction;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
+import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.shared.kafka.test.KafkaPartitionTestUtil;
 import org.apache.flume.shared.kafka.test.PartitionOption;
 import org.apache.flume.shared.kafka.test.PartitionTestScenario;
@@ -49,6 +50,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.internal.util.reflection.Whitebox;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -458,9 +460,17 @@ public class TestKafkaSink {
     doPartitionErrors(PartitionOption.NOTSET);
   }
 
-  @Test(expected = org.apache.flume.EventDeliveryException.class)
+  @Test
   public void testPartitionHeaderOutOfRange() throws Exception {
-    doPartitionErrors(PartitionOption.VALIDBUTOUTOFRANGE);
+    Sink kafkaSink = new KafkaSink();
+    try {
+      doPartitionErrors(PartitionOption.VALIDBUTOUTOFRANGE, kafkaSink);
+      fail();
+    } catch (EventDeliveryException e) {
+      //
+    }
+    SinkCounter sinkCounter = (SinkCounter) Whitebox.getInternalState(kafkaSink, "counter");
+    assertEquals(1, sinkCounter.getEventWriteFail());
   }
 
   @Test(expected = org.apache.flume.EventDeliveryException.class)
@@ -511,7 +521,10 @@ public class TestKafkaSink {
    * @throws Exception
    */
   private void doPartitionErrors(PartitionOption option) throws Exception {
-    Sink kafkaSink = new KafkaSink();
+    doPartitionErrors(option, new KafkaSink());
+  }
+
+  private void doPartitionErrors(PartitionOption option, Sink kafkaSink) throws Exception {
     Context context = prepareDefaultContext();
     context.put(KafkaSinkConstants.PARTITION_HEADER_NAME, "partition-header");
 

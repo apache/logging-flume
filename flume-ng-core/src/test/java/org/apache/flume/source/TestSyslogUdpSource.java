@@ -20,6 +20,7 @@ package org.apache.flume.source;
 
 import com.google.common.base.Charsets;
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelException;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -31,6 +32,7 @@ import org.apache.flume.conf.Configurables;
 import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -42,6 +44,9 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doThrow;
 
 public class TestSyslogUdpSource {
   private static final org.slf4j.Logger logger =
@@ -185,15 +190,7 @@ public class TestSyslogUdpSource {
   public void testSourceCounter() throws Exception {
     init("true");
 
-    source.start();
-    DatagramPacket datagramPacket = createDatagramPacket("test".getBytes());
-    sendDatagramPacket(datagramPacket);
-
-    Transaction txn = channel.getTransaction();
-    txn.begin();
-
-    channel.take();
-    commitAndCloseTransaction(txn);
+    doCounterCommon();
 
     // Retrying up to 10 times while the acceptedCount == 0 because the event processing in
     // SyslogUDPSource is handled on a separate thread by Netty so message delivery,
@@ -201,9 +198,45 @@ public class TestSyslogUdpSource {
     for (int i = 0; i < 10 && source.getSourceCounter().getEventAcceptedCount() == 0; i++) {
       Thread.sleep(100);
     }
-
     Assert.assertEquals(1, source.getSourceCounter().getEventAcceptedCount());
     Assert.assertEquals(1, source.getSourceCounter().getEventReceivedCount());
+  }
+
+  private void doCounterCommon() throws IOException, InterruptedException {
+    source.start();
+    DatagramPacket datagramPacket = createDatagramPacket("test".getBytes());
+    sendDatagramPacket(datagramPacket);
+  }
+
+  @Test
+  public void testSourceCounterChannelFail() throws Exception {
+    init("true");
+
+    ChannelProcessor cp = Mockito.mock(ChannelProcessor.class);
+    doThrow(new ChannelException("dummy")).when(cp).processEvent(any(Event.class));
+    source.setChannelProcessor(cp);
+
+    doCounterCommon();
+
+    for (int i = 0; i < 10 && source.getSourceCounter().getChannelWriteFail() == 0; i++) {
+      Thread.sleep(100);
+    }
+    Assert.assertEquals(1, source.getSourceCounter().getChannelWriteFail());
+  }
+
+  @Test
+  public void testSourceCounterReadFail() throws Exception {
+    init("true");
+
+    ChannelProcessor cp = Mockito.mock(ChannelProcessor.class);
+    doThrow(new RuntimeException("dummy")).when(cp).processEvent(any(Event.class));
+    source.setChannelProcessor(cp);
+
+    doCounterCommon();
+    for (int i = 0; i < 10 && source.getSourceCounter().getEventReadFail() == 0; i++) {
+      Thread.sleep(100);
+    }
+    Assert.assertEquals(1, source.getSourceCounter().getEventReadFail());
   }
 
   private DatagramPacket createDatagramPacket(byte[] payload) {

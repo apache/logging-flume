@@ -176,6 +176,7 @@ public class ScribeSource extends AbstractSource implements
           return ResultCode.OK;
         } catch (Exception e) {
           LOG.warn("Scribe source handling failure", e);
+          sourceCounter.incrementEventReadOrChannelFail(e);
         }
       }
 

@@ -29,6 +29,7 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.event.EventBuilder;
+import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.serialization.DecodeErrorPolicy;
 import org.apache.flume.serialization.DurablePositionTracker;
 import org.apache.flume.serialization.EventDeserializer;
@@ -110,6 +111,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
   private final DecodeErrorPolicy decodeErrorPolicy;
   private final ConsumeOrder consumeOrder;
   private final boolean recursiveDirectorySearch;
+  private final SourceCounter sourceCounter;
 
   private Optional<FileInfo> currentFile = Optional.absent();
   /** Always contains the last file from which lines have been read. */
@@ -133,8 +135,8 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       String deserializerType, Context deserializerContext,
       String deletePolicy, String trackingPolicy, String inputCharset,
       DecodeErrorPolicy decodeErrorPolicy,
-      ConsumeOrder consumeOrder,
-      boolean recursiveDirectorySearch) throws IOException {
+      ConsumeOrder consumeOrder, boolean recursiveDirectorySearch,
+                                          SourceCounter sourceCounter) throws IOException {
 
     // Sanity checks
     Preconditions.checkNotNull(spoolDirectory);
@@ -147,6 +149,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     Preconditions.checkNotNull(deletePolicy);
     Preconditions.checkNotNull(trackingPolicy);
     Preconditions.checkNotNull(inputCharset);
+    Preconditions.checkNotNull(sourceCounter);
 
     // validate delete policy
     if (!deletePolicy.equalsIgnoreCase(DeletePolicy.NEVER.name()) &&
@@ -209,6 +212,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     this.decodeErrorPolicy = Preconditions.checkNotNull(decodeErrorPolicy);
     this.consumeOrder = Preconditions.checkNotNull(consumeOrder);
     this.recursiveDirectorySearch = recursiveDirectorySearch;
+    this.sourceCounter = sourceCounter;
 
     trackerDirectory = new File(trackerDirPath);
 
@@ -287,6 +291,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     } catch (IOException e) {
       logger.error("I/O exception occurred while listing directories. " +
                    "Files already matched will be returned. " + directory, e);
+      sourceCounter.incrementGenericProcessingFail();
     }
 
     return candidateFiles;
@@ -508,6 +513,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
         if (!deleted) {
           logger.error("Unable to delete file " + fileToRoll.getAbsolutePath() +
               ". It will likely be ingested another time.");
+          sourceCounter.incrementGenericProcessingFail();
         }
       } else {
         String message = "File name has been re-used with different" +
@@ -681,6 +687,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       return Optional.absent();
     } catch (IOException e) {
       logger.error("Exception opening file: " + file, e);
+      sourceCounter.incrementGenericProcessingFail();
       return Optional.absent();
     }
   }
@@ -777,6 +784,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
         SpoolDirectorySourceConfigurationConstants.DEFAULT_CONSUME_ORDER;
     private boolean recursiveDirectorySearch =
         SpoolDirectorySourceConfigurationConstants.DEFAULT_RECURSIVE_DIRECTORY_SEARCH;
+    private SourceCounter sourceCounter;
 
     public Builder spoolDirectory(File directory) {
       this.spoolDirectory = directory;
@@ -863,12 +871,21 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       return this;
     }
 
+    public Builder sourceCounter(SourceCounter sourceCounter) {
+      this.sourceCounter = sourceCounter;
+      return this;
+    }
+
     public ReliableSpoolingFileEventReader build() throws IOException {
+      if (sourceCounter == null) {
+        sourceCounter = new SourceCounter("noop");
+      }
+
       return new ReliableSpoolingFileEventReader(spoolDirectory, completedSuffix,
           includePattern, ignorePattern, trackerDirPath, annotateFileName, fileNameHeader,
           annotateBaseName, baseNameHeader, deserializerType,
           deserializerContext, deletePolicy, trackingPolicy, inputCharset, decodeErrorPolicy,
-          consumeOrder, recursiveDirectorySearch);
+          consumeOrder, recursiveDirectorySearch, sourceCounter);
     }
   }
 

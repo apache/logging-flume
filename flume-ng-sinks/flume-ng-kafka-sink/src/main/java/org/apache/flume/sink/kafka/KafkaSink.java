@@ -250,6 +250,7 @@ public class KafkaSink extends AbstractSink implements Configurable {
     } catch (Exception ex) {
       String errorMsg = "Failed to publish events";
       logger.error("Failed to publish events", ex);
+      counter.incrementEventWriteOrChannelFail(ex);
       result = Status.BACKOFF;
       if (transaction != null) {
         try {

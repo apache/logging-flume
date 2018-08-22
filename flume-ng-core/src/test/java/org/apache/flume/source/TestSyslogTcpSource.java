@@ -20,6 +20,7 @@ package org.apache.flume.source;
 
 import com.google.common.base.Charsets;
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelException;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -31,6 +32,7 @@ import org.apache.flume.conf.Configurables;
 import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -39,6 +41,9 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doThrow;
 
 public class TestSyslogTcpSource {
   private static final org.slf4j.Logger logger =
@@ -159,5 +164,43 @@ public class TestSyslogTcpSource {
     Assert.assertEquals(10, source.getSourceCounter().getEventAcceptedCount());
     Assert.assertEquals(10, source.getSourceCounter().getEventReceivedCount());
   }
+
+  @Test
+  public void testSourceCounterChannelFail() throws Exception {
+    init("true");
+
+    errorCounterCommon(new ChannelException("dummy"));
+
+    for (int i = 0; i < 10 && source.getSourceCounter().getChannelWriteFail() == 0; i++) {
+      Thread.sleep(100);
+    }
+    Assert.assertEquals(1, source.getSourceCounter().getChannelWriteFail());
+  }
+
+  @Test
+  public void testSourceCounterEventFail() throws Exception {
+    init("true");
+
+    errorCounterCommon(new RuntimeException("dummy"));
+
+    for (int i = 0; i < 10 && source.getSourceCounter().getEventReadFail() == 0; i++) {
+      Thread.sleep(100);
+    }
+    Assert.assertEquals(1, source.getSourceCounter().getEventReadFail());
+  }
+
+  private void errorCounterCommon(Exception e) throws IOException {
+    ChannelProcessor cp = Mockito.mock(ChannelProcessor.class);
+    doThrow(e).when(cp).processEvent(any(Event.class));
+    source.setChannelProcessor(cp);
+
+    source.start();
+    // Write some message to the syslog port
+    InetSocketAddress addr = source.getBoundAddress();
+    try (Socket syslogSocket = new Socket(addr.getAddress(), addr.getPort())) {
+      syslogSocket.getOutputStream().write(bodyWithTandH.getBytes());
+    }
+  }
+
 }
 

@@ -28,6 +28,7 @@ import java.nio.ByteBuffer;
 import java.security.cert.X509Certificate;
 import java.nio.channels.ServerSocketChannel;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -41,6 +42,7 @@ import javax.net.ssl.X509TrustManager;
 import org.apache.avro.ipc.NettyTransceiver;
 import org.apache.avro.ipc.specific.SpecificRequestor;
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelException;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -50,6 +52,7 @@ import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
+import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.source.avro.AvroFlumeEvent;
@@ -64,8 +67,14 @@ import org.jboss.netty.handler.ssl.SslHandler;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.mockito.internal.util.reflection.Whitebox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyListOf;
+import static org.mockito.Mockito.doThrow;
 
 public class TestAvroSource {
 
@@ -578,4 +587,26 @@ public class TestAvroSource {
     Assert.assertEquals("Server is stopped", LifecycleState.STOP,
         source.getLifecycleState());
   }
+
+  @Test
+  public void testErrorCounterChannelWriteFail() throws Exception {
+    Context context = new Context();
+    context.put("port", String.valueOf(selectedPort = getFreePort()));
+    context.put("bind", "0.0.0.0");
+    source.configure(context);
+    ChannelProcessor cp = Mockito.mock(ChannelProcessor.class);
+    doThrow(new ChannelException("dummy")).when(cp).processEvent(any(Event.class));
+    doThrow(new ChannelException("dummy")).when(cp).processEventBatch(anyListOf(Event.class));
+    source.setChannelProcessor(cp);
+    source.start();
+    AvroFlumeEvent avroEvent = new AvroFlumeEvent();
+    avroEvent.setHeaders(new HashMap<CharSequence, CharSequence>());
+    avroEvent.setBody(ByteBuffer.wrap("Hello avro ssl".getBytes()));
+    source.append(avroEvent);
+    source.appendBatch(Arrays.asList(avroEvent));
+    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(source, "sourceCounter");
+    Assert.assertEquals(2, sc.getChannelWriteFail());
+    source.stop();
+  }
+
 }

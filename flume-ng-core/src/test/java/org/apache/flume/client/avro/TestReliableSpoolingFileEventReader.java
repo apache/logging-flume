@@ -42,6 +42,7 @@ import org.apache.commons.lang.SystemUtils;
 import org.apache.commons.lang.mutable.MutableLong;
 import org.apache.flume.Event;
 import org.apache.flume.client.avro.ReliableSpoolingFileEventReader.DeletePolicy;
+import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.client.avro.ReliableSpoolingFileEventReader.TrackingPolicy;
 import org.apache.flume.source.SpoolDirectorySourceConfigurationConstants;
 import org.apache.flume.source.SpoolDirectorySourceConfigurationConstants.ConsumeOrder;
@@ -145,6 +146,7 @@ public class TestReliableSpoolingFileEventReader {
         .spoolDirectory(WORK_DIR)
         .includePattern("^file2$")
         .deletePolicy(DeletePolicy.IMMEDIATE.toString())
+        .sourceCounter(new SourceCounter("test"))
         .build();
 
     String[] beforeFiles = { "file0", "file1", "file2", "file3", "emptylineFile" };
@@ -166,6 +168,7 @@ public class TestReliableSpoolingFileEventReader {
             .spoolDirectory(WORK_DIR)
             .ignorePattern("^file2$")
             .deletePolicy(DeletePolicy.IMMEDIATE.toString())
+            .sourceCounter(new SourceCounter("test"))
             .build();
 
     String[] beforeFiles = { "file0", "file1", "file2", "file3", "emptylineFile" };
@@ -195,6 +198,7 @@ public class TestReliableSpoolingFileEventReader {
         .ignorePattern("^file[013]$")
         .includePattern("^file2$")
         .deletePolicy(DeletePolicy.IMMEDIATE.toString())
+        .sourceCounter(new SourceCounter("test"))
         .build();
 
     String[] beforeFiles = { "file0", "file1", "file2", "file3", "emptylineFile" };
@@ -222,6 +226,7 @@ public class TestReliableSpoolingFileEventReader {
         .ignorePattern("^file2$")
         .includePattern("^file2$")
         .deletePolicy(DeletePolicy.IMMEDIATE.toString())
+        .sourceCounter(new SourceCounter("test"))
         .build();
 
     String[] beforeFiles = { "file0", "file1", "file2", "file3", "emptylineFile" };
@@ -239,6 +244,7 @@ public class TestReliableSpoolingFileEventReader {
   public void testRepeatedCallsWithCommitAlways() throws IOException {
     ReliableEventReader reader =
         new ReliableSpoolingFileEventReader.Builder().spoolDirectory(WORK_DIR)
+                                                     .sourceCounter(new SourceCounter("test"))
                                                      .build();
 
     final int expectedLines = 1 + 1 + 2 + 3 + 1;
@@ -261,6 +267,7 @@ public class TestReliableSpoolingFileEventReader {
     ReliableEventReader reader =
         new ReliableSpoolingFileEventReader.Builder().spoolDirectory(WORK_DIR)
                                                      .trackerDirPath(trackerDirPath)
+                                                     .sourceCounter(new SourceCounter("test"))
                                                      .build();
 
     final int expectedLines = 1 + 1 + 2 + 3 + 1;
@@ -288,6 +295,7 @@ public class TestReliableSpoolingFileEventReader {
     ReliableEventReader reader =
         new ReliableSpoolingFileEventReader.Builder().spoolDirectory(WORK_DIR)
                                                      .deletePolicy(DeletePolicy.IMMEDIATE.name())
+                                                     .sourceCounter(new SourceCounter("test"))
                                                      .build();
 
     List<File> before = listFiles(WORK_DIR);
@@ -311,6 +319,7 @@ public class TestReliableSpoolingFileEventReader {
   public void testNullConsumeOrder() throws IOException {
     new ReliableSpoolingFileEventReader.Builder().spoolDirectory(WORK_DIR)
                                                  .consumeOrder(null)
+                                                 .sourceCounter(new SourceCounter("test"))
                                                  .build();
   }
 
@@ -319,6 +328,7 @@ public class TestReliableSpoolingFileEventReader {
     ReliableEventReader reader =
         new ReliableSpoolingFileEventReader.Builder().spoolDirectory(WORK_DIR)
                                                      .consumeOrder(ConsumeOrder.RANDOM)
+                                                     .sourceCounter(new SourceCounter("test"))
                                                      .build();
     File fileName = new File(WORK_DIR, "new-file");
     FileUtils.write(fileName, "New file created in the end. Shoud be read randomly.\n");
@@ -340,6 +350,7 @@ public class TestReliableSpoolingFileEventReader {
     final ReliableEventReader reader =
         new ReliableSpoolingFileEventReader.Builder().spoolDirectory(WORK_DIR)
                                                      .consumeOrder(ConsumeOrder.RANDOM)
+                                                     .sourceCounter(new SourceCounter("test"))
                                                      .build();
     File fileName = new File(WORK_DIR, "new-file");
     FileUtils.write(fileName, "New file created in the end. Shoud be read randomly.\n");
@@ -376,6 +387,7 @@ public class TestReliableSpoolingFileEventReader {
     ReliableEventReader reader =
         new ReliableSpoolingFileEventReader.Builder().spoolDirectory(WORK_DIR)
                                                      .consumeOrder(ConsumeOrder.OLDEST)
+                                                     .sourceCounter(new SourceCounter("test"))
                                                      .build();
     File file1 = new File(WORK_DIR, "new-file1");
     File file2 = new File(WORK_DIR, "new-file2");
@@ -403,6 +415,7 @@ public class TestReliableSpoolingFileEventReader {
     ReliableEventReader reader =
         new ReliableSpoolingFileEventReader.Builder().spoolDirectory(WORK_DIR)
                                                      .consumeOrder(ConsumeOrder.YOUNGEST)
+                                                     .sourceCounter(new SourceCounter("test"))
                                                      .build();
     File file1 = new File(WORK_DIR, "new-file1");
     File file2 = new File(WORK_DIR, "new-file2");
@@ -434,6 +447,7 @@ public class TestReliableSpoolingFileEventReader {
     ReliableEventReader reader =
         new ReliableSpoolingFileEventReader.Builder().spoolDirectory(WORK_DIR)
                                                      .consumeOrder(ConsumeOrder.OLDEST)
+                                                     .sourceCounter(new SourceCounter("test"))
                                                      .build();
     File file1 = new File(WORK_DIR, "new-file1");
     File file2 = new File(WORK_DIR, "new-file2");
@@ -463,6 +477,7 @@ public class TestReliableSpoolingFileEventReader {
     ReliableEventReader reader =
         new ReliableSpoolingFileEventReader.Builder().spoolDirectory(WORK_DIR)
                                                      .consumeOrder(ConsumeOrder.YOUNGEST)
+                                                     .sourceCounter(new SourceCounter("test"))
                                                      .build();
     File file1 = new File(WORK_DIR, "new-file1");
     File file2 = new File(WORK_DIR, "new-file2");
@@ -529,6 +544,7 @@ public class TestReliableSpoolingFileEventReader {
     ReliableEventReader reader =
         new ReliableSpoolingFileEventReader.Builder().spoolDirectory(WORK_DIR)
                                                      .trackerDirPath(trackerDirPath)
+                                                     .sourceCounter(new SourceCounter("test"))
                                                      .build();
     final int expectedLines = 1;
     int seenLines = 0;
@@ -549,11 +565,12 @@ public class TestReliableSpoolingFileEventReader {
       dir = new File("target/test/work/" + this.getClass().getSimpleName() + "_large");
       Files.createParentDirs(new File(dir, "dummy"));
       ReliableEventReader reader =
-              new ReliableSpoolingFileEventReader.Builder().spoolDirectory(dir)
-                      .consumeOrder(order)
-                      .trackingPolicy(trackingPolicy.toString())
-                      .recursiveDirectorySearch(true)
-                      .build();
+          new ReliableSpoolingFileEventReader.Builder().spoolDirectory(dir)
+                                                       .consumeOrder(order)
+                                                       .trackingPolicy(trackingPolicy.toString())
+                                                       .recursiveDirectorySearch(true)
+                                                       .sourceCounter(new SourceCounter("test"))
+                                                       .build();
       Map<Long, List<String>> expected;
       if (comparator == null) {
         expected = new TreeMap<Long, List<String>>();
