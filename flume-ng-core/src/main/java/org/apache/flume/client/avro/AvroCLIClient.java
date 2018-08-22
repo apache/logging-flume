@@ -43,6 +43,7 @@ import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.api.RpcClient;
 import org.apache.flume.api.RpcClientFactory;
+import org.apache.flume.instrumentation.SourceCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -203,7 +204,9 @@ public class AvroCLIClient {
         reader = new SimpleTextLineEventReader(new FileReader(new File(fileName)));
       } else if (dirName != null) {
         reader = new ReliableSpoolingFileEventReader.Builder()
-            .spoolDirectory(new File(dirName)).build();
+            .spoolDirectory(new File(dirName))
+            .sourceCounter(new SourceCounter("avrocli"))
+            .build();
       } else {
         reader = new SimpleTextLineEventReader(new InputStreamReader(System.in));
       }

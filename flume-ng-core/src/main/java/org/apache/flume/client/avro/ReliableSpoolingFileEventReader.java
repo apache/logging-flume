@@ -877,6 +877,10 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     }
 
     public ReliableSpoolingFileEventReader build() throws IOException {
+      if (sourceCounter == null) {
+        sourceCounter = new SourceCounter("noop");
+      }
+
       return new ReliableSpoolingFileEventReader(spoolDirectory, completedSuffix,
           includePattern, ignorePattern, trackerDirPath, annotateFileName, fileNameHeader,
           annotateBaseName, baseNameHeader, deserializerType,
