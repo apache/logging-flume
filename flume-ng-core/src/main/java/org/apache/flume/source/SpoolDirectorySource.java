@@ -27,6 +27,7 @@ import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.FlumeException;
 import org.apache.flume.client.avro.ReliableSpoolingFileEventReader;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.serialization.DecodeErrorPolicy;
@@ -45,7 +46,7 @@ import java.util.concurrent.TimeUnit;
 import static org.apache.flume.source.SpoolDirectorySourceConfigurationConstants.*;
 
 public class SpoolDirectorySource extends AbstractSource
-    implements Configurable, EventDrivenSource {
+    implements Configurable, EventDrivenSource, BatchSizeSupported {
 
   private static final Logger logger = LoggerFactory.getLogger(SpoolDirectorySource.class);
 
@@ -233,6 +234,11 @@ public class SpoolDirectorySource extends AbstractSource
   @VisibleForTesting
   protected boolean getRecursiveDirectorySearch() {
     return recursiveDirectorySearch;
+  }
+
+  @Override
+  public long getBatchSize() {
+    return batchSize;
   }
 
   private class SpoolDirectoryRunnable implements Runnable {

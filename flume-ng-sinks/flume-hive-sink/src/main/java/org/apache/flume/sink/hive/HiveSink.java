@@ -28,6 +28,7 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Transaction;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.formatter.output.BucketPath;
 import org.apache.flume.instrumentation.SinkCounter;
@@ -50,7 +51,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class HiveSink extends AbstractSink implements Configurable {
+public class HiveSink extends AbstractSink implements Configurable, BatchSizeSupported {
 
   private static final Logger LOG = LoggerFactory.getLogger(HiveSink.class);
 
@@ -512,6 +513,10 @@ public class HiveSink extends AbstractSink implements Configurable {
     }
   }
 
+  @Override
+  public long getBatchSize() {
+    return batchSize;
+  }
 
   @Override
   public String toString() {

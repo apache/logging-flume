@@ -23,6 +23,7 @@ import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
+import org.apache.flume.Transaction;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.PseudoTxnMemoryChannel;
 import org.apache.flume.conf.Configurables;
@@ -280,6 +281,48 @@ public class TestRollingFileSink {
     File[] files = dir.listFiles();
     for (File file : files) {
       file.delete();
+    }
+  }
+
+  /**
+   * This test is to reproduce batch size and
+   * transaction capacity related configuration
+   * problems
+   */
+  @Test(expected = EventDeliveryException.class)
+  public void testTransCapBatchSizeCompatibility() throws EventDeliveryException {
+
+    Context context = new Context();
+
+    context.put("sink.directory", tmpDir.getPath());
+    context.put("sink.rollInterval", "0");
+    context.put("sink.batchSize", "1000");
+
+    Configurables.configure(sink, context);
+
+    context.put("capacity", "50");
+    context.put("transactionCapacity", "5");
+    Channel channel = new MemoryChannel();
+    Configurables.configure(channel, context);
+
+    sink.setChannel(channel);
+    sink.start();
+
+    try {
+      for (int j = 0; j < 10; j++) {
+        Transaction tx = channel.getTransaction();
+        tx.begin();
+        for (int i = 0; i < 5; i++) {
+          Event event = new SimpleEvent();
+          event.setBody(("Test event " + i).getBytes());
+          channel.put(event);
+        }
+        tx.commit();
+        tx.close();
+      }
+      sink.process();
+    } finally {
+      sink.stop();
     }
   }
 }

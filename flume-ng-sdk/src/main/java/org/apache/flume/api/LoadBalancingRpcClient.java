@@ -185,6 +185,7 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
     }
 
     selector.setHosts(hosts);
+    batchSize = parseBatchSize(properties);
     isOpen = true;
   }
 

@@ -38,6 +38,7 @@ import org.apache.flume.EventDrivenSource;
 import org.apache.flume.Source;
 import org.apache.flume.SystemClock;
 import org.apache.flume.channel.ChannelProcessor;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.instrumentation.SourceCounter;
@@ -146,7 +147,8 @@ import java.nio.charset.Charset;
  * TODO
  * </p>
  */
-public class ExecSource extends AbstractSource implements EventDrivenSource, Configurable {
+public class ExecSource extends AbstractSource implements EventDrivenSource, Configurable,
+        BatchSizeSupported {
 
   private static final Logger logger = LoggerFactory.getLogger(ExecSource.class);
 
@@ -246,6 +248,11 @@ public class ExecSource extends AbstractSource implements EventDrivenSource, Con
     if (sourceCounter == null) {
       sourceCounter = new SourceCounter(getName());
     }
+  }
+
+  @Override
+  public long getBatchSize() {
+    return bufferCount;
   }
 
   private static class ExecRunnable implements Runnable {

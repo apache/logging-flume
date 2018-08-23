@@ -39,6 +39,7 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.FlumeException;
 import org.apache.flume.PollableSource;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.source.AbstractSource;
@@ -57,7 +58,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 
 public class TaildirSource extends AbstractSource implements
-    PollableSource, Configurable {
+    PollableSource, Configurable, BatchSizeSupported {
 
   private static final Logger logger = LoggerFactory.getLogger(TaildirSource.class);
 
@@ -188,6 +189,11 @@ public class TaildirSource extends AbstractSource implements
     if (sourceCounter == null) {
       sourceCounter = new SourceCounter(getName());
     }
+  }
+
+  @Override
+  public long getBatchSize() {
+    return batchSize;
   }
 
   private Map<String, String> selectByKeys(Map<String, String> map, String[] keys) {
