@@ -66,7 +66,7 @@ public class TestConfig {
     LOGGER.debug("Using agent stage dir: {}", agentDir);
 
     File testDir = new File(agentDir, TestConfig.class.getName());
-    if (testDir.exists()){
+    if (testDir.exists()) {
       FileUtils.deleteDirectory(testDir);
     }
     assertTrue(testDir.mkdirs());

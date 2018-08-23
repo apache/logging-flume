@@ -359,17 +359,13 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
   }
 
   private List<Channel> getSourceChannels(Map<String, ChannelComponent> channelComponentMap,
-                                          Source source, Collection<String> channelNames) {
+                  Source source, Collection<String> channelNames) throws InstantiationException {
     List<Channel> sourceChannels = new ArrayList<Channel>();
     for (String chName : channelNames) {
       ChannelComponent channelComponent = channelComponentMap.get(chName);
       if (channelComponent != null) {
-        try {
-          checkSourceChannelCompatibility(source, channelComponent.channel);
-          sourceChannels.add(channelComponent.channel);
-        } catch (InstantiationException e) {
-          LOGGER.error("Source - channel compatibility problem", e);
-        }
+        checkSourceChannelCompatibility(source, channelComponent.channel);
+        sourceChannels.add(channelComponent.channel);
       }
     }
     return sourceChannels;
