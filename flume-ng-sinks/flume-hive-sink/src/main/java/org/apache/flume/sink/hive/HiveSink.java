@@ -264,6 +264,7 @@ public class HiveSink extends AbstractSink implements Configurable {
       LOG.warn(getName() + ": Thread was interrupted.", err);
       return Status.BACKOFF;
     } catch (Exception e) {
+      sinkCounter.incrementEventWriteOrChannelFail(e);
       throw new EventDeliveryException(e);
     } finally {
       if (!success) {

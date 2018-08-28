@@ -19,6 +19,7 @@
 package org.apache.flume.instrumentation;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.flume.ChannelException;
 
 public class SourceCounter extends MonitoredCounterGroup implements
     SourceCounterMBean {
@@ -37,15 +38,25 @@ public class SourceCounter extends MonitoredCounterGroup implements
       "src.append-batch.received";
   private static final String COUNTER_APPEND_BATCH_ACCEPTED =
       "src.append-batch.accepted";
-  
+
   private static final String COUNTER_OPEN_CONNECTION_COUNT =
           "src.open-connection.count";
+
+  private static final String COUNTER_EVENT_READ_FAIL =
+      "src.event.read.fail";
+
+  private static final String COUNTER_GENERIC_PROCESSING_FAIL =
+      "src.generic.processing.fail";
+
+  private static final String COUNTER_CHANNEL_WRITE_FAIL =
+      "src.channel.write.fail";
 
   private static final String[] ATTRIBUTES = {
     COUNTER_EVENTS_RECEIVED, COUNTER_EVENTS_ACCEPTED,
     COUNTER_APPEND_RECEIVED, COUNTER_APPEND_ACCEPTED,
     COUNTER_APPEND_BATCH_RECEIVED, COUNTER_APPEND_BATCH_ACCEPTED,
-    COUNTER_OPEN_CONNECTION_COUNT
+    COUNTER_OPEN_CONNECTION_COUNT, COUNTER_EVENT_READ_FAIL,
+    COUNTER_CHANNEL_WRITE_FAIL, COUNTER_GENERIC_PROCESSING_FAIL
   };
 
   public SourceCounter(String name) {
@@ -126,4 +137,39 @@ public class SourceCounter extends MonitoredCounterGroup implements
   public void setOpenConnectionCount(long openConnectionCount) {
     set(COUNTER_OPEN_CONNECTION_COUNT, openConnectionCount);
   }
+
+  public long incrementEventReadFail() {
+    return increment(COUNTER_EVENT_READ_FAIL);
+  }
+
+  @Override
+  public long getEventReadFail() {
+    return get(COUNTER_EVENT_READ_FAIL);
+  }
+
+  public long incrementChannelWriteFail() {
+    return increment(COUNTER_CHANNEL_WRITE_FAIL);
+  }
+
+  @Override
+  public long getChannelWriteFail() {
+    return get(COUNTER_CHANNEL_WRITE_FAIL);
+  }
+
+  public long incrementGenericProcessingFail() {
+    return increment(COUNTER_GENERIC_PROCESSING_FAIL);
+  }
+
+  @Override
+  public long getGenericProcessingFail() {
+    return get(COUNTER_GENERIC_PROCESSING_FAIL);
+  }
+
+  public long incrementEventReadOrChannelFail(Throwable t) {
+    if (t instanceof ChannelException) {
+      return incrementChannelWriteFail();
+    }
+    return incrementEventReadFail();
+  }
+
 }

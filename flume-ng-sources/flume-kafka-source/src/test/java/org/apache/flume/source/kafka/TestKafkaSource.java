@@ -34,6 +34,7 @@ import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
 import org.apache.flume.PollableSource.Status;
 import org.apache.flume.channel.ChannelProcessor;
+import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -47,6 +48,8 @@ import org.apache.kafka.common.security.JaasUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.mockito.internal.util.reflection.Whitebox;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
@@ -82,6 +85,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 
 public class TestKafkaSource {
@@ -427,6 +431,36 @@ public class TestKafkaSource {
 
     Assert.assertEquals("hello, world", new String(events.get(0).getBody(), Charsets.UTF_8));
   }
+
+  @Test
+  public void testErrorCounters() throws InterruptedException, EventDeliveryException {
+    context.put(TOPICS, topic0);
+    context.put(BATCH_SIZE, "1");
+    kafkaSource.configure(context);
+
+    ChannelProcessor cp = Mockito.mock(ChannelProcessor.class);
+    doThrow(new ChannelException("dummy")).doThrow(new RuntimeException("dummy"))
+        .when(cp).processEventBatch(any(List.class));
+    kafkaSource.setChannelProcessor(cp);
+
+    kafkaSource.start();
+
+    Thread.sleep(500L);
+
+    kafkaServer.produce(topic0, "", "hello, world");
+
+    Thread.sleep(500L);
+
+    kafkaSource.doProcess();
+    kafkaSource.doProcess();
+
+    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(kafkaSource, "counter");
+    Assert.assertEquals(1, sc.getChannelWriteFail());
+    Assert.assertEquals(1, sc.getEventReadFail());
+
+    kafkaSource.stop();
+  }
+
 
   @Test
   public void testSourceProperties() {

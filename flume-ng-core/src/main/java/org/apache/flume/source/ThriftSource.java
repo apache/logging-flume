@@ -430,6 +430,7 @@ public class ThriftSource extends AbstractSource implements Configurable, EventD
       } catch (ChannelException ex) {
         logger.warn("Thrift source " + getName() + " could not append events " +
                     "to the channel.", ex);
+        sourceCounter.incrementChannelWriteFail();
         return Status.FAILED;
       }
       sourceCounter.incrementAppendAcceptedCount();
@@ -451,6 +452,7 @@ public class ThriftSource extends AbstractSource implements Configurable, EventD
         getChannelProcessor().processEventBatch(flumeEvents);
       } catch (ChannelException ex) {
         logger.warn("Thrift source %s could not append events to the channel.", getName());
+        sourceCounter.incrementChannelWriteFail();
         return Status.FAILED;
       }
 
