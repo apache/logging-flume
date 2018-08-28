@@ -101,7 +101,7 @@ limitations under the License.
     <netty.version>3.10.6.Final</netty.version>
     <netty-all.version>4.1.17.Final</netty-all.version>
     <protobuf.version>2.5.0</protobuf.version>
-    <rat.version>0.11</rat.version>
+    <rat.version>0.12</rat.version>
     <snappy-java.version>1.1.4</snappy-java.version>
     <solr-global.version>4.3.0</solr-global.version>
     <slf4j.version>1.6.1</slf4j.version>
@@ -971,6 +971,7 @@ limitations under the License.
                   <exclude>**/derby.log</exclude>
                   <exclude>**/metastore_db/</exclude>
                 </excludes>
+                <consoleOutput>true</consoleOutput>
               </configuration>
             </execution>
           </executions>
