@@ -275,6 +275,7 @@ public class HttpSink extends AbstractSink implements Configurable {
           status = Status.BACKOFF;
 
           LOG.error("Error opening connection, or request timed out", e);
+          sinkCounter.incrementEventWriteFail();
         }
 
       } else {
@@ -289,6 +290,7 @@ public class HttpSink extends AbstractSink implements Configurable {
       status = Status.BACKOFF;
 
       LOG.error("Error sending HTTP request, retrying", t);
+      sinkCounter.incrementEventWriteOrChannelFail(t);
 
       // re-throw all Errors
       if (t instanceof Error) {

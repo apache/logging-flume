@@ -91,9 +91,11 @@ public class SyslogUDPSource extends AbstractSource
         sourceCounter.incrementEventAcceptedCount();
       } catch (ChannelException ex) {
         logger.error("Error writting to channel", ex);
+        sourceCounter.incrementChannelWriteFail();
         return;
       } catch (RuntimeException ex) {
         logger.error("Error parsing event from syslog stream, event dropped", ex);
+        sourceCounter.incrementEventReadFail();
         return;
       }
     }

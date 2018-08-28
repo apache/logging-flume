@@ -441,10 +441,12 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     } catch (IOException eIO) {
       transaction.rollback();
       LOG.warn("HDFS IO error", eIO);
+      sinkCounter.incrementEventWriteFail();
       return Status.BACKOFF;
     } catch (Throwable th) {
       transaction.rollback();
       LOG.error("process failed", th);
+      sinkCounter.incrementEventWriteOrChannelFail(th);
       if (th instanceof Error) {
         throw (Error) th;
       } else {

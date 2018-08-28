@@ -17,10 +17,15 @@
 
 package org.apache.flume.source.taildir;
 
+import static org.mockito.Mockito.anyListOf;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
+
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelException;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -34,11 +39,15 @@ import org.apache.flume.lifecycle.LifecycleState;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.mockito.internal.util.reflection.Whitebox;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.FILE_GROUPS;
 import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.FILE_GROUPS_PREFIX;
@@ -202,8 +211,7 @@ public class TestTaildirSource {
     }
   }
 
-  @Test
-  public void testFileConsumeOrder() throws IOException {
+  private ArrayList<String> prepareFileConsumeOrder() throws IOException {
     System.out.println(tmpDir.toString());
     // 1) Create 1st file
     File f1 = new File(tmpDir, "file1");
@@ -257,13 +265,31 @@ public class TestTaildirSource {
     f3.setLastModified(System.currentTimeMillis());
 
     // 4) Consume the files
-    ArrayList<String> consumedOrder = Lists.newArrayList();
     Context context = new Context();
     context.put(POSITION_FILE, posFilePath);
     context.put(FILE_GROUPS, "g1");
     context.put(FILE_GROUPS_PREFIX + "g1", tmpDir.getAbsolutePath() + "/.*");
 
     Configurables.configure(source, context);
+
+    // 6) Ensure consumption order is in order of last update time
+    ArrayList<String> expected = Lists.newArrayList(line1, line2, line3,    // file1
+        line1b, line2b, line3b, // file2
+        line1d, line2d, line3d, // file4
+        line1c, line2c, line3c  // file3
+    );
+    for (int i = 0; i != expected.size(); ++i) {
+      expected.set(i, expected.get(i).trim());
+    }
+
+    return expected;
+  }
+
+  @Test
+  public void testFileConsumeOrder() throws IOException {
+    ArrayList<String> consumedOrder = Lists.newArrayList();
+    ArrayList<String> expected = prepareFileConsumeOrder();
+
     source.start();
     source.process();
     Transaction txn = channel.getTransaction();
@@ -278,21 +304,11 @@ public class TestTaildirSource {
 
     System.out.println(consumedOrder);
 
-    // 6) Ensure consumption order is in order of last update time
-    ArrayList<String> expected = Lists.newArrayList(line1, line2, line3,    // file1
-                                                    line1b, line2b, line3b, // file2
-                                                    line1d, line2d, line3d, // file4
-                                                    line1c, line2c, line3c  // file3
-                                                   );
-    for (int i = 0; i != expected.size(); ++i) {
-      expected.set(i, expected.get(i).trim());
-    }
     assertArrayEquals("Files not consumed in expected order", expected.toArray(),
                       consumedOrder.toArray());
   }
 
-  @Test
-  public void testPutFilenameHeader() throws IOException {
+  private File configureSource()  throws IOException {
     File f1 = new File(tmpDir, "file1");
     Files.write("f1\n", f1, Charsets.UTF_8);
 
@@ -304,6 +320,13 @@ public class TestTaildirSource {
     context.put(FILENAME_HEADER_KEY, "path");
 
     Configurables.configure(source, context);
+
+    return f1;
+  }
+
+  @Test
+  public void testPutFilenameHeader() throws IOException {
+    File f1 = configureSource();
     source.start();
     source.process();
     Transaction txn = channel.getTransaction();
@@ -316,4 +339,45 @@ public class TestTaildirSource {
     assertEquals(f1.getAbsolutePath(),
             e.getHeaders().get("path"));
   }
+
+  @Test
+  public void testErrorCounterEventReadFail() throws Exception {
+    configureSource();
+    source.start();
+    ReliableTaildirEventReader reader = Mockito.mock(ReliableTaildirEventReader.class);
+    Whitebox.setInternalState(source, "reader", reader);
+    when(reader.updateTailFiles()).thenReturn(Collections.singletonList(123L));
+    when(reader.getTailFiles()).thenThrow(new RuntimeException("hello"));
+    source.process();
+    assertEquals(1, source.getSourceCounter().getEventReadFail());
+    source.stop();
+  }
+
+  @Test
+  public void testErrorCounterFileHandlingFail() throws Exception {
+    configureSource();
+    Whitebox.setInternalState(source, "idleTimeout", 0);
+    Whitebox.setInternalState(source, "checkIdleInterval", 60);
+    source.start();
+    ReliableTaildirEventReader reader = Mockito.mock(ReliableTaildirEventReader.class);
+    when(reader.getTailFiles()).thenThrow(new RuntimeException("hello"));
+    Whitebox.setInternalState(source, "reader", reader);
+    TimeUnit.MILLISECONDS.sleep(200);
+    assertTrue(0 < source.getSourceCounter().getGenericProcessingFail());
+    source.stop();
+  }
+
+  @Test
+  public void testErrorCounterChannelWriteFail() throws Exception {
+    prepareFileConsumeOrder();
+    ChannelProcessor cp = Mockito.mock(ChannelProcessor.class);
+    source.setChannelProcessor(cp);
+    doThrow(new ChannelException("dummy")).doNothing().when(cp)
+        .processEventBatch(anyListOf(Event.class));
+    source.start();
+    source.process();
+    assertEquals(1, source.getSourceCounter().getChannelWriteFail());
+    source.stop();
+  }
+
 }

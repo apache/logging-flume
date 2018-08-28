@@ -234,6 +234,7 @@ public class TaildirSource extends AbstractSource implements
       }
     } catch (Throwable t) {
       logger.error("Unable to tail files", t);
+      sourceCounter.incrementEventReadFail();
       status = Status.BACKOFF;
     }
     return status;
@@ -265,6 +266,7 @@ public class TaildirSource extends AbstractSource implements
       } catch (ChannelException ex) {
         logger.warn("The channel is full or unexpected failure. " +
             "The source will try again after " + retryInterval + " ms");
+        sourceCounter.incrementChannelWriteFail();
         TimeUnit.MILLISECONDS.sleep(retryInterval);
         retryInterval = retryInterval << 1;
         retryInterval = Math.min(retryInterval, maxRetryInterval);
@@ -306,6 +308,7 @@ public class TaildirSource extends AbstractSource implements
         }
       } catch (Throwable t) {
         logger.error("Uncaught exception in IdleFileChecker thread", t);
+        sourceCounter.incrementGenericProcessingFail();
       }
     }
   }
@@ -332,11 +335,13 @@ public class TaildirSource extends AbstractSource implements
       }
     } catch (Throwable t) {
       logger.error("Failed writing positionFile", t);
+      sourceCounter.incrementGenericProcessingFail();
     } finally {
       try {
         if (writer != null) writer.close();
       } catch (IOException e) {
         logger.error("Error: " + e.getMessage(), e);
+        sourceCounter.incrementGenericProcessingFail();
       }
     }
   }

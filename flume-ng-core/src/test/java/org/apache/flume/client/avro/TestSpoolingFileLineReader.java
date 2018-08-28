@@ -25,6 +25,7 @@ import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
+import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.serialization.LineDeserializer;
 import org.apache.flume.source.SpoolDirectorySourceConfigurationConstants;
 import org.junit.After;
@@ -71,6 +72,7 @@ public class TestSpoolingFileLineReader {
           .spoolDirectory(tmpDir)
           .completedSuffix(completedSuffix)
           .deserializerContext(ctx)
+          .sourceCounter(new SourceCounter("dummy"))
           .build();
     } catch (IOException ioe) {
       throw Throwables.propagate(ioe);
