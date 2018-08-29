@@ -997,6 +997,59 @@ Example for agent named a1:
   a1.sources.r1.destinationName = BUSINESS_DATA
   a1.sources.r1.destinationType = QUEUE
 
+
+SSL/TLS support
+'''''''''''''''
+
+JMS client implementations typically support to configure SSL/TLS via some Java system properties defined by JSSE
+(Java Secure Socket Extension). Specifying these system properties for Flume's JVM, JMS Source (or more precisely the
+JMS client implementation used by the JMS Source) can connect to the JMS server through SSL (of course only when the JMS
+server has also been set up to use SSL).
+It should work with any JMS provider and has been tested with ActiveMQ, IBM MQ and Oracle WebLogic.
+
+The JSSE Java system properties can either be passed on the command line or by setting the ``JAVA_OPTS`` environment
+variable in *conf/flume-env.sh* (the examples below show the second approach).
+
+The following sections describe the SSL configuration steps needed on the Flume side only. You can find more detailed
+descriptions about the server side setup of the different JMS providers and also full working configuration examples on
+Flume Wiki.
+
+**SSL transport / server authentication:**
+
+If the JMS server uses self-signed certificate or its certificate is signed by a non-trusted CA (eg. the company's own
+CA), then a truststore (containing the right certificate) needs to be set up and passed to Flume via the following JSSE
+Java system properties:
+
+.. code-block:: properties
+
+    export JAVA_OPTS="$JAVA_OPTS -Djavax.net.ssl.trustStore=/path/to/truststore.jks"
+    export JAVA_OPTS="$JAVA_OPTS -Djavax.net.ssl.trustStorePassword=password"
+
+Some JMS providers require SSL specific JNDI Initial Context Factory and/or Provider URL settings when using SSL (eg.
+ActiveMQ uses ssl:// URL prefix instead of tcp://).
+In this case the source properties (``initialContextFactory`` and/or ``providerURL``) have to be adjusted in the agent
+config file.
+
+**Client certificate authentication (two-way SSL):**
+
+JMS Source can authenticate to the JMS server through client certificate authentication instead of the usual
+user/password login (when SSL is used and the JMS server is configured to accept this kind of authentication).
+
+The keystore containing Flume's key used for the authentication needs to be configured via the following JSSE Java
+system properties (similarly to the truststore properties above):
+
+.. code-block:: properties
+
+    export JAVA_OPTS="$JAVA_OPTS -Djavax.net.ssl.keyStore=/path/to/keystore.jks"
+    export JAVA_OPTS="$JAVA_OPTS -Djavax.net.ssl.keyStorePassword=password"
+
+The keystore should contain only one key (if multiple keys are present, then the first one will be used).
+The key password must be the same as the keystore password.
+
+In case of client certificate authentication, it is not needed to specify the ``userName`` / ``passwordFile`` properties
+for the JMS Source in the Flume agent config file.
+
+
 Spooling Directory Source
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 This source lets you ingest data by placing files to be ingested into a
