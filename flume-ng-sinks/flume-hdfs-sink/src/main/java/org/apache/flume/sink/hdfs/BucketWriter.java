@@ -717,10 +717,11 @@ class BucketWriter {
         if (cSumm != null) {
           long quota = cSumm.getSpaceQuota();
           long spaceConsumed = cSumm.getSpaceConsumed();
+          short replica = quotaPath.getFileSystem(config).getDefaultReplication(quotaPath);
           long block = quotaPath.getFileSystem(config).getDefaultBlockSize(quotaPath);
           long quotaCondition = block + spaceConsumed + event.getBody().length;
         
-          if (quota != -1 && (quotaCondition >= quota)) {
+          if (quota != -1 && ((quotaCondition * replica) >= quota)) {
             return Boolean.TRUE;
           }
         }  
