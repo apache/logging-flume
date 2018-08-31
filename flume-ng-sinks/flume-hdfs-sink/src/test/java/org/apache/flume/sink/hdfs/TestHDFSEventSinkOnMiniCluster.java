@@ -589,6 +589,134 @@ public class TestHDFSEventSinkOnMiniCluster {
     cluster.shutdown();
     cluster = null;
   }
+  
+  public void testQuotaHDFS() throws FileNotFoundException, IOException {
+
+    Configuration conf = new Configuration();
+    cluster = new MiniDFSCluster.Builder(conf).numDataNodes(1).format(true).build();
+    cluster.waitActive();
+
+    String minQuotaDir = "/flume/simpleMinQuota";
+    String maxQuotaDir = "/flume/simpleMaxQuota";
+    String midQuotaDir = "/flume/simpleMidQuota";
+
+    Path minQuotaDirPath = new Path(minQuotaDir);
+    Path maxQuotaDirPath = new Path(maxQuotaDir);
+    Path midQuotaDirPath = new Path(midQuotaDir);
+
+    HDFSEventSink sinkMin = new HDFSEventSink();
+    HDFSEventSink sinkMax = new HDFSEventSink();
+    HDFSEventSink sinkMid = new HDFSEventSink();
+
+    FileSystem fs = cluster.getFileSystem();
+
+    Context chanCtx = new Context();
+    MemoryChannel channel = new MemoryChannel();
+    channel.setName("simpleHDFSQuota-mem-chan");
+    channel.configure(chanCtx);
+    channel.start();
+    String nnURL = getNameNodeURL(cluster);
+    if (!fs.exists(minQuotaDirPath)) {
+      fs.mkdirs(minQuotaDirPath);
+      DistributedFileSystem dfs = (DistributedFileSystem) fs.get(minQuotaDirPath.toUri(),conf);
+      dfs.setQuota(minQuotaDirPath, 40000000, 40000000);
+      Context sinkCtx = new Context();
+      sinkCtx.put("hdfs.path", nnURL + minQuotaDir);
+      sinkCtx.put("hdfs.fileType", HDFSWriterFactory.DataStreamType);
+      sinkCtx.put("hdfs.batchSize", Integer.toString(1));
+      sinkCtx.put("hdfs.callTimeout", Integer.toString(1000000));
+      sinkMin.setName("simpleHDFSQuotaMin-hdfs-sink");
+      sinkMin.configure(sinkCtx);
+      sinkMin.setChannel(channel);
+      sinkMin.start();
+    } else {
+      fs.delete(minQuotaDirPath, true);
+    }
+    if (!fs.exists(maxQuotaDirPath)) {
+      fs.mkdirs(maxQuotaDirPath);
+      DistributedFileSystem dfs = (DistributedFileSystem) fs.get(maxQuotaDirPath.toUri(),conf);
+      dfs.setQuota(maxQuotaDirPath, 500000000, 500000000);
+      Context sinkCtx = new Context();
+      sinkCtx.put("hdfs.path", nnURL + maxQuotaDir);
+      sinkCtx.put("hdfs.fileType", HDFSWriterFactory.DataStreamType);
+      sinkCtx.put("hdfs.batchSize", Integer.toString(1));
+      sinkCtx.put("hdfs.callTimeout", Integer.toString(1000000));
+      sinkMax.setName("simpleHDFSQuotaMax-hdfs-sink");
+      sinkMax.configure(sinkCtx);
+      sinkMax.setChannel(channel);
+      sinkMax.start();
+    } else {
+      fs.delete(maxQuotaDirPath, true);
+    }
+    if (!fs.exists(midQuotaDirPath)) {
+      fs.mkdirs(midQuotaDirPath);
+      DistributedFileSystem dfs = (DistributedFileSystem) fs.get(midQuotaDirPath.toUri(),conf);
+      dfs.setQuota(midQuotaDirPath, 402653199, 402653199);
+      Context sinkCtx = new Context();
+      sinkCtx.put("hdfs.path", nnURL + midQuotaDir);
+      sinkCtx.put("hdfs.fileType", HDFSWriterFactory.DataStreamType);
+      sinkCtx.put("hdfs.batchSize", Integer.toString(3));
+      sinkCtx.put("hdfs.rollCount", Integer.toString(2));
+      sinkCtx.put("hdfs.callTimeout", Integer.toString(1000000));
+      sinkMid.setName("simpleHDFSQuotaMid-hdfs-sink");
+      sinkMid.configure(sinkCtx);
+      sinkMid.setChannel(channel);
+      sinkMid.start();
+    } else {
+      fs.delete(midQuotaDirPath, true);
+    }    
+    String EVENT_BODY = "y";
+    String EVENT_BODY2 = "atra";
+    String EVENT_BODY3 = "done";
+    channel.getTransaction().begin();
+    try {
+      channel.put(EventBuilder.withBody(EVENT_BODY, Charsets.UTF_8));
+      channel.put(EventBuilder.withBody(EVENT_BODY2, Charsets.UTF_8));
+      channel.put(EventBuilder.withBody(EVENT_BODY3, Charsets.UTF_8));
+      channel.getTransaction().commit();
+    } finally {
+      channel.getTransaction().close();
+    }
+    // store event to HDFS
+    try {
+      sinkMin.process();
+    } catch (EventDeliveryException e) {
+      logger.error(e.getLocalizedMessage());
+    }
+    
+    try {
+      sinkMax.process();
+    } catch (EventDeliveryException e) {
+      logger.error(e.getLocalizedMessage());
+    }
+    
+    try {
+      sinkMid.process();
+    } catch (EventDeliveryException e) {
+      logger.error(e.getLocalizedMessage());
+    }
+    
+    // shut down flume
+    sinkMin.stop();
+    sinkMax.stop();
+    sinkMid.stop();
+    channel.stop();
+
+    FileStatus[] statusesMin = fs.listStatus(minQuotaDirPath);
+    FileStatus[] statusesMax = fs.listStatus(maxQuotaDirPath);
+    FileStatus[] statusesMid = fs.listStatus(midQuotaDirPath);
+
+    Assert.assertEquals("No files expected", 0, statusesMin.length);
+    Assert.assertEquals("One file expected", 1, statusesMax.length);
+    //There is a batch of 3 elements an a rollcount of two
+    //It will try to flush every two elements but it will reach
+    //the quota before. As a result, it will write just one file with 
+    //the proportional part.
+    Assert.assertEquals("One file expected", 1, statusesMid.length);
+    
+    cluster.shutdown();
+    cluster = null;
+  }
 
   @AfterClass
   public static void teardownClass() {
