@@ -65,65 +65,70 @@ class JMSMessageConsumer {
         + "than zero");
     Preconditions.checkArgument(pollTimeout >= 0, "Poll timeout cannot be " +
         "negative");
-    try {
-      if (userName.isPresent()) {
-        connection = connectionFactory.createConnection(userName.get(),
-            password.get());
-      } else {
-        connection = connectionFactory.createConnection();
-      }
-      if (clientId.isPresent()) {
-        connection.setClientID(clientId.get());
-      }
-      connection.start();
-    } catch (JMSException e) {
-      throw new FlumeException("Could not create connection to broker", e);
-    }
 
     try {
-      session = connection.createSession(true, Session.SESSION_TRANSACTED);
-    } catch (JMSException e) {
-      throw new FlumeException("Could not create session", e);
-    }
-
-    try {
-      if (destinationLocator.equals(JMSDestinationLocator.CDI)) {
-        switch (destinationType) {
-          case QUEUE:
-            destination = session.createQueue(destinationName);
-            break;
-          case TOPIC:
-            destination = session.createTopic(destinationName);
-            break;
-          default:
-            throw new IllegalStateException(String.valueOf(destinationType));
+      try {
+        if (userName.isPresent()) {
+          connection = connectionFactory.createConnection(userName.get(), password.get());
+        } else {
+          connection = connectionFactory.createConnection();
         }
-      } else {
-        destination = (Destination) initialContext.lookup(destinationName);
+        if (clientId.isPresent()) {
+          connection.setClientID(clientId.get());
+        }
+        connection.start();
+      } catch (JMSException e) {
+        throw new FlumeException("Could not create connection to broker", e);
       }
-    } catch (JMSException e) {
-      throw new FlumeException("Could not create destination " + destinationName, e);
-    } catch (NamingException e) {
-      throw new FlumeException("Could not find destination " + destinationName, e);
-    }
 
-    try {
-      if (createDurableSubscription) {
-        messageConsumer = session.createDurableSubscriber(
-            (Topic) destination, durableSubscriptionName,
-            messageSelector.isEmpty() ? null : messageSelector, true);
-      } else {
-        messageConsumer = session.createConsumer(destination,
-            messageSelector.isEmpty() ? null : messageSelector);
+      try {
+        session = connection.createSession(true, Session.SESSION_TRANSACTED);
+      } catch (JMSException e) {
+        throw new FlumeException("Could not create session", e);
       }
-    } catch (JMSException e) {
-      throw new FlumeException("Could not create consumer", e);
+
+      try {
+        if (destinationLocator.equals(JMSDestinationLocator.CDI)) {
+          switch (destinationType) {
+            case QUEUE:
+              destination = session.createQueue(destinationName);
+              break;
+            case TOPIC:
+              destination = session.createTopic(destinationName);
+              break;
+            default:
+              throw new IllegalStateException(String.valueOf(destinationType));
+          }
+        } else {
+          destination = (Destination) initialContext.lookup(destinationName);
+        }
+      } catch (JMSException e) {
+        throw new FlumeException("Could not create destination " + destinationName, e);
+      } catch (NamingException e) {
+        throw new FlumeException("Could not find destination " + destinationName, e);
+      }
+
+      try {
+        if (createDurableSubscription) {
+          messageConsumer = session.createDurableSubscriber(
+                  (Topic) destination, durableSubscriptionName,
+                  messageSelector.isEmpty() ? null : messageSelector, true);
+        } else {
+          messageConsumer = session.createConsumer(destination,
+                  messageSelector.isEmpty() ? null : messageSelector);
+        }
+      } catch (JMSException e) {
+        throw new FlumeException("Could not create consumer", e);
+      }
+      String startupMsg = String.format("Connected to '%s' of type '%s' with " +
+                      "user '%s', batch size '%d', selector '%s' ", destinationName,
+              destinationType, userName.isPresent() ? userName.get() : "null",
+              batchSize, messageSelector.isEmpty() ? null : messageSelector);
+      logger.info(startupMsg);
+    } catch (Exception e) {
+      close();
+      throw e;
     }
-    String startupMsg = String.format("Connected to '%s' of type '%s' with " +
-            "user '%s', batch size '%d', selector '%s' ", destinationName,
-        destinationType, userName.isPresent() ? userName.get() : "null",
-        batchSize, messageSelector.isEmpty() ? null : messageSelector);
-    logger.info(startupMsg);
   }
 
   List<Event> take() throws JMSException {
