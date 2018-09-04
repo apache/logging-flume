@@ -1198,6 +1198,29 @@ deserializer.schemaType         HASH            How the schema is represented. B
                                                 inefficient compared to ``HASH`` mode.
 ==============================  ==============  ======================================================================
 
+FLUME_AVRO
+^^^^
+
+This deserializer extends the ``AVRO`` deserializer from above in a way that it
+restores ``header`` and ``body`` correctly.
+
+E.g. if you use ``avro_event`` as a serializer for your ``file_roll`` sink, you can use this deserializer.
+A scenario could be that ``fileroll`` is a failover for ``kafka sink``. While reading events from disk
+and sending them to kafka, you need to make sure your metadata (encoded in the ``header``) are restored correctly.
+Using the ``AVRO`` deserializer would not distinguish between ``header`` and ``body`` payload.
+
+==============================  ==============  ======================================================================
+Property Name                   Default         Description
+==============================  ==============  ======================================================================
+deserializer.schemaType         HASH            How the schema is represented. By default, or when the value ``HASH``
+                                                is specified, the Avro schema is hashed and
+                                                the hash is stored in every event in the event header
+                                                "flume.avro.schema.hash". If ``LITERAL`` is specified, the JSON-encoded
+                                                schema itself is stored in every event in the event header
+                                                "flume.avro.schema.literal". Using ``LITERAL`` mode is relatively
+                                                inefficient compared to ``HASH`` mode.
+==============================  ==============  ======================================================================
+
 BlobDeserializer
 ^^^^^^^^^^^^^^^^
 
