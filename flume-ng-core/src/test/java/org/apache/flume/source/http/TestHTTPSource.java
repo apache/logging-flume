@@ -22,7 +22,6 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import junit.framework.Assert;
 import org.apache.flume.Channel;
-import org.apache.flume.ChannelException;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -90,15 +89,18 @@ import static org.mockito.Mockito.doThrow;
  */
 public class TestHTTPSource {
 
-  private static HTTPSource source;
+  private static HTTPSource httpSource;
   private static HTTPSource httpsSource;
+  private static HTTPSource httpsGlobalKeystoreSource;
 
-  private static Channel channel;
+  private static Channel httpChannel;
   private static Channel httpsChannel;
-  private static int selectedPort;
-  private static int sslPort;
-  HttpClient httpClient;
-  HttpPost postRequest;
+  private static Channel httpsGlobalKeystoreChannel;
+  private static int httpPort;
+  private static int httpsPort;
+  private static int httpsGlobalKeystorePort;
+  private HttpClient httpClient;
+  private HttpPost postRequest;
 
   private static int findFreePort() throws IOException {
     ServerSocket socket = new ServerSocket(0);
@@ -107,17 +109,17 @@ public class TestHTTPSource {
     return port;
   }
 
-  private static Context getDefaultNonSecureContext(int selectedPort) throws IOException {
+  private static Context getDefaultNonSecureContext(int port) throws IOException {
     Context ctx = new Context();
     ctx.put(HTTPSourceConfigurationConstants.CONFIG_BIND, "0.0.0.0");
-    ctx.put(HTTPSourceConfigurationConstants.CONFIG_PORT, String.valueOf(selectedPort));
+    ctx.put(HTTPSourceConfigurationConstants.CONFIG_PORT, String.valueOf(port));
     ctx.put("QueuedThreadPool.MaxThreads", "100");
     return ctx;
   }
 
-  private static Context getDefaultSecureContext(int sslPort) throws IOException {
+  private static Context getDefaultSecureContext(int port) throws IOException {
     Context sslContext = new Context();
-    sslContext.put(HTTPSourceConfigurationConstants.CONFIG_PORT, String.valueOf(sslPort));
+    sslContext.put(HTTPSourceConfigurationConstants.CONFIG_PORT, String.valueOf(port));
     sslContext.put(HTTPSourceConfigurationConstants.SSL_ENABLED, "true");
     sslContext.put(HTTPSourceConfigurationConstants.SSL_KEYSTORE_PASSWORD, "password");
     sslContext.put(HTTPSourceConfigurationConstants.SSL_KEYSTORE,
@@ -125,21 +127,42 @@ public class TestHTTPSource {
     return sslContext;
   }
 
+  private static Context getDefaultSecureContextGlobalKeystore(int port) throws IOException {
+    System.setProperty("javax.net.ssl.keyStore", "src/test/resources/jettykeystore");
+    System.setProperty("javax.net.ssl.keyStorePassword", "password");
+
+    Context sslContext = new Context();
+    sslContext.put(HTTPSourceConfigurationConstants.CONFIG_PORT, String.valueOf(port));
+    sslContext.put(HTTPSourceConfigurationConstants.SSL_ENABLED, "true");
+    return sslContext;
+  }
+
   @BeforeClass
   public static void setUpClass() throws Exception {
-    source = new HTTPSource();
-    channel = new MemoryChannel();
-    selectedPort = findFreePort();
-    configureSourceAndChannel(source, channel, getDefaultNonSecureContext(selectedPort));
-    channel.start();
-    source.start();
+    httpSource = new HTTPSource();
+    httpChannel = new MemoryChannel();
+    httpPort = findFreePort();
+    configureSourceAndChannel(httpSource, httpChannel, getDefaultNonSecureContext(httpPort));
+    httpChannel.start();
+    httpSource.start();
 
     httpsSource = new HTTPSource();
     httpsChannel = new MemoryChannel();
-    sslPort = findFreePort();
-    configureSourceAndChannel(httpsSource, httpsChannel, getDefaultSecureContext(sslPort));
+    httpsPort = findFreePort();
+    configureSourceAndChannel(httpsSource, httpsChannel, getDefaultSecureContext(httpsPort));
     httpsChannel.start();
     httpsSource.start();
+
+    httpsGlobalKeystoreSource = new HTTPSource();
+    httpsGlobalKeystoreChannel = new MemoryChannel();
+    httpsGlobalKeystorePort = findFreePort();
+    configureSourceAndChannel(httpsGlobalKeystoreSource, httpsGlobalKeystoreChannel,
+        getDefaultSecureContextGlobalKeystore(httpsGlobalKeystorePort));
+    httpsGlobalKeystoreChannel.start();
+    httpsGlobalKeystoreSource.start();
+
+    System.clearProperty("javax.net.ssl.keyStore");
+    System.clearProperty("javax.net.ssl.keyStorePassword");
   }
 
   private static void configureSourceAndChannel(
@@ -158,17 +181,19 @@ public class TestHTTPSource {
 
   @AfterClass
   public static void tearDownClass() throws Exception {
-    source.stop();
-    channel.stop();
+    httpSource.stop();
+    httpChannel.stop();
     httpsSource.stop();
     httpsChannel.stop();
+    httpsGlobalKeystoreSource.stop();
+    httpsGlobalKeystoreChannel.stop();
   }
 
   @Before
   public void setUp() {
     HttpClientBuilder builder = HttpClientBuilder.create();
     httpClient = builder.build();
-    postRequest = new HttpPost("http://0.0.0.0:" + selectedPort);
+    postRequest = new HttpPost("http://0.0.0.0:" + httpPort);
   }
 
   @Test
@@ -185,14 +210,14 @@ public class TestHTTPSource {
 
     Assert.assertEquals(HttpServletResponse.SC_OK,
             response.getStatusLine().getStatusCode());
-    Transaction tx = channel.getTransaction();
+    Transaction tx = httpChannel.getTransaction();
     tx.begin();
-    Event e = channel.take();
+    Event e = httpChannel.take();
     Assert.assertNotNull(e);
     Assert.assertEquals("b", e.getHeaders().get("a"));
     Assert.assertEquals("random_body", new String(e.getBody(), "UTF-8"));
 
-    e = channel.take();
+    e = httpChannel.take();
     Assert.assertNotNull(e);
     Assert.assertEquals("f", e.getHeaders().get("e"));
     Assert.assertEquals("random_body2", new String(e.getBody(), "UTF-8"));
@@ -202,12 +227,12 @@ public class TestHTTPSource {
 
   @Test
   public void testTrace() throws Exception {
-    doTestForbidden(new HttpTrace("http://0.0.0.0:" + selectedPort));
+    doTestForbidden(new HttpTrace("http://0.0.0.0:" + httpPort));
   }
 
   @Test
   public void testOptions() throws Exception {
-    doTestForbidden(new HttpOptions("http://0.0.0.0:" + selectedPort));
+    doTestForbidden(new HttpOptions("http://0.0.0.0:" + httpPort));
   }
 
   private void doTestForbidden(HttpRequestBase request) throws Exception {
@@ -228,14 +253,14 @@ public class TestHTTPSource {
 
     Assert.assertEquals(HttpServletResponse.SC_OK,
             response.getStatusLine().getStatusCode());
-    Transaction tx = channel.getTransaction();
+    Transaction tx = httpChannel.getTransaction();
     tx.begin();
-    Event e = channel.take();
+    Event e = httpChannel.take();
     Assert.assertNotNull(e);
     Assert.assertEquals("b", e.getHeaders().get("a"));
     Assert.assertEquals("random_body", new String(e.getBody(), "UTF-16"));
 
-    e = channel.take();
+    e = httpChannel.take();
     Assert.assertNotNull(e);
     Assert.assertEquals("f", e.getHeaders().get("e"));
     Assert.assertEquals("random_body2", new String(e.getBody(), "UTF-16"));
@@ -253,7 +278,7 @@ public class TestHTTPSource {
 
     Assert.assertEquals(HttpServletResponse.SC_BAD_REQUEST,
             response.getStatusLine().getStatusCode());
-    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(source, "sourceCounter");
+    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(httpSource, "sourceCounter");
     Assert.assertEquals(1, sc.getEventReadFail());
 
   }
@@ -277,12 +302,12 @@ public class TestHTTPSource {
   public void testCounterGenericFail() throws Exception {
     ChannelProcessor cp = Mockito.mock(ChannelProcessor.class);
     doThrow(new RuntimeException("dummy")).when(cp).processEventBatch(anyListOf(Event.class));
-    ChannelProcessor oldCp = source.getChannelProcessor();
-    source.setChannelProcessor(cp);
+    ChannelProcessor oldCp = httpSource.getChannelProcessor();
+    httpSource.setChannelProcessor(cp);
     testBatchWithVariousEncoding("UTF-8");
-    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(source, "sourceCounter");
+    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(httpSource, "sourceCounter");
     Assert.assertEquals(1, sc.getGenericProcessingFail());
-    source.setChannelProcessor(oldCp);
+    httpSource.setChannelProcessor(oldCp);
   }
 
   @Test
@@ -293,9 +318,9 @@ public class TestHTTPSource {
     postRequest.setEntity(input);
 
     httpClient.execute(postRequest);
-    Transaction tx = channel.getTransaction();
+    Transaction tx = httpChannel.getTransaction();
     tx.begin();
-    Event e = channel.take();
+    Event e = httpChannel.take();
     Assert.assertNotNull(e);
     Assert.assertEquals("b", e.getHeaders().get("a"));
     Assert.assertEquals("random_body", new String(e.getBody(),"UTF-8"));
@@ -323,9 +348,9 @@ public class TestHTTPSource {
     Assert.assertTrue(resp.getHeaders("X-Powered-By").length == 0);
     Assert.assertTrue(resp.getHeaders("Server").length == 1);
 
-    Transaction tx = channel.getTransaction();
+    Transaction tx = httpChannel.getTransaction();
     tx.begin();
-    Event e = channel.take();
+    Event e = httpChannel.take();
     Assert.assertNotNull(e);
     tx.commit();
     tx.close();
@@ -375,7 +400,7 @@ public class TestHTTPSource {
 
     newPostRequest = new HttpPost("http://0.0.0.0:" + newPort);
     try {
-      doTestHttps(null, newPort);
+      doTestHttps(null, newPort, httpsChannel);
       //We are testing that this fails because we've deliberately configured the wrong protocols
       Assert.assertTrue(false);
     } catch (AssertionError ex) {
@@ -390,22 +415,22 @@ public class TestHTTPSource {
     HttpResponse response = putWithEncoding("UTF-8", 150).response;
     Assert.assertEquals(HttpServletResponse.SC_SERVICE_UNAVAILABLE,
             response.getStatusLine().getStatusCode());
-    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(source, "sourceCounter");
+    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(httpSource, "sourceCounter");
     Assert.assertEquals(1, sc.getChannelWriteFail());
   }
 
   @Test
   public void testFail() throws Exception {
     HTTPSourceHandler handler = field("handler").ofType(HTTPSourceHandler.class)
-            .in(source).get();
+            .in(httpSource).get();
     //Cause an exception in the source - this is equivalent to any exception
     //thrown by the handler since the handler is called inside a try-catch
-    field("handler").ofType(HTTPSourceHandler.class).in(source).set(null);
+    field("handler").ofType(HTTPSourceHandler.class).in(httpSource).set(null);
     HttpResponse response = putWithEncoding("UTF-8", 1).response;
     Assert.assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
             response.getStatusLine().getStatusCode());
     //Set the original handler back so tests don't fail after this runs.
-    field("handler").ofType(HTTPSourceHandler.class).in(source).set(handler);
+    field("handler").ofType(HTTPSourceHandler.class).in(httpSource).set(handler);
   }
 
   @Test
@@ -458,15 +483,20 @@ public class TestHTTPSource {
 
   @Test
   public void testHttps() throws Exception {
-    doTestHttps(null, sslPort);
+    doTestHttps(null, httpsPort, httpsChannel);
   }
 
   @Test (expected = javax.net.ssl.SSLHandshakeException.class)
   public void testHttpsSSLv3() throws Exception {
-    doTestHttps("SSLv3", sslPort);
+    doTestHttps("SSLv3", httpsPort, httpsChannel);
   }
 
-  public void doTestHttps(String protocol, int port) throws Exception {
+  @Test
+  public void testHttpsGlobalKeystore() throws Exception {
+    doTestHttps(null, httpsGlobalKeystorePort, httpsGlobalKeystoreChannel);
+  }
+
+  private void doTestHttps(String protocol, int port, Channel channel) throws Exception {
     Type listType = new TypeToken<List<JSONEvent>>() {
     }.getType();
     List<JSONEvent> events = new ArrayList<JSONEvent>();
@@ -539,10 +569,10 @@ public class TestHTTPSource {
       int statusCode = httpsURLConnection.getResponseCode();
       Assert.assertEquals(200, statusCode);
 
-      transaction = httpsChannel.getTransaction();
+      transaction = channel.getTransaction();
       transaction.begin();
       for (int i = 0; i < 10; i++) {
-        Event e = httpsChannel.take();
+        Event e = channel.take();
         Assert.assertNotNull(e);
         Assert.assertEquals(String.valueOf(i), e.getHeaders().get("MsgNum"));
       }
@@ -577,7 +607,7 @@ public class TestHTTPSource {
     String json = gson.toJson(events, listType);
     HttpURLConnection httpURLConnection = null;
     try {
-      URL url = new URL("http://0.0.0.0:" + sslPort);
+      URL url = new URL("http://0.0.0.0:" + httpsPort);
       httpURLConnection = (HttpURLConnection) url.openConnection();
       httpURLConnection.setDoInput(true);
       httpURLConnection.setDoOutput(true);
@@ -594,12 +624,12 @@ public class TestHTTPSource {
   }
 
   private void takeWithEncoding(String encoding, int n, List<JSONEvent> events) throws Exception {
-    Transaction tx = channel.getTransaction();
+    Transaction tx = httpChannel.getTransaction();
     tx.begin();
     Event e = null;
     int i = 0;
     while (true) {
-      e = channel.take();
+      e = httpChannel.take();
       if (e == null) {
         break;
       }

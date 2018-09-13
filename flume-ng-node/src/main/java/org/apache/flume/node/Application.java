@@ -41,6 +41,7 @@ import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.lifecycle.LifecycleSupervisor;
 import org.apache.flume.lifecycle.LifecycleSupervisor.SupervisorPolicy;
+import org.apache.flume.util.SSLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -251,8 +252,7 @@ public class Application {
   public static void main(String[] args) {
 
     try {
-
-      boolean isZkConfigured = false;
+      SSLUtil.initGlobalSSLParameters();
 
       Options options = new Options();
 
@@ -294,10 +294,12 @@ public class Application {
       String agentName = commandLine.getOptionValue('n');
       boolean reload = !commandLine.hasOption("no-reload-conf");
 
+      boolean isZkConfigured = false;
       if (commandLine.hasOption('z') || commandLine.hasOption("zkConnString")) {
         isZkConfigured = true;
       }
-      Application application = null;
+
+      Application application;
       if (isZkConfigured) {
         // get options
         String zkConnectionStr = commandLine.getOptionValue('z');

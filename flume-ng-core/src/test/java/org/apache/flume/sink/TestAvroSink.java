@@ -103,13 +103,8 @@ public class TestAvroSink {
     sink = new AvroSink();
     channel = new MemoryChannel();
 
-    Context context = new Context();
+    Context context = createBaseContext();
 
-    context.put("hostname", hostname);
-    context.put("port", String.valueOf(port));
-    context.put("batch-size", String.valueOf(2));
-    context.put("connect-timeout", String.valueOf(2000L));
-    context.put("request-timeout", String.valueOf(3000L));
     if (compressionType.equals("deflate")) {
       context.put("compression-type", compressionType);
       context.put("compression-level", Integer.toString(compressionLevel));
@@ -119,6 +114,28 @@ public class TestAvroSink {
 
     Configurables.configure(sink, context);
     Configurables.configure(channel, context);
+  }
+
+  private Context createBaseContext() {
+    Context context = new Context();
+
+    context.put("hostname", hostname);
+    context.put("port", String.valueOf(port));
+    context.put("batch-size", String.valueOf(2));
+    context.put("connect-timeout", String.valueOf(2000L));
+    context.put("request-timeout", String.valueOf(3000L));
+
+    return context;
+  }
+
+  private Server createServer(AvroSourceProtocol protocol)
+      throws IllegalAccessException, InstantiationException {
+
+    Server server = new NettyServer(new SpecificResponder(
+        AvroSourceProtocol.class, protocol), new InetSocketAddress(
+        hostname, port));
+
+    return server;
   }
 
   @Test
@@ -387,82 +404,67 @@ public class TestAvroSink {
   public void testSslProcess() throws InterruptedException,
       EventDeliveryException, InstantiationException, IllegalAccessException {
     setUp();
-    Event event = EventBuilder.withBody("test event 1", Charsets.UTF_8);
-    Server server = createSslServer(new MockAvroServer());
 
-    server.start();
-
-    Context context = new Context();
-
-    context.put("hostname", hostname);
-    context.put("port", String.valueOf(port));
+    Context context = createBaseContext();
     context.put("ssl", String.valueOf(true));
     context.put("trust-all-certs", String.valueOf(true));
-    context.put("batch-size", String.valueOf(2));
-    context.put("connect-timeout", String.valueOf(2000L));
-    context.put("request-timeout", String.valueOf(3000L));
 
     Configurables.configure(sink, context);
 
-    sink.start();
-    Assert.assertTrue(LifecycleController.waitForOneOf(sink,
-        LifecycleState.START_OR_ERROR, 5000));
-
-    Transaction transaction = channel.getTransaction();
-
-    transaction.begin();
-    for (int i = 0; i < 10; i++) {
-      channel.put(event);
-    }
-    transaction.commit();
-    transaction.close();
-
-    for (int i = 0; i < 5; i++) {
-      Sink.Status status = sink.process();
-      Assert.assertEquals(Sink.Status.READY, status);
-    }
-
-    Assert.assertEquals(Sink.Status.BACKOFF, sink.process());
-
-    sink.stop();
-    Assert.assertTrue(LifecycleController.waitForOneOf(sink,
-        LifecycleState.STOP_OR_ERROR, 5000));
-
-    server.close();
+    doTestSslProcess();
   }
 
   @Test
-  public void testSslProcessWithTrustStore() throws InterruptedException,
+  public void testSslProcessWithComponentTruststore() throws InterruptedException,
       EventDeliveryException, InstantiationException, IllegalAccessException {
     setUp();
-    Event event = EventBuilder.withBody("test event 1", Charsets.UTF_8);
-    Server server = createSslServer(new MockAvroServer());
 
-    server.start();
-
-    Context context = new Context();
-
-    context.put("hostname", hostname);
-    context.put("port", String.valueOf(port));
+    Context context = createBaseContext();
     context.put("ssl", String.valueOf(true));
     context.put("truststore", "src/test/resources/truststore.jks");
     context.put("truststore-password", "password");
-    context.put("batch-size", String.valueOf(2));
-    context.put("connect-timeout", String.valueOf(2000L));
-    context.put("request-timeout", String.valueOf(3000L));
 
     Configurables.configure(sink, context);
+
+    doTestSslProcess();
+  }
+
+  @Test
+  public void testSslProcessWithGlobalTruststore() throws InterruptedException,
+      EventDeliveryException, InstantiationException, IllegalAccessException {
+    setUp();
+
+    System.setProperty("javax.net.ssl.trustStore", "src/test/resources/truststore.jks");
+    System.setProperty("javax.net.ssl.trustStorePassword", "password");
+
+    Context context = createBaseContext();
+    context.put("ssl", String.valueOf(true));
+
+    Configurables.configure(sink, context);
+
+    doTestSslProcess();
+
+    System.clearProperty("javax.net.ssl.trustStore");
+    System.clearProperty("javax.net.ssl.trustStorePassword");
+  }
+
+  private void doTestSslProcess() throws InterruptedException,
+      EventDeliveryException, InstantiationException, IllegalAccessException {
+    Server server = createSslServer(new MockAvroServer());
+    server.start();
 
     sink.start();
     Assert.assertTrue(LifecycleController.waitForOneOf(sink,
         LifecycleState.START_OR_ERROR, 5000));
 
     Transaction transaction = channel.getTransaction();
-
     transaction.begin();
+
+    Event event = EventBuilder.withBody("test event 1", Charsets.UTF_8);
     for (int i = 0; i < 10; i++) {
       channel.put(event);
     }
+
     transaction.commit();
     transaction.close();
 
@@ -478,16 +480,6 @@ public class TestAvroSink {
         LifecycleState.STOP_OR_ERROR, 5000));
 
     server.close();
-  }
-
-  private Server createServer(AvroSourceProtocol protocol)
-      throws IllegalAccessException, InstantiationException {
-
-    Server server = new NettyServer(new SpecificResponder(
-        AvroSourceProtocol.class, protocol), new InetSocketAddress(
-        hostname, port));
-
-    return server;
   }
 
   @Test
@@ -538,15 +530,9 @@ public class TestAvroSink {
     Event event = EventBuilder.withBody("Hello avro",
         Charset.forName("UTF8"));
 
-    context = new Context();
-
-    context.put("hostname", hostname);
-    context.put("port", String.valueOf(port));
+    context = createBaseContext();
     context.put("ssl", String.valueOf(true));
     context.put("trust-all-certs", String.valueOf(true));
-    context.put("batch-size", String.valueOf(2));
-    context.put("connect-timeout", String.valueOf(2000L));
-    context.put("request-timeout", String.valueOf(3000L));
     context.put("compression-type", "deflate");
     context.put("compression-level", Integer.toString(6));
 
@@ -591,57 +577,25 @@ public class TestAvroSink {
 
   @Test
   public void testSslSinkWithNonSslServer() throws InterruptedException,
-      EventDeliveryException, InstantiationException, IllegalAccessException {
+      InstantiationException, IllegalAccessException {
     setUp();
-    Event event = EventBuilder.withBody("test event 1", Charsets.UTF_8);
-    Server server = createServer(new MockAvroServer());
 
+    Server server = createServer(new MockAvroServer());
     server.start();
 
-    Context context = new Context();
-
-    context.put("hostname", hostname);
-    context.put("port", String.valueOf(port));
+    Context context = createBaseContext();
     context.put("ssl", String.valueOf(true));
     context.put("trust-all-certs", String.valueOf(true));
-    context.put("batch-size", String.valueOf(2));
-    context.put("connect-timeout", String.valueOf(2000L));
-    context.put("request-timeout", String.valueOf(3000L));
 
     Configurables.configure(sink, context);
 
-    sink.start();
-    Assert.assertTrue(LifecycleController.waitForOneOf(sink,
-        LifecycleState.START_OR_ERROR, 5000));
-
-    Transaction transaction = channel.getTransaction();
-
-    transaction.begin();
-    for (int i = 0; i < 10; i++) {
-      channel.put(event);
-    }
-    transaction.commit();
-    transaction.close();
-
-    boolean failed = false;
-    try {
-      for (int i = 0; i < 5; i++) {
-        sink.process();
-        failed = true;
-      }
-    } catch (EventDeliveryException ex) {
-      logger.info("Correctly failed to send event", ex);
-    }
-
-
-    sink.stop();
-    Assert.assertTrue(LifecycleController.waitForOneOf(sink,
-        LifecycleState.STOP_OR_ERROR, 5000));
+    boolean failed = doRequestWhenFailureExpected();
 
     server.close();
 
-    if (failed) {
-      Assert.fail("SSL-enabled sink successfully connected to a non-SSL-enabled server, that's wrong.");
+    if (!failed) {
+      Assert.fail("SSL-enabled sink successfully connected to a non-SSL-enabled server, " +
+          "that's wrong.");
     }
 
     SinkCounter sinkCounter = (SinkCounter) Whitebox.getInternalState(sink, "sinkCounter");
@@ -649,61 +603,59 @@ public class TestAvroSink {
   }
 
   @Test
-  public void testSslSinkWithNonTrustedCert()
-      throws InterruptedException, EventDeliveryException, InstantiationException,
-             IllegalAccessException {
+  public void testSslSinkWithNonTrustedCert() throws InterruptedException,
+      InstantiationException, IllegalAccessException {
     setUp();
-    Event event = EventBuilder.withBody("test event 1", Charsets.UTF_8);
-    Server server = createSslServer(new MockAvroServer());
 
+    Server server = createSslServer(new MockAvroServer());
     server.start();
 
-    Context context = new Context();
-
-    context.put("hostname", hostname);
-    context.put("port", String.valueOf(port));
+    Context context = createBaseContext();
     context.put("ssl", String.valueOf(true));
-    context.put("batch-size", String.valueOf(2));
-    context.put("connect-timeout", String.valueOf(2000L));
-    context.put("request-timeout", String.valueOf(3000L));
 
     Configurables.configure(sink, context);
 
+    boolean failed = doRequestWhenFailureExpected();
+
+    server.close();
+
+    if (!failed) {
+      Assert.fail("SSL-enabled sink successfully connected to a server with an " +
+          "untrusted certificate when it should have failed");
+    }
+    SinkCounter sinkCounter = (SinkCounter) Whitebox.getInternalState(sink, "sinkCounter");
+    Assert.assertEquals(1, sinkCounter.getEventWriteFail());
+  }
+
+  private boolean doRequestWhenFailureExpected()
+      throws InterruptedException {
     sink.start();
     Assert.assertTrue(LifecycleController.waitForOneOf(sink,
         LifecycleState.START_OR_ERROR, 5000));
 
     Transaction transaction = channel.getTransaction();
-
     transaction.begin();
-    for (int i = 0; i < 10; i++) {
-      channel.put(event);
-    }
+
+    Event event = EventBuilder.withBody("test event 1", Charsets.UTF_8);
+    channel.put(event);
+
     transaction.commit();
     transaction.close();
 
-    boolean failed = false;
+    boolean failed;
     try {
-      for (int i = 0; i < 5; i++) {
-        sink.process();
-        failed = true;
-      }
+      sink.process();
+      failed = false;
     } catch (EventDeliveryException ex) {
       logger.info("Correctly failed to send event", ex);
+      failed = true;
     }
-
 
     sink.stop();
     Assert.assertTrue(LifecycleController.waitForOneOf(sink,
         LifecycleState.STOP_OR_ERROR, 5000));
 
-    server.close();
-
-    if (failed) {
-      Assert.fail("SSL-enabled sink successfully connected to a server with an untrusted certificate when it should have failed");
-    }
-    SinkCounter sinkCounter = (SinkCounter) Whitebox.getInternalState(sink, "sinkCounter");
-    Assert.assertEquals(1, sinkCounter.getEventWriteFail());
+    return failed;
   }
 
   @Test

@@ -749,6 +749,100 @@ the selector will attempt to write the events to the optional channels. Any
 failures are simply ignored in that case.
 
 
+SSL/TLS support
+---------------
+
+Several Flume components support the SSL/TLS protocols in order to communicate with other systems
+securely.
+
+===============  ======================
+Component        SSL server or client
+===============  ======================
+Avro Source      server
+Avro Sink        client
+Thrift Source    server
+Thrift Sink      client
+Kafka Source     client
+Kafka Channel    client
+Kafka Sink       client
+HTTP Source      server
+JMS Source       client
+===============  ======================
+
+The SSL compatible components have several configuration parameters to set up SSL, like
+enable SSL flag, keystore / truststore parameters (location, password, type) and additional
+SSL parameters (eg. disabled protocols).
+
+Enabling SSL for a component is always specified at component level in the agent configuration file.
+So some components may be configured to use SSL while others not (even with the same component type).
+
+The keystore / truststore setup can be specified at component level or globally.
+
+In case of the component level setup, the keystore / truststore is configured in the agent
+configuration file through component specific parameters. The advantage of this method is that the
+components can use different keystores (if this would be needed). The disadvantage is that the
+keystore parameters must be copied for each component in the agent configuration file.
+The component level setup is optional, but if it is defined, it has higher precedence than
+the global parameters.
+
+With the global setup, it is enough to define the keystore / truststore parameters once
+and use the same settings for all components, which means less and more centralized configuration.
+
+The global setup can be configured either through system properties or through environment variables.
+
+==================================  ===============================  ==================================
+System property                     Environment variable             Description
+==================================  ===============================  ==================================
+javax.net.ssl.keyStore              FLUME_SSL_KEYSTORE_PATH          Keystore location
+javax.net.ssl.keyStorePassword      FLUME_SSL_KEYSTORE_PASSWORD      Keystore password
+javax.net.ssl.keyStoreType          FLUME_SSL_KEYSTORE_TYPE          Keystore type (by default JKS)
+javax.net.ssl.trustStore            FLUME_SSL_TRUSTSTORE_PATH        Truststore location
+javax.net.ssl.trustStorePassword    FLUME_SSL_TRUSTSTORE_PASSWORD    Truststore password
+javax.net.ssl.trustStoreType        FLUME_SSL_TRUSTSTORE_TYPE        Truststore type (by default JKS)
+==================================  ===============================  ==================================
+
+The SSL system properties can either be passed on the command line or by setting the ``JAVA_OPTS``
+environment variable in *conf/flume-env.sh*. (Although, using the command line is inadvisable because
+the commands including the passwords will be saved to the command history.)
+
+.. code-block:: properties
+
+    export JAVA_OPTS="$JAVA_OPTS -Djavax.net.ssl.keyStore=/path/to/keystore.jks"
+    export JAVA_OPTS="$JAVA_OPTS -Djavax.net.ssl.keyStorePassword=password"
+
+Flume uses the system properties defined in JSSE (Java Secure Socket Extension), so this is
+a standard way for setting up SSL. On the other hand, specifying passwords in system properties
+means that the passwords can be seen in the process list. For cases where it is not acceptable,
+it is also be possible to define the parameters in environment variables. Flume initializes
+the JSSE system properties from the corresponding environment variables internally in this case.
+
+The SSL environment variables can either be set in the shell environment before
+starting Flume or in *conf/flume-env.sh*. (Although, using the command line is inadvisable because
+the commands including the passwords will be saved to the command history.)
+
+.. code-block:: properties
+
+    export FLUME_SSL_KEYSTORE_PATH=/path/to/keystore.jks
+    export FLUME_SSL_KEYSTORE_PASSWORD=password
+
+**Please note:**
+
+* SSL must be enabled at component level. Specifying the global SSL parameters alone will not
+  have any effect.
+* If the global SSL parameters are specified at multiple levels, the priority is the
+  following (from higher to lower):
+
+  * component parameters in agent config
+  * system properties
+  * environment variables
+
+* If SSL is enabled for a component, but the SSL parameters are not specified in any of the ways
+  described above, then
+
+  * in case of keystores: configuration error
+  * in case of truststores: the default truststore will be used (``jssecacerts`` / ``cacerts`` in Oracle JDK)
+
+
 Flume Sources
 -------------
 
@@ -773,10 +867,19 @@ selector.*
 interceptors         --                Space-separated list of interceptors
 interceptors.*
 compression-type     none              This can be "none" or "deflate".  The compression-type must match the compression-type of matching AvroSource
-ssl                  false             Set this to true to enable SSL encryption. You must also specify a "keystore" and a "keystore-password".
-keystore             --                This is the path to a Java keystore file. Required for SSL.
-keystore-password    --                The password for the Java keystore. Required for SSL.
+ssl                  false             Set this to true to enable SSL encryption. If SSL is enabled,
+                                       you must also specify a "keystore" and a "keystore-password",
+                                       either through component level parameters (see below)
+                                       or as global SSL parameters (see *SSL/TLS support* section).
+keystore             --                This is the path to a Java keystore file.
+                                       If not specified here, then the global keystore will be used
+                                       (if defined, otherwise configuration error).
+keystore-password    --                The password for the Java keystore.
+                                       If not specified here, then the global keystore password will be used
+                                       (if defined, otherwise configuration error).
 keystore-type        JKS               The type of the Java keystore. This can be "JKS" or "PKCS12".
+                                       If not specified here, then the global keystore type will be used
+                                       (if defined, otherwise the default is JKS).
 exclude-protocols    SSLv3             Space-separated list of SSL/TLS protocols to exclude. SSLv3 will always be excluded in addition to the protocols specified.
 ipFilter             false             Set this to true to enable ipFiltering for netty
 ipFilterRules        --                Define N netty ipFilter pattern rules with this config.
@@ -819,9 +922,9 @@ agent-principal and agent-keytab are the properties used by the
 Thrift source to authenticate to the kerberos KDC.
 Required properties are in **bold**.
 
-==================   ===========  ===================================================
+==================   ===========  ==================================================================
 Property Name        Default      Description
-==================   ===========  ===================================================
+==================   ===========  ==================================================================
 **channels**         --
 **type**             --           The component type name, needs to be ``thrift``
 **bind**             --           hostname or IP address to listen on
@@ -831,15 +934,24 @@ selector.type
 selector.*
 interceptors         --           Space separated list of interceptors
 interceptors.*
-ssl                  false        Set this to true to enable SSL encryption. You must also specify a "keystore" and a "keystore-password".
-keystore             --           This is the path to a Java keystore file. Required for SSL.
-keystore-password    --           The password for the Java keystore. Required for SSL.
+ssl                  false        Set this to true to enable SSL encryption. If SSL is enabled,
+                                  you must also specify a "keystore" and a "keystore-password",
+                                  either through component level parameters (see below)
+                                  or as global SSL parameters (see *SSL/TLS support* section)
+keystore             --           This is the path to a Java keystore file.
+                                  If not specified here, then the global keystore will be used
+                                  (if defined, otherwise configuration error).
+keystore-password    --           The password for the Java keystore.
+                                  If not specified here, then the global keystore password will be used
+                                  (if defined, otherwise configuration error).
 keystore-type        JKS          The type of the Java keystore. This can be "JKS" or "PKCS12".
+                                  If not specified here, then the global keystore type will be used
+                                  (if defined, otherwise the default is JKS).
 exclude-protocols    SSLv3        Space-separated list of SSL/TLS protocols to exclude. SSLv3 will always be excluded in addition to the protocols specified.
 kerberos             false        Set to true to enable kerberos authentication. In kerberos mode, agent-principal and agent-keytab  are required for successful authentication. The Thrift source in secure mode, will accept connections only from Thrift clients that have kerberos enabled and are successfully authenticated to the kerberos KDC.
 agent-principal      --           The kerberos principal used by the Thrift Source to authenticate to the kerberos KDC.
 agent-keytab         —-           The keytab location used by the Thrift Source in combination with the agent-principal to authenticate to the kerberos KDC.
-==================   ===========  ===================================================
+==================   ===========  ==================================================================
 
 Example for agent named a1:
 
@@ -963,8 +1075,8 @@ durableSubscriptionName     --           Name used to identify the durable subsc
 =========================   ===========  ==============================================================
 
 
-Converter
-'''''''''
+JMS message converter
+'''''''''''''''''''''
 The JMS source allows pluggable converters, though it's likely the default converter will work
 for most purposes. The default converter is able to convert Bytes, Text, and Object messages
 to FlumeEvents. In all cases, the properties in the message are added as headers to the
@@ -998,17 +1110,14 @@ Example for agent named a1:
   a1.sources.r1.destinationType = QUEUE
 
 
-SSL/TLS support
-'''''''''''''''
+SSL and JMS Source
+''''''''''''''''''
 
 JMS client implementations typically support to configure SSL/TLS via some Java system properties defined by JSSE
 (Java Secure Socket Extension). Specifying these system properties for Flume's JVM, JMS Source (or more precisely the
 JMS client implementation used by the JMS Source) can connect to the JMS server through SSL (of course only when the JMS
 server has also been set up to use SSL).
 It should work with any JMS provider and has been tested with ActiveMQ, IBM MQ and Oracle WebLogic.
-
-The JSSE Java system properties can either be passed on the command line or by setting the ``JAVA_OPTS`` environment
-variable in *conf/flume-env.sh* (the examples below show the second approach).
 
 The following sections describe the SSL configuration steps needed on the Flume side only. You can find more detailed
 descriptions about the server side setup of the different JMS providers and also full working configuration examples on
@@ -1017,13 +1126,8 @@ Flume Wiki.
 **SSL transport / server authentication:**
 
 If the JMS server uses self-signed certificate or its certificate is signed by a non-trusted CA (eg. the company's own
-CA), then a truststore (containing the right certificate) needs to be set up and passed to Flume via the following JSSE
-Java system properties:
-
-.. code-block:: properties
-
-    export JAVA_OPTS="$JAVA_OPTS -Djavax.net.ssl.trustStore=/path/to/truststore.jks"
-    export JAVA_OPTS="$JAVA_OPTS -Djavax.net.ssl.trustStorePassword=password"
+CA), then a truststore (containing the right certificate) needs to be set up and passed to Flume. It can be done via
+the global SSL parameters. For more details about the global SSL setup, see the *SSL/TLS support* section.
 
 Some JMS providers require SSL specific JNDI Initial Context Factory and/or Provider URL settings when using SSL (eg.
 ActiveMQ uses ssl:// URL prefix instead of tcp://).
@@ -1035,19 +1139,21 @@ config file.
 JMS Source can authenticate to the JMS server through client certificate authentication instead of the usual
 user/password login (when SSL is used and the JMS server is configured to accept this kind of authentication).
 
-The keystore containing Flume's key used for the authentication needs to be configured via the following JSSE Java
-system properties (similarly to the truststore properties above):
-
-.. code-block:: properties
-
-    export JAVA_OPTS="$JAVA_OPTS -Djavax.net.ssl.keyStore=/path/to/keystore.jks"
-    export JAVA_OPTS="$JAVA_OPTS -Djavax.net.ssl.keyStorePassword=password"
+The keystore containing Flume's key used for the authentication needs to be configured via the global SSL parameters
+again. For more details about the global SSL setup, see the *SSL/TLS support* section.
 
 The keystore should contain only one key (if multiple keys are present, then the first one will be used).
 The key password must be the same as the keystore password.
 
 In case of client certificate authentication, it is not needed to specify the ``userName`` / ``passwordFile`` properties
 for the JMS Source in the Flume agent config file.
+
+**Please note:**
+
+There are no component level configuration parameters for JMS Source unlike in case of other components.
+No enable SSL flag either.
+SSL setup is controlled by JNDI/Provider URL settings (ultimately the JMS server settings) and by the presence / absence
+of the truststore / keystore.
 
 
 Spooling Directory Source
@@ -1440,9 +1546,12 @@ Example configuration with server side authentication and data encryption.
     a1.sources.source1.kafka.topics = mytopic
     a1.sources.source1.kafka.consumer.group.id = flume-consumer
     a1.sources.source1.kafka.consumer.security.protocol = SSL
+    # optional, the global truststore can be used alternatively
     a1.sources.source1.kafka.consumer.ssl.truststore.location=/path/to/truststore.jks
     a1.sources.source1.kafka.consumer.ssl.truststore.password=<password to access the truststore>
 
+Specyfing the truststore is optional here, the global truststore can be used instead.
+For more details about the global SSL setup, see the *SSL/TLS support* section.
 
 Note: By default the property ``ssl.endpoint.identification.algorithm``
 is not defined, so hostname verification is not performed.
@@ -1458,13 +1567,15 @@ against one of the following two fields:
 #) Common Name (CN) https://tools.ietf.org/html/rfc6125#section-2.3
 #) Subject Alternative Name (SAN) https://tools.ietf.org/html/rfc5280#section-4.2.1.6
 
-If client side authentication is also required then additionally the following should be added to Flume agent configuration.
+If client side authentication is also required then additionally the following needs to be added to Flume agent
+configuration or the global SSL setup can be used (see *SSL/TLS support* section).
 Each Flume agent has to have its client certificate which has to be trusted by Kafka brokers either
 individually or by their signature chain. Common example is to sign each client certificate by a single Root CA
 which in turn is trusted by Kafka brokers.
 
 .. code-block:: properties
 
+    # optional, the global keystore can be used alternatively
     a1.sources.source1.kafka.consumer.ssl.keystore.location=/path/to/client.keystore.jks
     a1.sources.source1.kafka.consumer.ssl.keystore.password=<password to access the keystore>
 
@@ -1511,6 +1622,7 @@ Example secure configuration using SASL_SSL:
     a1.sources.source1.kafka.consumer.security.protocol = SASL_SSL
     a1.sources.source1.kafka.consumer.sasl.mechanism = GSSAPI
     a1.sources.source1.kafka.consumer.sasl.kerberos.service.name = kafka
+    # optional, the global truststore can be used alternatively
     a1.sources.source1.kafka.consumer.ssl.truststore.location=/path/to/truststore.jks
     a1.sources.source1.kafka.consumer.ssl.truststore.password=<password to access the truststore>
 
@@ -1801,8 +1913,14 @@ interceptors          --                                            Space-separa
 interceptors.*
 enableSSL             false                                         Set the property true, to enable SSL. *HTTP Source does not support SSLv3.*
 excludeProtocols      SSLv3                                         Space-separated list of SSL/TLS protocols to exclude. SSLv3 is always excluded.
-keystore                                                            Location of the keystore includng keystore file name
-keystorePassword                                                    Keystore password
+keystore                                                            Location of the keystore including keystore file name.
+                                                                    If SSL is enabled but the keystore is not specified here,
+                                                                    then the global keystore will be used
+                                                                    (if defined, otherwise configuration error).
+keystorePassword                                                    Keystore password.
+                                                                    If SSL is enabled but the keystore password is not specified here,
+                                                                    then the global keystore password will be used
+                                                                    (if defined, otherwise configuration error).
 QueuedThreadPool.*                                                  Jetty specific settings to be set on org.eclipse.jetty.util.thread.QueuedThreadPool.
                                                                     N.B. QueuedThreadPool will only be used if at least one property of this class is set.
 HttpConfiguration.*                                                 Jetty specific settings to be set on org.eclipse.jetty.server.HttpConfiguration
@@ -2372,9 +2490,9 @@ compression-type             none                                               
 compression-level            6                                                      The level of compression to compress event. 0 = no compression and 1-9 is compression.  The higher the number the more compression
 ssl                          false                                                  Set to true to enable SSL for this AvroSink. When configuring SSL, you can optionally set a "truststore", "truststore-password", "truststore-type", and specify whether to "trust-all-certs".
 trust-all-certs              false                                                  If this is set to true, SSL server certificates for remote servers (Avro Sources) will not be checked. This should NOT be used in production because it makes it easier for an attacker to execute a man-in-the-middle attack and "listen in" on the encrypted connection.
-truststore                   --                                                     The path to a custom Java truststore file. Flume uses the certificate authority information in this file to determine whether the remote Avro Source's SSL authentication credentials should be trusted. If not specified, the default Java JSSE certificate authority files (typically "jssecacerts" or "cacerts" in the Oracle JRE) will be used.
-truststore-password          --                                                     The password for the specified truststore.
-truststore-type              JKS                                                    The type of the Java truststore. This can be "JKS" or other supported Java truststore type.
+truststore                   --                                                     The path to a custom Java truststore file. Flume uses the certificate authority information in this file to determine whether the remote Avro Source's SSL authentication credentials should be trusted. If not specified, then the global keystore will be used. If the global keystore not specified either, then the default Java JSSE certificate authority files (typically "jssecacerts" or "cacerts" in the Oracle JRE) will be used.
+truststore-password          --                                                     The password for the truststore. If not specified, then the global keystore password will be used (if defined).
+truststore-type              JKS                                                    The type of the Java truststore. This can be "JKS" or other supported Java truststore type. If not specified, then the global keystore type will be used (if defined, otherwise the defautl is JKS).
 exclude-protocols            SSLv3                                                  Space-separated list of SSL/TLS protocols to exclude. SSLv3 will always be excluded in addition to the protocols specified.
 maxIoWorkers                 2 * the number of available processors in the machine  The maximum number of I/O worker threads. This is configured on the NettyAvroRpcClient NioClientSocketChannelFactory.
 ==========================   =====================================================  ===========================================================================================
@@ -2417,9 +2535,9 @@ connect-timeout              20000    Amount of time (ms) to allow for the first
 request-timeout              20000    Amount of time (ms) to allow for requests after the first.
 connection-reset-interval    none     Amount of time (s) before the connection to the next hop is reset. This will force the Thrift Sink to reconnect to the next hop. This will allow the sink to connect to hosts behind a hardware load-balancer when news hosts are added without having to restart the agent.
 ssl                          false    Set to true to enable SSL for this ThriftSink. When configuring SSL, you can optionally set a "truststore", "truststore-password" and "truststore-type"
-truststore                   --       The path to a custom Java truststore file. Flume uses the certificate authority information in this file to determine whether the remote Thrift Source's SSL authentication credentials should be trusted. If not specified, the default Java JSSE certificate authority files (typically "jssecacerts" or "cacerts" in the Oracle JRE) will be used.
-truststore-password          --       The password for the specified truststore.
-truststore-type              JKS      The type of the Java truststore. This can be "JKS" or other supported Java truststore type.
+truststore                   --       The path to a custom Java truststore file. Flume uses the certificate authority information in this file to determine whether the remote Thrift Source's SSL authentication credentials should be trusted. If not specified, then the global keystore will be used. If the global keystore not specified either, then the default Java JSSE certificate authority files (typically "jssecacerts" or "cacerts" in the Oracle JRE) will be used.
+truststore-password          --       The password for the truststore. If not specified, then the global keystore password will be used (if defined).
+truststore-type              JKS      The type of the Java truststore. This can be "JKS" or other supported Java truststore type. If not specified, then the global keystore type will be used (if defined, otherwise the defautl is JKS).
 exclude-protocols            SSLv3    Space-separated list of SSL/TLS protocols to exclude
 kerberos                     false    Set to true to enable kerberos authentication. In kerberos mode, client-principal, client-keytab and server-principal are required for successful authentication and communication to a kerberos enabled Thrift Source.
 client-principal             —-       The kerberos principal used by the Thrift Sink to authenticate to the kerberos KDC.
@@ -3002,9 +3120,12 @@ Example configuration with server side authentication and data encryption.
     a1.sinks.sink1.kafka.bootstrap.servers = kafka-1:9093,kafka-2:9093,kafka-3:9093
     a1.sinks.sink1.kafka.topic = mytopic
     a1.sinks.sink1.kafka.producer.security.protocol = SSL
+    # optional, the global truststore can be used alternatively
     a1.sinks.sink1.kafka.producer.ssl.truststore.location = /path/to/truststore.jks
     a1.sinks.sink1.kafka.producer.ssl.truststore.password = <password to access the truststore>
 
+Specyfing the truststore is optional here, the global truststore can be used instead.
+For more details about the global SSL setup, see the *SSL/TLS support* section.
 
 Note: By default the property ``ssl.endpoint.identification.algorithm``
 is not defined, so hostname verification is not performed.
@@ -3020,13 +3141,15 @@ against one of the following two fields:
 #) Common Name (CN) https://tools.ietf.org/html/rfc6125#section-2.3
 #) Subject Alternative Name (SAN) https://tools.ietf.org/html/rfc5280#section-4.2.1.6
 
-If client side authentication is also required then additionally the following should be added to Flume agent configuration.
+If client side authentication is also required then additionally the following needs to be added to Flume agent
+configuration or the global SSL setup can be used (see *SSL/TLS support* section).
 Each Flume agent has to have its client certificate which has to be trusted by Kafka brokers either
 individually or by their signature chain. Common example is to sign each client certificate by a single Root CA
 which in turn is trusted by Kafka brokers.
 
 .. code-block:: properties
 
+    # optional, the global keystore can be used alternatively
     a1.sinks.sink1.kafka.producer.ssl.keystore.location = /path/to/client.keystore.jks
     a1.sinks.sink1.kafka.producer.ssl.keystore.password = <password to access the keystore>
 
@@ -3072,6 +3195,7 @@ Example secure configuration using SASL_SSL:
     a1.sinks.sink1.kafka.producer.security.protocol = SASL_SSL
     a1.sinks.sink1.kafka.producer.sasl.mechanism = GSSAPI
     a1.sinks.sink1.kafka.producer.sasl.kerberos.service.name = kafka
+    # optional, the global truststore can be used alternatively
     a1.sinks.sink1.kafka.producer.ssl.truststore.location = /path/to/truststore.jks
     a1.sinks.sink1.kafka.producer.ssl.truststore.password = <password to access the truststore>
 
@@ -3401,12 +3525,16 @@ Example configuration with server side authentication and data encryption.
     a1.channels.channel1.kafka.topic = channel1
     a1.channels.channel1.kafka.consumer.group.id = flume-consumer
     a1.channels.channel1.kafka.producer.security.protocol = SSL
+    # optional, the global truststore can be used alternatively
     a1.channels.channel1.kafka.producer.ssl.truststore.location = /path/to/truststore.jks
     a1.channels.channel1.kafka.producer.ssl.truststore.password = <password to access the truststore>
     a1.channels.channel1.kafka.consumer.security.protocol = SSL
+    # optional, the global truststore can be used alternatively
     a1.channels.channel1.kafka.consumer.ssl.truststore.location = /path/to/truststore.jks
     a1.channels.channel1.kafka.consumer.ssl.truststore.password = <password to access the truststore>
 
+Specyfing the truststore is optional here, the global truststore can be used instead.
+For more details about the global SSL setup, see the *SSL/TLS support* section.
 
 Note: By default the property ``ssl.endpoint.identification.algorithm``
 is not defined, so hostname verification is not performed.
@@ -3423,15 +3551,18 @@ against one of the following two fields:
 #) Common Name (CN) https://tools.ietf.org/html/rfc6125#section-2.3
 #) Subject Alternative Name (SAN) https://tools.ietf.org/html/rfc5280#section-4.2.1.6
 
-If client side authentication is also required then additionally the following should be added to Flume agent configuration.
+If client side authentication is also required then additionally the following needs to be added to Flume agent
+configuration or the global SSL setup can be used (see *SSL/TLS support* section).
 Each Flume agent has to have its client certificate which has to be trusted by Kafka brokers either
 individually or by their signature chain. Common example is to sign each client certificate by a single Root CA
 which in turn is trusted by Kafka brokers.
 
 .. code-block:: properties
 
+    # optional, the global keystore can be used alternatively
     a1.channels.channel1.kafka.producer.ssl.keystore.location = /path/to/client.keystore.jks
     a1.channels.channel1.kafka.producer.ssl.keystore.password = <password to access the keystore>
+    # optional, the global keystore can be used alternatively
     a1.channels.channel1.kafka.consumer.ssl.keystore.location = /path/to/client.keystore.jks
     a1.channels.channel1.kafka.consumer.ssl.keystore.password = <password to access the keystore>
 
@@ -3482,11 +3613,13 @@ Example secure configuration using SASL_SSL:
     a1.channels.channel1.kafka.producer.security.protocol = SASL_SSL
     a1.channels.channel1.kafka.producer.sasl.mechanism = GSSAPI
     a1.channels.channel1.kafka.producer.sasl.kerberos.service.name = kafka
+    # optional, the global truststore can be used alternatively
     a1.channels.channel1.kafka.producer.ssl.truststore.location = /path/to/truststore.jks
     a1.channels.channel1.kafka.producer.ssl.truststore.password = <password to access the truststore>
     a1.channels.channel1.kafka.consumer.security.protocol = SASL_SSL
     a1.channels.channel1.kafka.consumer.sasl.mechanism = GSSAPI
     a1.channels.channel1.kafka.consumer.sasl.kerberos.service.name = kafka
+    # optional, the global truststore can be used alternatively
     a1.channels.channel1.kafka.consumer.ssl.truststore.location = /path/to/truststore.jks
     a1.channels.channel1.kafka.consumer.ssl.truststore.password = <password to access the truststore>
 

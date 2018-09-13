@@ -65,6 +65,7 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
+import org.apache.flume.util.SSLUtil;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.socket.SocketChannel;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
@@ -586,11 +587,13 @@ public class NettyAvroRpcClient extends AbstractRpcClient implements RpcClient {
     trustAllCerts = Boolean.parseBoolean(properties.getProperty(
         RpcClientConfigurationConstants.CONFIG_TRUST_ALL_CERTS));
     truststore = properties.getProperty(
-        RpcClientConfigurationConstants.CONFIG_TRUSTSTORE);
+        RpcClientConfigurationConstants.CONFIG_TRUSTSTORE, SSLUtil.getGlobalTruststorePath());
     truststorePassword = properties.getProperty(
-        RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_PASSWORD);
+        RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_PASSWORD,
+        SSLUtil.getGlobalTruststorePassword());
     truststoreType = properties.getProperty(
-        RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_TYPE, "JKS");
+        RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_TYPE,
+        SSLUtil.getGlobalTruststoreType("JKS"));
     String excludeProtocolsStr = properties.getProperty(
         RpcClientConfigurationConstants.CONFIG_EXCLUDE_PROTOCOLS);
     if (excludeProtocolsStr == null) {

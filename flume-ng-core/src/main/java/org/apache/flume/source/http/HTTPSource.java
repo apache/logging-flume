@@ -28,6 +28,7 @@ import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.source.AbstractSource;
 import org.apache.flume.tools.FlumeBeanConfigurator;
 import org.apache.flume.tools.HTTPServerConstraintUtil;
+import org.apache.flume.util.SSLUtil;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
@@ -130,11 +131,13 @@ public class HTTPSource extends AbstractSource implements
 
       if (sslEnabled) {
         LOG.debug("SSL configuration enabled");
-        keyStorePath = context.getString(HTTPSourceConfigurationConstants.SSL_KEYSTORE);
+        keyStorePath = context.getString(HTTPSourceConfigurationConstants.SSL_KEYSTORE,
+                SSLUtil.getGlobalKeystorePath());
         Preconditions.checkArgument(keyStorePath != null && !keyStorePath.isEmpty(),
                                     "Keystore is required for SSL Conifguration" );
-        keyStorePassword =
-            context.getString(HTTPSourceConfigurationConstants.SSL_KEYSTORE_PASSWORD);
+        keyStorePassword = context.getString(
+                HTTPSourceConfigurationConstants.SSL_KEYSTORE_PASSWORD,
+                SSLUtil.getGlobalKeystorePassword());
         Preconditions.checkArgument(keyStorePassword != null,
             "Keystore password is required for SSL Configuration");
         String excludeProtocolsStr =
