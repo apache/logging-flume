@@ -36,6 +36,7 @@ import org.apache.flume.Source;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.conf.LogPrivacyUtil;
+import org.apache.flume.conf.PasswordConfigurator;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.source.avro.AvroFlumeEvent;
@@ -181,7 +182,7 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
 
     enableSsl = context.getBoolean(SSL_KEY, false);
     keystore = context.getString(KEYSTORE_KEY);
-    keystorePassword = context.getString(KEYSTORE_PASSWORD_KEY);
+    keystorePassword = PasswordConfigurator.getPassword(context, KEYSTORE_PASSWORD_KEY);
     keystoreType = context.getString(KEYSTORE_TYPE_KEY, "JKS");
     String excludeProtocolsStr = context.getString(EXCLUDE_PROTOCOLS);
     if (excludeProtocolsStr == null) {
