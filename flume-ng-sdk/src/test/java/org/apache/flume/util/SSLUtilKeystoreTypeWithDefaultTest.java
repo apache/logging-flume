@@ -38,7 +38,8 @@ public class SSLUtilKeystoreTypeWithDefaultTest extends AbstractSSLUtilTest {
     });
   }
 
-  public SSLUtilKeystoreTypeWithDefaultTest(String sysPropValue, String envVarValue, String expectedValue) {
+  public SSLUtilKeystoreTypeWithDefaultTest(String sysPropValue, String envVarValue,
+                                            String expectedValue) {
     super(sysPropValue, envVarValue, expectedValue);
   }
 

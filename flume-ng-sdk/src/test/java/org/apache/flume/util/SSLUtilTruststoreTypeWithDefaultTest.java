@@ -38,7 +38,8 @@ public class SSLUtilTruststoreTypeWithDefaultTest extends AbstractSSLUtilTest {
     });
   }
 
-  public SSLUtilTruststoreTypeWithDefaultTest(String sysPropValue, String envVarValue, String expectedValue) {
+  public SSLUtilTruststoreTypeWithDefaultTest(String sysPropValue, String envVarValue,
+                                              String expectedValue) {
     super(sysPropValue, envVarValue, expectedValue);
   }
 

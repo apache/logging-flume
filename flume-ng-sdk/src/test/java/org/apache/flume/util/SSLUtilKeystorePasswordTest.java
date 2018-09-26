@@ -23,7 +23,8 @@ import org.junit.Test;
 
 public class SSLUtilKeystorePasswordTest extends AbstractSSLUtilTest {
 
-  public SSLUtilKeystorePasswordTest(String sysPropValue, String envVarValue, String expectedValue) {
+  public SSLUtilKeystorePasswordTest(String sysPropValue, String envVarValue,
+                                     String expectedValue) {
     super(sysPropValue, envVarValue, expectedValue);
   }
 

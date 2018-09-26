@@ -80,7 +80,7 @@ public abstract class AbstractSSLUtilTest {
   private static void setEnvVar(String name, String value) {
     try {
       injectEnvironmentVariable(name, value);
-    } catch(ReflectiveOperationException e) {
+    } catch (ReflectiveOperationException e) {
       throw new AssertionError("Test setup  failed.", e);
     }
   }
