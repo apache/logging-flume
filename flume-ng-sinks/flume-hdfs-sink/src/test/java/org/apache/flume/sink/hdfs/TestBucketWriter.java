@@ -411,6 +411,12 @@ public class TestBucketWriter {
     SequenceFileRenameRetryCoreTest(2, false);
   }
 
+  @Test
+  public void testSequenceFileSystemCloseRetries() throws Exception {
+    SequenceFileCloseRetryCoreTest(5);
+    SequenceFileCloseRetryCoreTest(1);
+  }
+
   public void SequenceFileRenameRetryCoreTest(int numberOfRetriesRequired, boolean closeSucceed)
       throws Exception {
     String hdfsPath = "file:///tmp/flume-test." +
@@ -448,6 +454,39 @@ public class TestBucketWriter {
     Assert.assertTrue("Expected " + numberOfRetriesRequired + " " +
                       "but got " + bucketWriter.renameTries.get(),
                       bucketWriter.renameTries.get() == numberOfRetriesRequired);
+  }
+
+  private void SequenceFileCloseRetryCoreTest(int numberOfRetriesRequired)
+      throws Exception {
+    String hdfsPath = "file:///tmp/flume-test." +
+        Calendar.getInstance().getTimeInMillis() +
+        "." + Thread.currentThread().getId();
+
+    Context context = new Context();
+    Configuration conf = new Configuration();
+    FileSystem fs = FileSystem.get(conf);
+    Path dirPath = new Path(hdfsPath);
+    fs.delete(dirPath, true);
+    fs.mkdirs(dirPath);
+    context.put("hdfs.path", hdfsPath);
+    context.put("hdfs.closeTries", String.valueOf(numberOfRetriesRequired));
+    context.put("hdfs.rollCount", "1");
+    context.put("hdfs.retryInterval", "1");
+    context.put("hdfs.callTimeout", Long.toString(1000));
+    MockHDFSWriter mockHDFSWriter = new MockHDFSWriter(numberOfRetriesRequired);
+    BucketWriter bucketWriter = new BucketWriter(
+        0, 0, 1, 1, ctx, hdfsPath, hdfsPath, "singleBucket", ".tmp", null, null,
+        null, mockHDFSWriter, timedRollerPool, proxy,
+        new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()), 0, null, null, 30000,
+        Executors.newSingleThreadExecutor(), 1, numberOfRetriesRequired);
+
+    Event event = EventBuilder.withBody("test", Charsets.UTF_8);
+    bucketWriter.append(event);
+    bucketWriter.close(false);
+    TimeUnit.SECONDS.sleep(numberOfRetriesRequired + 2);
+    Assert.assertEquals("Expected " + numberOfRetriesRequired + " " +
+        "but got " + mockHDFSWriter.currentCloseAttempts,
+        mockHDFSWriter.currentCloseAttempts.get(), numberOfRetriesRequired);
   }
 
   // Test that we don't swallow IOExceptions in secure mode. We should close the bucket writer
