@@ -674,8 +674,8 @@ public class SpillableMemoryChannel extends FileChannel {
     }
 
     try {
-      avgEventSize = context.getInteger(AVG_EVENT_SIZE, defaultAvgEventSize);
-    } catch (NumberFormatException e) {
+      avgEventSize = context.getByteInteger(AVG_EVENT_SIZE, defaultAvgEventSize);
+    } catch (IllegalArgumentException e) {
       LOGGER.warn("Error parsing " + AVG_EVENT_SIZE + " for " + getName()
           + ". Using default = " + defaultAvgEventSize + ". "
           + e.getMessage());
@@ -683,12 +683,12 @@ public class SpillableMemoryChannel extends FileChannel {
     }
 
     try {
-      byteCapacity = (int) ((context.getLong(BYTE_CAPACITY, defaultByteCapacity) *
+      byteCapacity = (int) ((context.getByteLong(BYTE_CAPACITY, defaultByteCapacity) *
                             (1 - byteCapacityBufferPercentage * .01)) / avgEventSize);
       if (byteCapacity < 1) {
         byteCapacity = Integer.MAX_VALUE;
       }
-    } catch (NumberFormatException e) {
+    } catch (IllegalArgumentException e) {
       LOGGER.warn("Error parsing " + BYTE_CAPACITY + " setting for " + getName()
           + ". Using default = " + defaultByteCapacity + ". "
           + e.getMessage());

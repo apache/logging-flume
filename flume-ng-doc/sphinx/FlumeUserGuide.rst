@@ -1208,6 +1208,7 @@ Property Name               Default             Description
 ==========================  ==================  =======================================================================
 **deserializer**            --                  The FQCN of this class: ``org.apache.flume.sink.solr.morphline.BlobDeserializer$Builder``
 deserializer.maxBlobLength  100000000           The maximum number of bytes to read and buffer for a given request
+                                                Recommendation: Use capacity units g(G)/m(M)/k(K)/b(B), and if there are no units, the default is byte
 ==========================  ==================  =======================================================================
 
 Taildir Source
@@ -1559,6 +1560,7 @@ Property Name    Default      Description
 **bind**         --           Host name or IP address to bind to
 **port**         --           Port # to bind to
 max-line-length  512          Max line length per event body (in bytes)
+                              Recommendation: Use capacity units g(G)/m(M)/k(K)/b(B), and if there are no units, the default is byte
 ack-every-event  true         Respond with an "OK" for every event received
 selector.type    replicating  replicating or multiplexing
 selector.*                    Depends on the selector.type value
@@ -1664,6 +1666,7 @@ Property Name    Default      Description
 **host**         --           Host name or IP address to bind to
 **port**         --           Port # to bind to
 eventSize        2500         Maximum size of a single event line, in bytes
+                              Recommendation: Use capacity units g(G)/m(M)/k(K)/b(B), and if there are no units, the default is byte
 keepFields       none         Setting this to 'all' will preserve the Priority,
                               Timestamp and Hostname in the body of the event.
                               A spaced separated list of fields to include
@@ -1707,6 +1710,7 @@ Property Name         Default           Description
 **host**              --                Host name or IP address to bind to.
 **ports**             --                Space-separated list (one or more) of ports to bind to.
 eventSize             2500              Maximum size of a single event line, in bytes.
+                                        Recommendation: Use capacity units g(G)/m(M)/k(K)/b(B), and if there are no units, the default is byte
 keepFields            none              Setting this to 'all' will preserve the
                                         Priority, Timestamp and Hostname in the body of the event.
                                         A spaced separated list of fields to include
@@ -1884,6 +1888,7 @@ Property Name          Default             Description
 =====================  ==================  ============================================================================
 **handler**            --                  The FQCN of this class: ``org.apache.flume.sink.solr.morphline.BlobHandler``
 handler.maxBlobLength  100000000           The maximum number of bytes to read and buffer for a given request
+                                           Recommendation: Use capacity units g(G)/m(M)/k(K)/b(B), and if there are no units, the default is byte
 =====================  ==================  ============================================================================
 
 Stress Source
@@ -1901,6 +1906,7 @@ Property Name        Default      Description
 ===================  ===========  ===================================================
 **type**             --           The component type name, needs to be ``org.apache.flume.source.StressSource``
 size                 500          Payload size of each Event. Unit:**byte**
+                                  Recommendation: Use capacity units g(G)/m(M)/k(K)/b(B), and if there are no units, the default is byte
 maxTotalEvents       -1           Maximum number of Events to be sent
 maxSuccessfulEvents  -1           Maximum number of Events successfully sent
 batchSize            1            Number of Events to be sent in one batch
@@ -2035,6 +2041,7 @@ Property Name         Default      Description
 **type**              --           The component type name, needs to be ``org.apache.flume.source.scribe.ScribeSource``
 port                  1499         Port that Scribe should be connected
 maxReadBufferBytes    16384000     Thrift Default FrameBuffer Size
+                                   Recommendation: Use capacity units g(G)/m(M)/k(K)/b(B), and if there are no units, the default is byte
 workerThreads         5            Handing threads number in Thrift
 selector.type
 selector.*
@@ -3219,6 +3226,7 @@ byteCapacity                  see description   Maximum total **bytes** of memor
                                                 channel byteCapacity purposes.
                                                 Setting this value to ``0`` will cause this value to fall back to a hard
                                                 internal limit of about 200 GB.
+                                                Recommendation: Use capacity units g(G)/m(M)/k(K)/b(B), and if there are no units, the default is byte
 ============================  ================  ===============================================================================
 
 Example for agent named a1:
@@ -3532,7 +3540,9 @@ dataDirs                                          ~/.flume/file-channel/data    
 transactionCapacity                               10000                             The maximum size of transaction supported by the channel
 checkpointInterval                                30000                             Amount of time (in millis) between checkpoints
 maxFileSize                                       2146435071                        Max size (in bytes) of a single log file
+                                                                                    Recommendation: Use capacity units g(G)/m(M)/k(K)/b(B), and if there are no units, the default is byte
 minimumRequiredSpace                              524288000                         Minimum Required free space (in bytes). To avoid data corruption, File Channel stops accepting take/put requests when free space drops below this value
+                                                                                    Recommendation: Use capacity units g(G)/m(M)/k(K)/b(B), and if there are no units, the default is byte
 capacity                                          1000000                           Maximum capacity of the channel
 keep-alive                                        3                                 Amount of time (in sec) to wait for a put operation
 use-log-replay-v1                                 false                             Expert: Use old replay logic
@@ -3656,7 +3666,9 @@ byteCapacity                  see description   Maximum **bytes** of memory allo
                                                 channel byteCapacity purposes.
                                                 Setting this value to ``0`` will cause this value to fall back to a hard
                                                 internal limit of about 200 GB.
+                                                Recommendation: Use capacity units g(G)/m(M)/k(K)/b(B), and if there are no units, the default is byte
 avgEventSize                  500               Estimated average size of events, in bytes, going into the channel
+                                                Recommendation: Use capacity units g(G)/m(M)/k(K)/b(B), and if there are no units, the default is byte
 <file channel properties>     see file channel  Any file channel property with the exception of 'keep-alive' and 'capacity' can be used.
                                                 The keep-alive of file channel is managed by Spillable Memory Channel. Use 'overflowCapacity'
                                                 to set the File channel's capacity.
@@ -4001,6 +4013,7 @@ Configuration options are as follows:
 Property Name               Default           Description
 ==========================  ================  ===========================================================================
 syncIntervalBytes           2048000           Avro sync interval, in approximate bytes.
+                                              Recommendation: Use capacity units g(G)/m(M)/k(K)/b(B), and if there are no units, the default is byte
 compressionCodec            null              Avro compression codec. For supported codecs, see Avro's CodecFactory docs.
 ==========================  ================  ===========================================================================
 

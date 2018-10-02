@@ -91,7 +91,7 @@ public class AvroEventSerializer implements EventSerializer, Configurable {
   @Override
   public void configure(Context context) {
     syncIntervalBytes =
-        context.getInteger(SYNC_INTERVAL_BYTES, DEFAULT_SYNC_INTERVAL_BYTES);
+        context.getByteInteger(SYNC_INTERVAL_BYTES, DEFAULT_SYNC_INTERVAL_BYTES);
     compressionCodec =
         context.getString(COMPRESSION_CODEC, DEFAULT_COMPRESSION_CODEC);
     staticSchemaURL = context.getString(STATIC_SCHEMA_URL, DEFAULT_STATIC_SCHEMA_URL);

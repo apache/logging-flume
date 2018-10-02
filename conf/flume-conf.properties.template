@@ -15,6 +15,15 @@
 # specific language governing permissions and limitations
 # under the License.
 
+# Note on units: when memory size is needed, it is possible to specifiy
+# it in the usual form of 1k 5M 1.5g and so forth:
+#
+# 1b => 1 bytes
+# 1k => 1024 bytes
+# 1m => 1024*1024 bytes
+# 1g => 1024*1024*1024 bytes
+#
+# units are case insensitive so 1G 1g are all the same.
 
 # The configuration file needs to define the sources, 
 # the channels and the sinks.

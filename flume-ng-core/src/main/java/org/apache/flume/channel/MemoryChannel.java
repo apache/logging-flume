@@ -262,12 +262,12 @@ public class MemoryChannel extends BasicChannelSemantics implements TransactionC
     }
 
     try {
-      byteCapacity = (int) ((context.getLong("byteCapacity", defaultByteCapacity).longValue() *
+      byteCapacity = (int) ((context.getByteLong("byteCapacity", defaultByteCapacity).longValue() *
           (1 - byteCapacityBufferPercentage * .01)) / byteCapacitySlotSize);
       if (byteCapacity < 1) {
         byteCapacity = Integer.MAX_VALUE;
       }
-    } catch (NumberFormatException e) {
+    } catch (IllegalArgumentException e) {
       byteCapacity = (int) ((defaultByteCapacity * (1 - byteCapacityBufferPercentage * .01)) /
           byteCapacitySlotSize);
     }

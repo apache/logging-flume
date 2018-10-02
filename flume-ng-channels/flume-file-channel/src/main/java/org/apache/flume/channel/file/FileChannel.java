@@ -202,12 +202,12 @@ public class FileChannel extends BasicChannelSemantics implements TransactionCap
 
     // cannot be over FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE
     maxFileSize = Math.min(
-        context.getLong(FileChannelConfiguration.MAX_FILE_SIZE,
+        context.getByteLong(FileChannelConfiguration.MAX_FILE_SIZE,
             FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE),
         FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE);
 
     minimumRequiredSpace = Math.max(
-        context.getLong(FileChannelConfiguration.MINIMUM_REQUIRED_SPACE,
+        context.getByteLong(FileChannelConfiguration.MINIMUM_REQUIRED_SPACE,
             FileChannelConfiguration.DEFAULT_MINIMUM_REQUIRED_SPACE),
         FileChannelConfiguration.FLOOR_MINIMUM_REQUIRED_SPACE);
 
