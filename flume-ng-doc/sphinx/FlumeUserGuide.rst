@@ -872,7 +872,7 @@ compression-type     none              This can be "none" or "deflate".  The com
 ssl                  false             Set this to true to enable SSL encryption. If SSL is enabled,
                                        you must also specify a "keystore" and a "keystore-password",
                                        either through component level parameters (see below)
-                                       or as global SSL parameters (see *SSL/TLS support* section).
+                                       or as global SSL parameters (see `SSL/TLS support`_ section).
 keystore             --                This is the path to a Java keystore file.
                                        If not specified here, then the global keystore will be used
                                        (if defined, otherwise configuration error).
@@ -939,7 +939,7 @@ interceptors.*
 ssl                  false        Set this to true to enable SSL encryption. If SSL is enabled,
                                   you must also specify a "keystore" and a "keystore-password",
                                   either through component level parameters (see below)
-                                  or as global SSL parameters (see *SSL/TLS support* section)
+                                  or as global SSL parameters (see `SSL/TLS support`_ section)
 keystore             --           This is the path to a Java keystore file.
                                   If not specified here, then the global keystore will be used
                                   (if defined, otherwise configuration error).
@@ -1129,7 +1129,7 @@ Flume Wiki.
 
 If the JMS server uses self-signed certificate or its certificate is signed by a non-trusted CA (eg. the company's own
 CA), then a truststore (containing the right certificate) needs to be set up and passed to Flume. It can be done via
-the global SSL parameters. For more details about the global SSL setup, see the *SSL/TLS support* section.
+the global SSL parameters. For more details about the global SSL setup, see the `SSL/TLS support`_ section.
 
 Some JMS providers require SSL specific JNDI Initial Context Factory and/or Provider URL settings when using SSL (eg.
 ActiveMQ uses ssl:// URL prefix instead of tcp://).
@@ -1142,7 +1142,7 @@ JMS Source can authenticate to the JMS server through client certificate authent
 user/password login (when SSL is used and the JMS server is configured to accept this kind of authentication).
 
 The keystore containing Flume's key used for the authentication needs to be configured via the global SSL parameters
-again. For more details about the global SSL setup, see the *SSL/TLS support* section.
+again. For more details about the global SSL setup, see the `SSL/TLS support`_ section.
 
 The keystore should contain only one key (if multiple keys are present, then the first one will be used).
 The key password must be the same as the keystore password.
@@ -1553,7 +1553,7 @@ Example configuration with server side authentication and data encryption.
     a1.sources.source1.kafka.consumer.ssl.truststore.password=<password to access the truststore>
 
 Specyfing the truststore is optional here, the global truststore can be used instead.
-For more details about the global SSL setup, see the *SSL/TLS support* section.
+For more details about the global SSL setup, see the `SSL/TLS support`_ section.
 
 Note: By default the property ``ssl.endpoint.identification.algorithm``
 is not defined, so hostname verification is not performed.
@@ -1570,7 +1570,7 @@ against one of the following two fields:
 #) Subject Alternative Name (SAN) https://tools.ietf.org/html/rfc5280#section-4.2.1.6
 
 If client side authentication is also required then additionally the following needs to be added to Flume agent
-configuration or the global SSL setup can be used (see *SSL/TLS support* section).
+configuration or the global SSL setup can be used (see `SSL/TLS support`_ section).
 Each Flume agent has to have its client certificate which has to be trusted by Kafka brokers either
 individually or by their signature chain. Common example is to sign each client certificate by a single Root CA
 which in turn is trusted by Kafka brokers.
@@ -3127,7 +3127,7 @@ Example configuration with server side authentication and data encryption.
     a1.sinks.sink1.kafka.producer.ssl.truststore.password = <password to access the truststore>
 
 Specyfing the truststore is optional here, the global truststore can be used instead.
-For more details about the global SSL setup, see the *SSL/TLS support* section.
+For more details about the global SSL setup, see the `SSL/TLS support`_ section.
 
 Note: By default the property ``ssl.endpoint.identification.algorithm``
 is not defined, so hostname verification is not performed.
@@ -3144,7 +3144,7 @@ against one of the following two fields:
 #) Subject Alternative Name (SAN) https://tools.ietf.org/html/rfc5280#section-4.2.1.6
 
 If client side authentication is also required then additionally the following needs to be added to Flume agent
-configuration or the global SSL setup can be used (see *SSL/TLS support* section).
+configuration or the global SSL setup can be used (see `SSL/TLS support`_ section).
 Each Flume agent has to have its client certificate which has to be trusted by Kafka brokers either
 individually or by their signature chain. Common example is to sign each client certificate by a single Root CA
 which in turn is trusted by Kafka brokers.
@@ -3536,7 +3536,7 @@ Example configuration with server side authentication and data encryption.
     a1.channels.channel1.kafka.consumer.ssl.truststore.password = <password to access the truststore>
 
 Specyfing the truststore is optional here, the global truststore can be used instead.
-For more details about the global SSL setup, see the *SSL/TLS support* section.
+For more details about the global SSL setup, see the `SSL/TLS support`_ section.
 
 Note: By default the property ``ssl.endpoint.identification.algorithm``
 is not defined, so hostname verification is not performed.
@@ -3554,7 +3554,7 @@ against one of the following two fields:
 #) Subject Alternative Name (SAN) https://tools.ietf.org/html/rfc5280#section-4.2.1.6
 
 If client side authentication is also required then additionally the following needs to be added to Flume agent
-configuration or the global SSL setup can be used (see *SSL/TLS support* section).
+configuration or the global SSL setup can be used (see `SSL/TLS support`_ section).
 Each Flume agent has to have its client certificate which has to be trusted by Kafka brokers either
 individually or by their signature chain. Common example is to sign each client certificate by a single Root CA
 which in turn is trusted by Kafka brokers.
