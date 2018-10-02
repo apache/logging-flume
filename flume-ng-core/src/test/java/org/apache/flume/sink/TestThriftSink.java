@@ -220,6 +220,17 @@ public class TestThriftSink {
   }
 
   @Test
+  public void testSslProcessWithComponentTruststoreNoPassword() throws Exception {
+    Context context = createBaseContext();
+    context.put("ssl", String.valueOf(true));
+    context.put("truststore", "src/test/resources/truststorefile.jks");
+
+    Configurables.configure(sink, context);
+
+    doTestSslProcess();
+  }
+
+  @Test
   public void testSslProcessWithGlobalTruststore() throws Exception {
     System.setProperty("javax.net.ssl.trustStore", "src/test/resources/truststorefile.jks");
     System.setProperty("javax.net.ssl.trustStorePassword", "password");
@@ -233,6 +244,20 @@ public class TestThriftSink {
 
     System.clearProperty("javax.net.ssl.trustStore");
     System.clearProperty("javax.net.ssl.trustStorePassword");
+  }
+
+  @Test
+  public void testSslProcessWithGlobalTruststoreNoPassword() throws Exception {
+    System.setProperty("javax.net.ssl.trustStore", "src/test/resources/truststorefile.jks");
+
+    Context context = createBaseContext();
+    context.put("ssl", String.valueOf(true));
+
+    Configurables.configure(sink, context);
+
+    doTestSslProcess();
+
+    System.clearProperty("javax.net.ssl.trustStore");
   }
 
   private void doTestSslProcess() throws Exception {

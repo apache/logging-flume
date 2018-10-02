@@ -401,7 +401,7 @@ public class TestAvroSink {
   }
 
   @Test
-  public void testSslProcess() throws InterruptedException,
+  public void testSslProcessTrustAllCerts() throws InterruptedException,
       EventDeliveryException, InstantiationException, IllegalAccessException {
     setUp();
 
@@ -430,6 +430,20 @@ public class TestAvroSink {
   }
 
   @Test
+  public void testSslProcessWithComponentTruststoreNoPassword() throws InterruptedException,
+      EventDeliveryException, InstantiationException, IllegalAccessException {
+    setUp();
+
+    Context context = createBaseContext();
+    context.put("ssl", String.valueOf(true));
+    context.put("truststore", "src/test/resources/truststore.jks");
+
+    Configurables.configure(sink, context);
+
+    doTestSslProcess();
+  }
+
+  @Test
   public void testSslProcessWithGlobalTruststore() throws InterruptedException,
       EventDeliveryException, InstantiationException, IllegalAccessException {
     setUp();
@@ -446,6 +460,23 @@ public class TestAvroSink {
 
     System.clearProperty("javax.net.ssl.trustStore");
     System.clearProperty("javax.net.ssl.trustStorePassword");
+  }
+
+  @Test
+  public void testSslProcessWithGlobalTruststoreNoPassword() throws InterruptedException,
+      EventDeliveryException, InstantiationException, IllegalAccessException {
+    setUp();
+
+    System.setProperty("javax.net.ssl.trustStore", "src/test/resources/truststore.jks");
+
+    Context context = createBaseContext();
+    context.put("ssl", String.valueOf(true));
+
+    Configurables.configure(sink, context);
+
+    doTestSslProcess();
+
+    System.clearProperty("javax.net.ssl.trustStore");
   }
 
   private void doTestSslProcess() throws InterruptedException,

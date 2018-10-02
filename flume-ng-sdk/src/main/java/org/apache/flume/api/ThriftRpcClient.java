@@ -523,7 +523,8 @@ public class ThriftRpcClient extends AbstractRpcClient {
       KeyStore ts = null;
       if (truststore != null && truststoreType != null) {
         ts = KeyStore.getInstance(truststoreType);
-        ts.load(new FileInputStream(truststore), truststorePassword.toCharArray());
+        ts.load(new FileInputStream(truststore),
+            truststorePassword != null ? truststorePassword.toCharArray() : null);
         tmf.init(ts);
       }
 

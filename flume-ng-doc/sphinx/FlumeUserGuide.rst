@@ -841,6 +841,8 @@ the commands including the passwords will be saved to the command history.)
 
   * in case of keystores: configuration error
   * in case of truststores: the default truststore will be used (``jssecacerts`` / ``cacerts`` in Oracle JDK)
+* The trustore password is optional in all cases. If not specified, then no integrity check will be
+  performed on the truststore when it is opened by the JDK.
 
 
 Flume Sources

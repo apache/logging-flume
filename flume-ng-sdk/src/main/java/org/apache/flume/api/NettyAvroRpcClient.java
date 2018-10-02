@@ -719,12 +719,10 @@ public class NettyAvroRpcClient extends AbstractRpcClient implements RpcClient {
             KeyStore keystore = null;
 
             if (truststore != null) {
-              if (truststorePassword == null) {
-                throw new NullPointerException("truststore password is null");
-              }
               InputStream truststoreStream = new FileInputStream(truststore);
               keystore = KeyStore.getInstance(truststoreType);
-              keystore.load(truststoreStream, truststorePassword.toCharArray());
+              keystore.load(truststoreStream,
+                  truststorePassword != null ? truststorePassword.toCharArray() : null);
             }
 
             TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
