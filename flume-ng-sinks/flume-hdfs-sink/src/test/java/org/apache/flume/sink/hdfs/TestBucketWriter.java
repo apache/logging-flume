@@ -402,22 +402,22 @@ public class TestBucketWriter {
 
   @Test
   public void testSequenceFileRenameRetries() throws Exception {
-    SequenceFileRenameRetryCoreTest(1, true);
-    SequenceFileRenameRetryCoreTest(5, true);
-    SequenceFileRenameRetryCoreTest(2, true);
+    sequenceFileRenameRetryCoreTest(1, true);
+    sequenceFileRenameRetryCoreTest(5, true);
+    sequenceFileRenameRetryCoreTest(2, true);
 
-    SequenceFileRenameRetryCoreTest(1, false);
-    SequenceFileRenameRetryCoreTest(5, false);
-    SequenceFileRenameRetryCoreTest(2, false);
+    sequenceFileRenameRetryCoreTest(1, false);
+    sequenceFileRenameRetryCoreTest(5, false);
+    sequenceFileRenameRetryCoreTest(2, false);
   }
 
   @Test
-  public void testSequenceFileSystemCloseRetries() throws Exception {
-    SequenceFileCloseRetryCoreTest(5);
-    SequenceFileCloseRetryCoreTest(1);
+  public void testSequenceFileCloseRetries() throws Exception {
+    sequenceFileCloseRetryCoreTest(5);
+    sequenceFileCloseRetryCoreTest(1);
   }
 
-  public void SequenceFileRenameRetryCoreTest(int numberOfRetriesRequired, boolean closeSucceed)
+  public void sequenceFileRenameRetryCoreTest(int numberOfRetriesRequired, boolean closeSucceed)
       throws Exception {
     String hdfsPath = "file:///tmp/flume-test." +
                       Calendar.getInstance().getTimeInMillis() +
@@ -456,7 +456,7 @@ public class TestBucketWriter {
                       bucketWriter.renameTries.get() == numberOfRetriesRequired);
   }
 
-  private void SequenceFileCloseRetryCoreTest(int numberOfRetriesRequired)
+  private void sequenceFileCloseRetryCoreTest(int numberOfRetriesRequired)
       throws Exception {
     String hdfsPath = "file:///tmp/flume-test." +
         Calendar.getInstance().getTimeInMillis() +
