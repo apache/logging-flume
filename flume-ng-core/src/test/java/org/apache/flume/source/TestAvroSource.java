@@ -329,7 +329,7 @@ public class TestAvroSource {
   }
 
   @Test
-  public void testSslRequest() throws InterruptedException, IOException {
+  public void testSslRequestWithComponentKeystore() throws InterruptedException, IOException {
 
     Context context = new Context();
 
@@ -339,7 +339,34 @@ public class TestAvroSource {
     context.put("keystore", "src/test/resources/server.p12");
     context.put("keystore-password", "password");
     context.put("keystore-type", "PKCS12");
+
     Configurables.configure(source, context);
+
+    doSslRequest();
+  }
+
+  @Test
+  public void testSslRequestWithGlobalKeystore() throws InterruptedException, IOException {
+
+    System.setProperty("javax.net.ssl.keyStore", "src/test/resources/server.p12");
+    System.setProperty("javax.net.ssl.keyStorePassword", "password");
+    System.setProperty("javax.net.ssl.keyStoreType", "PKCS12");
+
+    Context context = new Context();
+
+    context.put("port", String.valueOf(selectedPort = getFreePort()));
+    context.put("bind", "0.0.0.0");
+    context.put("ssl", "true");
+
+    Configurables.configure(source, context);
+
+    doSslRequest();
+
+    System.clearProperty("javax.net.ssl.keyStore");
+    System.clearProperty("javax.net.ssl.keyStorePassword");
+  }
+
+  private void doSslRequest() throws InterruptedException, IOException {
     source.start();
 
     Assert
@@ -350,7 +377,7 @@ public class TestAvroSource {
 
     AvroSourceProtocol client = SpecificRequestor.getClient(
         AvroSourceProtocol.class, new NettyTransceiver(new InetSocketAddress(
-        selectedPort), new SSLChannelFactory()));
+            selectedPort), new SSLChannelFactory()));
 
     AvroFlumeEvent avroEvent = new AvroFlumeEvent();
 
