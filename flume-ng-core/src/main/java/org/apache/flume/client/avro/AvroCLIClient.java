@@ -44,6 +44,7 @@ import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.api.RpcClient;
 import org.apache.flume.api.RpcClientFactory;
 import org.apache.flume.instrumentation.SourceCounter;
+import org.apache.flume.util.SSLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,6 +67,8 @@ public class AvroCLIClient {
   private int sent;
 
   public static void main(String[] args) {
+    SSLUtil.initGlobalSSLParameters();
+
     AvroCLIClient client = new AvroCLIClient();
 
     try {
