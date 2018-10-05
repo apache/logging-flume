@@ -41,9 +41,9 @@ import java.util.concurrent.TimeoutException;
 public class TestThriftRpcClient {
   private static final String SEQ = "sequence";
   private final Properties props = new Properties();
-  ThriftRpcClient client;
-  ThriftTestingSource src;
-  int port;
+  private ThriftRpcClient client;
+  private ThriftTestingSource src;
+  private int port;
 
   @Before
   public void setUp() throws Exception {
@@ -70,7 +70,7 @@ public class TestThriftRpcClient {
    * @param count
    * @throws Exception
    */
-  public static void insertEvents(RpcClient client, int count) throws Exception {
+  private  static void insertEvents(RpcClient client, int count) throws Exception {
     for (int i = 0; i < count; i++) {
       Map<String, String> header = new HashMap<String, String>();
       header.put(SEQ, String.valueOf(i));
@@ -87,7 +87,7 @@ public class TestThriftRpcClient {
    * @throws Exception
    */
 
-  public static void insertAsBatch(RpcClient client, int start,
+  private static void insertAsBatch(RpcClient client, int start,
                                    int limit) throws Exception {
     List<Event> events = new ArrayList<Event>();
     for (int i = start; i <= limit; i++) {

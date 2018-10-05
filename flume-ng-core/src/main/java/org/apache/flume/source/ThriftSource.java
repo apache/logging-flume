@@ -34,6 +34,7 @@ import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.thrift.Status;
 import org.apache.flume.thrift.ThriftSourceProtocol;
 import org.apache.flume.thrift.ThriftFlumeEvent;
+import org.apache.flume.util.SSLUtil;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -160,9 +161,10 @@ public class ThriftSource extends AbstractSource implements Configurable, EventD
 
     enableSsl = context.getBoolean(SSL_KEY, false);
     if (enableSsl) {
-      keystore = context.getString(KEYSTORE_KEY);
-      keystorePassword = context.getString(KEYSTORE_PASSWORD_KEY);
-      keystoreType = context.getString(KEYSTORE_TYPE_KEY, "JKS");
+      keystore = context.getString(KEYSTORE_KEY, SSLUtil.getGlobalKeystorePath());
+      keystorePassword = context.getString(KEYSTORE_PASSWORD_KEY,
+          SSLUtil.getGlobalKeystorePassword());
+      keystoreType = context.getString(KEYSTORE_TYPE_KEY, SSLUtil.getGlobalKeystoreType("JKS"));
       String excludeProtocolsStr = context.getString(EXCLUDE_PROTOCOLS);
       if (excludeProtocolsStr == null) {
         excludeProtocols.add("SSLv3");

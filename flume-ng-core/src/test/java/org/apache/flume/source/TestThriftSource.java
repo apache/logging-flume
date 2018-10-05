@@ -102,24 +102,55 @@ public class TestThriftSource {
   }
 
   @Test
-  public void testAppendSSL() throws Exception {
-    Properties sslprops = (Properties)props.clone();
-    sslprops.put("ssl", "true");
-    sslprops.put("truststore", "src/test/resources/truststorefile.jks");
-    sslprops.put("truststore-password", "password");
-    sslprops.put("trustmanager-type", TrustManagerFactory.getDefaultAlgorithm());
-    client = RpcClientFactory.getThriftInstance(sslprops);
+  public void testAppendSSLWithComponentKeystore() throws Exception {
 
     Context context = new Context();
     channel.configure(context);
     configureSource();
+
     context.put(ThriftSource.CONFIG_BIND, "0.0.0.0");
     context.put(ThriftSource.CONFIG_PORT, String.valueOf(port));
     context.put("ssl", "true");
     context.put("keystore", "src/test/resources/keystorefile.jks");
     context.put("keystore-password", "password");
-    context.put("keymanager-type", KeyManagerFactory.getDefaultAlgorithm());
+    context.put("keystore-type", "JKS");
+
     Configurables.configure(source, context);
+
+    doAppendSSL();
+  }
+
+  @Test
+  public void testAppendSSLWithGlobalKeystore() throws Exception {
+
+    System.setProperty("javax.net.ssl.keyStore", "src/test/resources/keystorefile.jks");
+    System.setProperty("javax.net.ssl.keyStorePassword", "password");
+    System.setProperty("javax.net.ssl.keyStoreType", "JKS");
+
+    Context context = new Context();
+    channel.configure(context);
+    configureSource();
+
+    context.put(ThriftSource.CONFIG_BIND, "0.0.0.0");
+    context.put(ThriftSource.CONFIG_PORT, String.valueOf(port));
+    context.put("ssl", "true");
+
+    Configurables.configure(source, context);
+
+    doAppendSSL();
+
+    System.clearProperty("javax.net.ssl.keyStore");
+    System.clearProperty("javax.net.ssl.keyStorePassword");
+    System.clearProperty("javax.net.ssl.keyStoreType");
+  }
+
+  private void doAppendSSL() throws EventDeliveryException {
+    Properties sslprops = (Properties)props.clone();
+    sslprops.put("ssl", "true");
+    sslprops.put("truststore", "src/test/resources/truststorefile.jks");
+    sslprops.put("truststore-password", "password");
+    client = RpcClientFactory.getThriftInstance(sslprops);
+
     source.start();
     for (int i = 0; i < 30; i++) {
       client.append(EventBuilder.withBody(String.valueOf(i).getBytes()));
