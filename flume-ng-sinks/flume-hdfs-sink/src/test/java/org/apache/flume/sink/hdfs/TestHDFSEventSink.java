@@ -482,6 +482,7 @@ public class TestHDFSEventSink {
     context.put("hdfs.filePrefix", fileName);
     context.put("hdfs.rollCount", String.valueOf(rollCount));
     context.put("hdfs.batchSize", String.valueOf(batchSize));
+    context.put("hdfs.batchInTransactionSize", "1");
 
     Configurables.configure(sink, context);
 
@@ -568,6 +569,7 @@ public class TestHDFSEventSink {
     context.put("hdfs.rollCount", String.valueOf(rollCount));
     context.put("hdfs.batchSize", String.valueOf(batchSize));
     context.put("hdfs.useLocalTimeStamp", String.valueOf(true));
+    context.put("hdfs.batchInTransactionSize", "1");
 
     Configurables.configure(sink, context);
 
@@ -1144,6 +1146,7 @@ public class TestHDFSEventSink {
     context.put("hdfs.fileType", HDFSTestWriterFactory.TestSequenceFileType);
     context.put("hdfs.callTimeout", Long.toString(1000));
     Configurables.configure(sink, context);
+    context.put("hdfs.batchInTransactionSize", "1");
 
     Channel channel = new MemoryChannel();
     Configurables.configure(channel, context);
@@ -1590,6 +1593,9 @@ public class TestHDFSEventSink {
           Mockito.doCallRealMethod()
               .doThrow(BucketClosedException.class)
               .when(bw).append(Mockito.any(Event.class));
+          Mockito.doCallRealMethod()
+              .doThrow(BucketClosedException.class)
+              .when(bw).appendBatch(Mockito.any(Event[].class), Mockito.anyInt());
         } catch (IOException | InterruptedException e) {
           Assert.fail("This shouldn't happen, as append() is called during mocking.");
         }
@@ -1599,6 +1605,7 @@ public class TestHDFSEventSink {
     };
 
     Context context = new Context(ImmutableMap.of("hdfs.path", testPath));
+    context.put("hdfs.batchInTransactionSize", String.valueOf(1));
     Configurables.configure(sink, context);
 
     Channel channel = Mockito.spy(new MemoryChannel());

@@ -38,6 +38,8 @@ public interface HDFSWriter extends Configurable {
 
   public void append(Event e) throws IOException;
 
+  public void appendBatch(Event[] events, int length) throws IOException;
+
   public void sync() throws IOException;
 
   public void close() throws IOException;

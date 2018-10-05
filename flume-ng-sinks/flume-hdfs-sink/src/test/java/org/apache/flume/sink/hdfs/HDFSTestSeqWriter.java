@@ -46,27 +46,35 @@ public class HDFSTestSeqWriter extends HDFSSequenceFile {
 
   @Override
   public void append(Event e) throws IOException {
+    appendBatch(new Event[]{e}, 1);
+  }
 
-    if (e.getHeaders().containsKey("fault")) {
-      throw new IOException("Injected fault");
-    } else if (e.getHeaders().containsKey("fault-once")) {
-      e.getHeaders().remove("fault-once");
-      throw new IOException("Injected fault");
-    } else if (e.getHeaders().containsKey("fault-until-reopen")) {
-      // opening first time.
-      if (openCount == 1) {
-        throw new IOException("Injected fault-until-reopen");
-      }
-    } else if (e.getHeaders().containsKey("slow")) {
-      long waitTime = Long.parseLong(e.getHeaders().get("slow"));
-      try {
-        Thread.sleep(waitTime);
-      } catch (InterruptedException eT) {
-        throw new IOException("append interrupted", eT);
+  @Override
+  public void appendBatch(Event[] events, int len) throws IOException {
+
+    for (int i = 0; i < len; i++) {
+      Event e = events[i];
+      if (e.getHeaders().containsKey("fault")) {
+        throw new IOException("Injected fault");
+      } else if (e.getHeaders().containsKey("fault-once")) {
+        e.getHeaders().remove("fault-once");
+        throw new IOException("Injected fault");
+      } else if (e.getHeaders().containsKey("fault-until-reopen")) {
+        // opening first time.
+        if (openCount == 1) {
+          throw new IOException("Injected fault-until-reopen");
+        }
+      } else if (e.getHeaders().containsKey("slow")) {
+        long waitTime = Long.parseLong(e.getHeaders().get("slow"));
+        try {
+          Thread.sleep(waitTime);
+        } catch (InterruptedException eT) {
+          throw new IOException("append interrupted", eT);
+        }
       }
     }
 
-    super.append(e);
+    super.appendBatch(events, len);
   }
 
   @Override
