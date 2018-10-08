@@ -48,6 +48,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -112,7 +113,7 @@ class BucketWriter {
 
   // flag that the bucket writer was closed due to idling and thus shouldn't be
   // reopened. Not ideal, but avoids internals of owners
-  protected boolean closed = false;
+  protected AtomicBoolean closed = new AtomicBoolean();
   AtomicInteger renameTries = new AtomicInteger(0);
 
   BucketWriter(long rollInterval, long rollSize, long rollCount, long batchSize,
@@ -307,7 +308,7 @@ class BucketWriter {
    * sink that owns it. This method should be used only when size or count
    * based rolling closes this file.
    */
-  public synchronized void close() throws InterruptedException {
+  public void close() throws InterruptedException {
     close(false, false);
   }
 
@@ -413,7 +414,19 @@ class BucketWriter {
    * Close the file handle and rename the temp file to the permanent filename.
    * Safe to call multiple times. Logs HDFSWriter.close() exceptions.
    */
-  public synchronized void close(boolean callCloseCallback, boolean immediate)
+  public void close(boolean callCloseCallback, boolean immediate)
+      throws InterruptedException {
+    if (callCloseCallback) {
+      if (closed.compareAndSet(false, true)) {
+        runCloseAction(); //remove from the cache as soon as possible
+      } else {
+        LOG.warn("This bucketWriter is already closing or closed.");
+      }
+    }
+    doClose(immediate);
+  }
+
+  private synchronized void doClose(boolean immediate)
       throws InterruptedException {
     checkAndThrowInterruptedException();
     try {
@@ -452,10 +465,6 @@ class BucketWriter {
         final Callable<Void> scheduledRename =  new ScheduledRenameCallable();
         timedRollerPool.schedule(scheduledRename, retryInterval, TimeUnit.SECONDS);
       }
-    }
-    if (callCloseCallback) {
-      runCloseAction();
-      closed = true;
     }
   }
 
@@ -556,7 +565,7 @@ class BucketWriter {
     // force a new bucket writer to be created. Roll count and roll size will
     // just reuse this one
     if (!isOpen) {
-      if (closed) {
+      if (closed.get()) {
         throw new BucketClosedException("This bucket writer was closed and " +
           "this handle is thus no longer valid");
       }

@@ -41,6 +41,7 @@ import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
+import org.apache.flume.util.SSLUtil;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.Channels;
@@ -180,9 +181,10 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
     }
 
     enableSsl = context.getBoolean(SSL_KEY, false);
-    keystore = context.getString(KEYSTORE_KEY);
-    keystorePassword = context.getString(KEYSTORE_PASSWORD_KEY);
-    keystoreType = context.getString(KEYSTORE_TYPE_KEY, "JKS");
+    keystore = context.getString(KEYSTORE_KEY, SSLUtil.getGlobalKeystorePath());
+    keystorePassword = context.getString(KEYSTORE_PASSWORD_KEY,
+        SSLUtil.getGlobalKeystorePassword());
+    keystoreType = context.getString(KEYSTORE_TYPE_KEY, SSLUtil.getGlobalKeystoreType("JKS"));
     String excludeProtocolsStr = context.getString(EXCLUDE_PROTOCOLS);
     if (excludeProtocolsStr == null) {
       excludeProtocols.add("SSLv3");

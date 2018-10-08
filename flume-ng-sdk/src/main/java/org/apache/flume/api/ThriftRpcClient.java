@@ -24,6 +24,7 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.thrift.Status;
 import org.apache.flume.thrift.ThriftFlumeEvent;
 import org.apache.flume.thrift.ThriftSourceProtocol;
+import org.apache.flume.util.SSLUtil;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.TFastFramedTransport;
@@ -318,11 +319,13 @@ public class ThriftRpcClient extends AbstractRpcClient {
           RpcClientConfigurationConstants.CONFIG_SSL));
       if (enableSsl) {
         truststore = properties.getProperty(
-            RpcClientConfigurationConstants.CONFIG_TRUSTSTORE);
+            RpcClientConfigurationConstants.CONFIG_TRUSTSTORE, SSLUtil.getGlobalTruststorePath());
         truststorePassword = properties.getProperty(
-            RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_PASSWORD);
+            RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_PASSWORD,
+            SSLUtil.getGlobalTruststorePassword());
         truststoreType = properties.getProperty(
-            RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_TYPE, "JKS");
+            RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_TYPE,
+            SSLUtil.getGlobalTruststoreType("JKS"));
         String excludeProtocolsStr = properties.getProperty(
             RpcClientConfigurationConstants.CONFIG_EXCLUDE_PROTOCOLS);
         if (excludeProtocolsStr == null) {
@@ -520,7 +523,8 @@ public class ThriftRpcClient extends AbstractRpcClient {
       KeyStore ts = null;
       if (truststore != null && truststoreType != null) {
         ts = KeyStore.getInstance(truststoreType);
-        ts.load(new FileInputStream(truststore), truststorePassword.toCharArray());
+        ts.load(new FileInputStream(truststore),
+            truststorePassword != null ? truststorePassword.toCharArray() : null);
         tmf.init(ts);
       }
 
