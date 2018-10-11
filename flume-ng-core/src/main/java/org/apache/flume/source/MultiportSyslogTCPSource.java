@@ -21,6 +21,7 @@ package org.apache.flume.source;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
@@ -30,6 +31,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import javax.net.ssl.SSLParameters;
+
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
@@ -43,6 +47,7 @@ import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
+import org.apache.mina.filter.ssl.SslFilter;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +55,7 @@ import org.slf4j.LoggerFactory;
 /**
  *
  */
-public class MultiportSyslogTCPSource extends AbstractSource implements
+public class MultiportSyslogTCPSource extends SslContextAwareAbstractSource implements
         EventDrivenSource, Configurable, BatchSizeSupported {
 
   public static final Logger logger = LoggerFactory.getLogger(
@@ -77,6 +82,7 @@ public class MultiportSyslogTCPSource extends AbstractSource implements
 
   @Override
   public void configure(Context context) {
+    configureSsl(context);
     String portsStr = context.getString(
             SyslogSourceConfigurationConstants.CONFIG_PORTS);
 
@@ -161,6 +167,15 @@ public class MultiportSyslogTCPSource extends AbstractSource implements
     } else {
       acceptor = new NioSocketAcceptor();
     }
+
+    getSslContextSupplier().get().ifPresent(sslContext -> {
+      SslFilter filter = new SslFilter(sslContext);
+      SSLParameters sslParameters = getSslParametersForContext(sslContext);
+      filter.setEnabledProtocols(sslParameters.getProtocols());
+      filter.setEnabledCipherSuites(sslParameters.getCipherSuites());
+      acceptor.getFilterChain().addFirst("ssl", filter);
+    });
+
     acceptor.setReuseAddress(true);
     acceptor.getSessionConfig().setReadBufferSize(readBufferSize);
     acceptor.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, 10);

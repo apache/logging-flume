@@ -30,6 +30,9 @@ import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -62,6 +65,11 @@ import org.mockito.Mockito;
 import org.mockito.internal.util.reflection.Whitebox;
 
 import static org.mockito.Mockito.*;
+
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 public class TestMultiportSyslogTCPSource {
 
@@ -155,6 +163,103 @@ public class TestMultiportSyslogTCPSource {
     return portList;
   }
 
+  private List<Integer> testNPortsSSL(MultiportSyslogTCPSource source, Channel channel,
+                                   List<Event> channelEvents, int numPorts,
+                                   ChannelProcessor channelProcessor) throws IOException {
+    Context channelContext = new Context();
+    channelContext.put("capacity", String.valueOf(2000));
+    channelContext.put("transactionCapacity", String.valueOf(2000));
+    Configurables.configure(channel, channelContext);
+
+    if (channelProcessor == null) {
+      List<Channel> channels = Lists.newArrayList();
+      channels.add(channel);
+
+      ChannelSelector rcs = new ReplicatingChannelSelector();
+      rcs.setChannels(channels);
+
+      source.setChannelProcessor(new ChannelProcessor(rcs));
+    } else {
+      source.setChannelProcessor(channelProcessor);
+    }
+
+    List<Integer> portList = new ArrayList<>(numPorts);
+    while (portList.size() < numPorts) {
+      int port = getFreePort();
+      if (!portList.contains(port)) {
+        portList.add(port);
+      }
+    }
+
+    StringBuilder ports = new StringBuilder();
+    for (int i = 0; i < numPorts; i++) {
+      ports.append(String.valueOf(portList.get(i))).append(" ");
+    }
+    Context context = new Context();
+    context.put(SyslogSourceConfigurationConstants.CONFIG_PORTS,
+        ports.toString().trim());
+    context.put("ssl", "true");
+    context.put("keystore", "src/test/resources/server.p12");
+    context.put("keystore-password", "password");
+    context.put("keystore-type", "PKCS12");
+    source.configure(context);
+    source.start();
+
+    Socket syslogSocket;
+    SSLContext sslContext = null;
+    try {
+      sslContext = SSLContext.getInstance("TLS");
+      sslContext.init(null, new TrustManager[]{new X509TrustManager() {
+        @Override
+        public void checkClientTrusted(X509Certificate[] certs, String s) {
+          // nothing
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] certs, String s) {
+          // nothing
+        }
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers() {
+          return new X509Certificate[0];
+        }
+      } },
+          null);
+      SocketFactory socketFactory = sslContext.getSocketFactory();
+      for (int i = 0; i < numPorts; i++) {
+        syslogSocket = socketFactory.createSocket(
+          InetAddress.getLocalHost(), portList.get(i));
+        syslogSocket.getOutputStream().write(getEvent(i));
+        syslogSocket.close();
+      }
+    } catch (NoSuchAlgorithmException | KeyManagementException e) {
+      e.printStackTrace();
+    }
+
+
+
+    Transaction txn = channel.getTransaction();
+    txn.begin();
+    for (int i = 0; i < numPorts; i++) {
+      Event e = channel.take();
+      if (e == null) {
+        throw new NullPointerException("Event is null");
+      }
+      channelEvents.add(e);
+    }
+    try {
+      txn.commit();
+    } catch (Throwable t) {
+      txn.rollback();
+    } finally {
+      txn.close();
+    }
+
+
+    return portList;
+  }
+
   /**
    * Basic test to exercise multiple-port parsing.
    */
@@ -180,6 +285,50 @@ public class TestMultiportSyslogTCPSource {
             SyslogSourceConfigurationConstants.DEFAULT_PORT_HEADER)) {
           port = Integer.parseInt(headers.get(
                 SyslogSourceConfigurationConstants.DEFAULT_PORT_HEADER));
+        }
+        iter.remove();
+
+        Assert.assertEquals("Timestamps must match",
+            String.valueOf(time.getMillis()), headers.get("timestamp"));
+
+        String host2 = headers.get("host");
+        Assert.assertEquals(host1, host2);
+
+        if (port != null) {
+          int num = portList.indexOf(port);
+          Assert.assertEquals(data1 + " " + String.valueOf(num),
+              new String(e.getBody()));
+        }
+      }
+    }
+    source.stop();
+  }
+
+  /**
+   * Basic test to exercise multiple-port parsing.
+   */
+  @Test
+  public void testMultiplePortsSSL() throws IOException, ParseException {
+    MultiportSyslogTCPSource source = new MultiportSyslogTCPSource();
+    Channel channel = new MemoryChannel();
+    List<Event> channelEvents = new ArrayList<>();
+    int numPorts = 10;
+
+    List<Integer> portList = testNPortsSSL(source, channel, channelEvents,
+        numPorts, null);
+
+    //Since events can arrive out of order, search for each event in the array
+    for (int i = 0; i < numPorts ; i++) {
+      Iterator<Event> iter = channelEvents.iterator();
+      while (iter.hasNext()) {
+        Event e = iter.next();
+        Map<String, String> headers = e.getHeaders();
+        // rely on port to figure out which event it is
+        Integer port = null;
+        if (headers.containsKey(
+            SyslogSourceConfigurationConstants.DEFAULT_PORT_HEADER)) {
+          port = Integer.parseInt(headers.get(
+              SyslogSourceConfigurationConstants.DEFAULT_PORT_HEADER));
         }
         iter.remove();
 

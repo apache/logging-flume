@@ -44,8 +44,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Queue;
 import java.util.Random;
@@ -88,7 +90,10 @@ public class ThriftRpcClient extends AbstractRpcClient {
   private String truststore;
   private String truststorePassword;
   private String truststoreType;
-  private final List<String> excludeProtocols = new LinkedList<String>();
+  private final Set<String> excludeProtocols = new LinkedHashSet<>(Arrays.asList("SSLv3"));
+  private final Set<String> includeProtocols = new LinkedHashSet<>();
+  private final Set<String> excludeCipherSuites = new LinkedHashSet<>();
+  private final Set<String> includeCipherSuites = new LinkedHashSet<>();
 
   public ThriftRpcClient() {
     stateLock = new ReentrantLock(true);
@@ -326,16 +331,14 @@ public class ThriftRpcClient extends AbstractRpcClient {
         truststoreType = properties.getProperty(
             RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_TYPE,
             SSLUtil.getGlobalTruststoreType("JKS"));
-        String excludeProtocolsStr = properties.getProperty(
-            RpcClientConfigurationConstants.CONFIG_EXCLUDE_PROTOCOLS);
-        if (excludeProtocolsStr == null) {
-          excludeProtocols.add("SSLv3");
-        } else {
-          excludeProtocols.addAll(Arrays.asList(excludeProtocolsStr.split(" ")));
-          if (!excludeProtocols.contains("SSLv3")) {
-            excludeProtocols.add("SSLv3");
-          }
-        }
+        parseList(properties,
+            RpcClientConfigurationConstants.CONFIG_EXCLUDE_PROTOCOLS, excludeProtocols);
+        parseList(properties,
+            RpcClientConfigurationConstants.CONFIG_INCLUDE_PROTOCOLS, includeProtocols);
+        parseList(properties,
+            RpcClientConfigurationConstants.CONFIG_EXCLUDE_CIPHER_SUITES, excludeCipherSuites);
+        parseList(properties,
+            RpcClientConfigurationConstants.CONFIG_INCLUDE_CIPHER_SUITES, includeCipherSuites);
       }
 
       connectionManager = new ConnectionPoolManager(connectionPoolSize);
@@ -352,6 +355,12 @@ public class ThriftRpcClient extends AbstractRpcClient {
     } finally {
       stateLock.unlock();
     }
+  }
+
+  private void parseList(Properties properties, String name, Set<String> set) {
+    Optional.ofNullable(properties.getProperty(name)).ifPresent(s ->
+        set.addAll(Arrays.asList(s.split(" ")))
+    );
   }
 
   private static enum State {
@@ -385,7 +394,8 @@ public class ThriftRpcClient extends AbstractRpcClient {
 
         // Create the TSocket from that
         tsocket = createSSLSocket(
-            sslSockFactory, hostname, port, 120000, excludeProtocols);
+            sslSockFactory, hostname, port, 120000, excludeProtocols,
+            includeProtocols, excludeCipherSuites, includeCipherSuites);
       } else {
         tsocket = new TSocket(hostname, port);
       }
@@ -538,7 +548,8 @@ public class ThriftRpcClient extends AbstractRpcClient {
   }
 
   private static TSocket createSSLSocket(SSLSocketFactory factory, String host,
-                                         int port, int timeout, List<String> excludeProtocols)
+      int port, int timeout, Set<String> excludeProtocols, Set<String> includeProtocols,
+      Set<String> excludeCipherSuites, Set<String> includeCipherSuites)
       throws FlumeException {
     try {
       SSLSocket socket = (SSLSocket) factory.createSocket(host, port);
@@ -546,11 +557,22 @@ public class ThriftRpcClient extends AbstractRpcClient {
 
       List<String> enabledProtocols = new ArrayList<String>();
       for (String protocol : socket.getEnabledProtocols()) {
-        if (!excludeProtocols.contains(protocol)) {
+        if ((includeProtocols.isEmpty() || includeProtocols.contains(protocol))
+            && !excludeProtocols.contains(protocol)) {
           enabledProtocols.add(protocol);
         }
       }
       socket.setEnabledProtocols(enabledProtocols.toArray(new String[0]));
+
+      List<String> enabledCipherSuites = new ArrayList<String>();
+      for (String suite : socket.getEnabledCipherSuites()) {
+        if ((includeCipherSuites.isEmpty() || includeCipherSuites.contains(suite))
+            && !excludeCipherSuites.contains(suite)) {
+          enabledCipherSuites.add(suite);
+        }
+      }
+      socket.setEnabledCipherSuites(enabledCipherSuites.toArray(new String[0]));
+
       return new TSocket(socket);
     } catch (Exception e) {
       throw new FlumeException("Could not connect to " + host + " on port " + port, e);

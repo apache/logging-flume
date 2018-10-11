@@ -1913,23 +1913,34 @@ selector.type         replicating                                   replicating 
 selector.*                                                          Depends on the selector.type value
 interceptors          --                                            Space-separated list of interceptors
 interceptors.*
-enableSSL             false                                         Set the property true, to enable SSL. *HTTP Source does not support SSLv3.*
-excludeProtocols      SSLv3                                         Space-separated list of SSL/TLS protocols to exclude. SSLv3 is always excluded.
+ssl                   false                                         Set the property true, to enable SSL. *HTTP Source does not support SSLv3.*
+exclude-protocols     SSLv3                                         Space-separated list of SSL/TLS protocols to exclude. SSLv3 is always excluded.
 keystore                                                            Location of the keystore including keystore file name.
                                                                     If SSL is enabled but the keystore is not specified here,
                                                                     then the global keystore will be used
                                                                     (if defined, otherwise configuration error).
-keystorePassword                                                    Keystore password.
+keystore-password                                                   Keystore password.
                                                                     If SSL is enabled but the keystore password is not specified here,
                                                                     then the global keystore password will be used
                                                                     (if defined, otherwise configuration error).
+keystore-type         JKS                                           Keystore type. This can be "JKS" or "PKCS12".
 QueuedThreadPool.*                                                  Jetty specific settings to be set on org.eclipse.jetty.util.thread.QueuedThreadPool.
                                                                     N.B. QueuedThreadPool will only be used if at least one property of this class is set.
 HttpConfiguration.*                                                 Jetty specific settings to be set on org.eclipse.jetty.server.HttpConfiguration
 SslContextFactory.*                                                 Jetty specific settings to be set on org.eclipse.jetty.util.ssl.SslContextFactory (only
-                                                                    applicable when *enableSSL* is set to true).
+                                                                    applicable when *ssl* is set to true).
 ServerConnector.*                                                   Jetty specific settings to be set on org.eclipse.jetty.server.ServerConnector
 =========================================================================================================================================================
+
+Deprecated Properties
+
+===============================  ===================  =============================================================================================
+Property Name                    Default              Description
+===============================  ===================  =============================================================================================
+keystorePassword                 --                   Use *keystore-password*. Deprecated value will be overwritten with the new one.
+excludeProtocols                 SSLv3                Use *exclude-protocols*. Deprecated value will be overwritten with the new one.
+enableSSL                        false                Use *ssl*. Deprecated value will be overwritten with the new one.
+===============================  ===================  =============================================================================================
 
 N.B. Jetty-specific settings are set using the setter-methods on the objects listed above. For full details see the Javadoc for these classes
 (`QueuedThreadPool <http://www.eclipse.org/jetty/javadoc/9.4.6.v20170531/org/eclipse/jetty/util/thread/QueuedThreadPool.html>`_,
