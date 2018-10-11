@@ -177,7 +177,7 @@ public abstract class SslContextAwareAbstractSource extends AbstractSource {
   }
 
   protected SSLParameters getSSLParametersWithEnabledProtocolsAndCipherSuites(
-    SSLParameters sslParameters) {
+      SSLParameters sslParameters) {
     return new SSLParameters(
         getEnabledCipherSuites(sslParameters.getCipherSuites()),
         getEnabledProtocols(sslParameters.getProtocols())

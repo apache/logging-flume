@@ -166,23 +166,22 @@ public class HTTPSource extends SslContextAwareAbstractSource implements
 
     FlumeBeanConfigurator.setConfigurationFields(httpConfiguration, sourceContext);
     ServerConnector connector = getSslContextSupplier().get().map(sslContext -> {
-        SslContextFactory sslCtxFactory = new SslContextFactory();
-        sslCtxFactory.setSslContext(sslContext);
-        sslCtxFactory.setExcludeProtocols(getExcludeProtocols().toArray(new String[]{}));
-        sslCtxFactory.setIncludeProtocols(getIncludeProtocols().toArray(new String[]{}));
-        sslCtxFactory.setExcludeCipherSuites(getExcludeCipherSuites().toArray(new String[]{}));
-        sslCtxFactory.setIncludeCipherSuites(getIncludeCipherSuites().toArray(new String[]{}));
+      SslContextFactory sslCtxFactory = new SslContextFactory();
+      sslCtxFactory.setSslContext(sslContext);
+      sslCtxFactory.setExcludeProtocols(getExcludeProtocols().toArray(new String[]{}));
+      sslCtxFactory.setIncludeProtocols(getIncludeProtocols().toArray(new String[]{}));
+      sslCtxFactory.setExcludeCipherSuites(getExcludeCipherSuites().toArray(new String[]{}));
+      sslCtxFactory.setIncludeCipherSuites(getIncludeCipherSuites().toArray(new String[]{}));
 
-        FlumeBeanConfigurator.setConfigurationFields(sslCtxFactory, sourceContext);
+      FlumeBeanConfigurator.setConfigurationFields(sslCtxFactory, sourceContext);
 
-        httpConfiguration.setSecurePort(port);
-        httpConfiguration.setSecureScheme("https");
+      httpConfiguration.setSecurePort(port);
+      httpConfiguration.setSecureScheme("https");
 
-        return new ServerConnector(srv,
-          new SslConnectionFactory(sslCtxFactory, HttpVersion.HTTP_1_1.asString()),
-          new HttpConnectionFactory(httpConfiguration));
-      }
-    ).orElse(
+      return new ServerConnector(srv,
+        new SslConnectionFactory(sslCtxFactory, HttpVersion.HTTP_1_1.asString()),
+        new HttpConnectionFactory(httpConfiguration));
+    }).orElse(
         new ServerConnector(srv, new HttpConnectionFactory(httpConfiguration))
     );
 
