@@ -470,17 +470,20 @@ public class TestBucketWriter {
     context.put("hdfs.rollCount", "1");
     context.put("hdfs.retryInterval", "1");
     context.put("hdfs.callTimeout", Long.toString(1000));
-    MockHDFSWriter mockHDFSWriter = new MockHDFSWriter(numberOfRetriesRequired);
+    MockHDFSWriter mockHDFSWriter = new MockHDFSWriter(Integer.MAX_VALUE);
+    ExecutorService executorService = Executors.newSingleThreadExecutor();
     BucketWriter bucketWriter = new BucketWriter(
         0, 0, 1, 1, ctx, hdfsPath, hdfsPath, "singleBucket", ".tmp", null, null,
         null, mockHDFSWriter, timedRollerPool, proxy,
         new SinkCounter("test-bucket-writer-" + System.currentTimeMillis()), 0, null, null, 30000,
-        Executors.newSingleThreadExecutor(), 1, numberOfRetriesRequired);
+        executorService, 1, numberOfRetriesRequired);
 
     Event event = EventBuilder.withBody("test", Charsets.UTF_8);
     bucketWriter.append(event);
     bucketWriter.close(false);
     TimeUnit.SECONDS.sleep(numberOfRetriesRequired + 2);
+    Assert.assertEquals("ExcceutorService should be empty",
+        executorService.shutdownNow().size(), 0);
     Assert.assertEquals("Expected " + numberOfRetriesRequired + " " +
         "but got " + mockHDFSWriter.currentCloseAttempts,
         mockHDFSWriter.currentCloseAttempts.get(), numberOfRetriesRequired);

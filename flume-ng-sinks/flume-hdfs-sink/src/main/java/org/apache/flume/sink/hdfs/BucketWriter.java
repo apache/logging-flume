@@ -287,7 +287,7 @@ class BucketWriter {
               bucketPath, rollInterval);
           try {
             // Roll the file and remove reference from sfWriters map.
-            close(true, false);
+            close(true);
           } catch (Throwable t) {
             LOG.error("Unexpected error", t);
           }
@@ -309,7 +309,7 @@ class BucketWriter {
    * based rolling closes this file.
    */
   public void close() throws InterruptedException {
-    close(false, false);
+    close(false);
   }
 
   private CallRunner<Void> createCloseCallRunner() {
@@ -322,7 +322,7 @@ class BucketWriter {
     };
   }
 
-  private class CloseCallable implements Callable<Void> {
+  private class CloseHandler implements Callable<Void> {
     private final String path = bucketPath;
     private int closeTries = 0;
 
@@ -340,7 +340,7 @@ class BucketWriter {
      */
     public void close(boolean immediate) {
       closeTries++;
-      boolean shouldRetry = closeTries < maxRetries || !immediate;
+      boolean shouldRetry = closeTries < maxRetries && !immediate;
       try {
         callWithTimeout(createCloseCallRunner());
         sinkCounter.incrementConnectionClosedCount();
@@ -354,7 +354,7 @@ class BucketWriter {
         } else {
           LOG.warn("Cannot retry close any more timedRollerPool is null or terminated");
         }
-        if (!shouldRetry || immediate) {
+        if (!shouldRetry) {
           LOG.warn("Unsuccessfully attempted to close " + path + " " +
                   maxRetries + " times. Initializing lease recovery.");
           sinkCounter.incrementConnectionFailedCount();
@@ -437,7 +437,7 @@ class BucketWriter {
 
     LOG.info("Closing {}", bucketPath);
     if (isOpen) {
-      new CloseCallable().close(immediate);
+      new CloseHandler().close(immediate);
       isOpen = false;
     } else {
       LOG.info("HDFSWriter is already closed: {}", bucketPath);
