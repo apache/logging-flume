@@ -115,6 +115,7 @@ class BucketWriter {
   // reopened. Not ideal, but avoids internals of owners
   protected AtomicBoolean closed = new AtomicBoolean();
   AtomicInteger renameTries = new AtomicInteger(0);
+  AtomicInteger closeTries = new AtomicInteger(0);
 
   BucketWriter(long rollInterval, long rollSize, long rollCount, long batchSize,
       Context context, String filePath, String fileName, String inUsePrefix,
@@ -320,12 +321,30 @@ class BucketWriter {
     close(false);
   }
 
-  private CallRunner<Void> createCloseCallRunner() {
-    return new CallRunner<Void>() {
+  private Callable<Void> createCloseCallable() {
+    return new Callable<Void>() {
+      private final String path = bucketPath;
       private final HDFSWriter localWriter = writer;
+      private int closeTries = 0;
+
       @Override
       public Void call() throws Exception {
-        localWriter.close(); // could block
+        if (closeTries > maxRenameTries) {
+          LOG.warn("Unsuccessfully attempted to close " + path + " " +
+              maxRenameTries + " times. Initializing lease recovery.");
+          sinkCounter.incrementConnectionFailedCount();
+          recoverLease();
+          return null;
+        }
+        closeTries++;
+        try {
+          localWriter.close(); // could block
+        } catch (IOException e) {
+          LOG.warn("Closing file: " + path + " failed. Will " +
+              "retry again in " + retryInterval + " seconds.", e);
+          timedRollerPool.schedule(this, retryInterval, TimeUnit.SECONDS);
+          return null;
+        }
         return null;
       }
     };
@@ -404,18 +423,12 @@ class BucketWriter {
     }
 
     LOG.info("Closing {}", bucketPath);
-    CallRunner<Void> closeCallRunner = createCloseCallRunner();
     if (isOpen) {
-      try {
-        callWithTimeout(closeCallRunner);
-        sinkCounter.incrementConnectionClosedCount();
-      } catch (IOException e) {
-        LOG.warn("failed to close() HDFSWriter for file (" + bucketPath +
-                 "). Exception follows.", e);
-        sinkCounter.incrementConnectionFailedCount();
-        // starting lease recovery process, see FLUME-3080
-        recoverLease();
-      }
+      Callable<Void> closeCallRunner = createCloseCallable();
+      timedRollerPool.schedule(closeCallRunner, retryInterval, TimeUnit.SECONDS);
+      sinkCounter.incrementConnectionClosedCount();
+
+
       isOpen = false;
     } else {
       LOG.info("HDFSWriter is already closed: {}", bucketPath);
