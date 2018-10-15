@@ -293,6 +293,7 @@ public class TestHDFSEventSinkOnMiniCluster {
     sinkCtx.put("hdfs.path", nnURL + outputDir);
     sinkCtx.put("hdfs.fileType", HDFSWriterFactory.DataStreamType);
     sinkCtx.put("hdfs.batchSize", Integer.toString(1));
+    sinkCtx.put("hdfs.retryInterval", "10"); //to speed up test
 
     HDFSEventSink sink = new HDFSEventSink();
     sink.setName("simpleHDFSTest-hdfs-sink");
@@ -531,6 +532,7 @@ public class TestHDFSEventSinkOnMiniCluster {
     ctx.put("hdfs.fileType", HDFSWriterFactory.DataStreamType);
     ctx.put("hdfs.batchSize", Integer.toString(1));
     ctx.put("hdfs.callTimeout", Integer.toString(1000));
+    ctx.put("hdfs.retryInterval", "10"); //to speed up test
 
     HDFSWriter hdfsWriter = new HDFSDataStream() {
       @Override
