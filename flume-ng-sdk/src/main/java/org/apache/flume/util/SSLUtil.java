@@ -31,6 +31,10 @@ public class SSLUtil {
   private static final String SYS_PROP_TRUSTSTORE_PATH = "javax.net.ssl.trustStore";
   private static final String SYS_PROP_TRUSTSTORE_PASSWORD = "javax.net.ssl.trustStorePassword";
   private static final String SYS_PROP_TRUSTSTORE_TYPE = "javax.net.ssl.trustStoreType";
+  private static final String SYS_PROP_INCLUDE_PROTOCOLS = "flume.ssl.include.protocols";
+  private static final String SYS_PROP_EXCLUDE_PROTOCOLS = "flume.ssl.exclude.protocols";
+  private static final String SYS_PROP_INCLUDE_CIPHERSUITES = "flume.ssl.include.cipherSuites";
+  private static final String SYS_PROP_EXCLUDE_CIPHERSUITES = "flume.ssl.exclude.cipherSuites";
 
   private static final String ENV_VAR_KEYSTORE_PATH = "FLUME_SSL_KEYSTORE_PATH";
   private static final String ENV_VAR_KEYSTORE_PASSWORD = "FLUME_SSL_KEYSTORE_PASSWORD";
@@ -38,6 +42,10 @@ public class SSLUtil {
   private static final String ENV_VAR_TRUSTSTORE_PATH = "FLUME_SSL_TRUSTSTORE_PATH";
   private static final String ENV_VAR_TRUSTSTORE_PASSWORD = "FLUME_SSL_TRUSTSTORE_PASSWORD";
   private static final String ENV_VAR_TRUSTSTORE_TYPE = "FLUME_SSL_TRUSTSTORE_TYPE";
+  private static final String ENV_VAR_INCLUDE_PROTOCOLS  = "FLUME_SSL_INCLUDE_PROTOCOLS";
+  private static final String ENV_VAR_EXCLUDE_PROTOCOLS = "FLUME_SSL_EXCLUDE_PROTOCOLS";
+  private static final String ENV_VAR_INCLUDE_CIPHERSUITES = "FLUME_SSL_INCLUDE_CIPHERSUITES";
+  private static final String ENV_VAR_EXCLUDE_CIPHERSUITES = "FLUME_SSL_EXCLUDE_CIPHERSUITES";
 
   private static final String DESCR_KEYSTORE_PATH = "keystore path";
   private static final String DESCR_KEYSTORE_PASSWORD = "keystore password";
@@ -45,6 +53,10 @@ public class SSLUtil {
   private static final String DESCR_TRUSTSTORE_PATH = "truststore path";
   private static final String DESCR_TRUSTSTORE_PASSWORD = "truststore password";
   private static final String DESCR_TRUSTSTORE_TYPE = "truststore type";
+  private static final String DESCR_INCLUDE_PROTOCOLS = "include protocols";
+  private static final String DESCR_EXCLUDE_PROTOCOLS = "exclude protocols";
+  private static final String DESCR_INCLUDE_CIPHERSUITES = "include cipher suites";
+  private static final String DESCR_EXCLUDE_CIPHERSUITES = "exclude cipher suites";
 
   public static void initGlobalSSLParameters() {
     initSysPropFromEnvVar(
@@ -59,6 +71,14 @@ public class SSLUtil {
         SYS_PROP_TRUSTSTORE_PASSWORD, ENV_VAR_TRUSTSTORE_PASSWORD, DESCR_TRUSTSTORE_PASSWORD);
     initSysPropFromEnvVar(
         SYS_PROP_TRUSTSTORE_TYPE, ENV_VAR_TRUSTSTORE_TYPE, DESCR_TRUSTSTORE_TYPE);
+    initSysPropFromEnvVar(
+        SYS_PROP_INCLUDE_PROTOCOLS, ENV_VAR_INCLUDE_PROTOCOLS, DESCR_INCLUDE_PROTOCOLS);
+    initSysPropFromEnvVar(
+        SYS_PROP_EXCLUDE_PROTOCOLS, ENV_VAR_EXCLUDE_PROTOCOLS, DESCR_EXCLUDE_PROTOCOLS);
+    initSysPropFromEnvVar(
+        SYS_PROP_INCLUDE_CIPHERSUITES, ENV_VAR_INCLUDE_CIPHERSUITES, DESCR_INCLUDE_CIPHERSUITES);
+    initSysPropFromEnvVar(
+        SYS_PROP_EXCLUDE_CIPHERSUITES, ENV_VAR_EXCLUDE_CIPHERSUITES, DESCR_EXCLUDE_CIPHERSUITES);
   }
 
   private static void initSysPropFromEnvVar(String sysPropName, String envVarName,
@@ -103,4 +123,24 @@ public class SSLUtil {
     return sysPropValue != null ? sysPropValue : defaultValue;
   }
 
+  public static String getGlobalExcludeProtocols() {
+    return normalizeProperty(SYS_PROP_EXCLUDE_PROTOCOLS);
+  }
+
+  public static String getGlobalIncludeProtocols() {
+    return normalizeProperty(SYS_PROP_INCLUDE_PROTOCOLS);
+  }
+
+  public static String getGlobalExcludeCipherSuites() {
+    return normalizeProperty(SYS_PROP_EXCLUDE_CIPHERSUITES);
+  }
+
+  public static String getGlobalIncludeCipherSuites() {
+    return normalizeProperty(SYS_PROP_INCLUDE_CIPHERSUITES);
+  }
+
+  private static String normalizeProperty(String name) {
+    String property = System.getProperty(name);
+    return property == null ? null : property.replaceAll(",", " ");
+  }
 }

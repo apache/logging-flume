@@ -144,6 +144,9 @@ public final class RpcClientConfigurationConstants {
   public static final String CONFIG_TRUSTSTORE_PASSWORD = "truststore-password";
   public static final String CONFIG_TRUSTSTORE_TYPE = "truststore-type";
   public static final String CONFIG_EXCLUDE_PROTOCOLS = "exclude-protocols";
+  public static final String CONFIG_INCLUDE_PROTOCOLS = "include-protocols";
+  public static final String CONFIG_EXCLUDE_CIPHER_SUITES = "exclude-cipher-suites";
+  public static final String CONFIG_INCLUDE_CIPHER_SUITES = "include-cipher-suites";
 
   public static final String KERBEROS_KEY = "kerberos";
 
