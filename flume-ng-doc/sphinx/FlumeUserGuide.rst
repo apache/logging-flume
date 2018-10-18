@@ -755,19 +755,21 @@ SSL/TLS support
 Several Flume components support the SSL/TLS protocols in order to communicate with other systems
 securely.
 
-===============  ======================
-Component        SSL server or client
-===============  ======================
-Avro Source      server
-Avro Sink        client
-Thrift Source    server
-Thrift Sink      client
-Kafka Source     client
-Kafka Channel    client
-Kafka Sink       client
-HTTP Source      server
-JMS Source       client
-===============  ======================
+===========================  ======================
+Component                    SSL server or client
+===========================  ======================
+Avro Source                  server
+Avro Sink                    client
+Thrift Source                server
+Thrift Sink                  client
+Kafka Source                 client
+Kafka Channel                client
+Kafka Sink                   client
+HTTP Source                  server
+JMS Source                   client
+Syslog TCP Source            server
+Multiport Syslog TCP Source  server
+===========================  ======================
 
 The SSL compatible components have several configuration parameters to set up SSL, like
 enable SSL flag, keystore / truststore parameters (location, password, type) and additional
@@ -799,6 +801,12 @@ javax.net.ssl.keyStoreType          FLUME_SSL_KEYSTORE_TYPE          Keystore ty
 javax.net.ssl.trustStore            FLUME_SSL_TRUSTSTORE_PATH        Truststore location
 javax.net.ssl.trustStorePassword    FLUME_SSL_TRUSTSTORE_PASSWORD    Truststore password
 javax.net.ssl.trustStoreType        FLUME_SSL_TRUSTSTORE_TYPE        Truststore type (by default JKS)
+flume.ssl.include.protocols         FLUME_SSL_INCLUDE_PROTOCOLS      Protocols to include when calculating enabled protocols. A comma (,) separated list.
+                                                                     Excluded protocols will be excluded from this list if provided.
+flume.ssl.exclude.protocols         FLUME_SSL_EXCLUDE_PROTOCOLS      Protocols to exclude when calculating enabled protocols. A comma (,) separated list.
+flume.ssl.include.cipherSuites      FLUME_SSL_INCLUDE_CIPHERSUITES   Cipher suites to include when calculating enabled cipher suites. A comma (,) separated list.
+                                                                     Excluded cipher suites will be excluded from this list if provided.
+flume.ssl.exclude.cipherSuites      FLUME_SSL_EXCLUDE_CIPHERSUITES   Cipher suites to exclude when calculating enabled cipher suites. A comma (,) separated list.
 ==================================  ===============================  ==================================
 
 The SSL system properties can either be passed on the command line or by setting the ``JAVA_OPTS``
@@ -856,36 +864,44 @@ When paired with the built-in Avro Sink on another (previous hop) Flume agent,
 it can create tiered collection topologies.
 Required properties are in **bold**.
 
-==================   ================  ===================================================
-Property Name        Default           Description
-==================   ================  ===================================================
-**channels**         --
-**type**             --                The component type name, needs to be ``avro``
-**bind**             --                hostname or IP address to listen on
-**port**             --                Port # to bind to
-threads              --                Maximum number of worker threads to spawn
+===================   ================  ===================================================
+Property Name         Default           Description
+===================   ================  ===================================================
+**channels**          --
+**type**              --                The component type name, needs to be ``avro``
+**bind**              --                hostname or IP address to listen on
+**port**              --                Port # to bind to
+threads               --                Maximum number of worker threads to spawn
 selector.type
 selector.*
-interceptors         --                Space-separated list of interceptors
+interceptors          --                Space-separated list of interceptors
 interceptors.*
-compression-type     none              This can be "none" or "deflate".  The compression-type must match the compression-type of matching AvroSource
-ssl                  false             Set this to true to enable SSL encryption. If SSL is enabled,
-                                       you must also specify a "keystore" and a "keystore-password",
-                                       either through component level parameters (see below)
-                                       or as global SSL parameters (see `SSL/TLS support`_ section).
-keystore             --                This is the path to a Java keystore file.
-                                       If not specified here, then the global keystore will be used
-                                       (if defined, otherwise configuration error).
-keystore-password    --                The password for the Java keystore.
-                                       If not specified here, then the global keystore password will be used
-                                       (if defined, otherwise configuration error).
-keystore-type        JKS               The type of the Java keystore. This can be "JKS" or "PKCS12".
-                                       If not specified here, then the global keystore type will be used
-                                       (if defined, otherwise the default is JKS).
-exclude-protocols    SSLv3             Space-separated list of SSL/TLS protocols to exclude. SSLv3 will always be excluded in addition to the protocols specified.
-ipFilter             false             Set this to true to enable ipFiltering for netty
-ipFilterRules        --                Define N netty ipFilter pattern rules with this config.
-==================   ================  ===================================================
+compression-type      none              This can be "none" or "deflate".  The compression-type must match the compression-type of matching AvroSource
+ssl                   false             Set this to true to enable SSL encryption. If SSL is enabled,
+                                        you must also specify a "keystore" and a "keystore-password",
+                                        either through component level parameters (see below)
+                                        or as global SSL parameters (see `SSL/TLS support`_ section).
+keystore              --                This is the path to a Java keystore file.
+                                        If not specified here, then the global keystore will be used
+                                        (if defined, otherwise configuration error).
+keystore-password     --                The password for the Java keystore.
+                                        If not specified here, then the global keystore password will be used
+                                        (if defined, otherwise configuration error).
+keystore-type         JKS               The type of the Java keystore. This can be "JKS" or "PKCS12".
+                                        If not specified here, then the global keystore type will be used
+                                        (if defined, otherwise the default is JKS).
+exclude-protocols     SSLv3             Space-separated list of SSL/TLS protocols to exclude.
+                                        SSLv3 will always be excluded in addition to the protocols specified.
+include-protocols     --                Space-separated list of SSL/TLS protocols to include.
+                                        The enabled protocols will be the included protocols without the excluded protocols.
+                                        If included-protocols is empty, it includes every supported protocols.
+exclude-cipher-suites --                Space-separated list of cipher suites to exclude.
+include-cipher-suites --                Space-separated list of cipher suites to include.
+                                        The enabled cipher suites will be the included cipher suites without the excluded cipher suites.
+                                        If included-cipher-suites is empty, it includes every supported cipher suites.
+ipFilter              false             Set this to true to enable ipFiltering for netty
+ipFilterRules         --                Define N netty ipFilter pattern rules with this config.
+==================    ================  ===================================================
 
 Example for agent named a1:
 
@@ -924,36 +940,44 @@ agent-principal and agent-keytab are the properties used by the
 Thrift source to authenticate to the kerberos KDC.
 Required properties are in **bold**.
 
-==================   ===========  ==================================================================
-Property Name        Default      Description
-==================   ===========  ==================================================================
-**channels**         --
-**type**             --           The component type name, needs to be ``thrift``
-**bind**             --           hostname or IP address to listen on
-**port**             --           Port # to bind to
-threads              --           Maximum number of worker threads to spawn
+===================   ===========  ==================================================================
+Property Name         Default      Description
+===================   ===========  ==================================================================
+**channels**          --
+**type**              --           The component type name, needs to be ``thrift``
+**bind**              --           hostname or IP address to listen on
+**port**              --           Port # to bind to
+threads               --           Maximum number of worker threads to spawn
 selector.type
 selector.*
-interceptors         --           Space separated list of interceptors
+interceptors          --           Space separated list of interceptors
 interceptors.*
-ssl                  false        Set this to true to enable SSL encryption. If SSL is enabled,
-                                  you must also specify a "keystore" and a "keystore-password",
-                                  either through component level parameters (see below)
-                                  or as global SSL parameters (see `SSL/TLS support`_ section)
-keystore             --           This is the path to a Java keystore file.
-                                  If not specified here, then the global keystore will be used
-                                  (if defined, otherwise configuration error).
-keystore-password    --           The password for the Java keystore.
-                                  If not specified here, then the global keystore password will be used
-                                  (if defined, otherwise configuration error).
-keystore-type        JKS          The type of the Java keystore. This can be "JKS" or "PKCS12".
-                                  If not specified here, then the global keystore type will be used
-                                  (if defined, otherwise the default is JKS).
-exclude-protocols    SSLv3        Space-separated list of SSL/TLS protocols to exclude. SSLv3 will always be excluded in addition to the protocols specified.
-kerberos             false        Set to true to enable kerberos authentication. In kerberos mode, agent-principal and agent-keytab  are required for successful authentication. The Thrift source in secure mode, will accept connections only from Thrift clients that have kerberos enabled and are successfully authenticated to the kerberos KDC.
-agent-principal      --           The kerberos principal used by the Thrift Source to authenticate to the kerberos KDC.
-agent-keytab         —-           The keytab location used by the Thrift Source in combination with the agent-principal to authenticate to the kerberos KDC.
-==================   ===========  ==================================================================
+ssl                   false        Set this to true to enable SSL encryption. If SSL is enabled,
+                                   you must also specify a "keystore" and a "keystore-password",
+                                   either through component level parameters (see below)
+                                   or as global SSL parameters (see `SSL/TLS support`_ section)
+keystore              --           This is the path to a Java keystore file.
+                                   If not specified here, then the global keystore will be used
+                                   (if defined, otherwise configuration error).
+keystore-password     --           The password for the Java keystore.
+                                   If not specified here, then the global keystore password will be used
+                                   (if defined, otherwise configuration error).
+keystore-type         JKS          The type of the Java keystore. This can be "JKS" or "PKCS12".
+                                   If not specified here, then the global keystore type will be used
+                                   (if defined, otherwise the default is JKS).
+exclude-protocols     SSLv3        Space-separated list of SSL/TLS protocols to exclude.
+                                   SSLv3 will always be excluded in addition to the protocols specified.
+include-protocols     --           Space-separated list of SSL/TLS protocols to include.
+                                   The enabled protocols will be the included protocols without the excluded protocols.
+                                   If included-protocols is empty, it includes every supported protocols.
+exclude-cipher-suites --           Space-separated list of cipher suites to exclude.
+include-cipher-suites --           Space-separated list of cipher suites to include.
+                                   The enabled cipher suites will be the included cipher suites without the excluded cipher suites.
+
+kerberos              false        Set to true to enable kerberos authentication. In kerberos mode, agent-principal and agent-keytab  are required for successful authentication. The Thrift source in secure mode, will accept connections only from Thrift clients that have kerberos enabled and are successfully authenticated to the kerberos KDC.
+agent-principal       --           The kerberos principal used by the Thrift Source to authenticate to the kerberos KDC.
+agent-keytab          —-           The keytab location used by the Thrift Source in combination with the agent-principal to authenticate to the kerberos KDC.
+===================   ===========  ==================================================================
 
 Example for agent named a1:
 
@@ -1770,26 +1794,48 @@ Syslog TCP Source
 
 The original, tried-and-true syslog TCP source.
 
-==============   ===========  ==============================================
-Property Name    Default      Description
-==============   ===========  ==============================================
-**channels**     --
-**type**         --           The component type name, needs to be ``syslogtcp``
-**host**         --           Host name or IP address to bind to
-**port**         --           Port # to bind to
-eventSize        2500         Maximum size of a single event line, in bytes
-keepFields       none         Setting this to 'all' will preserve the Priority,
-                              Timestamp and Hostname in the body of the event.
-                              A spaced separated list of fields to include
-                              is allowed as well. Currently, the following
-                              fields can be included: priority, version,
-                              timestamp, hostname. The values 'true' and 'false'
-                              have been deprecated in favor of 'all' and 'none'.
-selector.type                 replicating or multiplexing
-selector.*       replicating  Depends on the selector.type value
-interceptors     --           Space-separated list of interceptors
+===================   ===========  ==============================================
+Property Name         Default      Description
+===================   ===========  ==============================================
+**channels**          --
+**type**              --           The component type name, needs to be ``syslogtcp``
+**host**              --           Host name or IP address to bind to
+**port**              --           Port # to bind to
+eventSize             2500         Maximum size of a single event line, in bytes
+keepFields            none         Setting this to 'all' will preserve the Priority,
+                                   Timestamp and Hostname in the body of the event.
+                                   A spaced separated list of fields to include
+                                   is allowed as well. Currently, the following
+                                   fields can be included: priority, version,
+                                   timestamp, hostname. The values 'true' and 'false'
+                                   have been deprecated in favor of 'all' and 'none'.
+selector.type                      replicating or multiplexing
+selector.*            replicating  Depends on the selector.type value
+interceptors          --           Space-separated list of interceptors
 interceptors.*
-==============   ===========  ==============================================
+ssl                   false        Set this to true to enable SSL encryption. If SSL is enabled,
+                                   you must also specify a "keystore" and a "keystore-password",
+                                   either through component level parameters (see below)
+                                   or as global SSL parameters (see `SSL/TLS support`_ section).
+keystore              --           This is the path to a Java keystore file.
+                                   If not specified here, then the global keystore will be used
+                                   (if defined, otherwise configuration error).
+keystore-password     --           The password for the Java keystore.
+                                   If not specified here, then the global keystore password will be used
+                                   (if defined, otherwise configuration error).
+keystore-type         JKS          The type of the Java keystore. This can be "JKS" or "PKCS12".
+                                   If not specified here, then the global keystore type will be used
+                                   (if defined, otherwise the default is JKS).
+exclude-protocols     SSLv3        Space-separated list of SSL/TLS protocols to exclude.
+                                   SSLv3 will always be excluded in addition to the protocols specified.
+include-protocols     --           Space-separated list of SSL/TLS protocols to include.
+                                   The enabled protocols will be the included protocols without the excluded protocols.
+                                   If included-protocols is empty, it includes every supported protocols.
+exclude-cipher-suites --           Space-separated list of cipher suites to exclude.
+include-cipher-suites --           Space-separated list of cipher suites to include.
+                                   The enabled cipher suites will be the included cipher suites without the excluded cipher suites.
+                                   If included-cipher-suites is empty, it includes every supported cipher suites.
+===================   ===========  ==============================================
 
 For example, a syslog TCP source for agent named a1:
 
@@ -1838,6 +1884,28 @@ selector.type         replicating       replicating, multiplexing, or custom
 selector.*            --                Depends on the ``selector.type`` value
 interceptors          --                Space-separated list of interceptors.
 interceptors.*
+ssl                   false             Set this to true to enable SSL encryption. If SSL is enabled,
+                                        you must also specify a "keystore" and a "keystore-password",
+                                        either through component level parameters (see below)
+                                        or as global SSL parameters (see `SSL/TLS support`_ section).
+keystore              --                This is the path to a Java keystore file.
+                                        If not specified here, then the global keystore will be used
+                                        (if defined, otherwise configuration error).
+keystore-password     --                The password for the Java keystore.
+                                        If not specified here, then the global keystore password will be used
+                                        (if defined, otherwise configuration error).
+keystore-type         JKS               The type of the Java keystore. This can be "JKS" or "PKCS12".
+                                        If not specified here, then the global keystore type will be used
+                                        (if defined, otherwise the default is JKS).
+exclude-protocols     SSLv3             Space-separated list of SSL/TLS protocols to exclude.
+                                        SSLv3 will always be excluded in addition to the protocols specified.
+include-protocols     --                Space-separated list of SSL/TLS protocols to include.
+                                        The enabled protocols will be the included protocols without the excluded protocols.
+                                        If included-protocols is empty, it includes every supported protocols.
+exclude-cipher-suites --                Space-separated list of cipher suites to exclude.
+include-cipher-suites --                Space-separated list of cipher suites to include.
+                                        The enabled cipher suites will be the included cipher suites without the excluded cipher suites.
+                                        If included-cipher-suites is empty, it includes every supported cipher suites.
 ====================  ================  ==============================================
 
 For example, a multiport syslog TCP source for agent named a1:
@@ -1913,23 +1981,41 @@ selector.type         replicating                                   replicating 
 selector.*                                                          Depends on the selector.type value
 interceptors          --                                            Space-separated list of interceptors
 interceptors.*
-enableSSL             false                                         Set the property true, to enable SSL. *HTTP Source does not support SSLv3.*
-excludeProtocols      SSLv3                                         Space-separated list of SSL/TLS protocols to exclude. SSLv3 is always excluded.
+ssl                   false                                         Set the property true, to enable SSL. *HTTP Source does not support SSLv3.*
+exclude-protocols     SSLv3                                         Space-separated list of SSL/TLS protocols to exclude.
+                                                                    SSLv3 will always be excluded in addition to the protocols specified.
+include-protocols     --                                            Space-separated list of SSL/TLS protocols to include.
+                                                                    The enabled protocols will be the included protocols without the excluded protocols.
+                                                                    If included-protocols is empty, it includes every supported protocols.
+exclude-cipher-suites --                                            Space-separated list of cipher suites to exclude.
+include-cipher-suites --                                            Space-separated list of cipher suites to include.
+                                                                    The enabled cipher suites will be the included cipher suites without the excluded cipher suites.
 keystore                                                            Location of the keystore including keystore file name.
                                                                     If SSL is enabled but the keystore is not specified here,
                                                                     then the global keystore will be used
                                                                     (if defined, otherwise configuration error).
-keystorePassword                                                    Keystore password.
+keystore-password                                                   Keystore password.
                                                                     If SSL is enabled but the keystore password is not specified here,
                                                                     then the global keystore password will be used
                                                                     (if defined, otherwise configuration error).
+keystore-type         JKS                                           Keystore type. This can be "JKS" or "PKCS12".
 QueuedThreadPool.*                                                  Jetty specific settings to be set on org.eclipse.jetty.util.thread.QueuedThreadPool.
                                                                     N.B. QueuedThreadPool will only be used if at least one property of this class is set.
 HttpConfiguration.*                                                 Jetty specific settings to be set on org.eclipse.jetty.server.HttpConfiguration
 SslContextFactory.*                                                 Jetty specific settings to be set on org.eclipse.jetty.util.ssl.SslContextFactory (only
-                                                                    applicable when *enableSSL* is set to true).
+                                                                    applicable when *ssl* is set to true).
 ServerConnector.*                                                   Jetty specific settings to be set on org.eclipse.jetty.server.ServerConnector
 =========================================================================================================================================================
+
+Deprecated Properties
+
+===============================  ===================  =============================================================================================
+Property Name                    Default              Description
+===============================  ===================  =============================================================================================
+keystorePassword                 --                   Use *keystore-password*. Deprecated value will be overwritten with the new one.
+excludeProtocols                 SSLv3                Use *exclude-protocols*. Deprecated value will be overwritten with the new one.
+enableSSL                        false                Use *ssl*. Deprecated value will be overwritten with the new one.
+===============================  ===================  =============================================================================================
 
 N.B. Jetty-specific settings are set using the setter-methods on the objects listed above. For full details see the Javadoc for these classes
 (`QueuedThreadPool <http://www.eclipse.org/jetty/javadoc/9.4.6.v20170531/org/eclipse/jetty/util/thread/QueuedThreadPool.html>`_,

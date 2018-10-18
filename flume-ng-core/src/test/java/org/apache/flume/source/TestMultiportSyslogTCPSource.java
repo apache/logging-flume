@@ -30,6 +30,7 @@ import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
+import java.security.cert.X509Certificate;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -37,6 +38,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiConsumer;
+
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
 import org.apache.flume.ChannelSelector;
@@ -62,6 +65,11 @@ import org.mockito.Mockito;
 import org.mockito.internal.util.reflection.Whitebox;
 
 import static org.mockito.Mockito.*;
+
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 public class TestMultiportSyslogTCPSource {
 
@@ -89,8 +97,9 @@ public class TestMultiportSyslogTCPSource {
   }
 
   private List<Integer> testNPorts(MultiportSyslogTCPSource source, Channel channel,
-                                   List<Event> channelEvents, int numPorts,
-                                   ChannelProcessor channelProcessor) throws IOException {
+      List<Event> channelEvents, int numPorts, ChannelProcessor channelProcessor,
+      BiConsumer<Integer, byte[]> eventSenderFuncton, Context additionalContext)
+      throws IOException {
     Context channelContext = new Context();
     channelContext.put("capacity", String.valueOf(2000));
     channelContext.put("transactionCapacity", String.valueOf(2000));
@@ -123,15 +132,12 @@ public class TestMultiportSyslogTCPSource {
     Context context = new Context();
     context.put(SyslogSourceConfigurationConstants.CONFIG_PORTS,
         ports.toString().trim());
+    context.putAll(additionalContext.getParameters());
     source.configure(context);
     source.start();
 
-    Socket syslogSocket;
     for (int i = 0; i < numPorts; i++) {
-      syslogSocket = new Socket(
-          InetAddress.getLocalHost(), portList.get(i));
-      syslogSocket.getOutputStream().write(getEvent(i));
-      syslogSocket.close();
+      eventSenderFuncton.accept(portList.get(i), getEvent(i));
     }
 
     Transaction txn = channel.getTransaction();
@@ -151,7 +157,6 @@ public class TestMultiportSyslogTCPSource {
       txn.close();
     }
 
-
     return portList;
   }
 
@@ -166,9 +171,85 @@ public class TestMultiportSyslogTCPSource {
     int numPorts = 1000;
 
     List<Integer> portList = testNPorts(source, channel, channelEvents,
-        numPorts, null);
+        numPorts, null, getSimpleEventSender(), new Context());
 
     //Since events can arrive out of order, search for each event in the array
+    processEvents(channelEvents, numPorts, portList);
+    source.stop();
+  }
+
+  /**
+   * Basic test to exercise multiple-port parsing.
+   */
+  @Test
+  public void testMultiplePortsSSL() throws Exception {
+
+    SSLContext sslContext = SSLContext.getInstance("TLS");
+    sslContext.init(null, new TrustManager[]{new X509TrustManager() {
+        @Override
+        public void checkClientTrusted(X509Certificate[] certs, String s) {
+          // nothing
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] certs, String s) {
+          // nothing
+        }
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers() {
+          return new X509Certificate[0];
+        }
+      } },
+        null);
+
+    SocketFactory socketFactory = sslContext.getSocketFactory();
+
+    Context context = new Context();
+    context.put("ssl", "true");
+    context.put("keystore", "src/test/resources/server.p12");
+    context.put("keystore-password", "password");
+    context.put("keystore-type", "PKCS12");
+
+
+    MultiportSyslogTCPSource source = new MultiportSyslogTCPSource();
+    Channel channel = new MemoryChannel();
+    List<Event> channelEvents = new ArrayList<>();
+    int numPorts = 10;
+
+    List<Integer> portList = testNPorts(source, channel, channelEvents,
+        numPorts, null, getSSLEventSender(socketFactory), context);
+
+    //Since events can arrive out of order, search for each event in the array
+    processEvents(channelEvents, numPorts, portList);
+    source.stop();
+  }
+
+  private BiConsumer<Integer, byte[]> getSSLEventSender(SocketFactory socketFactory) {
+    return (port, event) -> {
+      try {
+        Socket syslogSocket = socketFactory.createSocket(InetAddress.getLocalHost(), port);
+        syslogSocket.getOutputStream().write(event);
+        syslogSocket.close();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    };
+  }
+
+  private BiConsumer<Integer, byte[]> getSimpleEventSender() {
+    return (Integer port, byte[] event) -> {
+      try {
+        Socket syslogSocket = new Socket(InetAddress.getLocalHost(), port);
+        syslogSocket.getOutputStream().write(event);
+        syslogSocket.close();
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    };
+  }
+
+  private void processEvents(List<Event> channelEvents, int numPorts, List<Integer> portList) {
     for (int i = 0; i < numPorts ; i++) {
       Iterator<Event> iter = channelEvents.iterator();
       while (iter.hasNext()) {
@@ -179,7 +260,7 @@ public class TestMultiportSyslogTCPSource {
         if (headers.containsKey(
             SyslogSourceConfigurationConstants.DEFAULT_PORT_HEADER)) {
           port = Integer.parseInt(headers.get(
-                SyslogSourceConfigurationConstants.DEFAULT_PORT_HEADER));
+              SyslogSourceConfigurationConstants.DEFAULT_PORT_HEADER));
         }
         iter.remove();
 
@@ -196,7 +277,6 @@ public class TestMultiportSyslogTCPSource {
         }
       }
     }
-    source.stop();
   }
 
   /**
@@ -442,7 +522,8 @@ public class TestMultiportSyslogTCPSource {
     doThrow(new ChannelException("dummy")).doNothing().when(cp)
         .processEventBatch(anyListOf(Event.class));
     try {
-      testNPorts(source, channel, channelEvents, 1, cp);
+      testNPorts(source, channel, channelEvents, 1, cp,
+          getSimpleEventSender(), new Context());
     } catch (Exception e) {
       //
     }
