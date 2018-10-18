@@ -170,9 +170,9 @@ public class MultiportSyslogTCPSource extends SslContextAwareAbstractSource impl
 
     getSslContextSupplier().get().ifPresent(sslContext -> {
       SslFilter filter = new SslFilter(sslContext);
-      SSLParameters sslParameters = getSslParametersForContext(sslContext);
-      filter.setEnabledProtocols(sslParameters.getProtocols());
-      filter.setEnabledCipherSuites(sslParameters.getCipherSuites());
+      SSLParameters sslParameters = sslContext.getDefaultSSLParameters();
+      filter.setEnabledProtocols(getFilteredProtocols(sslParameters));
+      filter.setEnabledCipherSuites(getFilteredCipherSuites(sslParameters));
       acceptor.getFilterChain().addFirst("ssl", filter);
     });
 

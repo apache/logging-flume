@@ -417,11 +417,11 @@ public class AvroSource extends SslContextAwareAbstractSource implements EventDr
     private Supplier<Optional<SSLEngine>> sslEngineSupplier;
 
     public AdvancedChannelPipelineFactory(boolean enableCompression, boolean enableIpFilter,
-        String patternRuleConfigDefinition, Supplier<Optional<SSLEngine>> sslEngineProvider) {
+        String patternRuleConfigDefinition, Supplier<Optional<SSLEngine>> sslEngineSupplier) {
       this.enableCompression = enableCompression;
       this.enableIpFilter = enableIpFilter;
       this.patternRuleConfigDefinition = patternRuleConfigDefinition;
-      this.sslEngineSupplier = sslEngineProvider;
+      this.sslEngineSupplier = sslEngineSupplier;
     }
 
 

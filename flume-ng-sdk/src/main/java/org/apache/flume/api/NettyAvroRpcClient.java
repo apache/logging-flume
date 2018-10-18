@@ -29,11 +29,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -68,7 +66,6 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
-import org.apache.flume.util.SSLUtil;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.socket.SocketChannel;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
@@ -83,7 +80,7 @@ import org.slf4j.LoggerFactory;
  * The connections are intended to be opened before clients are given access so
  * that the object cannot ever be in an inconsistent when exposed to users.
  */
-public class NettyAvroRpcClient extends AbstractRpcClient implements RpcClient {
+public class NettyAvroRpcClient extends SSLContextAwareAbstractRpcClient {
 
   private ExecutorService callTimeoutPool;
   private final ReentrantLock stateLock = new ReentrantLock();
@@ -94,15 +91,6 @@ public class NettyAvroRpcClient extends AbstractRpcClient implements RpcClient {
   private ConnState connState;
 
   private InetSocketAddress address;
-  private boolean enableSsl;
-  private boolean trustAllCerts;
-  private String truststore;
-  private String truststorePassword;
-  private String truststoreType;
-  private final Set<String> excludeProtocols = new LinkedHashSet<>(Arrays.asList("SSLv3"));
-  private final Set<String> includeProtocols = new LinkedHashSet<>();
-  private final Set<String> excludeCipherSuites = new LinkedHashSet<>();
-  private final Set<String> includeCipherSuites = new LinkedHashSet<>();
 
   private Transceiver transceiver;
   private AvroSourceProtocol.Callback avroClient;
@@ -589,28 +577,7 @@ public class NettyAvroRpcClient extends AbstractRpcClient implements RpcClient {
       }
     }
 
-    enableSsl = Boolean.parseBoolean(properties.getProperty(
-        RpcClientConfigurationConstants.CONFIG_SSL));
-    trustAllCerts = Boolean.parseBoolean(properties.getProperty(
-        RpcClientConfigurationConstants.CONFIG_TRUST_ALL_CERTS));
-    truststore = properties.getProperty(
-        RpcClientConfigurationConstants.CONFIG_TRUSTSTORE, SSLUtil.getGlobalTruststorePath());
-    truststorePassword = properties.getProperty(
-        RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_PASSWORD,
-        SSLUtil.getGlobalTruststorePassword());
-    truststoreType = properties.getProperty(
-        RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_TYPE,
-        SSLUtil.getGlobalTruststoreType("JKS"));
-    String excludeProtocolsStr = properties.getProperty(
-        RpcClientConfigurationConstants.CONFIG_EXCLUDE_PROTOCOLS);
-    parseList(properties,
-        RpcClientConfigurationConstants.CONFIG_EXCLUDE_PROTOCOLS, excludeProtocols);
-    parseList(properties,
-        RpcClientConfigurationConstants.CONFIG_INCLUDE_PROTOCOLS, includeProtocols);
-    parseList(properties,
-        RpcClientConfigurationConstants.CONFIG_EXCLUDE_CIPHER_SUITES, excludeCipherSuites);
-    parseList(properties,
-        RpcClientConfigurationConstants.CONFIG_INCLUDE_CIPHER_SUITES, includeCipherSuites);
+    configureSSL(properties);
 
     String maxIoWorkersStr = properties.getProperty(RpcClientConfigurationConstants.MAX_IO_WORKERS);
     if (!StringUtils.isEmpty(maxIoWorkersStr)) {
@@ -629,13 +596,6 @@ public class NettyAvroRpcClient extends AbstractRpcClient implements RpcClient {
     }
 
     this.connect();
-  }
-
-
-  private void parseList(Properties properties, String name, Set<String> set) {
-    Optional.ofNullable(properties.getProperty(name)).ifPresent(s ->
-        set.addAll(Arrays.asList(s.split(" ")))
-    );
   }
 
   /**

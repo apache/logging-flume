@@ -100,15 +100,14 @@ public abstract class SslContextAwareAbstractSource extends AbstractSource {
     keystoreType = context.getString(
         KEYSTORE_TYPE_KEY, SSLUtil.getGlobalKeystoreType(KEYSTORE_TYPE_DEFAULT_VALUE));
 
-    Optional.ofNullable(context.getString(EXCLUDE_PROTOCOLS)).ifPresent(
-        s -> excludeProtocols.addAll(Arrays.asList(s.split(" "))));
-    Optional.ofNullable(context.getString(INCLUDE_PROTOCOLS)).ifPresent(
-        s -> includeProtocols.addAll(Arrays.asList(s.split(" "))));
-
-    Optional.ofNullable(context.getString(EXCLUDE_CIPHER_SUITES)).ifPresent(
-        s -> excludeCipherSuites.addAll(Arrays.asList(s.split(" "))));
-    Optional.ofNullable(context.getString(INCLUDE_CIPHER_SUITES)).ifPresent(
-        s -> includeCipherSuites.addAll(Arrays.asList(s.split(" "))));
+    parseList(context.getString(EXCLUDE_PROTOCOLS, SSLUtil.getGlobalExcludeProtocols()),
+        excludeProtocols);
+    parseList(context.getString(INCLUDE_PROTOCOLS, SSLUtil.getGlobalIncludeProtocols()),
+        includeProtocols);
+    parseList(context.getString(EXCLUDE_CIPHER_SUITES, SSLUtil.getGlobalExcludeCipherSuites()),
+        excludeCipherSuites);
+    parseList(context.getString(INCLUDE_CIPHER_SUITES, SSLUtil.getGlobalIncludeCipherSuites()),
+        includeCipherSuites);
 
     if (sslEnabled) {
       Objects.requireNonNull(keystore,
@@ -154,9 +153,9 @@ public abstract class SslContextAwareAbstractSource extends AbstractSource {
       SSLEngine sslEngine = sslContext.createSSLEngine();
       sslEngine.setUseClientMode(useClientMode);
       sslEngine.setEnabledProtocols(
-          getEnabledProtocols(sslEngine.getEnabledProtocols()));
+          getFilteredProtocols(sslEngine.getEnabledProtocols()));
       sslEngine.setEnabledCipherSuites(
-          getEnabledCipherSuites(sslEngine.getEnabledCipherSuites()));
+          getFilteredCipherSuites(sslEngine.getEnabledCipherSuites()));
       return sslEngine;
     });
   }
@@ -170,31 +169,31 @@ public abstract class SslContextAwareAbstractSource extends AbstractSource {
     return () -> getSslEngine(useClientMode);
   }
 
-  protected SSLParameters getSslParametersForContext(SSLContext sslContext) {
-    SSLParameters sslParameters = sslContext.getDefaultSSLParameters();
-
-    return getSSLParametersWithEnabledProtocolsAndCipherSuites(sslParameters);
+  protected String[] getFilteredProtocols(SSLParameters sslParameters) {
+    return getFilteredProtocols(sslParameters.getProtocols());
   }
 
-  protected SSLParameters getSSLParametersWithEnabledProtocolsAndCipherSuites(
-      SSLParameters sslParameters) {
-    return new SSLParameters(
-        getEnabledCipherSuites(sslParameters.getCipherSuites()),
-        getEnabledProtocols(sslParameters.getProtocols())
-    );
-  }
-
-  private String[] getEnabledProtocols(String[] enabledProtocols) {
+  private String[] getFilteredProtocols(String[] enabledProtocols) {
     return Stream.of(enabledProtocols)
       .filter(o -> includeProtocols.isEmpty() || includeProtocols.contains(o))
       .filter(o -> !excludeProtocols.contains(o) )
       .toArray(String[]::new);
   }
 
-  private String[] getEnabledCipherSuites(String[] enabledCipherSuites) {
+  protected String[] getFilteredCipherSuites(SSLParameters sslParameters) {
+    return getFilteredCipherSuites(sslParameters.getCipherSuites());
+  }
+
+  private String[] getFilteredCipherSuites(String[] enabledCipherSuites) {
     return Stream.of(enabledCipherSuites)
       .filter(o -> includeCipherSuites.isEmpty() || includeCipherSuites.contains(o))
       .filter(o -> !excludeCipherSuites.contains(o))
       .toArray(String[]::new);
+  }
+
+  private void parseList(String value, Set<String> set) {
+    if (Objects.nonNull(value)) {
+      set.addAll(Arrays.asList(value.split(" ")));
+    }
   }
 }

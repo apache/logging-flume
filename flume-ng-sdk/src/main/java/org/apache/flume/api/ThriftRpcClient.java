@@ -24,7 +24,6 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.thrift.Status;
 import org.apache.flume.thrift.ThriftFlumeEvent;
 import org.apache.flume.thrift.ThriftSourceProtocol;
-import org.apache.flume.util.SSLUtil;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.transport.TFastFramedTransport;
@@ -41,13 +40,10 @@ import java.io.FileInputStream;
 import java.nio.ByteBuffer;
 import java.security.KeyStore;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.Queue;
 import java.util.Random;
@@ -65,7 +61,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class ThriftRpcClient extends AbstractRpcClient {
+public class ThriftRpcClient extends SSLContextAwareAbstractRpcClient {
   private static final Logger LOGGER = LoggerFactory.getLogger(ThriftRpcClient.class);
 
   /**
@@ -85,15 +81,6 @@ public class ThriftRpcClient extends AbstractRpcClient {
   private final AtomicLong threadCounter;
   private final Random random = new Random();
   private String protocol;
-
-  private boolean enableSsl;
-  private String truststore;
-  private String truststorePassword;
-  private String truststoreType;
-  private final Set<String> excludeProtocols = new LinkedHashSet<>(Arrays.asList("SSLv3"));
-  private final Set<String> includeProtocols = new LinkedHashSet<>();
-  private final Set<String> excludeCipherSuites = new LinkedHashSet<>();
-  private final Set<String> includeCipherSuites = new LinkedHashSet<>();
 
   public ThriftRpcClient() {
     stateLock = new ReentrantLock(true);
@@ -319,27 +306,7 @@ public class ThriftRpcClient extends AbstractRpcClient {
         connectionPoolSize = RpcClientConfigurationConstants
             .DEFAULT_CONNECTION_POOL_SIZE;
       }
-
-      enableSsl = Boolean.parseBoolean(properties.getProperty(
-          RpcClientConfigurationConstants.CONFIG_SSL));
-      if (enableSsl) {
-        truststore = properties.getProperty(
-            RpcClientConfigurationConstants.CONFIG_TRUSTSTORE, SSLUtil.getGlobalTruststorePath());
-        truststorePassword = properties.getProperty(
-            RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_PASSWORD,
-            SSLUtil.getGlobalTruststorePassword());
-        truststoreType = properties.getProperty(
-            RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_TYPE,
-            SSLUtil.getGlobalTruststoreType("JKS"));
-        parseList(properties,
-            RpcClientConfigurationConstants.CONFIG_EXCLUDE_PROTOCOLS, excludeProtocols);
-        parseList(properties,
-            RpcClientConfigurationConstants.CONFIG_INCLUDE_PROTOCOLS, includeProtocols);
-        parseList(properties,
-            RpcClientConfigurationConstants.CONFIG_EXCLUDE_CIPHER_SUITES, excludeCipherSuites);
-        parseList(properties,
-            RpcClientConfigurationConstants.CONFIG_INCLUDE_CIPHER_SUITES, includeCipherSuites);
-      }
+      configureSSL(properties);
 
       connectionManager = new ConnectionPoolManager(connectionPoolSize);
       connState = State.READY;
@@ -355,12 +322,6 @@ public class ThriftRpcClient extends AbstractRpcClient {
     } finally {
       stateLock.unlock();
     }
-  }
-
-  private void parseList(Properties properties, String name, Set<String> set) {
-    Optional.ofNullable(properties.getProperty(name)).ifPresent(s ->
-        set.addAll(Arrays.asList(s.split(" ")))
-    );
   }
 
   private static enum State {

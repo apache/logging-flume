@@ -221,10 +221,9 @@ public class ThriftSource extends SslContextAwareAbstractSource
       ServerSocket serverSock = ((TServerSocket) transport).getServerSocket();
       if (serverSock instanceof SSLServerSocket) {
         SSLServerSocket sslServerSock = (SSLServerSocket) serverSock;
-        SSLParameters sslParameters = getSSLParametersWithEnabledProtocolsAndCipherSuites(
-            ((SSLServerSocket) serverSock).getSSLParameters());
-        sslServerSock.setEnabledCipherSuites(sslParameters.getCipherSuites());
-        sslServerSock.setEnabledProtocols(sslParameters.getProtocols());
+        SSLParameters sslParameters = sslServerSock.getSSLParameters();
+        sslServerSock.setEnabledCipherSuites(getFilteredCipherSuites(sslParameters));
+        sslServerSock.setEnabledProtocols(getFilteredProtocols(sslParameters));
       }
       return transport;
     } catch (Throwable throwable) {
