@@ -36,14 +36,21 @@ import org.mockito.Mockito;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetAddress;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doThrow;
+
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 public class TestSyslogTcpSource {
   private static final org.slf4j.Logger logger =
@@ -63,6 +70,10 @@ public class TestSyslogTcpSource {
       data1 + "\n";
 
   private void init(String keepFields) {
+    init(keepFields, new Context());
+  }
+
+  private void init(String keepFields, Context context) {
     source = new SyslogTcpSource();
     channel = new MemoryChannel();
 
@@ -75,13 +86,22 @@ public class TestSyslogTcpSource {
     rcs.setChannels(channels);
 
     source.setChannelProcessor(new ChannelProcessor(rcs));
-    Context context = new Context();
     context.put("port", String.valueOf(TEST_SYSLOG_PORT));
     context.put("keepFields", keepFields);
 
     source.configure(context);
 
   }
+
+  private void initSsl() {
+    Context context = new Context();
+    context.put("ssl", "true");
+    context.put("keystore", "src/test/resources/server.p12");
+    context.put("keystore-password", "password");
+    context.put("keystore-type", "PKCS12");
+    init("none", context);
+  }
+
   /** Tests the keepFields configuration parameter (enabled or disabled)
    using SyslogTcpSource.*/
   private void runKeepFieldsTest(String keepFields) throws IOException {
@@ -161,8 +181,8 @@ public class TestSyslogTcpSource {
   @Test
   public void testSourceCounter() throws IOException {
     runKeepFieldsTest("all");
-    Assert.assertEquals(10, source.getSourceCounter().getEventAcceptedCount());
-    Assert.assertEquals(10, source.getSourceCounter().getEventReceivedCount());
+    assertEquals(10, source.getSourceCounter().getEventAcceptedCount());
+    assertEquals(10, source.getSourceCounter().getEventReceivedCount());
   }
 
   @Test
@@ -174,7 +194,7 @@ public class TestSyslogTcpSource {
     for (int i = 0; i < 10 && source.getSourceCounter().getChannelWriteFail() == 0; i++) {
       Thread.sleep(100);
     }
-    Assert.assertEquals(1, source.getSourceCounter().getChannelWriteFail());
+    assertEquals(1, source.getSourceCounter().getChannelWriteFail());
   }
 
   @Test
@@ -186,7 +206,7 @@ public class TestSyslogTcpSource {
     for (int i = 0; i < 10 && source.getSourceCounter().getEventReadFail() == 0; i++) {
       Thread.sleep(100);
     }
-    Assert.assertEquals(1, source.getSourceCounter().getEventReadFail());
+    assertEquals(1, source.getSourceCounter().getEventReadFail());
   }
 
   private void errorCounterCommon(Exception e) throws IOException {
@@ -200,6 +220,48 @@ public class TestSyslogTcpSource {
     try (Socket syslogSocket = new Socket(addr.getAddress(), addr.getPort())) {
       syslogSocket.getOutputStream().write(bodyWithTandH.getBytes());
     }
+  }
+
+  @Test
+  public void testSSLMessages() throws Exception {
+    initSsl();
+
+    source.start();
+    InetSocketAddress address = source.getBoundAddress();
+
+    SSLContext sslContext = SSLContext.getInstance("TLS");
+    sslContext.init(null, new TrustManager[]{new X509TrustManager() {
+        @Override
+        public void checkClientTrusted(X509Certificate[] certs, String s) {
+          // nothing
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] certs, String s) {
+          // nothing
+        }
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers() {
+          return new X509Certificate[0];
+        }
+      } },
+        null);
+    SocketFactory socketFactory = sslContext.getSocketFactory();
+    Socket socket = socketFactory.createSocket();
+    socket.connect(address);
+    OutputStream outputStream = socket.getOutputStream();
+    outputStream.write(bodyWithTandH.getBytes());
+    socket.close();
+   // Thread.sleep(100);
+    Transaction transaction = channel.getTransaction();
+    transaction.begin();
+
+    Event event = channel.take();
+    assertEquals(new String(event.getBody()), data1);
+    transaction.commit();
+    transaction.close();
+
   }
 
 }
