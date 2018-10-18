@@ -23,7 +23,8 @@ import org.junit.Test;
 
 public class SSLUtilExcludeProtocolsTest extends AbstractSSLUtilListTest {
 
-  public SSLUtilExcludeProtocolsTest(String sysPropValue, String envVarValue, String expectedValue) {
+  public SSLUtilExcludeProtocolsTest(
+      String sysPropValue, String envVarValue, String expectedValue) {
     super(sysPropValue, envVarValue, expectedValue);
   }
 

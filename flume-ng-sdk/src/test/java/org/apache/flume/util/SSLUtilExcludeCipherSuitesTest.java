@@ -23,7 +23,8 @@ import org.junit.Test;
 
 public class SSLUtilExcludeCipherSuitesTest extends AbstractSSLUtilListTest {
 
-  public SSLUtilExcludeCipherSuitesTest(String sysPropValue, String envVarValue, String expectedValue) {
+  public SSLUtilExcludeCipherSuitesTest(
+      String sysPropValue, String envVarValue, String expectedValue) {
     super(sysPropValue, envVarValue, expectedValue);
   }
 
