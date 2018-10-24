@@ -86,7 +86,7 @@ public abstract class BaseJdbcChannelProviderTest {
     }
 
     derbyCtx.put(ConfigurationConstants.CONFIG_URL,
-        "jdbc:derby:" + derbyDbDir.getCanonicalPath() + "/db;create=true");
+        "jdbc:derby:memory:" + derbyDbDir.getCanonicalPath() + "/db;create=true");
 
     configureChannel(derbyCtx);
 

@@ -39,6 +39,7 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.FlumeException;
 import org.apache.flume.PollableSource;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.source.AbstractSource;
@@ -57,7 +58,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 
 public class TaildirSource extends AbstractSource implements
-    PollableSource, Configurable {
+    PollableSource, Configurable, BatchSizeSupported {
 
   private static final Logger logger = LoggerFactory.getLogger(TaildirSource.class);
 
@@ -190,6 +191,11 @@ public class TaildirSource extends AbstractSource implements
     }
   }
 
+  @Override
+  public long getBatchSize() {
+    return batchSize;
+  }
+
   private Map<String, String> selectByKeys(Map<String, String> map, String[] keys) {
     Map<String, String> result = Maps.newHashMap();
     for (String key : keys) {
@@ -234,6 +240,7 @@ public class TaildirSource extends AbstractSource implements
       }
     } catch (Throwable t) {
       logger.error("Unable to tail files", t);
+      sourceCounter.incrementEventReadFail();
       status = Status.BACKOFF;
     }
     return status;
@@ -265,6 +272,7 @@ public class TaildirSource extends AbstractSource implements
       } catch (ChannelException ex) {
         logger.warn("The channel is full or unexpected failure. " +
             "The source will try again after " + retryInterval + " ms");
+        sourceCounter.incrementChannelWriteFail();
         TimeUnit.MILLISECONDS.sleep(retryInterval);
         retryInterval = retryInterval << 1;
         retryInterval = Math.min(retryInterval, maxRetryInterval);
@@ -306,6 +314,7 @@ public class TaildirSource extends AbstractSource implements
         }
       } catch (Throwable t) {
         logger.error("Uncaught exception in IdleFileChecker thread", t);
+        sourceCounter.incrementGenericProcessingFail();
       }
     }
   }
@@ -332,11 +341,13 @@ public class TaildirSource extends AbstractSource implements
       }
     } catch (Throwable t) {
       logger.error("Failed writing positionFile", t);
+      sourceCounter.incrementGenericProcessingFail();
     } finally {
       try {
         if (writer != null) writer.close();
       } catch (IOException e) {
         logger.error("Error: " + e.getMessage(), e);
+        sourceCounter.incrementGenericProcessingFail();
       }
     }
   }

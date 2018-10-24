@@ -44,32 +44,53 @@ public class TestJMSMessageConsumer extends JMSMessageConsumerTestBase {
       .thenThrow(new JMSException(""));
     create();
   }
-  @Test(expected = FlumeException.class)
+  @Test
   public void testCreateSessionFails() throws Exception {
     when(connection.createSession(true, Session.SESSION_TRANSACTED))
       .thenThrow(new JMSException(""));
-    create();
+    try {
+      create();
+      fail("Expected exception: org.apache.flume.FlumeException");
+    } catch (FlumeException e) {
+      verify(connection).close();
+    }
   }
-  @Test(expected = FlumeException.class)
+  @Test
   public void testCreateQueueFails() throws Exception {
     when(session.createQueue(destinationName))
       .thenThrow(new JMSException(""));
-    create();
+    try {
+      create();
+      fail("Expected exception: org.apache.flume.FlumeException");
+    } catch (FlumeException e) {
+      verify(session).close();
+      verify(connection).close();
+    }
   }
-  @Test(expected = FlumeException.class)
+  @Test
   public void testCreateTopicFails() throws Exception {
     destinationType = JMSDestinationType.TOPIC;
-    when(session.createQueue(destinationName)).thenThrow(new AssertionError());
-    when(session.createTopic(destinationName)).thenReturn(topic);
     when(session.createTopic(destinationName))
       .thenThrow(new JMSException(""));
-    create();
+    try {
+      create();
+      fail("Expected exception: org.apache.flume.FlumeException");
+    } catch (FlumeException e) {
+      verify(session).close();
+      verify(connection).close();
+    }
   }
-  @Test(expected = FlumeException.class)
+  @Test
   public void testCreateConsumerFails() throws Exception {
     when(session.createConsumer(any(Destination.class), anyString()))
       .thenThrow(new JMSException(""));
-    create();
+    try {
+      create();
+      fail("Expected exception: org.apache.flume.FlumeException");
+    } catch (FlumeException e) {
+      verify(session).close();
+      verify(connection).close();
+    }
   }
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidBatchSizeZero() throws Exception {
@@ -88,14 +109,24 @@ public class TestJMSMessageConsumer extends JMSMessageConsumerTestBase {
   }
 
   @Test
+  public void testQueue() throws Exception {
+    destinationType = JMSDestinationType.QUEUE;
+    when(session.createQueue(destinationName)).thenReturn(queue);
+    consumer = create();
+    List<Event> events = consumer.take();
+    assertEquals(batchSize, events.size());
+    assertBodyIsExpected(events);
+    verify(session, never()).createTopic(anyString());
+  }
+  @Test
   public void testTopic() throws Exception {
     destinationType = JMSDestinationType.TOPIC;
-    when(session.createQueue(destinationName)).thenThrow(new AssertionError());
     when(session.createTopic(destinationName)).thenReturn(topic);
     consumer = create();
     List<Event> events = consumer.take();
     assertEquals(batchSize, events.size());
     assertBodyIsExpected(events);
+    verify(session, never()).createQueue(anyString());
   }
   @Test
   public void testUserPass() throws Exception {
@@ -173,6 +204,70 @@ public class TestJMSMessageConsumer extends JMSMessageConsumerTestBase {
         password, Optional.of(clientID), true, name);
     verify(connection, times(1)).setClientID(clientID);
     verify(session, times(1)).createDurableSubscriber(topic, name, messageSelector, true);
+  }
+
+  @Test(expected = JMSException.class)
+  public void testTakeFailsDueToJMSExceptionFromReceive() throws JMSException {
+    when(messageConsumer.receive(anyLong())).thenThrow(new JMSException(""));
+    consumer = create();
+
+    consumer.take();
+  }
+
+  @Test(expected = JMSException.class)
+  public void testTakeFailsDueToRuntimeExceptionFromReceive() throws JMSException {
+    when(messageConsumer.receive(anyLong())).thenThrow(new RuntimeException());
+    consumer = create();
+
+    consumer.take();
+  }
+
+  @Test(expected = JMSException.class)
+  public void testTakeFailsDueToJMSExceptionFromReceiveNoWait() throws JMSException {
+    when(messageConsumer.receiveNoWait()).thenThrow(new JMSException(""));
+    consumer = create();
+
+    consumer.take();
+  }
+
+  @Test(expected = JMSException.class)
+  public void testTakeFailsDueToRuntimeExceptionFromReceiveNoWait() throws JMSException {
+    when(messageConsumer.receiveNoWait()).thenThrow(new RuntimeException());
+    consumer = create();
+
+    consumer.take();
+  }
+
+  @Test
+  public void testCommitFailsDueToJMSException() throws JMSException {
+    doThrow(new JMSException("")).when(session).commit();
+    consumer = create();
+
+    consumer.commit();
+  }
+
+  @Test
+  public void testCommitFailsDueToRuntimeException() throws JMSException {
+    doThrow(new RuntimeException()).when(session).commit();
+    consumer = create();
+
+    consumer.commit();
+  }
+
+  @Test
+  public void testRollbackFailsDueToJMSException() throws JMSException {
+    doThrow(new JMSException("")).when(session).rollback();
+    consumer = create();
+
+    consumer.rollback();
+  }
+
+  @Test
+  public void testRollbackFailsDueToRuntimeException() throws JMSException {
+    doThrow(new RuntimeException()).when(session).rollback();
+    consumer = create();
+
+    consumer.rollback();
   }
 
 }

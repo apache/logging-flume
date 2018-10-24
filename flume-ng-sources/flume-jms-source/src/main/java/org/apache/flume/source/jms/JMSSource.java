@@ -36,6 +36,7 @@ import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.source.AbstractPollableSource;
@@ -50,7 +51,7 @@ import com.google.common.io.Files;
 
 @InterfaceAudience.Private
 @InterfaceStability.Unstable
-public class JMSSource extends AbstractPollableSource {
+public class JMSSource extends AbstractPollableSource implements BatchSizeSupported {
   private static final Logger logger = LoggerFactory.getLogger(JMSSource.class);
 
   // setup by constructor
@@ -133,7 +134,7 @@ public class JMSSource extends AbstractPollableSource {
     String passwordFile = context.getString(JMSSourceConfiguration.PASSWORD_FILE, "").trim();
 
     if (passwordFile.isEmpty()) {
-      password = Optional.of("");
+      password = Optional.absent();
     } else {
       try {
         password = Optional.of(Files.toString(new File(passwordFile),
@@ -295,11 +296,13 @@ public class JMSSource extends AbstractPollableSource {
       logger.warn("Error appending event to channel. "
           + "Channel might be full. Consider increasing the channel "
           + "capacity or make sure the sinks perform faster.", channelException);
+      sourceCounter.incrementChannelWriteFail();
     } catch (JMSException jmsException) {
       logger.warn("JMSException consuming events", jmsException);
       if (++jmsExceptionCounter > errorThreshold) {
         if (consumer != null) {
           logger.warn("Exceeded JMSException threshold, closing consumer");
+          sourceCounter.incrementEventReadFail();
           consumer.rollback();
           consumer.close();
           consumer = null;
@@ -307,6 +310,7 @@ public class JMSSource extends AbstractPollableSource {
       }
     } catch (Throwable throwable) {
       logger.error("Unexpected error processing events", throwable);
+      sourceCounter.incrementEventReadFail();
       if (throwable instanceof Error) {
         throw (Error) throwable;
       }
@@ -354,5 +358,10 @@ public class JMSSource extends AbstractPollableSource {
         createDurableSubscription, durableSubscriptionName);
     jmsExceptionCounter = 0;
     return consumer;
+  }
+
+  @Override
+  public long getBatchSize() {
+    return batchSize;
   }
 }

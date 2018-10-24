@@ -27,6 +27,7 @@ public class HTTPSourceConfigurationConstants {
   public static final String CONFIG_HANDLER = "handler";
   public static final String CONFIG_HANDLER_PREFIX =
           CONFIG_HANDLER + ".";
+
   public static final String CONFIG_BIND = "bind";
 
   public static final String DEFAULT_BIND = "0.0.0.0";
@@ -34,9 +35,13 @@ public class HTTPSourceConfigurationConstants {
   public static final String DEFAULT_HANDLER =
           "org.apache.flume.source.http.JSONHandler";
 
+  @Deprecated
   public static final String SSL_KEYSTORE = "keystore";
+  @Deprecated
   public static final String SSL_KEYSTORE_PASSWORD = "keystorePassword";
+  @Deprecated
   public static final String SSL_ENABLED = "enableSSL";
+  @Deprecated
   public static final String EXCLUDE_PROTOCOLS = "excludeProtocols";
 
 }

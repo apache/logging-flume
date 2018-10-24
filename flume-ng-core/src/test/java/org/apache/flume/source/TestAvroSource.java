@@ -22,11 +22,13 @@ package org.apache.flume.source;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.security.cert.X509Certificate;
 import java.nio.channels.ServerSocketChannel;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -40,6 +42,7 @@ import javax.net.ssl.X509TrustManager;
 import org.apache.avro.ipc.NettyTransceiver;
 import org.apache.avro.ipc.specific.SpecificRequestor;
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelException;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -49,6 +52,7 @@ import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
+import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.source.avro.AvroFlumeEvent;
@@ -63,8 +67,14 @@ import org.jboss.netty.handler.ssl.SslHandler;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.mockito.internal.util.reflection.Whitebox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyListOf;
+import static org.mockito.Mockito.doThrow;
 
 public class TestAvroSource {
 
@@ -94,26 +104,16 @@ public class TestAvroSource {
   }
 
   @Test
-  public void testLifecycle() throws InterruptedException {
-    boolean bound = false;
+  public void testLifecycle() throws InterruptedException, IOException {
 
-    for (int i = 0; i < 100 && !bound; i++) {
+    Context context = new Context();
 
-      Context context = new Context();
+    context.put("port", String.valueOf(selectedPort = getFreePort()));
+    context.put("bind", "0.0.0.0");
 
-      context.put("port", String.valueOf(selectedPort = 41414 + i));
-      context.put("bind", "0.0.0.0");
-      // Invalid configuration may throw a FlumeException which has to be expected in the callers
-      Configurables.configure(source, context);
-      try {
-        source.start();
-        bound = true;
-      } catch (FlumeException e) {
-        /*
-         * NB: This assume the failure is to bind.
-         */
-      }
-    }
+    Configurables.configure(source, context);
+
+    source.start();
 
     Assert
         .assertTrue("Reached start or error", LifecycleController.waitForOneOf(
@@ -232,28 +232,20 @@ public class TestAvroSource {
 
   private void doRequest(boolean serverEnableCompression, boolean clientEnableCompression,
                          int compressionLevel) throws InterruptedException, IOException {
-    boolean bound = false;
 
-    for (int i = 0; i < 100 && !bound; i++) {
-      Context context = new Context();
-      context.put("port", String.valueOf(selectedPort = 41414 + i));
-      context.put("bind", "0.0.0.0");
-      context.put("threads", "50");
-      if (serverEnableCompression) {
-        context.put("compression-type", "deflate");
-      } else {
-        context.put("compression-type", "none");
-      }
-      Configurables.configure(source, context);
-      try {
-        source.start();
-        bound = true;
-      } catch (FlumeException e) {
-        /*
-         * NB: This assume the failure is to bind.
-         */
-      }
+    Context context = new Context();
+    context.put("port", String.valueOf(selectedPort = getFreePort()));
+    context.put("bind", "0.0.0.0");
+    context.put("threads", "50");
+    if (serverEnableCompression) {
+      context.put("compression-type", "deflate");
+    } else {
+      context.put("compression-type", "none");
     }
+
+    Configurables.configure(source, context);
+
+    source.start();
 
     Assert
         .assertTrue("Reached start or error", LifecycleController.waitForOneOf(
@@ -307,6 +299,12 @@ public class TestAvroSource {
         source.getLifecycleState());
   }
 
+  private static int getFreePort() throws IOException {
+    try (ServerSocket socket = new ServerSocket(0)) {
+      return socket.getLocalPort();
+    }
+  }
+
   private static class CompressionChannelFactory extends
       NioClientSocketChannelFactory {
     private int compressionLevel;
@@ -331,29 +329,45 @@ public class TestAvroSource {
   }
 
   @Test
-  public void testSslRequest() throws InterruptedException, IOException {
-    boolean bound = false;
+  public void testSslRequestWithComponentKeystore() throws InterruptedException, IOException {
 
-    for (int i = 0; i < 10 && !bound; i++) {
-      Context context = new Context();
+    Context context = new Context();
 
-      context.put("port", String.valueOf(selectedPort = 41414 + i));
-      context.put("bind", "0.0.0.0");
-      context.put("ssl", "true");
-      context.put("keystore", "src/test/resources/server.p12");
-      context.put("keystore-password", "password");
-      context.put("keystore-type", "PKCS12");
-      Configurables.configure(source, context);
-      try {
-        source.start();
-        bound = true;
-      } catch (FlumeException e) {
-        /*
-         * NB: This assume the failure is to bind.
-         */
-        Thread.sleep(100);
-      }
-    }
+    context.put("port", String.valueOf(selectedPort = getFreePort()));
+    context.put("bind", "0.0.0.0");
+    context.put("ssl", "true");
+    context.put("keystore", "src/test/resources/server.p12");
+    context.put("keystore-password", "password");
+    context.put("keystore-type", "PKCS12");
+
+    Configurables.configure(source, context);
+
+    doSslRequest();
+  }
+
+  @Test
+  public void testSslRequestWithGlobalKeystore() throws InterruptedException, IOException {
+
+    System.setProperty("javax.net.ssl.keyStore", "src/test/resources/server.p12");
+    System.setProperty("javax.net.ssl.keyStorePassword", "password");
+    System.setProperty("javax.net.ssl.keyStoreType", "PKCS12");
+
+    Context context = new Context();
+
+    context.put("port", String.valueOf(selectedPort = getFreePort()));
+    context.put("bind", "0.0.0.0");
+    context.put("ssl", "true");
+
+    Configurables.configure(source, context);
+
+    doSslRequest();
+
+    System.clearProperty("javax.net.ssl.keyStore");
+    System.clearProperty("javax.net.ssl.keyStorePassword");
+  }
+
+  private void doSslRequest() throws InterruptedException, IOException {
+    source.start();
 
     Assert
         .assertTrue("Reached start or error", LifecycleController.waitForOneOf(
@@ -363,7 +377,7 @@ public class TestAvroSource {
 
     AvroSourceProtocol client = SpecificRequestor.getClient(
         AvroSourceProtocol.class, new NettyTransceiver(new InetSocketAddress(
-        selectedPort), new SSLChannelFactory()));
+            selectedPort), new SSLChannelFactory()));
 
     AvroFlumeEvent avroEvent = new AvroFlumeEvent();
 
@@ -523,37 +537,23 @@ public class TestAvroSource {
   public void doIpFilterTest(InetAddress dest, String ruleDefinition,
       boolean eventShouldBeAllowed, boolean testWithSSL)
       throws InterruptedException, IOException {
-    boolean bound = false;
-
-    for (int i = 0; i < 100 && !bound; i++) {
-
-      Context context = new Context();
-      context.put("port", String.valueOf(selectedPort = 41414 + i));
-      context.put("bind", "0.0.0.0");
-      context.put("ipFilter", "true");
-      if (ruleDefinition != null) {
-        context.put("ipFilterRules", ruleDefinition);
-      }
-      if (testWithSSL) {
-        logger.info("Client testWithSSL" + testWithSSL);
-        context.put("ssl", "true");
-        context.put("keystore", "src/test/resources/server.p12");
-        context.put("keystore-password", "password");
-        context.put("keystore-type", "PKCS12");
-      }
-      // Invalid configuration may result in a FlumeException
-      Configurables.configure(source, context);
-
-      try {
-        source.start();
-        bound = true;
-      } catch (FlumeException e) {
-        /*
-         * NB: This assume the failure is to bind.
-         */
-        Thread.sleep(100);
-      }
+    Context context = new Context();
+    context.put("port", String.valueOf(selectedPort = getFreePort()));
+    context.put("bind", "0.0.0.0");
+    context.put("ipFilter", "true");
+    if (ruleDefinition != null) {
+      context.put("ipFilterRules", ruleDefinition);
     }
+    if (testWithSSL) {
+      logger.info("Client testWithSSL" + testWithSSL);
+      context.put("ssl", "true");
+      context.put("keystore", "src/test/resources/server.p12");
+      context.put("keystore-password", "password");
+      context.put("keystore-type", "PKCS12");
+    }
+    // Invalid configuration may result in a FlumeException
+    Configurables.configure(source, context);
+    source.start();
 
     Assert
         .assertTrue("Reached start or error", LifecycleController.waitForOneOf(
@@ -614,4 +614,26 @@ public class TestAvroSource {
     Assert.assertEquals("Server is stopped", LifecycleState.STOP,
         source.getLifecycleState());
   }
+
+  @Test
+  public void testErrorCounterChannelWriteFail() throws Exception {
+    Context context = new Context();
+    context.put("port", String.valueOf(selectedPort = getFreePort()));
+    context.put("bind", "0.0.0.0");
+    source.configure(context);
+    ChannelProcessor cp = Mockito.mock(ChannelProcessor.class);
+    doThrow(new ChannelException("dummy")).when(cp).processEvent(any(Event.class));
+    doThrow(new ChannelException("dummy")).when(cp).processEventBatch(anyListOf(Event.class));
+    source.setChannelProcessor(cp);
+    source.start();
+    AvroFlumeEvent avroEvent = new AvroFlumeEvent();
+    avroEvent.setHeaders(new HashMap<CharSequence, CharSequence>());
+    avroEvent.setBody(ByteBuffer.wrap("Hello avro ssl".getBytes()));
+    source.append(avroEvent);
+    source.appendBatch(Arrays.asList(avroEvent));
+    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(source, "sourceCounter");
+    Assert.assertEquals(2, sc.getChannelWriteFail());
+    source.stop();
+  }
+
 }

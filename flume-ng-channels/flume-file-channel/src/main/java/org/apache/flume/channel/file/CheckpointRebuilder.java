@@ -28,6 +28,7 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.apache.flume.channel.file.instrumentation.FileChannelCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -240,7 +241,7 @@ public class CheckpointRebuilder {
     } else {
       EventQueueBackingStore backingStore =
           EventQueueBackingStoreFactory.get(checkpointFile,
-              capacity, "channel");
+              capacity, "channel", new FileChannelCounter("Main"));
       FlumeEventQueue queue = new FlumeEventQueue(backingStore,
           new File(checkpointDir, "inflighttakes"),
           new File(checkpointDir, "inflightputs"),

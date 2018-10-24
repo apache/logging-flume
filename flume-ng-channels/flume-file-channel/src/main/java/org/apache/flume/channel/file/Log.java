@@ -450,7 +450,7 @@ public class Log {
         backingStore =
             EventQueueBackingStoreFactory.get(checkpointFile,
                 backupCheckpointDir, queueCapacity, channelNameDescriptor,
-                true, this.useDualCheckpoints,
+                channelCounter, true, this.useDualCheckpoints,
                 this.compressBackupCheckpoint);
         queue = new FlumeEventQueue(backingStore, inflightTakesFile,
             inflightPutsFile, queueSetDir);
@@ -487,7 +487,7 @@ public class Log {
         }
         backingStore = EventQueueBackingStoreFactory.get(
             checkpointFile, backupCheckpointDir, queueCapacity,
-            channelNameDescriptor, true, useDualCheckpoints,
+            channelNameDescriptor, channelCounter, true, useDualCheckpoints,
             compressBackupCheckpoint);
         queue = new FlumeEventQueue(backingStore, inflightTakesFile,
             inflightPutsFile, queueSetDir);

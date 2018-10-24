@@ -43,6 +43,7 @@ import org.apache.flume.SystemClock;
 import org.apache.flume.Transaction;
 import org.apache.flume.auth.FlumeAuthenticationUtil;
 import org.apache.flume.auth.PrivilegedExecutor;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.formatter.output.BucketPath;
 import org.apache.flume.instrumentation.SinkCounter;
@@ -58,7 +59,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-public class HDFSEventSink extends AbstractSink implements Configurable {
+public class HDFSEventSink extends AbstractSink implements Configurable, BatchSizeSupported {
   public interface WriterCallback {
     public void run(String filePath);
   }
@@ -159,8 +160,6 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
         // return true
         try {
           eldest.getValue().close();
-        } catch (IOException e) {
-          LOG.warn(eldest.getKey().toString(), e);
         } catch (InterruptedException e) {
           LOG.warn(eldest.getKey().toString(), e);
           Thread.currentThread().interrupt();
@@ -441,10 +440,12 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
     } catch (IOException eIO) {
       transaction.rollback();
       LOG.warn("HDFS IO error", eIO);
+      sinkCounter.incrementEventWriteFail();
       return Status.BACKOFF;
     } catch (Throwable th) {
       transaction.rollback();
       LOG.error("process failed", th);
+      sinkCounter.incrementEventWriteOrChannelFail(th);
       if (th instanceof Error) {
         throw (Error) th;
       } else {
@@ -459,16 +460,16 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   BucketWriter initializeBucketWriter(String realPath,
       String realName, String lookupPath, HDFSWriter hdfsWriter,
       WriterCallback closeCallback) {
+    HDFSWriter actualHdfsWriter = mockFs == null ? hdfsWriter : mockWriter;
     BucketWriter bucketWriter = new BucketWriter(rollInterval,
         rollSize, rollCount,
         batchSize, context, realPath, realName, inUsePrefix, inUseSuffix,
-        suffix, codeC, compType, hdfsWriter, timedRollerPool,
+        suffix, codeC, compType, actualHdfsWriter, timedRollerPool,
         privExecutor, sinkCounter, idleTimeout, closeCallback,
         lookupPath, callTimeout, callTimeoutPool, retryInterval,
         tryCount);
     if (mockFs != null) {
       bucketWriter.setFileSystem(mockFs);
-      bucketWriter.setMockStream(mockWriter);
     }
     return bucketWriter;
   }
@@ -481,7 +482,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
         LOG.info("Closing {}", entry.getKey());
 
         try {
-          entry.getValue().close();
+          entry.getValue().close(false, true);
         } catch (Exception ex) {
           LOG.warn("Exception while closing " + entry.getKey() + ". " +
                   "Exception follows.", ex);
@@ -557,4 +558,10 @@ public class HDFSEventSink extends AbstractSink implements Configurable {
   int getTryCount() {
     return tryCount;
   }
+
+  @Override
+  public long getBatchSize() {
+    return batchSize;
+  }
+
 }

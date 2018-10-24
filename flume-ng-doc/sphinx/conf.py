@@ -17,6 +17,7 @@
 
 import sys
 import os
+from datetime import date
 
 # eventlet/gevent should not monkey patch anything.
 os.environ["GEVENT_NOPATCH"] = "yes"
@@ -57,7 +58,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Apache Flume'
-copyright = '2009-2012 The Apache Software Foundation'
+copyright = '2009-%s The Apache Software Foundation' % date.today().year
 
 keep_warnings = True
 

@@ -37,6 +37,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -60,17 +62,29 @@ public class TestHttpSinkIT {
 
   private HttpSink httpSink;
 
+  private static int findFreePort() {
+    try (ServerSocket socket = new ServerSocket(0)) {
+      return socket.getLocalPort();
+    } catch (IOException e) {
+      throw new AssertionError("Can not find free port.", e);
+    }
+  }
+
+  private final int port = findFreePort();
+
   @Before
   public void setupSink() {
     if (httpSink == null) {
       Context httpSinkContext = new Context();
-      httpSinkContext.put("endpoint", "http://localhost:8080/endpoint");
+      httpSinkContext.put("endpoint", "http://localhost:" + port + "/endpoint");
       httpSinkContext.put("requestTimeout", "2000");
       httpSinkContext.put("connectTimeout", "1500");
       httpSinkContext.put("acceptHeader", "application/json");
       httpSinkContext.put("contentTypeHeader", "application/json");
       httpSinkContext.put("backoff.200", "false");
       httpSinkContext.put("rollback.200", "false");
+      httpSinkContext.put("backoff.401", "false");
+      httpSinkContext.put("rollback.401", "false");
       httpSinkContext.put("incrementMetrics.200", "true");
 
       Context memoryChannelContext = new Context();
@@ -89,11 +103,11 @@ public class TestHttpSinkIT {
   @After
   public void waitForShutdown() throws InterruptedException {
     httpSink.stop();
-    new CountDownLatch(1).await(500, TimeUnit.MILLISECONDS);
+    Thread.sleep(500);
   }
 
   @Rule
-  public WireMockRule service = new WireMockRule(wireMockConfig().port(8080));
+  public WireMockRule service = new WireMockRule(wireMockConfig().port(port));
 
   @Test
   public void ensureSuccessfulMessageDelivery() throws Exception {
@@ -129,6 +143,36 @@ public class TestHttpSinkIT {
 
     service.verify(2, postRequestedFor(urlEqualTo("/endpoint"))
         .withRequestBody(equalToJson(event("TRANSIENT_ERROR"))));
+  }
+
+  @Test
+  public void ensureEventsNotResentOn401Failure() throws Exception {
+    String errorScenario = "Error skip scenario";
+
+    service.stubFor(post(urlEqualTo("/endpoint"))
+            .inScenario(errorScenario)
+            .whenScenarioStateIs(STARTED)
+            .withRequestBody(equalToJson(event("UNAUTHORIZED REQUEST")))
+            .willReturn(aResponse().withStatus(401)
+            .withHeader("Content-Type", "text/plain")
+            .withBody("Not allowed!"))
+            .willSetStateTo("Error Sent"));
+
+    service.stubFor(post(urlEqualTo("/endpoint"))
+            .inScenario(errorScenario)
+            .whenScenarioStateIs("Error Sent")
+            .withRequestBody(equalToJson(event("NEXT EVENT")))
+            .willReturn(aResponse().withStatus(200)));
+
+    addEventToChannel(event("UNAUTHORIZED REQUEST"), Status.READY);
+    addEventToChannel(event("NEXT EVENT"), Status.READY);
+
+    service.verify(1, postRequestedFor(urlEqualTo("/endpoint"))
+            .withRequestBody(equalToJson(event("UNAUTHORIZED REQUEST"))));
+
+    service.verify(1, postRequestedFor(urlEqualTo("/endpoint"))
+            .withRequestBody(equalToJson(event("NEXT EVENT"))));
+
   }
 
   @Test

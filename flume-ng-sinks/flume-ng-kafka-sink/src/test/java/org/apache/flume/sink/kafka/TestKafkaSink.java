@@ -38,6 +38,7 @@ import org.apache.flume.Transaction;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
+import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.shared.kafka.test.KafkaPartitionTestUtil;
 import org.apache.flume.shared.kafka.test.PartitionOption;
 import org.apache.flume.shared.kafka.test.PartitionTestScenario;
@@ -49,6 +50,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.internal.util.reflection.Whitebox;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -240,6 +242,92 @@ public class TestKafkaSink {
                  new String((byte[]) fetchedMsg.key(), "UTF-8"));
   }
 
+  /**
+   * Tests that a message will be produced to a topic as specified by a
+   * custom topicHeader parameter (FLUME-3046).
+   * @throws UnsupportedEncodingException
+   */
+  @Test
+  public void testTopicFromConfHeader() throws UnsupportedEncodingException {
+    String customTopicHeader = "customTopicHeader";
+    Sink kafkaSink = new KafkaSink();
+    Context context = prepareDefaultContext();
+    context.put(KafkaSinkConstants.TOPIC_OVERRIDE_HEADER, customTopicHeader);
+    Configurables.configure(kafkaSink, context);
+    Channel memoryChannel = new MemoryChannel();
+    Configurables.configure(memoryChannel, context);
+    kafkaSink.setChannel(memoryChannel);
+    kafkaSink.start();
+
+    String msg = "test-topic-from-config-header";
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put(customTopicHeader, TestConstants.CUSTOM_TOPIC);
+    Transaction tx = memoryChannel.getTransaction();
+    tx.begin();
+    Event event = EventBuilder.withBody(msg.getBytes(), headers);
+    memoryChannel.put(event);
+    tx.commit();
+    tx.close();
+
+    try {
+      Sink.Status status = kafkaSink.process();
+      if (status == Sink.Status.BACKOFF) {
+        fail("Error Occurred");
+      }
+    } catch (EventDeliveryException ex) {
+      // ignore
+    }
+
+    MessageAndMetadata<?, ?> fetchedMsg =
+        testUtil.getNextMessageFromConsumer(TestConstants.CUSTOM_TOPIC);
+
+    assertEquals(msg, new String((byte[]) fetchedMsg.message(), "UTF-8"));
+  }
+
+  /**
+   * Tests that the topicHeader parameter will be ignored if the allowTopicHeader
+   * parameter is set to false (FLUME-3046).
+   * @throws UnsupportedEncodingException
+   */
+  @Test
+  public void testTopicNotFromConfHeader() throws UnsupportedEncodingException {
+    Sink kafkaSink = new KafkaSink();
+    Context context = prepareDefaultContext();
+    context.put(KafkaSinkConstants.ALLOW_TOPIC_OVERRIDE_HEADER, "false");
+    context.put(KafkaSinkConstants.TOPIC_OVERRIDE_HEADER, "foo");
+
+    Configurables.configure(kafkaSink, context);
+    Channel memoryChannel = new MemoryChannel();
+    Configurables.configure(memoryChannel, context);
+    kafkaSink.setChannel(memoryChannel);
+    kafkaSink.start();
+
+    String msg = "test-topic-from-config-header";
+    Map<String, String> headers = new HashMap<String, String>();
+    headers.put(KafkaSinkConstants.DEFAULT_TOPIC_OVERRIDE_HEADER, TestConstants.CUSTOM_TOPIC);
+    headers.put("foo", TestConstants.CUSTOM_TOPIC);
+    Transaction tx = memoryChannel.getTransaction();
+    tx.begin();
+    Event event = EventBuilder.withBody(msg.getBytes(), headers);
+    memoryChannel.put(event);
+    tx.commit();
+    tx.close();
+
+    try {
+      Sink.Status status = kafkaSink.process();
+      if (status == Sink.Status.BACKOFF) {
+        fail("Error Occurred");
+      }
+    } catch (EventDeliveryException ex) {
+      // ignore
+    }
+
+    MessageAndMetadata<?, ?> fetchedMsg =
+        testUtil.getNextMessageFromConsumer(DEFAULT_TOPIC);
+
+    assertEquals(msg, new String((byte[]) fetchedMsg.message(), "UTF-8"));
+  }
+
   @Test
   public void testReplaceSubStringOfTopicWithHeaders() throws UnsupportedEncodingException {
     Sink kafkaSink = new KafkaSink();
@@ -372,9 +460,17 @@ public class TestKafkaSink {
     doPartitionErrors(PartitionOption.NOTSET);
   }
 
-  @Test(expected = org.apache.flume.EventDeliveryException.class)
+  @Test
   public void testPartitionHeaderOutOfRange() throws Exception {
-    doPartitionErrors(PartitionOption.VALIDBUTOUTOFRANGE);
+    Sink kafkaSink = new KafkaSink();
+    try {
+      doPartitionErrors(PartitionOption.VALIDBUTOUTOFRANGE, kafkaSink);
+      fail();
+    } catch (EventDeliveryException e) {
+      //
+    }
+    SinkCounter sinkCounter = (SinkCounter) Whitebox.getInternalState(kafkaSink, "counter");
+    assertEquals(1, sinkCounter.getEventWriteFail());
   }
 
   @Test(expected = org.apache.flume.EventDeliveryException.class)
@@ -425,7 +521,10 @@ public class TestKafkaSink {
    * @throws Exception
    */
   private void doPartitionErrors(PartitionOption option) throws Exception {
-    Sink kafkaSink = new KafkaSink();
+    doPartitionErrors(option, new KafkaSink());
+  }
+
+  private void doPartitionErrors(PartitionOption option, Sink kafkaSink) throws Exception {
     Context context = prepareDefaultContext();
     context.put(KafkaSinkConstants.PARTITION_HEADER_NAME, "partition-header");
 

@@ -19,7 +19,6 @@
 
 package org.apache.flume.source;
 
-import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.avro.ipc.NettyServer;
 import org.apache.avro.ipc.NettyTransceiver;
@@ -54,22 +53,19 @@ import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
-import java.io.FileInputStream;
+
 import java.net.InetSocketAddress;
-import java.security.KeyStore;
-import java.security.Security;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * <p>
@@ -126,7 +122,7 @@ import java.util.concurrent.TimeUnit;
  * TODO
  * </p>
  */
-public class AvroSource extends AbstractSource implements EventDrivenSource,
+public class AvroSource extends SslContextAwareAbstractSource implements EventDrivenSource,
     Configurable, AvroSourceProtocol {
 
   private static final String THREADS = "threads";
@@ -137,21 +133,11 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
   private static final String PORT_KEY = "port";
   private static final String BIND_KEY = "bind";
   private static final String COMPRESSION_TYPE = "compression-type";
-  private static final String SSL_KEY = "ssl";
   private static final String IP_FILTER_KEY = "ipFilter";
   private static final String IP_FILTER_RULES_KEY = "ipFilterRules";
-  private static final String KEYSTORE_KEY = "keystore";
-  private static final String KEYSTORE_PASSWORD_KEY = "keystore-password";
-  private static final String KEYSTORE_TYPE_KEY = "keystore-type";
-  private static final String EXCLUDE_PROTOCOLS = "exclude-protocols";
   private int port;
   private String bindAddress;
   private String compressionType;
-  private String keystore;
-  private String keystorePassword;
-  private String keystoreType;
-  private final List<String> excludeProtocols = new LinkedList<String>();
-  private boolean enableSsl = false;
   private boolean enableIpFilter;
   private String patternRuleConfigDefinition;
 
@@ -166,6 +152,7 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
 
   @Override
   public void configure(Context context) {
+    configureSsl(context);
     Configurables.ensureRequiredNonNull(context, PORT_KEY, BIND_KEY);
 
     port = context.getInteger(PORT_KEY);
@@ -177,34 +164,6 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
     } catch (NumberFormatException e) {
       logger.warn("AVRO source\'s \"threads\" property must specify an integer value.",
               context.getString(THREADS));
-    }
-
-    enableSsl = context.getBoolean(SSL_KEY, false);
-    keystore = context.getString(KEYSTORE_KEY);
-    keystorePassword = context.getString(KEYSTORE_PASSWORD_KEY);
-    keystoreType = context.getString(KEYSTORE_TYPE_KEY, "JKS");
-    String excludeProtocolsStr = context.getString(EXCLUDE_PROTOCOLS);
-    if (excludeProtocolsStr == null) {
-      excludeProtocols.add("SSLv3");
-    } else {
-      excludeProtocols.addAll(Arrays.asList(excludeProtocolsStr.split(" ")));
-      if (!excludeProtocols.contains("SSLv3")) {
-        excludeProtocols.add("SSLv3");
-      }
-    }
-
-    if (enableSsl) {
-      Preconditions.checkNotNull(keystore,
-          KEYSTORE_KEY + " must be specified when SSL is enabled");
-      Preconditions.checkNotNull(keystorePassword,
-          KEYSTORE_PASSWORD_KEY + " must be specified when SSL is enabled");
-      try {
-        KeyStore ks = KeyStore.getInstance(keystoreType);
-        ks.load(new FileInputStream(keystore), keystorePassword.toCharArray());
-      } catch (Exception ex) {
-        throw new FlumeException(
-            "Avro source configured with invalid keystore: " + keystore, ex);
-      }
     }
 
     enableIpFilter = context.getBoolean(IP_FILTER_KEY, false);
@@ -281,11 +240,10 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
   private ChannelPipelineFactory initChannelPipelineFactory() {
     ChannelPipelineFactory pipelineFactory;
     boolean enableCompression = compressionType.equalsIgnoreCase("deflate");
-    if (enableCompression || enableSsl || enableIpFilter) {
+    if (enableCompression || isSslEnabled() || enableIpFilter) {
       pipelineFactory = new AdvancedChannelPipelineFactory(
-        enableCompression, enableSsl, keystore,
-        keystorePassword, keystoreType, enableIpFilter,
-        patternRuleConfigDefinition);
+        enableCompression, enableIpFilter,
+        patternRuleConfigDefinition, getSslEngineSupplier(false));
     } else {
       pipelineFactory = Channels::pipeline;
     }
@@ -363,6 +321,7 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
     } catch (ChannelException ex) {
       logger.warn("Avro source " + getName() + ": Unable to process event. " +
           "Exception follows.", ex);
+      sourceCounter.incrementChannelWriteFail();
       return Status.FAILED;
     }
 
@@ -393,6 +352,7 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
     } catch (Throwable t) {
       logger.error("Avro source " + getName() + ": Unable to process event " +
           "batch. Exception follows.", t);
+      sourceCounter.incrementChannelWriteFail();
       if (t instanceof Error) {
         throw (Error) t;
       }
@@ -451,52 +411,19 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
       implements ChannelPipelineFactory {
 
     private boolean enableCompression;
-    private boolean enableSsl;
-    private String keystore;
-    private String keystorePassword;
-    private String keystoreType;
 
     private boolean enableIpFilter;
     private String patternRuleConfigDefinition;
+    private Supplier<Optional<SSLEngine>> sslEngineSupplier;
 
-    public AdvancedChannelPipelineFactory(boolean enableCompression,
-        boolean enableSsl, String keystore, String keystorePassword,
-        String keystoreType, boolean enableIpFilter,
-        String patternRuleConfigDefinition) {
+    public AdvancedChannelPipelineFactory(boolean enableCompression, boolean enableIpFilter,
+        String patternRuleConfigDefinition, Supplier<Optional<SSLEngine>> sslEngineSupplier) {
       this.enableCompression = enableCompression;
-      this.enableSsl = enableSsl;
-      this.keystore = keystore;
-      this.keystorePassword = keystorePassword;
-      this.keystoreType = keystoreType;
       this.enableIpFilter = enableIpFilter;
       this.patternRuleConfigDefinition = patternRuleConfigDefinition;
+      this.sslEngineSupplier = sslEngineSupplier;
     }
 
-    private SSLContext createServerSSLContext() {
-      try {
-        KeyStore ks = KeyStore.getInstance(keystoreType);
-        ks.load(new FileInputStream(keystore), keystorePassword.toCharArray());
-
-        // Set up key manager factory to use our key store
-        KeyManagerFactory kmf = KeyManagerFactory.getInstance(getAlgorithm());
-        kmf.init(ks, keystorePassword.toCharArray());
-
-        SSLContext serverContext = SSLContext.getInstance("TLS");
-        serverContext.init(kmf.getKeyManagers(), null, null);
-        return serverContext;
-      } catch (Exception e) {
-        throw new Error("Failed to initialize the server-side SSLContext", e);
-      }
-    }
-
-    private String getAlgorithm() {
-      String algorithm = Security.getProperty(
-          "ssl.KeyManagerFactory.algorithm");
-      if (algorithm == null) {
-        algorithm = "SunX509";
-      }
-      return algorithm;
-    }
 
     @Override
     public ChannelPipeline getPipeline() throws Exception {
@@ -507,23 +434,14 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
         pipeline.addFirst("inflater", new ZlibDecoder());
       }
 
-      if (enableSsl) {
-        SSLEngine sslEngine = createServerSSLContext().createSSLEngine();
-        sslEngine.setUseClientMode(false);
-        List<String> enabledProtocols = new ArrayList<String>();
-        for (String protocol : sslEngine.getEnabledProtocols()) {
-          if (!excludeProtocols.contains(protocol)) {
-            enabledProtocols.add(protocol);
-          }
-        }
-        sslEngine.setEnabledProtocols(enabledProtocols.toArray(new String[0]));
+      sslEngineSupplier.get().ifPresent(sslEngine -> {
         logger.info("SSLEngine protocols enabled: " +
             Arrays.asList(sslEngine.getEnabledProtocols()));
         // addFirst() will make SSL handling the first stage of decoding
         // and the last stage of encoding this must be added after
         // adding compression handling above
         pipeline.addFirst("ssl", new SslHandler(sslEngine));
-      }
+      });
 
       if (enableIpFilter) {
 

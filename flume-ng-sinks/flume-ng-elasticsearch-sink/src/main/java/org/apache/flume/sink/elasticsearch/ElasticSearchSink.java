@@ -38,6 +38,7 @@ import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Transaction;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.formatter.output.BucketPath;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.instrumentation.SinkCounter;
@@ -83,7 +84,7 @@ import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.IND
  *      ://www.elasticsearch.org/guide/reference/api/admin-indices-templates.
  *      html
  */
-public class ElasticSearchSink extends AbstractSink implements Configurable {
+public class ElasticSearchSink extends AbstractSink implements Configurable, BatchSizeSupported {
 
   private static final Logger logger = LoggerFactory
       .getLogger(ElasticSearchSink.class);
@@ -169,6 +170,11 @@ public class ElasticSearchSink extends AbstractSink implements Configurable {
   @VisibleForTesting
   IndexNameBuilder getIndexNameBuilder() {
     return indexNameBuilder;
+  }
+
+  @Override
+  public long getBatchSize() {
+    return batchSize;
   }
 
   @Override

@@ -29,6 +29,7 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Transaction;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.conf.LogPrivacyUtil;
@@ -67,7 +68,6 @@ import static org.apache.flume.sink.kafka.KafkaSinkConstants.KEY_HEADER;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.OLD_BATCH_SIZE;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.REQUIRED_ACKS_FLUME_KEY;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.TOPIC_CONFIG;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.TOPIC_HEADER;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.KEY_SERIALIZER_KEY;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.MESSAGE_SERIALIZER_KEY;
 
@@ -103,7 +103,7 @@ import static org.apache.flume.sink.kafka.KafkaSinkConstants.MESSAGE_SERIALIZER_
  * topic
  * key
  */
-public class KafkaSink extends AbstractSink implements Configurable {
+public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSupported {
 
   private static final Logger logger = LoggerFactory.getLogger(KafkaSink.class);
 
@@ -117,6 +117,9 @@ public class KafkaSink extends AbstractSink implements Configurable {
   private boolean useAvroEventFormat;
   private String partitionHeader = null;
   private Integer staticPartitionId = null;
+  private boolean allowTopicOverride;
+  private String topicHeader = null;
+
   private Optional<SpecificDatumWriter<AvroFlumeEvent>> writer =
           Optional.absent();
   private Optional<SpecificDatumReader<AvroFlumeEvent>> reader =
@@ -134,7 +137,7 @@ public class KafkaSink extends AbstractSink implements Configurable {
     return topic;
   }
 
-  public int getBatchSize() {
+  public long getBatchSize() {
     return batchSize;
   }
 
@@ -172,10 +175,19 @@ public class KafkaSink extends AbstractSink implements Configurable {
         byte[] eventBody = event.getBody();
         Map<String, String> headers = event.getHeaders();
 
-        eventTopic = headers.get(TOPIC_HEADER);
-        if (eventTopic == null) {
-          eventTopic = BucketPath.escapeString(topic, event.getHeaders());
+        if (allowTopicOverride) {
+          eventTopic = headers.get(topicHeader);
+          if (eventTopic == null) {
+            eventTopic = BucketPath.escapeString(topic, event.getHeaders());
+            logger.debug("{} was set to true but header {} was null. Producing to {}" + 
+                " topic instead.",
+                new Object[]{KafkaSinkConstants.ALLOW_TOPIC_OVERRIDE_HEADER, 
+                    topicHeader, eventTopic});
+          }
+        } else {
+          eventTopic = topic;
         }
+
         eventKey = headers.get(KEY_HEADER);
         if (logger.isTraceEnabled()) {
           if (LogPrivacyUtil.allowLogRawData()) {
@@ -239,6 +251,7 @@ public class KafkaSink extends AbstractSink implements Configurable {
     } catch (Exception ex) {
       String errorMsg = "Failed to publish events";
       logger.error("Failed to publish events", ex);
+      counter.incrementEventWriteOrChannelFail(ex);
       result = Status.BACKOFF;
       if (transaction != null) {
         try {
@@ -316,6 +329,12 @@ public class KafkaSink extends AbstractSink implements Configurable {
 
     partitionHeader = context.getString(KafkaSinkConstants.PARTITION_HEADER_NAME);
     staticPartitionId = context.getInteger(KafkaSinkConstants.STATIC_PARTITION_CONF);
+
+    allowTopicOverride = context.getBoolean(KafkaSinkConstants.ALLOW_TOPIC_OVERRIDE_HEADER,
+                                          KafkaSinkConstants.DEFAULT_ALLOW_TOPIC_OVERRIDE_HEADER);
+
+    topicHeader = context.getString(KafkaSinkConstants.TOPIC_OVERRIDE_HEADER,
+                                    KafkaSinkConstants.DEFAULT_TOPIC_OVERRIDE_HEADER);
 
     if (logger.isDebugEnabled()) {
       logger.debug(KafkaSinkConstants.AVRO_EVENT + " set to: {}", useAvroEventFormat);

@@ -18,15 +18,14 @@
  */
 package org.apache.flume.tools;
 
-import org.mortbay.jetty.security.Constraint;
-import org.mortbay.jetty.security.ConstraintMapping;
-import org.mortbay.jetty.security.SecurityHandler;
-import org.mortbay.jetty.servlet.Context;
+import org.eclipse.jetty.util.security.Constraint;
+import org.eclipse.jetty.security.ConstraintMapping;
+import org.eclipse.jetty.security.ConstraintSecurityHandler;
 
 // Most of the code in this class is copied from HBASE-10473
 
 /**
- * Utility class to impose constraints on Jetty HTTP servers
+ * Utility class to define constraints on Jetty HTTP servers
  */
 
 public class HTTPServerConstraintUtil {
@@ -36,12 +35,10 @@ public class HTTPServerConstraintUtil {
   }
 
   /**
-   * Impose constraints on the {@linkplain org.mortbay.jetty.servlet.Context}
-   * passed in.
-   * @param ctx - {@linkplain org.mortbay.jetty.servlet.Context} to impose
-   *            constraints on.
+   * Generate constraints for the Flume HTTP Source
+   * @return ConstraintSecurityHandler for use with Jetty servlet
    */
-  public static void enforceConstraints(Context ctx) {
+  public static ConstraintSecurityHandler enforceConstraints() {
     Constraint c = new Constraint();
     c.setAuthenticate(true);
 
@@ -55,8 +52,9 @@ public class HTTPServerConstraintUtil {
     cmo.setMethod("OPTIONS");
     cmo.setPathSpec("/*");
 
-    SecurityHandler sh = new SecurityHandler();
+    ConstraintSecurityHandler sh = new ConstraintSecurityHandler();
     sh.setConstraintMappings(new ConstraintMapping[]{cmt, cmo});
-    ctx.addHandler(sh);
+
+    return sh;
   }
 }

@@ -19,11 +19,13 @@
 package org.apache.flume.sink.http;
 
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.Sink.Status;
 import org.apache.flume.Transaction;
 import org.apache.flume.instrumentation.SinkCounter;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -216,6 +218,36 @@ public class TestHttpSink {
   }
 
   @Test
+  public void testErrorCounter() throws Exception {
+    RuntimeException exception = new RuntimeException("dummy");
+    when(channel.take()).thenThrow(exception);
+
+    Context context = new Context();
+    context.put("defaultRollback", "false");
+    context.put("defaultBackoff", "false");
+    context.put("defaultIncrementMetrics", "false");
+
+    executeWithMocks(false, Status.BACKOFF, false, false, context, HttpURLConnection.HTTP_OK);
+    inOrder(sinkCounter).verify(sinkCounter).incrementEventWriteOrChannelFail(exception);
+  }
+
+  @Test
+  public void ensureSingleErrorStatusConfigurationCorrectlyUsed() throws Exception {
+    when(channel.take()).thenReturn(event);
+    when(event.getBody()).thenReturn("something".getBytes());
+
+    Context context = new Context();
+    context.put("defaultRollback", "true");
+    context.put("defaultBackoff", "true");
+    context.put("defaultIncrementMetrics", "false");
+    context.put("rollback.401", "false");
+    context.put("backoff.401", "false");
+    context.put("incrementMetrics.401", "false");
+
+    executeWithMocks(true, Status.READY, false, true, context, HttpURLConnection.HTTP_UNAUTHORIZED);
+  }
+
+  @Test
   public void ensureGroupConfigurationCorrectlyUsed() throws Exception {
     when(channel.take()).thenReturn(event);
     when(event.getBody()).thenReturn("something".getBytes());
@@ -278,6 +310,7 @@ public class TestHttpSink {
     when(channel.getTransaction()).thenReturn(transaction);
     when(httpURLConnection.getOutputStream()).thenReturn(outputStream);
     when(httpURLConnection.getInputStream()).thenReturn(inputStream);
+    when(httpURLConnection.getErrorStream()).thenReturn(inputStream);
     when(httpURLConnection.getResponseCode()).thenReturn(httpStatus);
 
     Status actualStatus = httpSink.process();

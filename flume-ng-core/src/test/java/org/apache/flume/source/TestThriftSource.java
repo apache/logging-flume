@@ -21,6 +21,7 @@ package org.apache.flume.source;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelException;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -36,35 +37,46 @@ import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
 
+import org.apache.flume.instrumentation.SourceCounter;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.mockito.internal.util.reflection.Whitebox;
 
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.KeyManagerFactory;
+
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Random;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyListOf;
+import static org.mockito.Mockito.doThrow;
 
 public class TestThriftSource {
 
   private ThriftSource source;
   private MemoryChannel channel;
   private RpcClient client;
-  private final Random random = new Random();
   private final Properties props = new Properties();
   private int port;
 
   @Before
-  public void setUp() {
-    port = random.nextInt(50000) + 1024;
+  public void setUp() throws IOException {
+    try (ServerSocket socket = new ServerSocket(0)) {
+      port = socket.getLocalPort();
+    }
     props.clear();
     props.setProperty("hosts", "h1");
     props.setProperty("hosts.h1", "0.0.0.0:" + String.valueOf(port));
@@ -90,24 +102,55 @@ public class TestThriftSource {
   }
 
   @Test
-  public void testAppendSSL() throws Exception {
-    Properties sslprops = (Properties)props.clone();
-    sslprops.put("ssl", "true");
-    sslprops.put("truststore", "src/test/resources/truststorefile.jks");
-    sslprops.put("truststore-password", "password");
-    sslprops.put("trustmanager-type", TrustManagerFactory.getDefaultAlgorithm());
-    client = RpcClientFactory.getThriftInstance(sslprops);
+  public void testAppendSSLWithComponentKeystore() throws Exception {
 
     Context context = new Context();
     channel.configure(context);
     configureSource();
+
     context.put(ThriftSource.CONFIG_BIND, "0.0.0.0");
     context.put(ThriftSource.CONFIG_PORT, String.valueOf(port));
     context.put("ssl", "true");
     context.put("keystore", "src/test/resources/keystorefile.jks");
     context.put("keystore-password", "password");
-    context.put("keymanager-type", KeyManagerFactory.getDefaultAlgorithm());
+    context.put("keystore-type", "JKS");
+
     Configurables.configure(source, context);
+
+    doAppendSSL();
+  }
+
+  @Test
+  public void testAppendSSLWithGlobalKeystore() throws Exception {
+
+    System.setProperty("javax.net.ssl.keyStore", "src/test/resources/keystorefile.jks");
+    System.setProperty("javax.net.ssl.keyStorePassword", "password");
+    System.setProperty("javax.net.ssl.keyStoreType", "JKS");
+
+    Context context = new Context();
+    channel.configure(context);
+    configureSource();
+
+    context.put(ThriftSource.CONFIG_BIND, "0.0.0.0");
+    context.put(ThriftSource.CONFIG_PORT, String.valueOf(port));
+    context.put("ssl", "true");
+
+    Configurables.configure(source, context);
+
+    doAppendSSL();
+
+    System.clearProperty("javax.net.ssl.keyStore");
+    System.clearProperty("javax.net.ssl.keyStorePassword");
+    System.clearProperty("javax.net.ssl.keyStoreType");
+  }
+
+  private void doAppendSSL() throws EventDeliveryException {
+    Properties sslprops = (Properties)props.clone();
+    sslprops.put("ssl", "true");
+    sslprops.put("truststore", "src/test/resources/truststorefile.jks");
+    sslprops.put("truststore-password", "password");
+    client = RpcClientFactory.getThriftInstance(sslprops);
+
     source.start();
     for (int i = 0; i < 30; i++) {
       client.append(EventBuilder.withBody(String.valueOf(i).getBytes()));
@@ -252,7 +295,7 @@ public class TestThriftSource {
     context.put(ThriftSource.CONFIG_PORT, String.valueOf(port));
     Configurables.configure(source, context);
     source.start();
-    ExecutorCompletionService<Void> completionService = new ExecutorCompletionService(submitter);
+    ExecutorCompletionService<Void> completionService = new ExecutorCompletionService<>(submitter);
     for (int i = 0; i < 30; i++) {
       completionService.submit(new SubmitHelper(i), null);
     }
@@ -285,6 +328,34 @@ public class TestThriftSource {
         Assert.assertEquals(i, events.get(index++).intValue());
       }
     }
+  }
+
+  @Test
+  public void testErrorCounterChannelWriteFail() throws Exception {
+    client = RpcClientFactory.getThriftInstance(props);
+    Context context = new Context();
+    context.put(ThriftSource.CONFIG_BIND, "0.0.0.0");
+    context.put(ThriftSource.CONFIG_PORT, String.valueOf(port));
+    source.configure(context);
+    ChannelProcessor cp = Mockito.mock(ChannelProcessor.class);
+    doThrow(new ChannelException("dummy")).when(cp).processEvent(any(Event.class));
+    doThrow(new ChannelException("dummy")).when(cp).processEventBatch(anyListOf(Event.class));
+    source.setChannelProcessor(cp);
+    source.start();
+    Event event = EventBuilder.withBody("hello".getBytes());
+    try {
+      client.append(event);
+    } catch (EventDeliveryException e) {
+      //
+    }
+    try {
+      client.appendBatch(Arrays.asList(event));
+    } catch (EventDeliveryException e) {
+      //
+    }
+    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(source, "sourceCounter");
+    Assert.assertEquals(2, sc.getChannelWriteFail());
+    source.stop();
   }
 
   private class SubmitHelper implements Runnable {

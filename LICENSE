@@ -226,6 +226,7 @@ For
  curator-framework-<version>.jar:
  curator-recipes-<version>.jar:
  derby-<version>.jar:
+ geronimo-jms_1.1_spec-<version>.jar:
  guava-<version>.jar:
  gson-<version>.jar:
  httpclient-<version>.jar:

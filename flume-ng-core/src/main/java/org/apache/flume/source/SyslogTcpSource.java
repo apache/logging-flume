@@ -21,9 +21,13 @@ package org.apache.flume.source;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+
+import javax.net.ssl.SSLEngine;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.flume.ChannelException;
@@ -44,6 +48,7 @@ import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,8 +56,8 @@ import org.slf4j.LoggerFactory;
  * @deprecated use {@link MultiportSyslogTCPSource} instead.
  */
 @Deprecated
-public class SyslogTcpSource extends AbstractSource
-                             implements EventDrivenSource, Configurable {
+public class SyslogTcpSource extends SslContextAwareAbstractSource
+    implements EventDrivenSource, Configurable {
   private static final Logger logger = LoggerFactory.getLogger(SyslogTcpSource.class);
 
   private int port;
@@ -96,8 +101,10 @@ public class SyslogTcpSource extends AbstractSource
           sourceCounter.incrementEventAcceptedCount();
         } catch (ChannelException ex) {
           logger.error("Error writting to channel, event dropped", ex);
+          sourceCounter.incrementChannelWriteFail();
         } catch (RuntimeException ex) {
           logger.error("Error parsing event from syslog stream, event dropped", ex);
+          sourceCounter.incrementEventReadFail();
           return;
         }
       }
@@ -111,17 +118,10 @@ public class SyslogTcpSource extends AbstractSource
         Executors.newCachedThreadPool(), Executors.newCachedThreadPool());
 
     ServerBootstrap serverBootstrap = new ServerBootstrap(factory);
-    serverBootstrap.setPipelineFactory(new ChannelPipelineFactory() {
-      @Override
-      public ChannelPipeline getPipeline() {
-        syslogTcpHandler handler = new syslogTcpHandler();
-        handler.setEventSize(eventSize);
-        handler.setFormater(formaterProp);
-        handler.setKeepFields(keepFields);
-        return Channels.pipeline(handler);
-      }
-    });
 
+    serverBootstrap.setPipelineFactory(new PipelineFactory(
+        eventSize, formaterProp, keepFields, getSslEngineSupplier(false)
+    ));
     logger.info("Syslog TCP Source starting...");
 
     if (host == null) {
@@ -156,17 +156,18 @@ public class SyslogTcpSource extends AbstractSource
 
   @Override
   public void configure(Context context) {
+    configureSsl(context);
     Configurables.ensureRequiredNonNull(context,
         SyslogSourceConfigurationConstants.CONFIG_PORT);
     port = context.getInteger(SyslogSourceConfigurationConstants.CONFIG_PORT);
     host = context.getString(SyslogSourceConfigurationConstants.CONFIG_HOST);
     eventSize = context.getInteger("eventSize", SyslogUtils.DEFAULT_SIZE);
     formaterProp = context.getSubProperties(
-        SyslogSourceConfigurationConstants.CONFIG_FORMAT_PREFIX);
+      SyslogSourceConfigurationConstants.CONFIG_FORMAT_PREFIX);
     keepFields = SyslogUtils.chooseFieldsToKeep(
-        context.getString(
-            SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS,
-            SyslogSourceConfigurationConstants.DEFAULT_KEEP_FIELDS));
+      context.getString(
+        SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS,
+        SyslogSourceConfigurationConstants.DEFAULT_KEEP_FIELDS));
 
     if (sourceCounter == null) {
       sourceCounter = new SourceCounter(getName());
@@ -186,5 +187,36 @@ public class SyslogTcpSource extends AbstractSource
   @VisibleForTesting
   SourceCounter getSourceCounter() {
     return sourceCounter;
+  }
+
+  private class PipelineFactory implements ChannelPipelineFactory {
+    private final Integer eventSize;
+    private final Map<String, String> formaterProp;
+    private final Set<String> keepFields;
+    private Supplier<Optional<SSLEngine>> sslEngineSupplier;
+
+    public PipelineFactory(Integer eventSize, Map<String, String> formaterProp,
+        Set<String> keepFields, Supplier<Optional<SSLEngine>> sslEngineSupplier) {
+      this.eventSize = eventSize;
+      this.formaterProp = formaterProp;
+      this.keepFields = keepFields;
+      this.sslEngineSupplier = sslEngineSupplier;
+    }
+
+    @Override
+    public ChannelPipeline getPipeline() {
+      syslogTcpHandler handler = new syslogTcpHandler();
+      handler.setEventSize(eventSize);
+      handler.setFormater(formaterProp);
+      handler.setKeepFields(keepFields);
+
+      ChannelPipeline pipeline = Channels.pipeline(handler);
+
+      sslEngineSupplier.get().ifPresent(sslEngine -> {
+        pipeline.addFirst("ssl", new SslHandler(sslEngine));
+      });
+
+      return pipeline;
+    }
   }
 }
