@@ -1448,6 +1448,12 @@ limitations under the License.
 
       <dependency>
         <groupId>org.apache.flume.flume-shared</groupId>
+        <artifactId>flume-shared-kafka</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.flume.flume-shared</groupId>
         <artifactId>flume-shared-kafka-test</artifactId>
         <version>${project.version}</version>
         <scope>test</scope>
