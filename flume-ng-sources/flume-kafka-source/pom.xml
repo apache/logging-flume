@@ -50,6 +50,10 @@
     </dependency>
     <dependency>
       <groupId>org.apache.flume.flume-shared</groupId>
+      <artifactId>flume-shared-kafka</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flume.flume-shared</groupId>
       <artifactId>flume-shared-kafka-test</artifactId>
       <scope>test</scope>
     </dependency>

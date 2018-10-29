@@ -38,6 +38,7 @@ import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.conf.LogPrivacyUtil;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.instrumentation.kafka.KafkaChannelCounter;
+import org.apache.flume.shared.kafka.KafkaSSLUtil;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
@@ -268,6 +269,8 @@ public class KafkaChannel extends BasicChannelSemantics {
     // Defaults overridden based on config
     producerProps.putAll(ctx.getSubProperties(KAFKA_PRODUCER_PREFIX));
     producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootStrapServers);
+
+    KafkaSSLUtil.addGlobalSSLParameters(producerProps);
   }
 
   protected Properties getProducerProps() {
@@ -285,6 +288,8 @@ public class KafkaChannel extends BasicChannelSemantics {
     consumerProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootStrapServers);
     consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
     consumerProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+
+    KafkaSSLUtil.addGlobalSSLParameters(consumerProps);
   }
 
   protected Properties getConsumerProps() {
