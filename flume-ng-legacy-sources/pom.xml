@@ -26,19 +26,9 @@ limitations under the License.
     <version>1.9.0-SNAPSHOT</version>
   </parent>
 
-  <groupId>org.apache.flume</groupId>
   <artifactId>flume-ng-legacy-sources</artifactId>
   <name>Flume legacy Sources</name>
   <packaging>pom</packaging>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
 
   <modules>
     <module>flume-thrift-source</module>

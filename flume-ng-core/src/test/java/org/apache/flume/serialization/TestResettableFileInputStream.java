@@ -588,7 +588,7 @@ public class TestResettableFileInputStream {
    * Helper function to read a line from a character stream.
    * @param in
    * @param maxLength
-   * @return
+   * @return Line as string
    * @throws IOException
    */
   private static String readLine(ResettableInputStream in, int maxLength)

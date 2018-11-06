@@ -21,14 +21,12 @@
   <artifactId>flume-ng-hbase-sink</artifactId>
   <name>Flume NG HBase Sink</name>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
+  <properties>
+    <!-- TODO fix spotbugs/pmd violations -->
+    <spotbugs.maxAllowedViolations>24</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>14</pmd.maxAllowedViolations>
+  </properties>
+
   <dependencies>
 
     <dependency>

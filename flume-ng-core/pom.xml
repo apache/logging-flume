@@ -29,6 +29,12 @@ limitations under the License.
   <artifactId>flume-ng-core</artifactId>
   <name>Flume NG Core</name>
 
+  <properties>
+    <!-- TODO fix spotbugs violations -->
+    <spotbugs.maxAllowedViolations>115</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>112</pmd.maxAllowedViolations>
+  </properties>
+
   <build>
     <pluginManagement>
       <plugins>
@@ -116,11 +122,6 @@ limitations under the License.
             </goals>
           </execution>
         </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
       </plugin>
 
     </plugins>

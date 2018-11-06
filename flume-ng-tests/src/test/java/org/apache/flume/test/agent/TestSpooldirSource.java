@@ -23,15 +23,12 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
-import org.apache.commons.io.FileUtils;
 import org.apache.flume.test.util.StagedInstall;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;

@@ -22,8 +22,7 @@ package org.apache.flume.client.avro;
 import static org.apache.flume.client.avro.TestSpoolingFileLineReader.bodyAsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.apache.flume.client.avro.TestSpoolingFileLineReader
-    .bodiesAsStrings;
+import static org.apache.flume.client.avro.TestSpoolingFileLineReader.bodiesAsStrings;
 
 import java.io.File;
 import java.io.FileReader;

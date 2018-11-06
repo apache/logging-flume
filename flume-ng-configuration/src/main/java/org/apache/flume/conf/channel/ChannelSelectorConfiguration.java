@@ -20,7 +20,6 @@ import java.util.Set;
 
 import org.apache.flume.conf.ComponentConfiguration;
 import org.apache.flume.conf.ConfigurationException;
-import org.apache.flume.conf.channel.ChannelConfiguration.ChannelConfigurationType;
 
 public class ChannelSelectorConfiguration extends
     ComponentConfiguration {

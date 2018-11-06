@@ -30,7 +30,6 @@ import org.apache.flume.EventDeliveryException;
 import org.apache.flume.PollableSource;
 import org.apache.flume.Transaction;
 import org.apache.flume.channel.ChannelProcessor;
-import org.apache.flume.channel.ChannelSelectorFactory;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;

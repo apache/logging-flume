@@ -31,14 +31,11 @@
   <artifactId>flume-file-channel</artifactId>
   <name>Flume NG file-based channel</name>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
+  <properties>
+    <!-- TODO fix spotbugs violations -->
+    <spotbugs.maxAllowedViolations>86</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>486</pmd.maxAllowedViolations>
+  </properties>
 
   <dependencies>
 

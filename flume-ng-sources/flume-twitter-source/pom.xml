@@ -30,6 +30,12 @@ limitations under the License.
   <artifactId>flume-twitter-source</artifactId>
   <name>Flume Twitter Source</name>
 
+  <properties>
+    <!-- TODO fix spotbugs/pmd violations -->
+    <spotbugs.maxAllowedViolations>4</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>2</pmd.maxAllowedViolations>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.apache.flume</groupId>

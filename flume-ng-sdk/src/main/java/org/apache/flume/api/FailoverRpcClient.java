@@ -19,7 +19,6 @@
 package org.apache.flume.api;
 
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 

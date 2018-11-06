@@ -31,14 +31,11 @@
   <artifactId>flume-spillable-memory-channel</artifactId>
   <name>Flume NG Spillable Memory channel</name>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
+  <properties>
+    <!-- TODO fix spotbugs/pmd violations -->
+    <spotbugs.maxAllowedViolations>2</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>8</pmd.maxAllowedViolations>
+  </properties>
 
   <dependencies>
 

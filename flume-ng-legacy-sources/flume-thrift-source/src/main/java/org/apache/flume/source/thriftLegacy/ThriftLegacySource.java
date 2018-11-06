@@ -19,7 +19,6 @@
 
 package org.apache.flume.source.thriftLegacy;
 
-import java.lang.InterruptedException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;

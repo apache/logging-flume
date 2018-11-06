@@ -21,14 +21,11 @@
   <artifactId>flume-ng-hbase2-sink</artifactId>
   <name>Flume NG HBase2 Sink</name>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
+  <properties>
+    <!-- TODO fix spotbugs violations -->
+    <spotbugs.maxAllowedViolations>3</spotbugs.maxAllowedViolations>
+  </properties>
+
   <dependencyManagement>
     <dependencies>
       <!-- HBase2 dependencies -->

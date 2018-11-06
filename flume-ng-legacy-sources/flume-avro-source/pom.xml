@@ -31,6 +31,8 @@ limitations under the License.
   <name>Flume legacy Avro source</name>
 
   <properties>
+    <!-- TODO fix spotbugs violations -->
+    <spotbugs.maxAllowedViolations>2</spotbugs.maxAllowedViolations>
     <thrift.executable>${env.THRIFT_HOME}/bin/thrift</thrift.executable>
   </properties>
 
@@ -64,10 +66,6 @@ limitations under the License.
       </plugins>
     </pluginManagement>
     <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
       <plugin>
         <groupId>org.apache.avro</groupId>
         <artifactId>avro-maven-plugin</artifactId>
