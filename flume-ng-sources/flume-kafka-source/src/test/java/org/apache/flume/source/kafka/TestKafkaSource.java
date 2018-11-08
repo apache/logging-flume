@@ -20,9 +20,8 @@ package org.apache.flume.source.kafka;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import junit.framework.Assert;
-import kafka.common.TopicExistsException;
-import kafka.utils.ZKGroupTopicDirs;
-import kafka.utils.ZkUtils;
+
+import kafka.zk.KafkaZkClient;
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.specific.SpecificDatumWriter;
@@ -37,6 +36,8 @@ import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -45,8 +46,12 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.security.JaasUtils;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.utils.Time;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.internal.util.reflection.Whitebox;
@@ -58,13 +63,13 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 import static org.apache.flume.source.kafka.KafkaSourceConstants.AVRO_EVENT;
@@ -83,6 +88,7 @@ import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_TOPIC_H
 import static org.apache.flume.source.kafka.KafkaSourceConstants.ZOOKEEPER_CONNECT_FLUME_KEY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
@@ -92,22 +98,30 @@ public class TestKafkaSource {
   private static final Logger log = LoggerFactory.getLogger(TestKafkaSource.class);
 
   private KafkaSource kafkaSource;
-  private KafkaSourceEmbeddedKafka kafkaServer;
+  private static KafkaSourceEmbeddedKafka kafkaServer;
   private Context context;
   private List<Event> events;
 
-  private final Set<String> usedTopics = new HashSet<String>();
-  private String topic0 = "test1";
-  private String topic1 = "topic1";
+  private final List<String> usedTopics = new ArrayList<>();
+  private String topic0;
+  private String topic1;
+
+
+  @BeforeClass
+  public static void startKafkaServer() {
+    kafkaServer = new KafkaSourceEmbeddedKafka(null);
+    startupCheck();
+  }
 
   @SuppressWarnings("unchecked")
   @Before
   public void setup() throws Exception {
     kafkaSource = new KafkaSource();
-    kafkaServer = new KafkaSourceEmbeddedKafka(null);
     try {
+      topic0 = findUnusedTopic();
       kafkaServer.createTopic(topic0, 1);
       usedTopics.add(topic0);
+      topic1 = findUnusedTopic();
       kafkaServer.createTopic(topic1, 3);
       usedTopics.add(topic1);
     } catch (TopicExistsException e) {
@@ -116,6 +130,35 @@ public class TestKafkaSource {
     }
     context = prepareDefaultContext("flume-group");
     kafkaSource.setChannelProcessor(createGoodChannel());
+  }
+
+  private static void startupCheck() {
+    String startupTopic = "startupCheck";
+    KafkaConsumer<String, String> startupConsumer;
+    kafkaServer.createTopic(startupTopic, 1);
+    final Properties props = new Properties();
+    props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaServer.getBootstrapServers());
+    props.put(ConsumerConfig.GROUP_ID_CONFIG, "group_1");
+    props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+    props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+    KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props);
+    consumer.subscribe(Collections.singletonList(startupTopic));
+    log.info("Checking Startup");
+    boolean success = false;
+    for (int i = 0; i < 20; i++) {
+      kafkaServer.produce(startupTopic, "", "record");
+      ConsumerRecords recs = consumer.poll(Duration.ofMillis(1000L));
+      if (!recs.isEmpty()) {
+        success = true;
+        break;
+      }
+    }
+    if (!success) {
+      fail("Kafka server startup failed");
+    }
+    log.info("Kafka server startup success");
+    consumer.close();
+    kafkaServer.deleteTopics(Collections.singletonList(startupTopic));
   }
 
   private Context prepareDefaultContext(String groupId) {
@@ -127,8 +170,30 @@ public class TestKafkaSource {
 
   @After
   public void tearDown() throws Exception {
-    kafkaSource.stop();
+    try {
+      kafkaSource.stop();
+    } catch (Exception e) {
+      log.warn("Error stopping kafkaSource", e);
+    }
+    topic0 = null;
+    topic1 = null;
+    kafkaServer.deleteTopics(usedTopics);
+    usedTopics.clear();
+  }
+
+  @AfterClass
+  public static void stopKafkaServer() throws Exception {
     kafkaServer.stop();
+  }
+
+  private void startKafkaSource() throws EventDeliveryException, InterruptedException {
+    kafkaSource.start();
+    /* Timing magic: We call the process method, that executes a consumer.poll()
+      A thread.sleep(10000L) does not work even though it takes longer */
+    for (int i = 0; i < 3; i++) {
+      kafkaSource.process();
+      Thread.sleep(1000);
+    }
   }
 
   @SuppressWarnings("unchecked")
@@ -140,7 +205,7 @@ public class TestKafkaSource {
             String.valueOf(batchDuration));
     context.put(BATCH_SIZE, "3");
     kafkaSource.configure(context);
-    kafkaSource.start();
+    startKafkaSource();
     Thread.sleep(500L);
     Status status = kafkaSource.process();
     assertEquals(Status.BACKOFF, status);
@@ -190,7 +255,7 @@ public class TestKafkaSource {
     kafkaSource = new KafkaSource();
     kafkaSource.setChannelProcessor(createGoodChannel());
     kafkaSource.configure(context);
-    kafkaSource.start();
+    startKafkaSource();
     kafkaServer.produce(topic1, "", "record14");
     Thread.sleep(1000L);
     assertEquals(Status.READY, kafkaSource.process());
@@ -209,7 +274,7 @@ public class TestKafkaSource {
     context.put(TOPICS, topic0);
     context.put(BATCH_SIZE, "1");
     kafkaSource.configure(context);
-    kafkaSource.start();
+    startKafkaSource();
 
     Thread.sleep(500L);
 
@@ -232,7 +297,7 @@ public class TestKafkaSource {
     context.put(TOPICS, topic0);
     context.put(BATCH_SIZE,"2");
     kafkaSource.configure(context);
-    kafkaSource.start();
+    startKafkaSource();
 
     Thread.sleep(500L);
 
@@ -258,7 +323,7 @@ public class TestKafkaSource {
           IllegalAccessException, InterruptedException {
     context.put(TOPICS, topic0);
     kafkaSource.configure(context);
-    kafkaSource.start();
+    startKafkaSource();
     Thread.sleep(500L);
 
     Status status = kafkaSource.process();
@@ -272,7 +337,7 @@ public class TestKafkaSource {
           IllegalAccessException, InterruptedException {
     context.put(TOPICS,"faketopic");
     kafkaSource.configure(context);
-    kafkaSource.start();
+    startKafkaSource();
     Thread.sleep(500L);
 
     Status status = kafkaSource.process();
@@ -287,7 +352,7 @@ public class TestKafkaSource {
     context.put(TOPICS, topic0);
     context.put(BOOTSTRAP_SERVERS,"blabla:666");
     kafkaSource.configure(context);
-    kafkaSource.start();
+    startKafkaSource();
     Thread.sleep(500L);
 
     Status status = kafkaSource.process();
@@ -299,7 +364,8 @@ public class TestKafkaSource {
     context.put(TOPICS, topic0);
     context.put(BATCH_DURATION_MS, "250");
     kafkaSource.configure(context);
-    kafkaSource.start();
+    startKafkaSource();
+    kafkaSource.process(); // timing magic
 
     Thread.sleep(500L);
 
@@ -323,7 +389,7 @@ public class TestKafkaSource {
     context.put(TOPICS, topic0);
     context.put(BATCH_SIZE, "1");
     kafkaSource.configure(context);
-    kafkaSource.start();
+    startKafkaSource();
 
     Thread.sleep(500L);
 
@@ -334,7 +400,7 @@ public class TestKafkaSource {
     Assert.assertEquals(Status.READY, kafkaSource.process());
     kafkaSource.stop();
     Thread.sleep(500L);
-    kafkaSource.start();
+    startKafkaSource();
     Thread.sleep(500L);
     Assert.assertEquals(Status.BACKOFF, kafkaSource.process());
   }
@@ -346,7 +412,7 @@ public class TestKafkaSource {
     context.put(BATCH_SIZE,"1");
     context.put(BATCH_DURATION_MS,"30000");
     kafkaSource.configure(context);
-    kafkaSource.start();
+    startKafkaSource();
     Thread.sleep(500L);
 
     kafkaServer.produce(topic0, "", "hello, world");
@@ -370,7 +436,7 @@ public class TestKafkaSource {
     context.put(BATCH_SIZE,"1");
     context.put(BATCH_DURATION_MS, "30000");
     kafkaSource.configure(context);
-    kafkaSource.start();
+    startKafkaSource();
     Thread.sleep(500L);
 
     kafkaServer.produce(topic0, "", "event 1");
@@ -393,7 +459,7 @@ public class TestKafkaSource {
     context.put(BATCH_DURATION_MS,"30000");
     context.put(KAFKA_CONSUMER_PREFIX + "enable.auto.commit", "true");
     kafkaSource.configure(context);
-    kafkaSource.start();
+    startKafkaSource();
     Thread.sleep(500L);
 
     kafkaServer.produce(topic0, "", "event 1");
@@ -417,7 +483,7 @@ public class TestKafkaSource {
     context.put(TOPICS, topic0);
     context.put(BATCH_SIZE, "1");
     kafkaSource.configure(context);
-    kafkaSource.start();
+    startKafkaSource();
 
     Thread.sleep(500L);
 
@@ -443,7 +509,7 @@ public class TestKafkaSource {
         .when(cp).processEventBatch(any(List.class));
     kafkaSource.setChannelProcessor(cp);
 
-    kafkaSource.start();
+    startKafkaSource();
 
     Thread.sleep(500L);
 
@@ -567,7 +633,7 @@ public class TestKafkaSource {
     context.put(BATCH_SIZE, "1");
     context.put(AVRO_EVENT, "true");
     kafkaSource.configure(context);
-    kafkaSource.start();
+    startKafkaSource();
 
     Thread.sleep(500L);
 
@@ -699,7 +765,7 @@ public class TestKafkaSource {
   public void testTopicHeaderSet() throws InterruptedException, EventDeliveryException {
     context.put(TOPICS, topic0);
     kafkaSource.configure(context);
-    kafkaSource.start();
+    startKafkaSource();
 
     Thread.sleep(500L);
 
@@ -730,7 +796,7 @@ public class TestKafkaSource {
     context.put(KafkaSourceConstants.TOPIC_HEADER, "customTopicHeader");
     kafkaSource.configure(context);
 
-    kafkaSource.start();
+    startKafkaSource();
 
     Thread.sleep(500L);
 
@@ -761,7 +827,7 @@ public class TestKafkaSource {
     context.put(KafkaSourceConstants.SET_TOPIC_HEADER, "false");
     kafkaSource.configure(context);
 
-    kafkaSource.start();
+    startKafkaSource();
 
     Thread.sleep(500L);
 
@@ -810,14 +876,13 @@ public class TestKafkaSource {
 
     // Commit 10th offset to zookeeper
     if (hasZookeeperOffsets) {
-      ZkUtils zkUtils = ZkUtils.apply(kafkaServer.getZkConnectString(), 30000, 30000,
-          JaasUtils.isZkSecurityEnabled());
-      ZKGroupTopicDirs topicDirs = new ZKGroupTopicDirs(group, topic);
-      // we commit the tenth offset to ensure some data is missed.
+      KafkaZkClient zkClient = KafkaZkClient.apply(kafkaServer.getZkConnectString(),
+              JaasUtils.isZkSecurityEnabled(), 30000, 30000, 10, Time.SYSTEM,
+              "kafka.server", "SessionExpireListener");
+      zkClient.getConsumerOffset(group, new TopicPartition(topic, 0));
       Long offset = tenthOffset + 1;
-      zkUtils.updatePersistentPath(topicDirs.consumerOffsetDir() + "/0", offset.toString(),
-          zkUtils.updatePersistentPath$default$3());
-      zkUtils.close();
+      zkClient.setOrCreateConsumerOffset(group, new TopicPartition(topic, 0), offset);
+      zkClient.close();
     }
 
     // Commit 5th offset to kafka
@@ -832,6 +897,11 @@ public class TestKafkaSource {
     // Start the source and read some data
     source.setChannelProcessor(createGoodChannel());
     source.start();
+    for (int i = 0; i < 3; i++) {
+      source.process();
+      Thread.sleep(1000);
+    }
+
     Thread.sleep(500L);
     source.process();
     List<Integer> finals = new ArrayList<Integer>(40);

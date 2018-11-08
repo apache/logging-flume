@@ -19,8 +19,6 @@
 package org.apache.flume.channel.kafka;
 
 import com.google.common.collect.Lists;
-import kafka.admin.AdminUtils;
-import kafka.utils.ZkUtils;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -39,7 +37,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
@@ -91,21 +88,11 @@ public class TestKafkaChannelBase {
   }
 
   static void createTopic(String topicName, int numPartitions) {
-    int sessionTimeoutMs = 10000;
-    int connectionTimeoutMs = 10000;
-    ZkUtils zkUtils =
-        ZkUtils.apply(testUtil.getZkUrl(), sessionTimeoutMs, connectionTimeoutMs, false);
-    int replicationFactor = 1;
-    Properties topicConfig = new Properties();
-    AdminUtils.createTopic(zkUtils, topicName, numPartitions, replicationFactor, topicConfig);
+    testUtil.createTopics(Collections.singletonList(topicName), numPartitions);
   }
 
   static void deleteTopic(String topicName) {
-    int sessionTimeoutMs = 10000;
-    int connectionTimeoutMs = 10000;
-    ZkUtils zkUtils =
-        ZkUtils.apply(testUtil.getZkUrl(), sessionTimeoutMs, connectionTimeoutMs, false);
-    AdminUtils.deleteTopic(zkUtils, topicName);
+    testUtil.deleteTopic(topicName);
   }
 
   KafkaChannel startChannel(boolean parseAsFlume) throws Exception {
