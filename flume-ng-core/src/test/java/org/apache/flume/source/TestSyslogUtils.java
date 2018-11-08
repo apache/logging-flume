@@ -18,12 +18,16 @@
  */
 package org.apache.flume.source;
 
+import static org.junit.Assert.assertEquals;
+
 import org.apache.flume.Event;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Clock;
@@ -594,6 +598,60 @@ public class TestSyslogUtils {
                 format1, host1, data5);
     checkHeader("all", msg1, stamp1 + "+0800", format1, host1, data5);
     checkHeader("true", msg1, stamp1 + "+0800", format1, host1, data5);
+  }
+
+  @Test
+  public void testGetIPWhenSuccessful() {
+    SocketAddress socketAddress = new InetSocketAddress("localhost", 2000);
+
+    String ip = SyslogUtils.getIP(socketAddress);
+
+    assertEquals("127.0.0.1", ip);
+  }
+
+  @Test
+  public void testGetIPWhenInputIsNull() {
+    SocketAddress socketAddress = null;
+
+    String ip = SyslogUtils.getIP(socketAddress);
+
+    assertEquals("", ip);
+  }
+
+  @Test
+  public void testGetIPWhenInputIsNotInetSocketAddress() {
+    SocketAddress socketAddress = new SocketAddress() {};
+
+    String ip = SyslogUtils.getIP(socketAddress);
+
+    assertEquals("", ip);
+  }
+
+  @Test
+  public void testGetHostnameWhenSuccessful() {
+    SocketAddress socketAddress = new InetSocketAddress("127.0.0.1", 2000);
+
+    String hostname = SyslogUtils.getHostname(socketAddress);
+
+    assertEquals("localhost", hostname);
+  }
+
+  @Test
+  public void testGetHostnameWhenInputIsNull() {
+    SocketAddress socketAddress = null;
+
+    String hostname = SyslogUtils.getHostname(socketAddress);
+
+    assertEquals("", hostname);
+  }
+
+  @Test
+  public void testGetHostnameWhenInputIsNotInetSocketAddress() {
+    SocketAddress socketAddress = new SocketAddress() {};
+
+    String hostname = SyslogUtils.getHostname(socketAddress);
+
+    assertEquals("", hostname);
   }
 
 }
