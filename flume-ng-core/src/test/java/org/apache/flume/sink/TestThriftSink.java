@@ -39,7 +39,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.TrustManagerFactory;
 
 import java.net.ServerSocket;
 import java.nio.charset.Charset;

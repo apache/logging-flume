@@ -28,20 +28,11 @@ limitations under the License.
   <name>Flume Auth</name>
   <description>Flume Authentication</description>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
-        <inherited>true</inherited>
-        <extensions>true</extensions>
-      </plugin>
-    </plugins>
-  </build>
+  <properties>
+    <!-- TODO fix spotbugs/pmd violations -->
+    <spotbugs.maxAllowedViolations>1</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>7</pmd.maxAllowedViolations>
+  </properties>
 
   <dependencies>
 
@@ -90,18 +81,13 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-minikdc</artifactId>
-      <version>${hadoop2.version}</version>
       <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>log4j</groupId>
-          <artifactId>log4j</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-log4j12</artifactId>
-        </exclusion>
-      </exclusions>
+    </dependency>
+    <dependency>
+      <!-- add this to satisfy the dependency requirement of apacheds-jdbm1 in minikdc-->
+      <groupId>org.apache.directory.jdbm</groupId>
+      <artifactId>apacheds-jdbm1</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>

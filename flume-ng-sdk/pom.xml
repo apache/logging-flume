@@ -28,6 +28,12 @@ limitations under the License.
   <name>Flume NG SDK</name>
   <description>Flume Software Development Kit: Stable public API for integration with Flume 1.x</description>
 
+  <properties>
+    <!-- TODO fix spotbugs/pmd violations -->
+    <spotbugs.maxAllowedViolations>67</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>131</pmd.maxAllowedViolations>
+  </properties>
+
   <profiles>
     <profile>
       <id>compileThrift</id>

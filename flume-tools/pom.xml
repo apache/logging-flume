@@ -34,6 +34,9 @@ limitations under the License.
   <name>Flume NG Tools</name>
 
   <properties>
+    <!-- TODO fix spotbugs/pmd violations -->
+    <spotbugs.maxAllowedViolations>5</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>2</pmd.maxAllowedViolations>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 

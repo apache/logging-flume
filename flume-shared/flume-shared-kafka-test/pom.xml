@@ -22,12 +22,14 @@
   <artifactId>flume-shared-kafka-test</artifactId>
   <name>Flume Shared Kafka Test Utils</name>
 
+  <properties>
+    <!-- TODO fix spotbugs/pmd violations -->
+    <spotbugs.maxAllowedViolations>1</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>1</pmd.maxAllowedViolations>
+  </properties>
+
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>

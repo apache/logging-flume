@@ -36,7 +36,6 @@ import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.sink.DefaultSinkProcessor;
 import org.apache.flume.sink.LoggerSink;
-import org.apache.flume.source.twitter.TwitterSource;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.BeforeClass;

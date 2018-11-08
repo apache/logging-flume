@@ -30,21 +30,11 @@ limitations under the License.
   <artifactId>flume-jdbc-channel</artifactId>
   <name>Flume NG JDBC channel</name>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <argLine>-Xmx1024m</argLine>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
+  <properties>
+    <!-- TODO fix spotbugs/pmd violations -->
+    <spotbugs.maxAllowedViolations>31</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>16</pmd.maxAllowedViolations>
+  </properties>
 
   <dependencies>
     <dependency>

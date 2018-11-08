@@ -110,7 +110,7 @@ public class RpcClientFactory {
 
   /**
    * Deprecated. Use
-   * {@link getDefaultInstance() getDefaultInstance(String, Integer)} instead.
+   * {@link #getDefaultInstance(String, Integer)} instead.
    * @throws FlumeException
    * @deprecated
    */
@@ -133,7 +133,7 @@ public class RpcClientFactory {
 
   /**
    * Deprecated. Use
-   * {@link getDefaultInstance() getDefaultInstance(String, Integer, Integer)}
+   * {@link #getDefaultInstance(String, Integer, Integer)}
    * instead.
    * @throws FlumeException
    * @deprecated

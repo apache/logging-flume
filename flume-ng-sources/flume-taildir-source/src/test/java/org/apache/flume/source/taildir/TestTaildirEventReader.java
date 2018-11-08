@@ -38,8 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants
-                  .BYTE_OFFSET_HEADER_KEY;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.BYTE_OFFSET_HEADER_KEY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;

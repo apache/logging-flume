@@ -18,7 +18,6 @@
  */
 package org.apache.flume.channel.file.instrumentation;
 
-import org.apache.flume.Event;
 import org.apache.flume.instrumentation.ChannelCounterMBean;
 
 public interface FileChannelCounterMBean extends ChannelCounterMBean {
@@ -45,7 +44,8 @@ public interface FileChannelCounterMBean extends ChannelCounterMBean {
 
   /**
    * A count of the number of IOExceptions encountered while trying to put() onto the channel.
-   * @see org.apache.flume.channel.file.FileChannel.FileBackedTransaction#doPut(Event)
+   * @see org.apache.flume.channel.file.FileChannel.FileBackedTransaction
+   #doPut(org.apache.flume.Event)
    */
   long getEventPutErrorCount();
 

@@ -25,15 +25,12 @@ limitations under the License.
   </parent>
   <artifactId>flume-ng-configuration</artifactId>
   <name>Flume NG Configuration</name>
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
 
-    </plugins>
-  </build>
+  <properties>
+    <!-- TODO fix spotbugs violations -->
+    <spotbugs.maxAllowedViolations>8</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>17</pmd.maxAllowedViolations>
+  </properties>
 
   <dependencies>
 

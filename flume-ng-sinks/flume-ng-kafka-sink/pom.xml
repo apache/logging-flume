@@ -22,12 +22,14 @@
   <artifactId>flume-ng-kafka-sink</artifactId>
   <name>Flume Kafka Sink</name>
 
+  <properties>
+    <!-- TODO fix spotbugs/pmd violations -->
+    <spotbugs.maxAllowedViolations>3</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>3</pmd.maxAllowedViolations>
+  </properties>
+
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>

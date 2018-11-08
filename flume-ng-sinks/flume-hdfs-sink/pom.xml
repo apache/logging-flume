@@ -30,14 +30,11 @@ limitations under the License.
   <artifactId>flume-hdfs-sink</artifactId>
   <name>Flume NG HDFS Sink</name>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
+  <properties>
+    <!-- TODO fix spotbugs/pmd violations -->
+    <spotbugs.maxAllowedViolations>14</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>24</pmd.maxAllowedViolations>
+  </properties>
 
   <dependencies>
 

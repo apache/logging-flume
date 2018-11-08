@@ -31,29 +31,11 @@
   <artifactId>flume-ng-node</artifactId>
   <name>Flume NG Node</name>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>verify.rat</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-            <configuration>
-              <excludes>
-                <!-- JSON doesn't support comments -->
-                <exclude>src/test/resources/flume-conf.json</exclude>
-              </excludes>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
+  <properties>
+    <!-- TODO fix spotbugs violations -->
+    <spotbugs.maxAllowedViolations>7</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>7</pmd.maxAllowedViolations>
+  </properties>
 
   <dependencies>
 

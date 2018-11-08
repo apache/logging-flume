@@ -189,7 +189,7 @@ public class BucketPath {
     return replaceShorthand(c, headers, timeZone, needRounding, unit,
         roundDown, false, ts);
   }
-  
+
   protected static final ThreadLocal<HashMap<String, SimpleDateFormat>> simpleDateFormatCache =
       new ThreadLocal<HashMap<String, SimpleDateFormat>>() {
 
@@ -218,7 +218,7 @@ public class BucketPath {
   @VisibleForTesting
   protected static String replaceStaticString(String key) {
     String replacementString = "";
-    
+
     switch (key.toLowerCase()) {
       case "localhost":
         replacementString = InetAddressCache.hostName;

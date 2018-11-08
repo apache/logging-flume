@@ -21,7 +21,7 @@ limitations under the License.
   <parent>
     <groupId>org.apache</groupId>
     <artifactId>apache</artifactId>
-    <version>18</version>
+    <version>21</version>
   </parent>
 
   <modelVersion>4.0.0</modelVersion>
@@ -50,8 +50,7 @@ limitations under the License.
     <asynchbase.version>1.7.0</asynchbase.version>
     <avro.version>1.7.4</avro.version>
     <bundle-plugin.version>2.3.7</bundle-plugin.version>
-    <checkstyle.plugin.version>2.17</checkstyle.plugin.version>
-    <checkstyle.tool.version>6.19</checkstyle.tool.version>
+    <checkstyle.tool.version>8.12</checkstyle.tool.version>
     <codehaus.jackson.version>1.9.3</codehaus.jackson.version>
     <commons-cli.version>1.2</commons-cli.version>
     <commons-codec.version>1.8</commons-codec.version>
@@ -87,17 +86,20 @@ limitations under the License.
     <mapdb.version>0.9.9</mapdb.version>
     <mina.version>2.0.4</mina.version>
     <mockito.version>1.9.0</mockito.version>
-    <mvn-antrun-plugin.version>1.7</mvn-antrun-plugin.version>
-    <mvn-assembly-plugin.version>2.3</mvn-assembly-plugin.version>
-    <mvn-build-helper-plugin>1.7</mvn-build-helper-plugin>
-    <mvn-clean-plugin.version>2.4.1</mvn-clean-plugin.version>
-    <mvn-compiler-plugin.version>2.3.2</mvn-compiler-plugin.version>
+    <mvn-antrun-plugin.version>1.8</mvn-antrun-plugin.version>
+    <mvn-assembly-plugin.version>3.1.0</mvn-assembly-plugin.version>
+    <mvn-build-helper-plugin>3.0.0</mvn-build-helper-plugin>
+    <mvn-checkstyle-plugin.version>3.0.0</mvn-checkstyle-plugin.version>
+    <mvn-clean-plugin.version>3.1.0</mvn-clean-plugin.version>
+    <mvn-compiler-plugin.version>3.8.0</mvn-compiler-plugin.version>
+    <mvn-gpg-plugin.version>1.6</mvn-gpg-plugin.version>
     <mvn-javadoc-plugin.version>2.9</mvn-javadoc-plugin.version>
-    <mvn-paranamer-plugin.version>2.3</mvn-paranamer-plugin.version>
-    <mvn-project-info-reports-plugin.version>2.4</mvn-project-info-reports-plugin.version>
-    <mvn-site-plugin.version>3.3</mvn-site-plugin.version>
-    <mvn-sphinx-plugin>1.0.2</mvn-sphinx-plugin>
-    <mvn-surefire-plugin.version>2.20.1</mvn-surefire-plugin.version>
+    <mvn-paranamer-plugin.version>2.8</mvn-paranamer-plugin.version>
+    <mvn-pmd-plugin.version>3.11.0</mvn-pmd-plugin.version>
+    <mvn-site-plugin.version>3.7.1</mvn-site-plugin.version>
+    <mvn-sphinx-plugin>1.0.3</mvn-sphinx-plugin>
+    <mvn-spotbugs-plugin.version>3.1.7</mvn-spotbugs-plugin.version>
+    <mvn-surefire-plugin.version>2.22.1</mvn-surefire-plugin.version>
     <netty.version>3.10.6.Final</netty.version>
     <netty-all.version>4.1.17.Final</netty-all.version>
     <protobuf.version>2.5.0</protobuf.version>
@@ -105,7 +107,7 @@ limitations under the License.
     <snappy-java.version>1.1.4</snappy-java.version>
     <solr-global.version>4.3.0</solr-global.version>
     <slf4j.version>1.6.1</slf4j.version>
-    <system-rules.version>1.16.0</system-rules.version>
+    <system-rules.version>1.17.0</system-rules.version>
     <thrift.version>0.9.3</thrift.version>
     <twitter4j.version>3.0.3</twitter4j.version>
     <xalan.version>2.7.2</xalan.version>
@@ -115,7 +117,6 @@ limitations under the License.
   </properties>
 
   <modules>
-    <module>flume-checkstyle</module>
     <module>flume-ng-core</module>
     <module>flume-ng-configuration</module>
     <module>flume-ng-embedded-agent</module>
@@ -131,7 +132,8 @@ limitations under the License.
     <module>flume-tools</module>
     <module>flume-ng-auth</module>
     <module>flume-shared</module>
-      <module>flume-ng-configfilters</module>
+    <module>flume-ng-configfilters</module>
+    <module>build-support</module>
   </modules>
 
   <profiles>
@@ -328,6 +330,7 @@ limitations under the License.
           <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
+            <version>${slf4j.version}</version>
             <scope>test</scope>
           </dependency>
         </dependencies>
@@ -543,6 +546,7 @@ limitations under the License.
           <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
+            <version>${slf4j.version}</version>
             <scope>test</scope>
           </dependency>
         </dependencies>
@@ -602,14 +606,6 @@ limitations under the License.
 
       <build>
         <plugins>
-
-          <plugin>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>maven-bundle-plugin</artifactId>
-            <inherited>true</inherited>
-            <extensions>true</extensions>
-          </plugin>
-
           <plugin>
             <artifactId>maven-javadoc-plugin</artifactId>
             <executions>
@@ -637,23 +633,23 @@ limitations under the License.
                   <goal>site</goal>
                 </goals>
               </execution>
-              <!--
-              <execution>
-                <id>flume-site-dist</id>
-                <phase>package</phase>
-                <goals>
-                  <goal>stage</goal>
-                </goals>
-              </execution>
-              -->
             </executions>
           </plugin>
-
         </plugins>
       </build>
 
     </profile>
 
+    <profile>
+      <id>skipChecks</id>
+      <properties>
+        <checkstyle.skip>true</checkstyle.skip>
+        <spotbugs.skip>true</spotbugs.skip>
+        <pmd.skip>true</pmd.skip>
+        <rat.skip>true</rat.skip>
+      </properties>
+
+    </profile>
   </profiles>
 
   <inceptionYear>2009</inceptionYear>
@@ -695,9 +691,9 @@ limitations under the License.
   </mailingLists>
 
   <scm>
-    <url>scm:svn:https://svn.apache.org/repos/asf/flume/</url>
-    <developerConnection>scm:svn:https://svn.apache.org/repos/asf/flume/</developerConnection>
-    <connection>scm:svn:https://svn.apache.org/repos/asf/flume</connection>
+    <url>https://git-wip-us.apache.org/repos/asf?p=flume.git;a=tree;h=refs/heads/trunk;hb=trunk</url>
+    <developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/flume.git</developerConnection>
+    <connection>scm:git:http://git-wip-us.apache.org/repos/asf/flume.git</connection>
   </scm>
 
   <ciManagement>
@@ -860,52 +856,33 @@ limitations under the License.
         <groupId>org.apache.rat</groupId>
         <artifactId>apache-rat-plugin</artifactId>
       </plugin>
-
-      <!-- Run checkstyle as part of the "verify" phase. See
-           https://maven.apache.org/plugins/maven-checkstyle-plugin/examples/multi-module-config.html
-           for how to configure plugin for a multi-module project. -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
-        <version>${checkstyle.plugin.version}</version>
-        <dependencies>
-          <!-- The flume-checkstyle module adds the checkstyle config files to the classpath. -->
-          <dependency>
-            <groupId>org.apache.flume</groupId>
-            <artifactId>flume-checkstyle</artifactId>
-            <version>${project.version}</version>
-          </dependency>
-          <!-- Newer versions of puppycrawl checkstyle have more features. Pull in a more recent
-               version than is specified in the maven-checkstyle-plugin pom file. -->
-          <dependency>
-            <groupId>com.puppycrawl.tools</groupId>
-            <artifactId>checkstyle</artifactId>
-            <version>${checkstyle.tool.version}</version>
-          </dependency>
-        </dependencies>
-        <executions>
-          <execution>
-            <id>verify</id>
-            <phase>verify</phase>
-            <configuration>
-              <configLocation>flume/checkstyle.xml</configLocation>
-              <suppressionsLocation>flume/checkstyle-suppressions.xml</suppressionsLocation>
-              <suppressionsFileExpression>checkstyle.suppressions.file</suppressionsFileExpression>
-              <encoding>UTF-8</encoding>
-              <includeTestSourceDirectory>true</includeTestSourceDirectory>
-              <linkXRef>false</linkXRef>
-            </configuration>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
+        </plugin>
+      <plugin>
+        <groupId>com.github.spotbugs</groupId>
+        <artifactId>spotbugs-maven-plugin</artifactId>
       </plugin>
-
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-pmd-plugin</artifactId>
+      </plugin>
     </plugins>
 
     <pluginManagement>
       <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-antrun-plugin</artifactId>
+          <version>${mvn-antrun-plugin.version}</version>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-gpg-plugin</artifactId>
+          <version>${mvn-gpg-plugin.version}</version>
+        </plugin>
 
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -941,6 +918,32 @@ limitations under the License.
           <groupId>org.apache.rat</groupId>
           <artifactId>apache-rat-plugin</artifactId>
           <version>${rat.version}</version>
+          <configuration>
+            <excludes>
+              <exclude>**/.idea/</exclude>
+              <exclude>**/*.iml</exclude>
+              <exclude>**/nb-configuration.xml</exclude>
+              <exclude>.git/</exclude>
+              <exclude>patchprocess/</exclude>
+              <exclude>.gitignore</exclude>
+              <!-- ASF jenkins box puts the Maven repo in our root directory. -->
+              <exclude>.repository/</exclude>
+              <exclude>**/*.diff</exclude>
+              <exclude>**/*.patch</exclude>
+              <exclude>**/*.avsc</exclude>
+              <exclude>**/*.avro</exclude>
+              <exclude>**/docs/**</exclude>
+              <exclude>**/test/resources/**</exclude>
+              <exclude>**/.settings/*</exclude>
+              <exclude>**/.classpath</exclude>
+              <exclude>**/.project</exclude>
+              <exclude>**/target/**</exclude>
+              <exclude>**/derby.log</exclude>
+              <exclude>**/metastore_db/</exclude>
+              <exclude>.mvn/**</exclude>
+            </excludes>
+            <consoleOutput>true</consoleOutput>
+          </configuration>
           <executions>
             <execution>
               <id>verify.rat</id>
@@ -948,33 +951,46 @@ limitations under the License.
               <goals>
                 <goal>check</goal>
               </goals>
-              <configuration>
-                <excludes>
-                  <exclude>**/.idea/</exclude>
-                  <exclude>**/*.iml</exclude>
-                  <exclude>**/nb-configuration.xml</exclude>
-                  <exclude>.git/</exclude>
-                  <exclude>patchprocess/</exclude>
-                  <exclude>.gitignore</exclude>
-                  <!-- ASF jenkins box puts the Maven repo in our root directory. -->
-                  <exclude>.repository/</exclude>
-                  <exclude>**/*.diff</exclude>
-                  <exclude>**/*.patch</exclude>
-                  <exclude>**/*.avsc</exclude>
-                  <exclude>**/*.avro</exclude>
-                  <exclude>**/docs/**</exclude>
-                  <exclude>**/test/resources/**</exclude>
-                  <exclude>**/.settings/*</exclude>
-                  <exclude>**/.classpath</exclude>
-                  <exclude>**/.project</exclude>
-                  <exclude>**/target/**</exclude>
-                  <exclude>**/derby.log</exclude>
-                  <exclude>**/metastore_db/</exclude>
-                </excludes>
-                <consoleOutput>true</consoleOutput>
-              </configuration>
             </execution>
           </executions>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-checkstyle-plugin</artifactId>
+          <version>${mvn-checkstyle-plugin.version}</version>
+          <dependencies>
+            <!-- The build-support module adds the checkstyle config files to the classpath. -->
+            <dependency>
+              <groupId>org.apache.flume</groupId>
+              <artifactId>build-support</artifactId>
+              <version>${project.version}</version>
+            </dependency>
+            <!-- Newer versions of puppycrawl checkstyle have more features. Pull in a more recent
+                 version than is specified in the maven-checkstyle-plugin pom file. -->
+            <dependency>
+              <groupId>com.puppycrawl.tools</groupId>
+              <artifactId>checkstyle</artifactId>
+              <version>${checkstyle.tool.version}</version>
+            </dependency>
+          </dependencies>
+          <executions>
+            <execution>
+              <id>verify.checkstyle</id>
+              <phase>verify</phase>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <configLocation>config/checkstyle/checkstyle.xml</configLocation>
+            <suppressionsLocation>config/checkstyle/checkstyle-suppressions.xml</suppressionsLocation>
+            <suppressionsFileExpression>checkstyle.suppressions.file</suppressionsFileExpression>
+            <encoding>UTF-8</encoding>
+            <includeTestSourceDirectory>true</includeTestSourceDirectory>
+            <linkXRef>false</linkXRef>
+          </configuration>
         </plugin>
 
         <plugin>
@@ -1034,13 +1050,41 @@ limitations under the License.
             </filesets>
           </configuration>
         </plugin>
-      <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
-        <version>${bundle-plugin.version}</version>
-      </plugin>
-      </plugins>
 
+        <plugin>
+          <groupId>com.github.spotbugs</groupId>
+          <artifactId>spotbugs-maven-plugin</artifactId>
+          <version>${mvn-spotbugs-plugin.version}</version>
+          <executions>
+            <execution>
+              <id>verify.spotbugs</id>
+              <phase>verify</phase>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <effort>Max</effort>
+            <threshold>Low</threshold>
+          </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-pmd-plugin</artifactId>
+          <version>${mvn-pmd-plugin.version}</version>
+          <executions>
+            <execution>
+              <id>verify.pmd</id>
+              <phase>verify</phase>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
     </pluginManagement>
 
   </build>
@@ -1073,6 +1117,36 @@ limitations under the License.
         <groupId>com.github.stefanbirkner</groupId>
         <artifactId>system-rules</artifactId>
         <version>${system-rules.version}</version>
+        <scope>test</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-minikdc</artifactId>
+        <version>${hadoop2.version}</version>
+        <scope>test</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+          <exclusion>
+            <!-- exclude this from hadoop minikdc as the minikdc depends on
+            the apacheds-jdbm1 bundle, which is not available in maven central-->
+            <groupId>org.apache.directory.jdbm</groupId>
+            <artifactId>apacheds-jdbm1</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <!-- add this to satisfy the dependency requirement of apacheds-jdbm1 in minikdc-->
+        <groupId>org.apache.directory.jdbm</groupId>
+        <artifactId>apacheds-jdbm1</artifactId>
+        <version>2.0.0-M2</version>
         <scope>test</scope>
       </dependency>
 
@@ -1354,12 +1428,6 @@ limitations under the License.
        </dependency>
 
       <dependency>
-        <groupId>org.apache.hadoop</groupId>
-        <artifactId>hadoop</artifactId>
-        <version>${hadoop.version}</version>
-      </dependency>
-
-      <dependency>
         <groupId>org.elasticsearch</groupId>
         <artifactId>elasticsearch</artifactId>
         <version>${elasticsearch.version}</version>
@@ -1401,7 +1469,7 @@ limitations under the License.
 
       <dependency>
         <groupId>org.apache.flume</groupId>
-        <artifactId>flume-checkstyle</artifactId>
+        <artifactId>build-support</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -1439,12 +1507,6 @@ limitations under the License.
         <artifactId>flume-spillable-memory-channel</artifactId>
         <version>${project.version}</version>
       </dependency>
-
-     <dependency>
-       <groupId>org.apache.flume.flume-ng-channels</groupId>
-       <artifactId>flume-recoverable-memory-channel</artifactId>
-       <version>${project.version}</version>
-     </dependency>
 
       <dependency>
         <groupId>org.apache.flume.flume-shared</groupId>
@@ -1828,30 +1890,23 @@ limitations under the License.
 
   <reporting>
     <plugins>
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-project-info-reports-plugin</artifactId>
-        <version>${mvn-project-info-reports-plugin.version}</version>
         <reportSets>
           <reportSet>
             <reports>
-              <report>project-team</report>
-              <report>mailing-list</report>
-              <report>issue-tracking</report>
-              <report>license</report>
-<!-- for now
-              <report>modules</report>
-              <report>dependencies</report>
-              <report>cim</report>
+              <report>ci-management</report>
+              <report>distribution-management</report>
+              <report>team</report>
+              <report>mailing-lists</report>
+              <report>issue-management</report>
+              <report>licenses</report>
               <report>scm</report>
--->
-              <!-- warning: the "about" report conflicts with sphinx-maven -->
             </reports>
           </reportSet>
         </reportSets>
       </plugin>
-
       <plugin>
         <groupId>org.tomdz.maven</groupId>
         <artifactId>sphinx-maven-plugin</artifactId>
@@ -1861,21 +1916,18 @@ limitations under the License.
           <sourceDirectory>${project.basedir}/flume-ng-doc/sphinx</sourceDirectory>
         </configuration>
       </plugin>
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
-        <version>${checkstyle.plugin.version}</version>
-        <configuration>
-          <configLocation>flume/checkstyle.xml</configLocation>
-          <suppressionsLocation>flume/checkstyle-suppressions.xml</suppressionsLocation>
-          <suppressionsFileExpression>checkstyle.suppressions.file</suppressionsFileExpression>
-          <encoding>UTF-8</encoding>
-          <includeTestSourceDirectory>true</includeTestSourceDirectory>
-          <linkXRef>false</linkXRef>
-        </configuration>
       </plugin>
-
+      <plugin>
+        <groupId>com.github.spotbugs</groupId>
+        <artifactId>spotbugs-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-pmd-plugin</artifactId>
+      </plugin>
     </plugins>
   </reporting>
 

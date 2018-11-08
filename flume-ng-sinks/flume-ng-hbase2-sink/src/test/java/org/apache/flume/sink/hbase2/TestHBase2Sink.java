@@ -406,7 +406,7 @@ public class TestHBase2Sink {
    *
    * @param table
    * @param numEvents Number of events inserted into the table
-   * @return
+   * @return array of byte arrays
    * @throws IOException
    */
   private byte[][] getResults(Table table, int numEvents) throws IOException {

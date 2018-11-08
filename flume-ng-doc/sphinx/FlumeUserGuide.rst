@@ -792,9 +792,9 @@ and use the same settings for all components, which means less and more centrali
 
 The global setup can be configured either through system properties or through environment variables.
 
-==================================  ===============================  ==================================
+==================================  ===============================  ============================================================================================
 System property                     Environment variable             Description
-==================================  ===============================  ==================================
+==================================  ===============================  ============================================================================================
 javax.net.ssl.keyStore              FLUME_SSL_KEYSTORE_PATH          Keystore location
 javax.net.ssl.keyStorePassword      FLUME_SSL_KEYSTORE_PASSWORD      Keystore password
 javax.net.ssl.keyStoreType          FLUME_SSL_KEYSTORE_TYPE          Keystore type (by default JKS)
@@ -807,7 +807,7 @@ flume.ssl.exclude.protocols         FLUME_SSL_EXCLUDE_PROTOCOLS      Protocols t
 flume.ssl.include.cipherSuites      FLUME_SSL_INCLUDE_CIPHERSUITES   Cipher suites to include when calculating enabled cipher suites. A comma (,) separated list.
                                                                      Excluded cipher suites will be excluded from this list if provided.
 flume.ssl.exclude.cipherSuites      FLUME_SSL_EXCLUDE_CIPHERSUITES   Cipher suites to exclude when calculating enabled cipher suites. A comma (,) separated list.
-==================================  ===============================  ==================================
+==================================  ===============================  ============================================================================================
 
 The SSL system properties can either be passed on the command line or by setting the ``JAVA_OPTS``
 environment variable in *conf/flume-env.sh*. (Although, using the command line is inadvisable because
@@ -864,9 +864,9 @@ When paired with the built-in Avro Sink on another (previous hop) Flume agent,
 it can create tiered collection topologies.
 Required properties are in **bold**.
 
-===================   ================  ===================================================
+===================== ================  =======================================================
 Property Name         Default           Description
-===================   ================  ===================================================
+===================== ================  =======================================================
 **channels**          --
 **type**              --                The component type name, needs to be ``avro``
 **bind**              --                hostname or IP address to listen on
@@ -901,7 +901,7 @@ include-cipher-suites --                Space-separated list of cipher suites to
                                         If included-cipher-suites is empty, it includes every supported cipher suites.
 ipFilter              false             Set this to true to enable ipFiltering for netty
 ipFilterRules         --                Define N netty ipFilter pattern rules with this config.
-==================    ================  ===================================================
+===================== ================  =======================================================
 
 Example for agent named a1:
 
@@ -940,9 +940,9 @@ agent-principal and agent-keytab are the properties used by the
 Thrift source to authenticate to the kerberos KDC.
 Required properties are in **bold**.
 
-===================   ===========  ==================================================================
+===================== ===========  ==========================================================================================================================
 Property Name         Default      Description
-===================   ===========  ==================================================================
+===================== ===========  ==========================================================================================================================
 **channels**          --
 **type**              --           The component type name, needs to be ``thrift``
 **bind**              --           hostname or IP address to listen on
@@ -977,7 +977,7 @@ include-cipher-suites --           Space-separated list of cipher suites to incl
 kerberos              false        Set to true to enable kerberos authentication. In kerberos mode, agent-principal and agent-keytab  are required for successful authentication. The Thrift source in secure mode, will accept connections only from Thrift clients that have kerberos enabled and are successfully authenticated to the kerberos KDC.
 agent-principal       --           The kerberos principal used by the Thrift Source to authenticate to the kerberos KDC.
 agent-keytab          —-           The keytab location used by the Thrift Source in combination with the agent-principal to authenticate to the kerberos KDC.
-===================   ===========  ==================================================================
+===================== ===========  ==========================================================================================================================
 
 Example for agent named a1:
 
@@ -1795,9 +1795,9 @@ Syslog TCP Source
 
 The original, tried-and-true syslog TCP source.
 
-===================   ===========  ==============================================
+===================== ===========  =================================================================================================
 Property Name         Default      Description
-===================   ===========  ==============================================
+===================== ===========  =================================================================================================
 **channels**          --
 **type**              --           The component type name, needs to be ``syslogtcp``
 **host**              --           Host name or IP address to bind to
@@ -1836,7 +1836,7 @@ exclude-cipher-suites --           Space-separated list of cipher suites to excl
 include-cipher-suites --           Space-separated list of cipher suites to include.
                                    The enabled cipher suites will be the included cipher suites without the excluded cipher suites.
                                    If included-cipher-suites is empty, it includes every supported cipher suites.
-===================   ===========  ==============================================
+===================== ===========  =================================================================================================
 
 For example, a syslog TCP source for agent named a1:
 
@@ -1860,9 +1860,9 @@ Provides support for RFC-3164 and many common RFC-5424 formatted messages.
 Also provides the capability to configure the character set used on a per-port
 basis.
 
-====================  ================  ==============================================
+===================== ================  ==============================================
 Property Name         Default           Description
-====================  ================  ==============================================
+===================== ================  ==============================================
 **channels**          --
 **type**              --                The component type name, needs to be ``multiport_syslogtcp``
 **host**              --                Host name or IP address to bind to.
@@ -1907,7 +1907,7 @@ exclude-cipher-suites --                Space-separated list of cipher suites to
 include-cipher-suites --                Space-separated list of cipher suites to include.
                                         The enabled cipher suites will be the included cipher suites without the excluded cipher suites.
                                         If included-cipher-suites is empty, it includes every supported cipher suites.
-====================  ================  ==============================================
+===================== ================  ==============================================
 
 For example, a multiport syslog TCP source for agent named a1:
 
@@ -1970,9 +1970,9 @@ inserted into the channel in one transaction.
 This source is based on Jetty 9.4 and offers the ability to set additional
 Jetty-specific parameters which will be passed directly to the Jetty components.
 
-====================  ============================================  =====================================================================================
+===================== ============================================  =====================================================================================
 Property Name         Default                                       Description
-====================  ============================================  =====================================================================================
+===================== ============================================  =====================================================================================
 **type**                                                            The component type name, needs to be ``http``
 **port**              --                                            The port the source should bind to.
 bind                  0.0.0.0                                       The hostname or IP address to listen on
@@ -2006,7 +2006,7 @@ HttpConfiguration.*                                                 Jetty specif
 SslContextFactory.*                                                 Jetty specific settings to be set on org.eclipse.jetty.util.ssl.SslContextFactory (only
                                                                     applicable when *ssl* is set to true).
 ServerConnector.*                                                   Jetty specific settings to be set on org.eclipse.jetty.server.ServerConnector
-=========================================================================================================================================================
+===================== ============================================  =====================================================================================
 
 Deprecated Properties
 
@@ -5225,7 +5225,7 @@ quantifying how much data you generate. That is not always
 a simple task! Most data streams are bursty (for instance, due to diurnal
 patterns) and potentially unpredictable. A good starting point is to think
 about the maximum throughput you'll have in each tier of the topology, both
-in terms of *events per second* and *bytes per second*. Once you know the
+in terms of *events per second* and *bytes per second*. Once you know the
 required throughput of a given tier, you can calulate a lower bound on how many
 nodes you require for that tier. To determine attainable throughput, it's
 best to experiment with Flume on your hardware, using synthetic or sampled

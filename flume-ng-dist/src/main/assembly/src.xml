@@ -44,6 +44,7 @@
         <exclude>**/.settings/**</exclude>
         <exclude>lib/**</exclude>
         <exclude>**/.DS_Store</exclude>
+        <exclude>./mvn/wrapper/maven-wrapper.jar</exclude>
       </excludes>
     </fileSet>
   </fileSets>

@@ -45,9 +45,6 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.internal.util.reflection.Whitebox;
 
-import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.KeyManagerFactory;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
