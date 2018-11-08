@@ -22,8 +22,9 @@ package org.apache.flume.test.util;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
 import org.junit.Assert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -42,7 +43,7 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class SyslogAgent {
-  private static final Logger LOGGER = Logger.getLogger(SyslogAgent.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(SyslogAgent.class);
   private static final Collection<File> tempResources = new ArrayList<File>();
   private static final int DEFAULT_ATTEMPTS = 20;
   private static final long DEFAULT_TIMEOUT = 500L;

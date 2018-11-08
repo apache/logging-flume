@@ -21,11 +21,12 @@ package org.apache.flume.test.agent;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import org.apache.flume.test.util.StagedInstall;
-import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -35,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 
 public class TestFileChannel {
 
-  private static final Logger LOGGER = Logger.getLogger(TestFileChannel.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(TestFileChannel.class);
 
   private static final Collection<File> tempResources = new ArrayList<File>();
 
