@@ -19,13 +19,11 @@
 package org.apache.flume.sink.http;
 
 import org.apache.flume.Channel;
-import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.Sink.Status;
 import org.apache.flume.Transaction;
 import org.apache.flume.instrumentation.SinkCounter;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;

@@ -197,11 +197,7 @@ public class SyslogUtils {
   }
 
   public SyslogUtils(Integer defaultSize, Set<String> keepFields, boolean isUdp) {
-      this(defaultSize,
-              keepFields,
-              isUdp,
-              Clock.system(Clock.systemDefaultZone().getZone())
-      );
+    this(defaultSize, keepFields, isUdp, Clock.system(Clock.systemDefaultZone().getZone()));
   }
 
   public SyslogUtils(Integer eventSize, Set<String> keepFields, boolean isUdp, Clock clock) {

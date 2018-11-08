@@ -640,7 +640,7 @@ public class Log {
    *
    * @param transactionID
    * @param event
-   * @return
+   * @return FlumeEventPointer
    * @throws IOException
    */
   FlumeEventPointer put(long transactionID, Event event)

@@ -29,6 +29,9 @@ limitations under the License.
   <name>Flume NG Morphline Solr Sink</name>
 
   <properties>
+    <!-- TODO fix spotbugspmd violations -->
+    <spotbugs.maxAllowedViolations>6</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>6</pmd.maxAllowedViolations>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <solr.version>${solr-global.version}</solr.version>
     <solr.expected.version>${solr-global.version}</solr.expected.version> <!-- sanity check to verify we actually run against the expected version rather than some outdated version -->
@@ -139,20 +142,11 @@ limitations under the License.
       <plugin>
         <groupId>org.apache.rat</groupId>
         <artifactId>apache-rat-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>test.rat</id>
-            <phase>test</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-            <configuration>
-              <excludes>
-                <exclude>src/test/resources/**</exclude>
-              </excludes>
-            </configuration>
-          </execution>
-        </executions>
+        <configuration>
+          <excludes>
+            <exclude>src/test/resources/**</exclude>
+          </excludes>
+        </configuration>
       </plugin>
 
     </plugins>

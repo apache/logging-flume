@@ -24,14 +24,11 @@
   <artifactId>flume-ng-elasticsearch-sink</artifactId>
   <name>Flume NG ElasticSearch Sink</name>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
+  <properties>
+    <!-- TODO fix spotbugs/pmd violations -->
+    <spotbugs.maxAllowedViolations>8</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>10</pmd.maxAllowedViolations>
+  </properties>
 
   <dependencies>
 

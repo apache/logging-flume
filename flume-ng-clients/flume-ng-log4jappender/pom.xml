@@ -29,13 +29,14 @@ limitations under the License.
   <artifactId>flume-ng-log4jappender</artifactId>
   <name>Flume NG Log4j Appender</name>
 
+  <properties>
+    <!-- TODO fix spotbugs/pmd violations -->
+    <spotbugs.maxAllowedViolations>2</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>1</pmd.maxAllowedViolations>
+  </properties>
+
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
-
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <configuration>

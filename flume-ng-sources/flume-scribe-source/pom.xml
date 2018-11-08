@@ -30,6 +30,12 @@ limitations under the License.
   <artifactId>flume-scribe-source</artifactId>
   <name>Flume Scribe Source</name>
 
+  <properties>
+    <!-- TODO fix spotbugs/pmd violations -->
+    <spotbugs.maxAllowedViolations>19</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>76</pmd.maxAllowedViolations>
+  </properties>
+
   <profiles>
     <profile>
       <id>compileThrift</id>

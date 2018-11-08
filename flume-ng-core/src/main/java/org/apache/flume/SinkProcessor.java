@@ -21,7 +21,6 @@ import java.util.List;
 
 import org.apache.flume.Sink.Status;
 import org.apache.flume.conf.Configurable;
-import org.apache.flume.conf.ConfigurableComponent;
 import org.apache.flume.lifecycle.LifecycleAware;
 
 /**

@@ -30,6 +30,12 @@ limitations under the License.
   <artifactId>flume-jms-source</artifactId>
   <name>Flume JMS Source</name>
 
+  <properties>
+    <!-- TODO fix spotbugs/pmd violations -->
+    <spotbugs.maxAllowedViolations>5</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>4</pmd.maxAllowedViolations>
+  </properties>
+
   <dependencies>
 
     <dependency>

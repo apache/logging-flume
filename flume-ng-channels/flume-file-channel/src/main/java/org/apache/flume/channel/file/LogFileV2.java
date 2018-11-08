@@ -97,7 +97,7 @@ class LogFileV2 extends LogFile {
         long usableSpaceRefreshInterval)
         throws IOException {
       super(file, logFileID, maxFileSize, null, usableSpaceRefreshInterval,
-        true, 0);
+          true, 0);
       RandomAccessFile writeFileHandle = getFileHandle();
       writeFileHandle.writeInt(getVersion());
       writeFileHandle.writeInt(logFileID);

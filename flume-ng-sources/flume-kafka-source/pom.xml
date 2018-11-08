@@ -30,14 +30,11 @@
   <artifactId>flume-kafka-source</artifactId>
   <name>Flume Kafka Source</name>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
+  <properties>
+    <!-- TODO fix spotbugs/pmd violations -->
+    <spotbugs.maxAllowedViolations>16</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>32</pmd.maxAllowedViolations>
+  </properties>
 
   <dependencies>
     <dependency>

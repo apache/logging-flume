@@ -18,7 +18,6 @@
  */
 package org.apache.flume.configfilter;
 
-import org.apache.flume.configfilter.ExternalProcessConfigFilter;
 import org.junit.Before;
 import org.junit.Test;
 

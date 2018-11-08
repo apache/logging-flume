@@ -24,7 +24,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 import com.google.common.annotations.Beta;
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.flume.source.shaded.guava.Stopwatch;
 import org.apache.flume.source.shaded.guava.SmoothRateLimiter.SmoothBursty;
 import org.apache.flume.source.shaded.guava.SmoothRateLimiter.SmoothWarmingUp;
 

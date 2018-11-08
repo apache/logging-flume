@@ -18,7 +18,6 @@
 package org.apache.flume.sink;
 
 import java.util.List;
-import java.util.Map;
 
 import org.apache.flume.Context;
 import org.apache.flume.FlumeException;

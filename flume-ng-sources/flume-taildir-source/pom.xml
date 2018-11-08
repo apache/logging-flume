@@ -30,6 +30,12 @@ limitations under the License.
   <artifactId>flume-taildir-source</artifactId>
   <name>Flume Taildir Source</name>
 
+  <properties>
+    <!-- TODO fix spotbugs/pmd violations -->
+    <spotbugs.maxAllowedViolations>13</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>3</pmd.maxAllowedViolations>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.apache.flume</groupId>
