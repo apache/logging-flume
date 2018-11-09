@@ -556,7 +556,7 @@ public class TestMultiportSyslogTCPSource {
     source.start();
 
     //create a socket to send a test event
-    Socket syslogSocket = new Socket(InetAddress.getLocalHost(), port);
+    Socket syslogSocket = new Socket(InetAddress.getLoopbackAddress().getHostAddress(), port);
     syslogSocket.getOutputStream().write(getEvent(0));
 
     Event e = takeEvent(channel);
