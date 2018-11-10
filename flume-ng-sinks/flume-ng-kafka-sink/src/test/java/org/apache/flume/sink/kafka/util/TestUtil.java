@@ -29,9 +29,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.net.UnknownHostException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,7 +48,9 @@ public class TestUtil {
   private static final TestUtil instance = new TestUtil();
 
   private KafkaLocal kafkaServer;
-  private String hostname = "localhost";
+  private boolean externalServers = true;
+  private String kafkaServerUrl;
+  private String zkServerUrl;
   private int kafkaLocalPort;
   private Properties clientProps;
   private int zkLocalPort;
@@ -64,16 +66,31 @@ public class TestUtil {
   }
 
   private void init() {
-    // get the localhost.
     try {
-      hostname = InetAddress.getLocalHost().getHostName();
-    } catch (UnknownHostException e) {
-      logger.warn("Error getting the value of localhost. " +
-          "Proceeding with 'localhost'.", e);
+      Properties settings = new Properties();
+      InputStream in = Class.class.getResourceAsStream("/testutil.properties");
+      if (in != null) {
+        settings.load(in);
+      }
+      externalServers = "true".equalsIgnoreCase(settings.getProperty("external-servers"));
+      if (externalServers) {
+        kafkaServerUrl = settings.getProperty("kafka-server-url");
+        zkServerUrl = settings.getProperty("zk-server-url");
+      } else {
+        String hostname = InetAddress.getLocalHost().getHostName();
+        zkLocalPort = getNextPort();
+        kafkaLocalPort = getNextPort();
+        kafkaServerUrl = hostname + ":" + kafkaLocalPort;
+        zkServerUrl = hostname + ":" + zkLocalPort;
+      }
+      clientProps = createClientProperties();
+    } catch (Exception e) {
+      logger.error("Unexpected error", e);
+      throw new RuntimeException("Unexpected error", e);
     }
   }
 
-  private boolean startKafkaServer() {
+  private boolean startEmbeddedKafkaServer() {
     Properties kafkaProperties = new Properties();
     Properties zkProperties = new Properties();
 
@@ -84,7 +101,6 @@ public class TestUtil {
           "/zookeeper.properties"));
 
       //start local Zookeeper
-      zkLocalPort = getNextPort();
       // override the Zookeeper client port with the generated one.
       zkProperties.setProperty("clientPort", Integer.toString(zkLocalPort));
       new ZooKeeperLocal(zkProperties);
@@ -96,14 +112,12 @@ public class TestUtil {
           "/kafka-server.properties"));
       // override the Zookeeper url.
       kafkaProperties.setProperty("zookeeper.connect", getZkUrl());
-      kafkaLocalPort = getNextPort();
       // override the Kafka server port
       kafkaProperties.setProperty("port", Integer.toString(kafkaLocalPort));
       kafkaServer = new KafkaLocal(kafkaProperties);
       kafkaServer.start();
       logger.info("Kafka Server is successfully started on port " + kafkaLocalPort);
 
-      clientProps = createClientProperties();
       return true;
 
     } catch (Exception e) {
@@ -168,7 +182,11 @@ public class TestUtil {
   }
 
   public void prepare() {
-    boolean startStatus = startKafkaServer();
+
+    if (externalServers) {
+      return;
+    }
+    boolean startStatus = startEmbeddedKafkaServer();
     if (!startStatus) {
       throw new RuntimeException("Error starting the server!");
     }
@@ -188,6 +206,7 @@ public class TestUtil {
     }
     if (adminClient != null) {
       adminClient.close();
+      adminClient = null;
     }
     try {
       Thread.sleep(3 * 1000);   // add this sleep time to
@@ -195,8 +214,10 @@ public class TestUtil {
     } catch (InterruptedException e) {
       // ignore
     }
-    logger.info("Shutting down the kafka Server.");
-    kafkaServer.stop();
+    if (kafkaServer != null) {
+      logger.info("Shutting down the kafka Server.");
+      kafkaServer.stop();
+    }
     logger.info("Completed the tearDown phase.");
   }
 
@@ -207,10 +228,10 @@ public class TestUtil {
   }
 
   public String getZkUrl() {
-    return hostname + ":" + zkLocalPort;
+    return zkServerUrl;
   }
 
   public String getKafkaServerUrl() {
-    return hostname + ":" + kafkaLocalPort;
+    return kafkaServerUrl;
   }
 }
