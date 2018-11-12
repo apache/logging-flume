@@ -1481,12 +1481,6 @@ topicHeader                         topic        Defines the name of the header 
                                                  from, if the ``setTopicHeader`` property is set to ``true``. Care should be taken if combining
                                                  with the Kafka Sink ``topicHeader`` property so as to avoid sending the message back to the same
                                                  topic in a loop.
-migrateZookeeperOffsets             true         When no Kafka stored offset is found, look up the offsets in Zookeeper and commit them to Kafka.
-                                                 This should be true to support seamless Kafka client migration from older versions of Flume.
-                                                 Once migrated this can be set to false, though that should generally not be required.
-                                                 If no Zookeeper offset is found, the Kafka configuration kafka.consumer.auto.offset.reset
-                                                 defines how offsets are handled.
-                                                 Check `Kafka documentation <http://kafka.apache.org/documentation.html#newconsumerconfigs>`_ for details
 kafka.consumer.security.protocol    PLAINTEXT    Set to SASL_PLAINTEXT, SASL_SSL or SSL if writing to Kafka using some level of security. See below for additional info on secure setup.
 *more consumer security props*                   If using SASL_PLAINTEXT, SASL_SSL or SSL refer to `Kafka security <http://kafka.apache.org/documentation.html#security>`_ for additional
                                                  properties that need to be set on consumer.
@@ -1504,14 +1498,21 @@ Other Kafka Consumer Properties     --           These properties are used to co
 
 Deprecated Properties
 
-===============================  ===================  =============================================================================================
+===============================  ===================  ================================================================================================
 Property Name                    Default              Description
-===============================  ===================  =============================================================================================
+===============================  ===================  ================================================================================================
 topic                            --                   Use kafka.topics
 groupId                          flume                Use kafka.consumer.group.id
 zookeeperConnect                 --                   Is no longer supported by kafka consumer client since 0.9.x. Use kafka.bootstrap.servers
                                                       to establish connection with kafka cluster
-===============================  ===================  =============================================================================================
+migrateZookeeperOffsets          true                 When no Kafka stored offset is found, look up the offsets in Zookeeper and commit them to Kafka.
+                                                      This should be true to support seamless Kafka client migration from older versions of Flume.
+                                                      Once migrated this can be set to false, though that should generally not be required.
+                                                      If no Zookeeper offset is found, the Kafka configuration kafka.consumer.auto.offset.reset
+                                                      defines how offsets are handled.
+                                                      Check `Kafka documentation <http://kafka.apache.org/documentation.html#newconsumerconfigs>`_
+                                                      for details
+===============================  ===================  ================================================================================================
 
 Example for topic subscription by comma-separated topic list.
 
@@ -3525,10 +3526,6 @@ parseAsFlumeEvent                        true                        Expecting A
                                                                      This should be true if Flume source is writing to the channel and false if other producers are
                                                                      writing into the topic that the channel is using. Flume source messages to Kafka can be parsed outside of Flume by using
                                                                      org.apache.flume.source.avro.AvroFlumeEvent provided by the flume-ng-sdk artifact
-migrateZookeeperOffsets                  true                        When no Kafka stored offset is found, look up the offsets in Zookeeper and commit them to Kafka.
-                                                                     This should be true to support seamless Kafka client migration from older versions of Flume. Once migrated this can be set
-                                                                     to false, though that should generally not be required. If no Zookeeper offset is found the kafka.consumer.auto.offset.reset
-                                                                     configuration defines how offsets are handled.
 pollTimeout                              500                         The amount of time(in milliseconds) to wait in the "poll()" call of the consumer.
                                                                      https://kafka.apache.org/090/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html#poll(long)
 defaultPartitionId                       --                          Specifies a Kafka partition ID (integer) for all events in this channel to be sent to, unless
@@ -3553,17 +3550,20 @@ kafka.consumer.security.protocol         PLAINTEXT                   Same as kaf
 
 Deprecated Properties
 
-================================  ==========================  ===============================================================================================================
+================================  ==========================  ============================================================================================================================
 Property Name                     Default                     Description
-================================  ==========================  ===============================================================================================================
+================================  ==========================  ============================================================================================================================
 brokerList                        --                          List of brokers in the Kafka cluster used by the channel
                                                               This can be a partial list of brokers, but we recommend at least two for HA.
                                                               The format is comma separated list of hostname:port
 topic                             flume-channel               Use kafka.topic
 groupId                           flume                       Use kafka.consumer.group.id
 readSmallestOffset                false                       Use kafka.consumer.auto.offset.reset
-
-================================  ==========================  ===============================================================================================================
+migrateZookeeperOffsets           true                        When no Kafka stored offset is found, look up the offsets in Zookeeper and commit them to Kafka.
+                                                              This should be true to support seamless Kafka client migration from older versions of Flume. Once migrated this can be set
+                                                              to false, though that should generally not be required. If no Zookeeper offset is found the kafka.consumer.auto.offset.reset
+                                                              configuration defines how offsets are handled.
+================================  ==========================  ============================================================================================================================
 
 .. note:: Due to the way the channel is load balanced, there may be duplicate events when the agent first starts up
 

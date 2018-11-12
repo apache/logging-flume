@@ -133,6 +133,7 @@ public class KafkaSource extends AbstractPollableSource
   private String zookeeperConnect;
   private String bootstrapServers;
   private String groupId = DEFAULT_GROUP_ID;
+  @Deprecated
   private boolean migrateZookeeperOffsets = DEFAULT_MIGRATE_ZOOKEEPER_OFFSETS;
   private String topicHeader = null;
   private boolean setTopicHeader;

@@ -102,6 +102,7 @@ public class KafkaChannel extends BasicChannelSemantics {
   private String groupId = DEFAULT_GROUP_ID;
   private String partitionHeader = null;
   private Integer staticPartitionId;
+  @Deprecated
   private boolean migrateZookeeperOffsets = DEFAULT_MIGRATE_ZOOKEEPER_OFFSETS;
 
   // used to indicate if a rebalance has occurred during the current transaction
