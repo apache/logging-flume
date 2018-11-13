@@ -4318,7 +4318,7 @@ This interceptor can preserve an existing timestamp if it is already present in 
 Property Name     Default    Description
 ================  =========  ========================================================================
 **type**          --         The component type name, has to be ``timestamp`` or the FQCN
-header            timestamp  The name of the header in which to place the generated timestamp.
+headerName        timestamp  The name of the header in which to place the generated timestamp.
 preserveExisting  false      If the timestamp already exists, should it be preserved - true or false
 ================  =========  ========================================================================
 
