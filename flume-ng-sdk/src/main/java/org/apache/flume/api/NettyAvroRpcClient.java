@@ -591,7 +591,7 @@ public class NettyAvroRpcClient extends SSLContextAwareAbstractRpcClient {
     }
 
     if (maxIoWorkers < 1) {
-      logger.warn("Using default maxIOWorkers");
+      logger.info("Using default maxIOWorkers");
       maxIoWorkers = -1;
     }
 
