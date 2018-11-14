@@ -57,6 +57,8 @@ public class SyslogUDPSource extends AbstractSource
   private Channel nettyChannel;
   private Map<String, String> formaterProp;
   private Set<String> keepFields;
+  private String clientIPHeader;
+  private String clientHostnameHeader;
 
   private static final Logger logger = LoggerFactory.getLogger(SyslogUDPSource.class);
 
@@ -68,6 +70,8 @@ public class SyslogUDPSource extends AbstractSource
 
   public class syslogHandler extends SimpleChannelHandler {
     private SyslogUtils syslogUtils = new SyslogUtils(DEFAULT_INITIAL_SIZE, null, true);
+    private String clientIPHeader;
+    private String clientHostnameHeader;
 
     public void setFormater(Map<String, String> prop) {
       syslogUtils.addFormats(prop);
@@ -75,6 +79,14 @@ public class SyslogUDPSource extends AbstractSource
 
     public void setKeepFields(Set<String> keepFields) {
       syslogUtils.setKeepFields(keepFields);
+    }
+
+    public void setClientIPHeader(String clientIPHeader) {
+      this.clientIPHeader = clientIPHeader;
+    }
+
+    public void setClientHostnameHeader(String clientHostnameHeader) {
+      this.clientHostnameHeader = clientHostnameHeader;
     }
 
     @Override
@@ -85,6 +97,17 @@ public class SyslogUDPSource extends AbstractSource
         if (e == null) {
           return;
         }
+
+        if (clientIPHeader != null) {
+          e.getHeaders().put(clientIPHeader,
+              SyslogUtils.getIP(mEvent.getRemoteAddress()));
+        }
+
+        if (clientHostnameHeader != null) {
+          e.getHeaders().put(clientHostnameHeader,
+              SyslogUtils.getHostname(mEvent.getRemoteAddress()));
+        }
+
         sourceCounter.incrementEventReceivedCount();
 
         getChannelProcessor().processEvent(e);
@@ -109,6 +132,8 @@ public class SyslogUDPSource extends AbstractSource
     final syslogHandler handler = new syslogHandler();
     handler.setFormater(formaterProp);
     handler.setKeepFields(keepFields);
+    handler.setClientIPHeader(clientIPHeader);
+    handler.setClientHostnameHeader(clientHostnameHeader);
     serverBootstrap.setOption("receiveBufferSizePredictorFactory",
         new AdaptiveReceiveBufferSizePredictorFactory(DEFAULT_MIN_SIZE,
             DEFAULT_INITIAL_SIZE, maxsize));
@@ -160,6 +185,10 @@ public class SyslogUDPSource extends AbstractSource
         context.getString(
             SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS,
             SyslogSourceConfigurationConstants.DEFAULT_KEEP_FIELDS));
+    clientIPHeader =
+        context.getString(SyslogSourceConfigurationConstants.CONFIG_CLIENT_IP_HEADER);
+    clientHostnameHeader =
+        context.getString(SyslogSourceConfigurationConstants.CONFIG_CLIENT_HOSTNAME_HEADER);
 
     if (sourceCounter == null) {
       sourceCounter = new SourceCounter(getName());

@@ -42,7 +42,10 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doThrow;
 
@@ -64,6 +67,10 @@ public class TestSyslogUdpSource {
       data1;
 
   private void init(String keepFields) {
+    init(keepFields, new Context());
+  }
+
+  private void init(String keepFields, Context context) {
     source = new SyslogUDPSource();
     channel = new MemoryChannel();
 
@@ -76,7 +83,7 @@ public class TestSyslogUdpSource {
     rcs.setChannels(channels);
 
     source.setChannelProcessor(new ChannelProcessor(rcs));
-    Context context = new Context();
+
     context.put("host", InetAddress.getLoopbackAddress().getHostAddress());
     context.put("port", String.valueOf(TEST_SYSLOG_PORT));
     context.put("keepFields", keepFields);
@@ -265,6 +272,44 @@ public class TestSyslogUdpSource {
       payload.append("x");
     }
     return payload.toString();
+  }
+
+  @Test
+  public void testClientHeaders() throws IOException {
+    String testClientIPHeader = "testClientIPHeader";
+    String testClientHostnameHeader = "testClientHostnameHeader";
+
+
+    Context context = new Context();
+    context.put("clientIPHeader", testClientIPHeader);
+    context.put("clientHostnameHeader", testClientHostnameHeader);
+
+    init("none", context);
+
+    source.start();
+
+    DatagramPacket datagramPacket = createDatagramPacket(bodyWithTandH.getBytes());
+    sendDatagramPacket(datagramPacket);
+
+    Transaction txn = channel.getTransaction();
+    txn.begin();
+    Event e = channel.take();
+
+    commitAndCloseTransaction(txn);
+
+    source.stop();
+
+    Map<String, String> headers = e.getHeaders();
+
+    checkHeader(headers, testClientIPHeader, InetAddress.getLoopbackAddress().getHostAddress());
+    checkHeader(headers, testClientHostnameHeader, InetAddress.getLoopbackAddress().getHostName());
+  }
+
+  private static void checkHeader(Map<String, String> headers, String headerName,
+      String expectedValue) {
+    assertTrue("Missing event header: " + headerName, headers.containsKey(headerName));
+    assertEquals("Event header value does not match: " + headerName,
+        expectedValue, headers.get(headerName));
   }
 }
 
