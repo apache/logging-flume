@@ -64,6 +64,8 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.internal.util.reflection.Whitebox;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
 import javax.net.SocketFactory;
@@ -132,6 +134,7 @@ public class TestMultiportSyslogTCPSource {
     Context context = new Context();
     context.put(SyslogSourceConfigurationConstants.CONFIG_PORTS,
         ports.toString().trim());
+    context.put("portHeader", "port");
     context.putAll(additionalContext.getParameters());
     source.configure(context);
     source.start();
@@ -257,10 +260,8 @@ public class TestMultiportSyslogTCPSource {
         Map<String, String> headers = e.getHeaders();
         // rely on port to figure out which event it is
         Integer port = null;
-        if (headers.containsKey(
-            SyslogSourceConfigurationConstants.DEFAULT_PORT_HEADER)) {
-          port = Integer.parseInt(headers.get(
-              SyslogSourceConfigurationConstants.DEFAULT_PORT_HEADER));
+        if (headers.containsKey("port")) {
+          port = Integer.parseInt(headers.get("port"));
         }
         iter.remove();
 
@@ -311,12 +312,10 @@ public class TestMultiportSyslogTCPSource {
         parsedLine.buffer.getString(Charsets.UTF_8.newDecoder()));
     parsedLine.buffer.rewind();
 
-    MultiportSyslogTCPSource.MultiportSyslogHandler handler =
-        new MultiportSyslogTCPSource.MultiportSyslogHandler(maxLen, 100, null,
-        null, SyslogSourceConfigurationConstants.DEFAULT_PORT_HEADER,
+    MultiportSyslogHandler handler = new MultiportSyslogHandler(
+        maxLen, 100, null, null, null, null, null,
         new ThreadSafeDecoder(Charsets.UTF_8),
-        new ConcurrentHashMap<Integer, ThreadSafeDecoder>(),
-        null);
+        new ConcurrentHashMap<Integer, ThreadSafeDecoder>(),null);
 
     Event event = handler.parseEvent(parsedLine, Charsets.UTF_8.newDecoder());
     String body = new String(event.getBody(), Charsets.UTF_8);
@@ -340,10 +339,9 @@ public class TestMultiportSyslogTCPSource {
     // defaults to UTF-8
     MultiportSyslogHandler handler = new MultiportSyslogHandler(
         1000, 10, new ChannelProcessor(new ReplicatingChannelSelector()),
-        new SourceCounter("test"), "port",
+        new SourceCounter("test"), null, null, null,
         new ThreadSafeDecoder(Charsets.UTF_8),
-        new ConcurrentHashMap<Integer, ThreadSafeDecoder>(),
-        null);
+        new ConcurrentHashMap<Integer, ThreadSafeDecoder>(),null);
 
     ParsedBuffer parsedBuf = new ParsedBuffer();
     parsedBuf.incomplete = false;
@@ -393,10 +391,9 @@ public class TestMultiportSyslogTCPSource {
     // defaults to UTF-8
     MultiportSyslogHandler handler = new MultiportSyslogHandler(
         1000, 10, new ChannelProcessor(new ReplicatingChannelSelector()),
-        new SourceCounter("test"), "port",
+        new SourceCounter("test"), null, null, null,
         new ThreadSafeDecoder(Charsets.UTF_8),
-        new ConcurrentHashMap<Integer, ThreadSafeDecoder>(),
-        null);
+        new ConcurrentHashMap<Integer, ThreadSafeDecoder>(), null);
 
     handler.exceptionCaught(null, new RuntimeException("dummy"));
     SourceCounter sc = (SourceCounter) Whitebox.getInternalState(handler, "sourceCounter");
@@ -460,9 +457,8 @@ public class TestMultiportSyslogTCPSource {
 
     // defaults to UTF-8
     MultiportSyslogHandler handler = new MultiportSyslogHandler(
-        1000, 10, chanProc, new SourceCounter("test"), "port",
-        new ThreadSafeDecoder(Charsets.UTF_8), portCharsets,
-        null);
+        1000, 10, chanProc, new SourceCounter("test"), null, null, null,
+        new ThreadSafeDecoder(Charsets.UTF_8), portCharsets, null);
 
     // initialize buffers
     handler.sessionCreated(session1);
@@ -530,6 +526,54 @@ public class TestMultiportSyslogTCPSource {
     SourceCounter sc = (SourceCounter) Whitebox.getInternalState(source, "sourceCounter");
     Assert.assertEquals(1, sc.getChannelWriteFail());
     source.stop();
+  }
+
+  @Test
+  public void testClientHeaders() throws IOException {
+    String testClientIPHeader = "testClientIPHeader";
+    String testClientHostnameHeader = "testClientHostnameHeader";
+
+    MultiportSyslogTCPSource source = new MultiportSyslogTCPSource();
+    Channel channel = new MemoryChannel();
+
+    Configurables.configure(channel, new Context());
+
+    List<Channel> channels = Lists.newArrayList();
+    channels.add(channel);
+
+    ChannelSelector rcs = new ReplicatingChannelSelector();
+    rcs.setChannels(channels);
+
+    source.setChannelProcessor(new ChannelProcessor(rcs));
+    int port = getFreePort();
+    Context context = new Context();
+    context.put("host", InetAddress.getLoopbackAddress().getHostAddress());
+    context.put("ports", String.valueOf(port));
+    context.put("clientIPHeader", testClientIPHeader);
+    context.put("clientHostnameHeader", testClientHostnameHeader);
+
+    source.configure(context);
+    source.start();
+
+    //create a socket to send a test event
+    Socket syslogSocket = new Socket(InetAddress.getLoopbackAddress().getHostAddress(), port);
+    syslogSocket.getOutputStream().write(getEvent(0));
+
+    Event e = takeEvent(channel);
+
+    source.stop();
+
+    Map<String, String> headers = e.getHeaders();
+
+    checkHeader(headers, testClientIPHeader, InetAddress.getLoopbackAddress().getHostAddress());
+    checkHeader(headers, testClientHostnameHeader, InetAddress.getLoopbackAddress().getHostName());
+  }
+
+  private static void checkHeader(Map<String, String> headers, String headerName,
+      String expectedValue) {
+    assertTrue("Missing event header: " + headerName, headers.containsKey(headerName));
+    assertEquals("Event header value does not match: " + headerName,
+        expectedValue, headers.get(headerName));
   }
 
 }

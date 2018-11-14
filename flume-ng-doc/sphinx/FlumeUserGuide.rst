@@ -1809,6 +1809,20 @@ keepFields            none         Setting this to 'all' will preserve the Prior
                                    fields can be included: priority, version,
                                    timestamp, hostname. The values 'true' and 'false'
                                    have been deprecated in favor of 'all' and 'none'.
+clientIPHeader        --           If specified, the IP address of the client will be stored in
+                                   the header of each event using the header name specified here.
+                                   This allows for interceptors and channel selectors to customize
+                                   routing logic based on the IP address of the client.
+                                   Do not use the standard Syslog header names here (like _host_)
+                                   because the event header will be overridden in that case.
+clientHostnameHeader  --           If specified, the host name of the client will be stored in
+                                   the header of each event using the header name specified here.
+                                   This allows for interceptors and channel selectors to customize
+                                   routing logic based on the host name of the client.
+                                   Retrieving the host name may involve a name service reverse
+                                   lookup which may affect the performance.
+                                   Do not use the standard Syslog header names here (like _host_)
+                                   because the event header will be overridden in that case.
 selector.type                      replicating or multiplexing
 selector.*            replicating  Depends on the selector.type value
 interceptors          --           Space-separated list of interceptors
@@ -1875,6 +1889,20 @@ keepFields            none              Setting this to 'all' will preserve the
                                         timestamp, hostname. The values 'true' and 'false'
                                         have been deprecated in favor of 'all' and 'none'.
 portHeader            --                If specified, the port number will be stored in the header of each event using the header name specified here. This allows for interceptors and channel selectors to customize routing logic based on the incoming port.
+clientIPHeader        --                If specified, the IP address of the client will be stored in
+                                        the header of each event using the header name specified here.
+                                        This allows for interceptors and channel selectors to customize
+                                        routing logic based on the IP address of the client.
+                                        Do not use the standard Syslog header names here (like _host_)
+                                        because the event header will be overridden in that case.
+clientHostnameHeader  --                If specified, the host name of the client will be stored in
+                                        the header of each event using the header name specified here.
+                                        This allows for interceptors and channel selectors to customize
+                                        routing logic based on the host name of the client.
+                                        Retrieving the host name may involve a name service reverse
+                                        lookup which may affect the performance.
+                                        Do not use the standard Syslog header names here (like _host_)
+                                        because the event header will be overridden in that case.
 charset.default       UTF-8             Default character set used while parsing syslog events into strings.
 charset.port.<port>   --                Character set is configurable on a per-port basis.
 batchSize             100               Maximum number of events to attempt to process per request loop. Using the default is usually fine.
@@ -1923,20 +1951,34 @@ For example, a multiport syslog TCP source for agent named a1:
 Syslog UDP Source
 '''''''''''''''''
 
-==============  ===========  ==============================================
-Property Name   Default      Description
-==============  ===========  ==============================================
-**channels**    --
-**type**        --           The component type name, needs to be ``syslogudp``
-**host**        --           Host name or IP address to bind to
-**port**        --           Port # to bind to
-keepFields      false        Setting this to true will preserve the Priority,
-                             Timestamp and Hostname in the body of the event.
-selector.type                replicating or multiplexing
-selector.*      replicating  Depends on the selector.type value
-interceptors    --           Space-separated list of interceptors
+====================  ===========  ================================================================
+Property Name         Default      Description
+====================  ===========  ================================================================
+**channels**          --
+**type**              --           The component type name, needs to be ``syslogudp``
+**host**              --           Host name or IP address to bind to
+**port**              --           Port # to bind to
+keepFields            false        Setting this to true will preserve the Priority,
+                                   Timestamp and Hostname in the body of the event.
+clientIPHeader        --           If specified, the IP address of the client will be stored in
+                                   the header of each event using the header name specified here.
+                                   This allows for interceptors and channel selectors to customize
+                                   routing logic based on the IP address of the client.
+                                   Do not use the standard Syslog header names here (like _host_)
+                                   because the event header will be overridden in that case.
+clientHostnameHeader  --           If specified, the host name of the client will be stored in
+                                   the header of each event using the header name specified here.
+                                   This allows for interceptors and channel selectors to customize
+                                   routing logic based on the host name of the client.
+                                   Retrieving the host name may involve a name service reverse
+                                   lookup which may affect the performance.
+                                   Do not use the standard Syslog header names here (like _host_)
+                                   because the event header will be overridden in that case.
+selector.type                      replicating or multiplexing
+selector.*            replicating  Depends on the selector.type value
+interceptors          --           Space-separated list of interceptors
 interceptors.*
-==============  ===========  ==============================================
+====================  ===========  =================================================================
 
 
 For example, a syslog UDP source for agent named a1:
