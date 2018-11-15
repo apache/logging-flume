@@ -267,6 +267,10 @@ public class KafkaSource extends AbstractPollableSource
           headers.put(KafkaSourceConstants.PARTITION_HEADER,
               String.valueOf(message.partition()));
         }
+        if (!headers.containsKey(OFFSET_HEADER)) {
+          headers.put(OFFSET_HEADER,
+              String.valueOf(message.offset()));
+        }
 
         if (kafkaKey != null) {
           headers.put(KafkaSourceConstants.KEY_HEADER, kafkaKey);
