@@ -83,6 +83,9 @@ public class HDFSEventSink extends AbstractSink implements Configurable, BatchSi
   // Retry forever.
   private static final int defaultTryCount = Integer.MAX_VALUE;
 
+  public static final String IN_USE_SUFFIX_PARAM_NAME = "hdfs.inUseSuffix";
+
+
   /**
    * Default length of time we wait for blocking BucketWriter calls
    * before timing out the operation. Intended to prevent server hangs.
@@ -194,7 +197,16 @@ public class HDFSEventSink extends AbstractSink implements Configurable, BatchSi
     fileName = context.getString("hdfs.filePrefix", defaultFileName);
     this.suffix = context.getString("hdfs.fileSuffix", defaultSuffix);
     inUsePrefix = context.getString("hdfs.inUsePrefix", defaultInUsePrefix);
-    inUseSuffix = context.getString("hdfs.inUseSuffix", defaultInUseSuffix);
+    boolean emptyInUseSuffix = context.getBoolean("hdfs.emptyInUseSuffix", false);
+    if (emptyInUseSuffix) {
+      inUseSuffix = "";
+      String tmpInUseSuffix = context.getString(IN_USE_SUFFIX_PARAM_NAME);
+      if (tmpInUseSuffix != null) {
+        LOG.warn("Ignoring parameter " + IN_USE_SUFFIX_PARAM_NAME + " for hdfs sink: " + getName());
+      }
+    } else {
+      inUseSuffix = context.getString(IN_USE_SUFFIX_PARAM_NAME, defaultInUseSuffix);
+    }
     String tzName = context.getString("hdfs.timeZone");
     timeZone = tzName == null ? null : TimeZone.getTimeZone(tzName);
     rollInterval = context.getLong("hdfs.rollInterval", defaultRollInterval);

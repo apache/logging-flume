@@ -2373,6 +2373,9 @@ hdfs.filePrefix         FlumeData     Name prefixed to files created by Flume in
 hdfs.fileSuffix         --            Suffix to append to file (eg ``.avro`` - *NOTE: period is not automatically added*)
 hdfs.inUsePrefix        --            Prefix that is used for temporal files that flume actively writes into
 hdfs.inUseSuffix        ``.tmp``      Suffix that is used for temporal files that flume actively writes into
+hdfs.emptyInUseSuffix   false         If ``false`` an ``hdfs.inUseSuffix`` is used while writing the output. After closing the output
+                                      ``hdfs.inUseSuffix`` is removed from the output file name.
+                                      If ``true`` the ``hdfs.inUseSuffix`` parameter is ignored an empty string is used instead.
 hdfs.rollInterval       30            Number of seconds to wait before rolling current file
                                       (0 = never roll based on time interval)
 hdfs.rollSize           1024          File size to trigger roll, in bytes (0: never roll based on file size)
