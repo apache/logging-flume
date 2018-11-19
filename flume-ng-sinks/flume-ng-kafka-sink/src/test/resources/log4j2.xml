@@ -24,23 +24,23 @@
     <Console name="Console" target="SYSTEM_OUT">
       <PatternLayout pattern="%d (%t) [%p - %l] %m%n" />
     </Console>
-    <RollingFile name="kafka" fileName="${kafka.logs.dir}/server.log">
+    <RollingFile name="kafka" fileName="${kafka.logs.dir}/server.log" filePattern="${kafka.logs.dir}/server.log.%i">
       <PatternLayout pattern="[%d] %p %m (%c)%n" />
       <CronTriggeringPolicy schedule="0 0 0 * * ?"/>
     </RollingFile>
-    <RollingFile name="stateChange" fileName="${kafka.logs.dir}/state-change.log">
+    <RollingFile name="stateChange" fileName="${kafka.logs.dir}/state-change.log" filePattern="${kafka.logs.dir}/state-change.log.%i">
       <PatternLayout pattern="[%d] %p %m (%c)%n" />
       <CronTriggeringPolicy schedule="0 0 0 * * ?"/>
     </RollingFile>
-    <RollingFile name="request" fileName="${kafka.logs.dir}/kafka-request.log">
+    <RollingFile name="request" fileName="${kafka.logs.dir}/kafka-request.log" filePattern="${kafka.logs.dir}/kafka-request.log.%i">
       <PatternLayout pattern="[%d] %p %m (%c)%n" />
       <CronTriggeringPolicy schedule="0 0 0 * * ?"/>
     </RollingFile>
-    <RollingFile name="cleaner" fileName="${kafka.logs.dir}/log-cleaner.log">
+    <RollingFile name="cleaner" fileName="${kafka.logs.dir}/log-cleaner.log" filePattern="${kafka.logs.dir}/log-cleaner.log.%i">
       <PatternLayout pattern="[%d] %p %m (%c)%n" />
       <CronTriggeringPolicy schedule="0 0 0 * * ?"/>
     </RollingFile>
-    <RollingFile name="controller" fileName="${kafka.logs.dir}/controller.log">
+    <RollingFile name="controller" fileName="${kafka.logs.dir}/controller.log" filePattern="${kafka.logs.dir}/controller.log.%i">
       <PatternLayout pattern="[%d] %p %m (%c)%n" />
       <CronTriggeringPolicy schedule="0 0 0 * * ?"/>
     </RollingFile>

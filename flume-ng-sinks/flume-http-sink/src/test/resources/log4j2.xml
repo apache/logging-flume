@@ -19,7 +19,7 @@
 <Configuration status="OFF">
   <Appenders>
     <Console name="Console" target="SYSTEM_OUT">
-      <PatternLayout pattern="%m%n" />
+      <PatternLayout pattern="%d (%t) [%p - %l] %m%n" />
     </Console>
   </Appenders>
   <Loggers>
