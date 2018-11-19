@@ -24,7 +24,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.Files;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -48,7 +49,7 @@ import java.util.zip.GZIPInputStream;
  */
 public class StagedInstall {
 
-  private static final Logger LOGGER = Logger.getLogger(StagedInstall.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(StagedInstall.class);
 
   public static final String PROP_PATH_TO_DIST_TARBALL =
       "flume.dist.tarball";

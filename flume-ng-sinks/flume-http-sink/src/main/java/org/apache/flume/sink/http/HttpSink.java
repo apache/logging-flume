@@ -26,8 +26,8 @@ import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.sink.AbstractSink;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -48,7 +48,7 @@ import java.util.Map;
 public class HttpSink extends AbstractSink implements Configurable {
 
   /** Class logger. */
-  private static final Logger LOG = LogManager.getLogger(HttpSink.class);
+  private static final Logger LOG = LoggerFactory.getLogger(HttpSink.class);
 
   /** Lowest valid HTTP status code. */
   private static final int HTTP_STATUS_CONTINUE = 100;

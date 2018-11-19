@@ -20,12 +20,13 @@
 package org.apache.flume.test.agent;
 
 import org.apache.flume.test.util.SyslogAgent;
-import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,7 +34,7 @@ import java.util.List;
 
 @RunWith(Parameterized.class)
 public class TestSyslogSource {
-  private static final Logger LOGGER = Logger.getLogger(TestSyslogSource.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(TestSyslogSource.class);
 
   private SyslogAgent agent;
   private SyslogAgent.SyslogSourceType sourceType;
