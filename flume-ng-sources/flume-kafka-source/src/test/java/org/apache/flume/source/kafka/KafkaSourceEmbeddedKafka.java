@@ -16,12 +16,13 @@
  */
 package org.apache.flume.source.kafka;
 
-import kafka.admin.AdminUtils;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaServerStartable;
-import kafka.utils.ZkUtils;
-import org.I0Itec.zkclient.ZkClient;
 import org.apache.commons.io.FileUtils;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.DescribeTopicsResult;
+import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
@@ -31,9 +32,12 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 public class KafkaSourceEmbeddedKafka {
 
@@ -41,6 +45,7 @@ public class KafkaSourceEmbeddedKafka {
 
   KafkaServerStartable kafkaServer;
   KafkaSourceEmbeddedZookeeper zookeeper;
+  private AdminClient adminClient;
 
   private static int findFreePort() {
     try (ServerSocket socket = new ServerSocket(0)) {
@@ -70,6 +75,7 @@ public class KafkaSourceEmbeddedKafka {
     props.put("host.name", "localhost");
     props.put("port", String.valueOf(serverPort));
     props.put("log.dir", dir.getAbsolutePath());
+    props.put("offsets.topic.replication.factor", "1");
     if (properties != null) {
       props.putAll(properties);
     }
@@ -132,15 +138,31 @@ public class KafkaSourceEmbeddedKafka {
   }
 
   public void createTopic(String topicName, int numPartitions) {
-    // Create a ZooKeeper client
-    int sessionTimeoutMs = 10000;
-    int connectionTimeoutMs = 10000;
-    ZkClient zkClient =
-        ZkUtils.createZkClient(HOST + ":" + zkPort, sessionTimeoutMs, connectionTimeoutMs);
-    ZkUtils zkUtils = ZkUtils.apply(zkClient, false);
-    int replicationFactor = 1;
-    Properties topicConfig = new Properties();
-    AdminUtils.createTopic(zkUtils, topicName, numPartitions, replicationFactor, topicConfig);
+    AdminClient adminClient = getAdminClient();
+    NewTopic newTopic = new NewTopic(topicName, numPartitions, (short) 1);
+    adminClient.createTopics(Collections.singletonList(newTopic));
+
+    //the following lines are a bit of black magic to ensure the topic is ready when we return
+    DescribeTopicsResult dtr = adminClient.describeTopics(Collections.singletonList(topicName));
+    try {
+      dtr.all().get(10, TimeUnit.SECONDS);
+    } catch (Exception e) {
+      throw new RuntimeException("Error getting topic info", e);
+    }
+  }
+
+  private AdminClient getAdminClient() {
+    if (adminClient == null) {
+      final Properties props = new Properties();
+      props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, HOST + ":" + serverPort);
+      props.put(ConsumerConfig.GROUP_ID_CONFIG, "group_1");
+      adminClient = AdminClient.create(props);
+    }
+    return adminClient;
+  }
+
+  public void deleteTopics(List<String> topic) {
+    getAdminClient().deleteTopics(topic);
   }
 
 }

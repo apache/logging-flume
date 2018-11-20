@@ -19,11 +19,6 @@
 package org.apache.flume.sink.kafka;
 
 import com.google.common.base.Charsets;
-
-import kafka.admin.AdminUtils;
-import kafka.message.MessageAndMetadata;
-import kafka.utils.ZkUtils;
-
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.specific.SpecificDatumReader;
@@ -45,6 +40,8 @@ import org.apache.flume.shared.kafka.test.PartitionTestScenario;
 import org.apache.flume.sink.kafka.util.TestUtil;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.kafka.clients.CommonClientConfigs;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -54,8 +51,8 @@ import org.mockito.internal.util.reflection.Whitebox;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -75,7 +72,8 @@ import static org.apache.flume.sink.kafka.KafkaSinkConstants.OLD_BATCH_SIZE;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.REQUIRED_ACKS_FLUME_KEY;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.TOPIC_CONFIG;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
@@ -83,7 +81,7 @@ import static org.junit.Assert.fail;
  */
 public class TestKafkaSink {
 
-  private static TestUtil testUtil = TestUtil.getInstance();
+  private static final TestUtil testUtil = TestUtil.getInstance();
   private final Set<String> usedTopics = new HashSet<String>();
 
   @BeforeClass
@@ -178,9 +176,15 @@ public class TestKafkaSink {
       // ignore
     }
 
-    String fetchedMsg = new String((byte[]) testUtil.getNextMessageFromConsumer(DEFAULT_TOPIC)
-                                                    .message());
-    assertEquals(msg, fetchedMsg);
+    checkMessageArrived(msg, DEFAULT_TOPIC);
+  }
+
+  private void checkMessageArrived(String msg, String topic) {
+    ConsumerRecords recs = pollConsumerRecords(topic);
+    assertNotNull(recs);
+    assertTrue(recs.count() > 0);
+    ConsumerRecord consumerRecord = (ConsumerRecord) recs.iterator().next();
+    assertEquals(msg, consumerRecord.value());
   }
 
   @Test
@@ -199,13 +203,11 @@ public class TestKafkaSink {
       // ignore
     }
 
-    String fetchedMsg = new String((byte[]) testUtil.getNextMessageFromConsumer(
-        TestConstants.STATIC_TOPIC).message());
-    assertEquals(msg, fetchedMsg);
+    checkMessageArrived(msg, TestConstants.STATIC_TOPIC);
   }
 
   @Test
-  public void testTopicAndKeyFromHeader() throws UnsupportedEncodingException {
+  public void testTopicAndKeyFromHeader() {
     Sink kafkaSink = new KafkaSink();
     Context context = prepareDefaultContext();
     Configurables.configure(kafkaSink, context);
@@ -234,21 +236,15 @@ public class TestKafkaSink {
       // ignore
     }
 
-    MessageAndMetadata fetchedMsg =
-        testUtil.getNextMessageFromConsumer(TestConstants.CUSTOM_TOPIC);
-
-    assertEquals(msg, new String((byte[]) fetchedMsg.message(), "UTF-8"));
-    assertEquals(TestConstants.CUSTOM_KEY,
-                 new String((byte[]) fetchedMsg.key(), "UTF-8"));
+    checkMessageArrived(msg, TestConstants.CUSTOM_TOPIC);
   }
 
   /**
    * Tests that a message will be produced to a topic as specified by a
    * custom topicHeader parameter (FLUME-3046).
-   * @throws UnsupportedEncodingException
    */
   @Test
-  public void testTopicFromConfHeader() throws UnsupportedEncodingException {
+  public void testTopicFromConfHeader() {
     String customTopicHeader = "customTopicHeader";
     Sink kafkaSink = new KafkaSink();
     Context context = prepareDefaultContext();
@@ -278,19 +274,15 @@ public class TestKafkaSink {
       // ignore
     }
 
-    MessageAndMetadata<?, ?> fetchedMsg =
-        testUtil.getNextMessageFromConsumer(TestConstants.CUSTOM_TOPIC);
-
-    assertEquals(msg, new String((byte[]) fetchedMsg.message(), "UTF-8"));
+    checkMessageArrived(msg, TestConstants.CUSTOM_TOPIC);
   }
 
   /**
    * Tests that the topicHeader parameter will be ignored if the allowTopicHeader
    * parameter is set to false (FLUME-3046).
-   * @throws UnsupportedEncodingException
    */
   @Test
-  public void testTopicNotFromConfHeader() throws UnsupportedEncodingException {
+  public void testTopicNotFromConfHeader() {
     Sink kafkaSink = new KafkaSink();
     Context context = prepareDefaultContext();
     context.put(KafkaSinkConstants.ALLOW_TOPIC_OVERRIDE_HEADER, "false");
@@ -322,14 +314,12 @@ public class TestKafkaSink {
       // ignore
     }
 
-    MessageAndMetadata<?, ?> fetchedMsg =
-        testUtil.getNextMessageFromConsumer(DEFAULT_TOPIC);
-
-    assertEquals(msg, new String((byte[]) fetchedMsg.message(), "UTF-8"));
+    checkMessageArrived(msg, DEFAULT_TOPIC);
   }
 
   @Test
-  public void testReplaceSubStringOfTopicWithHeaders() throws UnsupportedEncodingException {
+  public void testReplaceSubStringOfTopicWithHeaders() {
+    String topic = TestConstants.HEADER_1_VALUE + "-topic";
     Sink kafkaSink = new KafkaSink();
     Context context = prepareDefaultContext();
     context.put(TOPIC_CONFIG, TestConstants.HEADER_TOPIC);
@@ -358,10 +348,7 @@ public class TestKafkaSink {
       // ignore
     }
 
-    String fetchedMsg = new String((byte[])
-        testUtil.getNextMessageFromConsumer(TestConstants.HEADER_1_VALUE + "-topic").message());
-
-    assertEquals(msg, fetchedMsg);
+    checkMessageArrived(msg, topic);
   }
 
   @SuppressWarnings("rawtypes")
@@ -398,12 +385,15 @@ public class TestKafkaSink {
       // ignore
     }
 
-    MessageAndMetadata fetchedMsg = testUtil.getNextMessageFromConsumer(TestConstants.CUSTOM_TOPIC);
+    String topic = TestConstants.CUSTOM_TOPIC;
 
-    ByteArrayInputStream in = new ByteArrayInputStream((byte[]) fetchedMsg.message());
+    ConsumerRecords<String, String> recs = pollConsumerRecords(topic);
+    assertNotNull(recs);
+    assertTrue(recs.count() > 0);
+    ConsumerRecord<String, String> consumerRecord = recs.iterator().next();
+    ByteArrayInputStream in = new ByteArrayInputStream(consumerRecord.value().getBytes());
     BinaryDecoder decoder = DecoderFactory.get().directBinaryDecoder(in, null);
-    SpecificDatumReader<AvroFlumeEvent> reader =
-        new SpecificDatumReader<AvroFlumeEvent>(AvroFlumeEvent.class);
+    SpecificDatumReader<AvroFlumeEvent> reader = new SpecificDatumReader<>(AvroFlumeEvent.class);
 
     AvroFlumeEvent avroevent = reader.read(null, decoder);
 
@@ -411,15 +401,33 @@ public class TestKafkaSink {
     Map<CharSequence, CharSequence> eventHeaders = avroevent.getHeaders();
 
     assertEquals(msg, eventBody);
-    assertEquals(TestConstants.CUSTOM_KEY, new String((byte[]) fetchedMsg.key(), "UTF-8"));
+    assertEquals(TestConstants.CUSTOM_KEY, consumerRecord.key());
 
     assertEquals(TestConstants.HEADER_1_VALUE,
                  eventHeaders.get(new Utf8(TestConstants.HEADER_1_KEY)).toString());
     assertEquals(TestConstants.CUSTOM_KEY, eventHeaders.get(new Utf8("key")).toString());
   }
 
+  private ConsumerRecords<String, String> pollConsumerRecords(String topic) {
+    return pollConsumerRecords(topic, 20);
+  }
+
+  private ConsumerRecords<String, String> pollConsumerRecords(String topic, int maxIter) {
+    ConsumerRecords<String, String> recs = null;
+    for (int i = 0; i < maxIter; i++) {
+      recs = testUtil.getNextMessageFromConsumer(topic);
+      if (recs.count() > 0) break;
+      try {
+        Thread.sleep(1000L);
+      } catch (InterruptedException e) {
+        //
+      }
+    }
+    return recs;
+  }
+
   @Test
-  public void testEmptyChannel() throws UnsupportedEncodingException, EventDeliveryException {
+  public void testEmptyChannel() throws EventDeliveryException {
     Sink kafkaSink = new KafkaSink();
     Context context = prepareDefaultContext();
     Configurables.configure(kafkaSink, context);
@@ -432,7 +440,9 @@ public class TestKafkaSink {
     if (status != Sink.Status.BACKOFF) {
       fail("Error Occurred");
     }
-    assertNull(testUtil.getNextMessageFromConsumer(DEFAULT_TOPIC));
+    ConsumerRecords recs = pollConsumerRecords(DEFAULT_TOPIC, 2);
+    assertNotNull(recs);
+    assertEquals(recs.count(), 0);
   }
 
   @Test
@@ -481,10 +491,9 @@ public class TestKafkaSink {
   /**
    * Tests that sub-properties (kafka.producer.*) apply correctly across multiple invocations
    * of configure() (fix for FLUME-2857).
-   * @throws Exception
    */
   @Test
-  public void testDefaultSettingsOnReConfigure() throws Exception {
+  public void testDefaultSettingsOnReConfigure() {
     String sampleProducerProp = "compression.type";
     String sampleProducerVal = "snappy";
 
@@ -515,10 +524,8 @@ public class TestKafkaSink {
    *    Expected behaviour: Exception is not thrown because the code avoids an NPE.
    *
    * 3. PartitionOption.NOTANUMBER: The partition header is set, but is not an Integer.
-   *    Expected behaviour: ChannelExeption thrown.
+   *    Expected behaviour: ChannelException thrown.
    *
-   * @param option
-   * @throws Exception
    */
   private void doPartitionErrors(PartitionOption option) throws Exception {
     doPartitionErrors(option, new KafkaSink());
@@ -577,9 +584,6 @@ public class TestKafkaSink {
    * a large skew to some partitions and then verify that this actually happened
    * by reading messages directly using a Kafka Consumer.
    *
-   * @param usePartitionHeader
-   * @param staticPtn
-   * @throws Exception
    */
   private void doPartitionHeader(PartitionTestScenario scenario) throws Exception {
     final int numPtns = 5;
@@ -680,25 +684,15 @@ public class TestKafkaSink {
     return kafkaSink.process();
   }
 
-  public static void createTopic(String topicName, int numPartitions) {
-    int sessionTimeoutMs = 10000;
-    int connectionTimeoutMs = 10000;
-    ZkUtils zkUtils =
-        ZkUtils.apply(testUtil.getZkUrl(), sessionTimeoutMs, connectionTimeoutMs, false);
-    int replicationFactor = 1;
-    Properties topicConfig = new Properties();
-    AdminUtils.createTopic(zkUtils, topicName, numPartitions, replicationFactor, topicConfig);
+  private void createTopic(String topicName, int numPartitions) {
+    testUtil.createTopics(Collections.singletonList(topicName), numPartitions);
   }
 
-  public static void deleteTopic(String topicName) {
-    int sessionTimeoutMs = 10000;
-    int connectionTimeoutMs = 10000;
-    ZkUtils zkUtils =
-        ZkUtils.apply(testUtil.getZkUrl(), sessionTimeoutMs, connectionTimeoutMs, false);
-    AdminUtils.deleteTopic(zkUtils, topicName);
+  private void deleteTopic(String topicName) {
+    testUtil.deleteTopic(topicName);
   }
 
-  public String findUnusedTopic() {
+  private String findUnusedTopic() {
     String newTopic = null;
     boolean topicFound = false;
     while (!topicFound) {

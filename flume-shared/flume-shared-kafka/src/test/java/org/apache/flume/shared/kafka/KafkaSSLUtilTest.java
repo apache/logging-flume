@@ -20,7 +20,7 @@ package org.apache.flume.shared.kafka;
 
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.common.config.SslConfigs;
-import org.apache.kafka.common.protocol.SecurityProtocol;
+import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

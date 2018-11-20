@@ -21,7 +21,7 @@ package org.apache.flume.shared.kafka;
 import org.apache.flume.util.SSLUtil;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.common.config.SslConfigs;
-import org.apache.kafka.common.protocol.SecurityProtocol;
+import org.apache.kafka.common.security.auth.SecurityProtocol;
 
 import java.util.Properties;
 
