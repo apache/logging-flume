@@ -68,7 +68,7 @@ limitations under the License.
     <gson.version>2.2.2</gson.version>
     <guava.version>18.0</guava.version>
     <guava-old.version>11.0.2</guava-old.version>
-    <hadoop2.version>2.9.0</hadoop2.version>
+    <hadoop.version>2.9.0</hadoop.version>
     <hbase2.jetty.version>9.3.19.v20170502</hbase2.jetty.version>
     <hbase2.version>2.0.0</hbase2.version>
     <httpcore.version>4.4.6</httpcore.version>
@@ -146,7 +146,6 @@ limitations under the License.
         </property>
       </activation>
       <properties>
-        <hadoop.version>${hadoop2.version}</hadoop.version>
         <hbase.version>1.0.0</hbase.version>
       </properties>
       <dependencyManagement>
@@ -981,7 +980,7 @@ limitations under the License.
       <dependency>
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-minikdc</artifactId>
-        <version>${hadoop2.version}</version>
+        <version>${hadoop.version}</version>
         <scope>test</scope>
         <exclusions>
           <exclusion>
