@@ -37,13 +37,16 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doThrow;
 
@@ -86,6 +89,8 @@ public class TestSyslogTcpSource {
     rcs.setChannels(channels);
 
     source.setChannelProcessor(new ChannelProcessor(rcs));
+
+    context.put("host", InetAddress.getLoopbackAddress().getHostAddress());
     context.put("port", String.valueOf(TEST_SYSLOG_PORT));
     context.put("keepFields", keepFields);
 
@@ -264,5 +269,49 @@ public class TestSyslogTcpSource {
 
   }
 
+
+  @Test
+  public void testClientHeaders() throws IOException {
+    String testClientIPHeader = "testClientIPHeader";
+    String testClientHostnameHeader = "testClientHostnameHeader";
+
+    Context context = new Context();
+    context.put("clientIPHeader", testClientIPHeader);
+    context.put("clientHostnameHeader", testClientHostnameHeader);
+
+    init("none", context);
+
+    source.start();
+    // Write some message to the syslog port
+    InetSocketAddress addr = source.getBoundAddress();
+    Socket syslogSocket = new Socket(addr.getAddress(), addr.getPort());
+    syslogSocket.getOutputStream().write(bodyWithTandH.getBytes());
+
+    Transaction txn = channel.getTransaction();
+    txn.begin();
+    Event e = channel.take();
+
+    try {
+      txn.commit();
+    } catch (Throwable t) {
+      txn.rollback();
+    } finally {
+      txn.close();
+    }
+
+    source.stop();
+
+    Map<String, String> headers = e.getHeaders();
+
+    checkHeader(headers, testClientIPHeader, InetAddress.getLoopbackAddress().getHostAddress());
+    checkHeader(headers, testClientHostnameHeader, InetAddress.getLoopbackAddress().getHostName());
+  }
+
+  private static void checkHeader(Map<String, String> headers, String headerName,
+      String expectedValue) {
+    assertTrue("Missing event header: " + headerName, headers.containsKey(headerName));
+    assertEquals("Event header value does not match: " + headerName,
+        expectedValue, headers.get(headerName));
+  }
 }
 

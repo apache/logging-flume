@@ -228,6 +228,67 @@ public class Context {
   public String getString(String key) {
     return get(key);
   }
+
+
+  /**
+   * Gets value mapped to key, returning defaultValue if unmapped.
+   * @param key to be found
+   * @param defaultValue returned if key is unmapped
+   * @return value associated with key
+   */
+  public Float getFloat(String key, Float defaultValue) {
+    String value = get(key);
+    if (value != null) {
+      return Float.parseFloat(value.trim());
+    }
+    return defaultValue;
+  }
+  /**
+   * Gets value mapped to key, returning null if unmapped.
+   * <p>
+   * Note that this method returns an object as opposed to a
+   * primitive. The configuration key requested may not be mapped
+   * to a value and by returning the primitive object wrapper we can
+   * return null. If the key does not exist the return value of
+   * this method is assigned directly to a primitive, a
+   * {@link NullPointerException} will be thrown.
+   * </p>
+   * @param key to be found
+   * @return value associated with key or null if unmapped
+   */
+  public Float getFloat(String key) {
+    return getFloat(key, null);
+  }
+  /**
+   * Gets value mapped to key, returning defaultValue if unmapped.
+   * @param key to be found
+   * @param defaultValue returned if key is unmapped
+   * @return value associated with key
+   */
+  public Double getDouble(String key, Double defaultValue) {
+    String value = get(key);
+    if (value != null) {
+      return Double.parseDouble(value.trim());
+    }
+    return defaultValue;
+  }
+  /**
+   * Gets value mapped to key, returning null if unmapped.
+   * <p>
+   * Note that this method returns an object as opposed to a
+   * primitive. The configuration key requested may not be mapped
+   * to a value and by returning the primitive object wrapper we can
+   * return null. If the key does not exist the return value of
+   * this method is assigned directly to a primitive, a
+   * {@link NullPointerException} will be thrown.
+   * </p>
+   * @param key to be found
+   * @return value associated with key or null if unmapped
+   */
+  public Double getDouble(String key) {
+    return getDouble(key, null);
+  }
+
   private String get(String key, String defaultValue) {
     String result = parameters.get(key);
     if (result != null) {

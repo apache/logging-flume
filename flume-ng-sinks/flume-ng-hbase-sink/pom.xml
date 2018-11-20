@@ -67,18 +67,6 @@
 
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-api</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-core</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-slf4j-impl</artifactId>
       <scope>test</scope>
     </dependency>
@@ -212,17 +200,6 @@
         <dependency>
           <groupId>org.apache.hadoop</groupId>
           <artifactId>hadoop-minicluster</artifactId>
-          <scope>test</scope>
-          <exclusions>
-            <exclusion>
-              <groupId>log4j</groupId>
-              <artifactId>log4j</artifactId>
-            </exclusion>
-            <exclusion>
-              <groupId>org.slf4j</groupId>
-              <artifactId>slf4j-log4j12</artifactId>
-            </exclusion>
-          </exclusions>
         </dependency>
 
         <dependency>
@@ -253,6 +230,16 @@
           <groupId>org.apache.hbase</groupId>
           <artifactId>hbase-server</artifactId>
           <scope>test</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>log4j</groupId>
+              <artifactId>log4j</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>org.slf4j</groupId>
+              <artifactId>slf4j-log4j12</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
 
         <dependency>
@@ -260,6 +247,16 @@
           <artifactId>hbase-server</artifactId>
           <classifier>tests</classifier>
           <scope>test</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>log4j</groupId>
+              <artifactId>log4j</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>org.slf4j</groupId>
+              <artifactId>slf4j-log4j12</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
 
         <!-- There should be no need for Flume to include the following two
@@ -303,16 +300,6 @@
           <groupId>org.apache.zookeeper</groupId>
           <artifactId>zookeeper</artifactId>
           <scope>test</scope>
-          <exclusions>
-            <exclusion>
-              <groupId>log4j</groupId>
-              <artifactId>log4j</artifactId>
-            </exclusion>
-            <exclusion>
-              <groupId>org.slf4j</groupId>
-              <artifactId>slf4j-log4j12</artifactId>
-            </exclusion>
-          </exclusions>
         </dependency>
       </dependencies>
     </profile>

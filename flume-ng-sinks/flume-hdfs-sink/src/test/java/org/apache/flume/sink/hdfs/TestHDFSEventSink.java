@@ -1662,4 +1662,26 @@ public class TestHDFSEventSink {
     Assert.assertEquals(1, sc.getChannelReadFail());
   }
 
+  @Test
+  public void testEmptyInUseSuffix() {
+    String inUseSuffixConf = "aaaa";
+    Context context = new Context();
+    context.put("hdfs.path", testPath);
+    context.put("hdfs.inUseSuffix", inUseSuffixConf);
+
+    //hdfs.emptyInUseSuffix not defined
+    Configurables.configure(sink, context);
+    String inUseSuffix = (String) Whitebox.getInternalState(sink, "inUseSuffix");
+    Assert.assertEquals(inUseSuffixConf, inUseSuffix);
+
+    context.put("hdfs.emptyInUseSuffix", "true");
+    Configurables.configure(sink, context);
+    inUseSuffix = (String) Whitebox.getInternalState(sink, "inUseSuffix");
+    Assert.assertEquals("", inUseSuffix);
+
+    context.put("hdfs.emptyInUseSuffix", "false");
+    Configurables.configure(sink, context);
+    inUseSuffix = (String) Whitebox.getInternalState(sink, "inUseSuffix");
+    Assert.assertEquals(inUseSuffixConf, inUseSuffix);
+  }
 }

@@ -71,6 +71,8 @@ public class MultiportSyslogTCPSource extends SslContextAwareAbstractSource impl
   private int batchSize;
   private int readBufferSize;
   private String portHeader;
+  private String clientIPHeader;
+  private String clientHostnameHeader;
   private SourceCounter sourceCounter = null;
   private Charset defaultCharset;
   private ThreadSafeDecoder defaultDecoder;
@@ -141,7 +143,13 @@ public class MultiportSyslogTCPSource extends SslContextAwareAbstractSource impl
         SyslogSourceConfigurationConstants.DEFAULT_BATCHSIZE);
 
     portHeader = context.getString(
-            SyslogSourceConfigurationConstants.CONFIG_PORT_HEADER);
+        SyslogSourceConfigurationConstants.CONFIG_PORT_HEADER);
+
+    clientIPHeader = context.getString(
+        SyslogSourceConfigurationConstants.CONFIG_CLIENT_IP_HEADER);
+
+    clientHostnameHeader = context.getString(
+        SyslogSourceConfigurationConstants.CONFIG_CLIENT_HOSTNAME_HEADER);
 
     readBufferSize = context.getInteger(
         SyslogSourceConfigurationConstants.CONFIG_READBUF_SIZE,
@@ -181,8 +189,8 @@ public class MultiportSyslogTCPSource extends SslContextAwareAbstractSource impl
     acceptor.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, 10);
 
     acceptor.setHandler(new MultiportSyslogHandler(maxEventSize, batchSize,
-        getChannelProcessor(), sourceCounter, portHeader, defaultDecoder,
-        portCharsets, keepFields));
+        getChannelProcessor(), sourceCounter, portHeader, clientIPHeader,
+        clientHostnameHeader, defaultDecoder, portCharsets, keepFields));
 
     for (int port : ports) {
       InetSocketAddress addr;
@@ -237,6 +245,8 @@ public class MultiportSyslogTCPSource extends SslContextAwareAbstractSource impl
     private final int batchSize;
     private final SourceCounter sourceCounter;
     private final String portHeader;
+    private final String clientIPHeader;
+    private final String clientHostnameHeader;
     private final SyslogParser syslogParser;
     private final LineSplitter lineSplitter;
     private final ThreadSafeDecoder defaultDecoder;
@@ -245,14 +255,16 @@ public class MultiportSyslogTCPSource extends SslContextAwareAbstractSource impl
 
     public MultiportSyslogHandler(int maxEventSize, int batchSize,
         ChannelProcessor cp, SourceCounter ctr, String portHeader,
-        ThreadSafeDecoder defaultDecoder,
-        ConcurrentMap<Integer, ThreadSafeDecoder> portCharsets,
-        Set<String> keepFields) {
+        String clientIPHeader, String clientHostnameHeader,
+        ThreadSafeDecoder defaultDecoder, ConcurrentMap<Integer,
+        ThreadSafeDecoder> portCharsets, Set<String> keepFields) {
       channelProcessor = cp;
       sourceCounter = ctr;
       this.maxEventSize = maxEventSize;
       this.batchSize = batchSize;
       this.portHeader = portHeader;
+      this.clientIPHeader = clientIPHeader;
+      this.clientHostnameHeader = clientHostnameHeader;
       this.defaultDecoder = defaultDecoder;
       this.portCharsets = portCharsets;
       this.keepFields = keepFields;
@@ -320,6 +332,17 @@ public class MultiportSyslogTCPSource extends SslContextAwareAbstractSource impl
             if (portHeader != null) {
               event.getHeaders().put(portHeader, String.valueOf(port));
             }
+
+            if (clientIPHeader != null) {
+              event.getHeaders().put(clientIPHeader,
+                  SyslogUtils.getIP(session.getRemoteAddress()));
+            }
+
+            if (clientHostnameHeader != null) {
+              event.getHeaders().put(clientHostnameHeader,
+                  SyslogUtils.getHostname(session.getRemoteAddress()));
+            }
+
             events.add(event);
           } else {
             logger.trace("Parsed null event");

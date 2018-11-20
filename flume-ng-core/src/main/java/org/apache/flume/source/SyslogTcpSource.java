@@ -67,10 +67,14 @@ public class SyslogTcpSource extends SslContextAwareAbstractSource
   private Map<String, String> formaterProp;
   private SourceCounter sourceCounter;
   private Set<String> keepFields;
+  private String clientIPHeader;
+  private String clientHostnameHeader;
 
   public class syslogTcpHandler extends SimpleChannelHandler {
 
     private SyslogUtils syslogUtils = new SyslogUtils();
+    private String clientIPHeader;
+    private String clientHostnameHeader;
 
     public void setEventSize(int eventSize) {
       syslogUtils.setEventSize(eventSize);
@@ -84,6 +88,14 @@ public class SyslogTcpSource extends SslContextAwareAbstractSource
       syslogUtils.addFormats(prop);
     }
 
+    public void setClientIPHeader(String clientIPHeader) {
+      this.clientIPHeader = clientIPHeader;
+    }
+
+    public void setClientHostnameHeader(String clientHostnameHeader) {
+      this.clientHostnameHeader = clientHostnameHeader;
+    }
+
     @Override
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent mEvent) {
       ChannelBuffer buff = (ChannelBuffer) mEvent.getMessage();
@@ -94,6 +106,17 @@ public class SyslogTcpSource extends SslContextAwareAbstractSource
               "rest of the event is received.");
           continue;
         }
+
+        if (clientIPHeader != null) {
+          e.getHeaders().put(clientIPHeader,
+              SyslogUtils.getIP(ctx.getChannel().getRemoteAddress()));
+        }
+
+        if (clientHostnameHeader != null) {
+          e.getHeaders().put(clientHostnameHeader,
+              SyslogUtils.getHostname(ctx.getChannel().getRemoteAddress()));
+        }
+
         sourceCounter.incrementEventReceivedCount();
 
         try {
@@ -120,7 +143,8 @@ public class SyslogTcpSource extends SslContextAwareAbstractSource
     ServerBootstrap serverBootstrap = new ServerBootstrap(factory);
 
     serverBootstrap.setPipelineFactory(new PipelineFactory(
-        eventSize, formaterProp, keepFields, getSslEngineSupplier(false)
+        eventSize, formaterProp, keepFields, clientIPHeader, clientHostnameHeader,
+        getSslEngineSupplier(false)
     ));
     logger.info("Syslog TCP Source starting...");
 
@@ -163,11 +187,15 @@ public class SyslogTcpSource extends SslContextAwareAbstractSource
     host = context.getString(SyslogSourceConfigurationConstants.CONFIG_HOST);
     eventSize = context.getInteger("eventSize", SyslogUtils.DEFAULT_SIZE);
     formaterProp = context.getSubProperties(
-      SyslogSourceConfigurationConstants.CONFIG_FORMAT_PREFIX);
+        SyslogSourceConfigurationConstants.CONFIG_FORMAT_PREFIX);
     keepFields = SyslogUtils.chooseFieldsToKeep(
-      context.getString(
-        SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS,
-        SyslogSourceConfigurationConstants.DEFAULT_KEEP_FIELDS));
+        context.getString(
+            SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS,
+            SyslogSourceConfigurationConstants.DEFAULT_KEEP_FIELDS));
+    clientIPHeader =
+        context.getString(SyslogSourceConfigurationConstants.CONFIG_CLIENT_IP_HEADER);
+    clientHostnameHeader =
+        context.getString(SyslogSourceConfigurationConstants.CONFIG_CLIENT_HOSTNAME_HEADER);
 
     if (sourceCounter == null) {
       sourceCounter = new SourceCounter(getName());
@@ -193,13 +221,18 @@ public class SyslogTcpSource extends SslContextAwareAbstractSource
     private final Integer eventSize;
     private final Map<String, String> formaterProp;
     private final Set<String> keepFields;
+    private String clientIPHeader;
+    private String clientHostnameHeader;
     private Supplier<Optional<SSLEngine>> sslEngineSupplier;
 
     public PipelineFactory(Integer eventSize, Map<String, String> formaterProp,
-        Set<String> keepFields, Supplier<Optional<SSLEngine>> sslEngineSupplier) {
+        Set<String> keepFields, String clientIPHeader, String clientHostnameHeader,
+        Supplier<Optional<SSLEngine>> sslEngineSupplier) {
       this.eventSize = eventSize;
       this.formaterProp = formaterProp;
       this.keepFields = keepFields;
+      this.clientIPHeader = clientIPHeader;
+      this.clientHostnameHeader = clientHostnameHeader;
       this.sslEngineSupplier = sslEngineSupplier;
     }
 
@@ -209,6 +242,8 @@ public class SyslogTcpSource extends SslContextAwareAbstractSource
       handler.setEventSize(eventSize);
       handler.setFormater(formaterProp);
       handler.setKeepFields(keepFields);
+      handler.setClientIPHeader(clientIPHeader);
+      handler.setClientHostnameHeader(clientHostnameHeader);
 
       ChannelPipeline pipeline = Channels.pipeline(handler);
 
