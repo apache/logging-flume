@@ -45,6 +45,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.BOOTSTRAP_SERVERS_CONFIG;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.KAFKA_CONSUMER_PREFIX;
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.PARSE_AS_FLUME_EVENT;
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.TOPIC_CONFIG;
 
@@ -108,6 +109,7 @@ public class TestKafkaChannelBase {
     context.put(BOOTSTRAP_SERVERS_CONFIG, testUtil.getKafkaServerUrl());
     context.put(PARSE_AS_FLUME_EVENT, String.valueOf(parseAsFlume));
     context.put(TOPIC_CONFIG, topic);
+    context.put(KAFKA_CONSUMER_PREFIX + "max.poll.interval.ms", "10000");
 
     return context;
   }

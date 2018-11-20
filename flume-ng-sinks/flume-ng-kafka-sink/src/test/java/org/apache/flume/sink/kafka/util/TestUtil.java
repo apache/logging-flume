@@ -141,6 +141,8 @@ public class TestUtil {
     props.put("auto.commit.interval.ms", "1000");
     props.put("auto.offset.reset", "earliest");
     props.put("consumer.timeout.ms","10000");
+    props.put("max.poll.interval.ms","10000");
+
     // Create the consumer using props.
     return props;
   }
