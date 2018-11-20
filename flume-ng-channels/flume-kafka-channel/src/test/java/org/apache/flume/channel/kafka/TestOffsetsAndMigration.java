@@ -18,8 +18,7 @@
  */
 package org.apache.flume.channel.kafka;
 
-import kafka.utils.ZKGroupTopicDirs;
-import kafka.utils.ZkUtils;
+import kafka.zk.KafkaZkClient;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.Transaction;
@@ -30,6 +29,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.security.JaasUtils;
+import org.apache.kafka.common.utils.Time;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -97,7 +97,7 @@ public class TestOffsetsAndMigration extends TestKafkaChannelBase {
   }
 
   private Event takeEventWithoutCommittingTxn(KafkaChannel channel) {
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 10; i++) {
       Transaction txn = channel.getTransaction();
       txn.begin();
 
@@ -142,14 +142,13 @@ public class TestOffsetsAndMigration extends TestKafkaChannelBase {
 
     // Commit 10th offset to zookeeper
     if (hasZookeeperOffsets) {
-      ZkUtils zkUtils = ZkUtils.apply(testUtil.getZkUrl(), 30000, 30000,
-          JaasUtils.isZkSecurityEnabled());
-      ZKGroupTopicDirs topicDirs = new ZKGroupTopicDirs(group, topic);
-      // we commit the tenth offset to ensure some data is missed.
+      KafkaZkClient zkClient = KafkaZkClient.apply(testUtil.getZkUrl(),
+              JaasUtils.isZkSecurityEnabled(), 30000, 30000, 10, Time.SYSTEM,
+              "kafka.server", "SessionExpireListener");
+      zkClient.getConsumerOffset(group, new TopicPartition(topic, 0));
       Long offset = tenthOffset + 1;
-      zkUtils.updatePersistentPath(topicDirs.consumerOffsetDir() + "/0", offset.toString(),
-          zkUtils.updatePersistentPath$default$3());
-      zkUtils.close();
+      zkClient.setOrCreateConsumerOffset(group, new TopicPartition(topic, 0), offset);
+      zkClient.close();
     }
 
     // Commit 5th offset to kafka

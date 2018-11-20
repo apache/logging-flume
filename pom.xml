@@ -78,7 +78,7 @@ limitations under the License.
     <jetty.version>9.4.6.v20170531</jetty.version>
     <joda-time.version>2.9.9</joda-time.version>
     <junit.version>4.10</junit.version>
-    <kafka.version>0.9.0.1</kafka.version>
+    <kafka.version>2.0.1</kafka.version>
     <kite.version>1.0.0</kite.version>
     <hive.version>1.0.0</hive.version>
     <lifecycle-mapping.version>1.0.0</lifecycle-mapping.version>
@@ -106,7 +106,7 @@ limitations under the License.
     <rat.version>0.12</rat.version>
     <snappy-java.version>1.1.4</snappy-java.version>
     <solr-global.version>4.3.0</solr-global.version>
-    <slf4j.version>1.6.1</slf4j.version>
+    <slf4j.version>1.7.25</slf4j.version>
     <system-rules.version>1.17.0</system-rules.version>
     <thrift.version>0.9.3</thrift.version>
     <twitter4j.version>3.0.3</twitter4j.version>
@@ -1809,7 +1809,7 @@ limitations under the License.
       <!-- Dependencies of Kafka source -->
       <dependency>
         <groupId>org.apache.kafka</groupId>
-        <artifactId>kafka_2.10</artifactId>
+        <artifactId>kafka_2.11</artifactId>
         <version>${kafka.version}</version>
         <exclusions>
           <exclusion>
@@ -1824,7 +1824,7 @@ limitations under the License.
       </dependency>
       <dependency>
         <groupId>org.apache.kafka</groupId>
-        <artifactId>kafka_2.10</artifactId>
+        <artifactId>kafka_2.11</artifactId>
         <version>${kafka.version}</version>
         <classifier>test</classifier>
         <scope>test</scope>

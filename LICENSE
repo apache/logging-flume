@@ -240,7 +240,7 @@ For
  jetty-<version>.jar:
  jetty-util-<version>.jar:
  joda-time-<version>.jar:
- kafka_2.10-<version>.jar:
+ kafka_2.11-<version>.jar:
  kafka-clients-<version>.jar:
  kite-data-core-<version>.jar:
  kite-data-hbase-<version>.jar:
