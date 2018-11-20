@@ -148,14 +148,14 @@ limitations under the License.
       <properties>
         <hadoop.version>${hadoop2.version}</hadoop.version>
         <hbase.version>1.0.0</hbase.version>
-        <hadoop.common.artifact.id>hadoop-common</hadoop.common.artifact.id>
       </properties>
       <dependencyManagement>
         <dependencies>
           <dependency>
             <groupId>org.apache.hadoop</groupId>
-            <artifactId>${hadoop.common.artifact.id}</artifactId>
+            <artifactId>hadoop-common</artifactId>
             <version>${hadoop.version}</version>
+            <optional>true</optional>
             <exclusions>
               <exclusion>
                 <groupId>log4j</groupId>
