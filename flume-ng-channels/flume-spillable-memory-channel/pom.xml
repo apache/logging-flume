@@ -89,7 +89,6 @@
     <dependency>
       <groupId>org.easytesting</groupId>
       <artifactId>fest-reflect</artifactId>
-      <version>${fest-reflect.version}</version>
       <scope>test</scope>
     </dependency>
 

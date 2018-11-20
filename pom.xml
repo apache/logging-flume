@@ -1102,6 +1102,13 @@ limitations under the License.
 
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
+        <artifactId>flume-ng-kafka-sink</artifactId>
+        <version>${project.version}</version>
+        <classifier>tests</classifier>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-dataset-sink</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -1389,9 +1396,35 @@ limitations under the License.
       </dependency>
 
       <dependency>
+        <groupId>org.apache.hive.hcatalog</groupId>
+        <artifactId>hive-hcatalog-core</artifactId>
+        <version>${hive.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
         <groupId>org.apache.hive</groupId>
         <artifactId>hive-cli</artifactId>
         <version>${hive.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <!-- Dependency for Zk provider -->
