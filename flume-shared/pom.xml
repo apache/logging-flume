@@ -37,18 +37,4 @@ limitations under the License.
     <module>flume-shared-kafka-test</module>
   </modules>
 
-  <profiles>
-
-    <profile>
-      <id>hadoop-1.0</id>
-      <activation>
-        <property>
-          <name>flume.hadoop.profile</name>
-          <value>1</value>
-        </property>
-      </activation>
-    </profile>
-
-  </profiles>
-
 </project>

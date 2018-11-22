@@ -91,7 +91,6 @@ limitations under the License.
       -->
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-common</artifactId>
-      <version>${hadoop2.version}</version>
       <optional>true</optional>
     </dependency>
 
@@ -114,7 +113,6 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-minicluster</artifactId>
-      <version>${hadoop2.version}</version>
     </dependency>
 
     <dependency>
