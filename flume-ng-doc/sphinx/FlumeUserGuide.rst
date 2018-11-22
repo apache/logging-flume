@@ -195,11 +195,11 @@ several named agents; when a given Flume process is launched a flag is passed te
 
 Given this configuration file, we can start Flume as follows::
 
-  $ bin/flume-ng agent --conf conf --conf-file example.conf --name a1 -Dflume.root.logger=INFO,console
+  $ bin/flume-ng agent --conf conf --conf-file example.conf --name a1 -Dflume.root.logger.level=INFO -Dflume.root.logger.appender=Console
 
-Note that in a full deployment we would typically include one more option: ``--conf=<conf-dir>``.
-The ``<conf-dir>`` directory would include a shell script *flume-env.sh* and potentially a log4j properties file.
-In this example, we pass a Java option to force Flume to log to the console and we go without a custom environment script.
+Note that in a full deployment we typically include the option: ``--conf=<conf-dir>``.
+The ``<conf-dir>`` directory would include a shell script *flume-env.sh* and a *log4j2.xml* file.
+In this example, we pass a Java option to force Flume to log to the console.
 
 From a separate terminal, we can then telnet port 44444 and send Flume an event:
 
@@ -237,7 +237,8 @@ NB: it currently works for values only, not for keys. (Ie. only on the "right si
 This can be enabled via Java system properties on agent invocation by setting `propertiesImplementation = org.apache.flume.node.EnvVarResolverProperties`.
 
 For example::
-  $ NC_PORT=44444 bin/flume-ng agent --conf conf --conf-file example.conf --name a1 -Dflume.root.logger=INFO,console -DpropertiesImplementation=org.apache.flume.node.EnvVarResolverProperties
+
+  $ NC_PORT=44444 bin/flume-ng agent --conf conf --conf-file example.conf --name a1 -Dflume.root.logger.level=INFO -Dflume.root.logger.appender=Console -DpropertiesImplementation=org.apache.flume.node.EnvVarResolverProperties
 
 Note the above is just an example, environment variables can be configured in other ways, including being set in `conf/flume-env.sh`.
 
@@ -256,20 +257,20 @@ connected to a `Logger Sink`_, which will output all event data to the Flume log
 In some situations, however, this approach is insufficient.
 
 In order to enable logging of event- and configuration-related data, some Java system properties
-must be set in addition to log4j properties.
+must be set in addition to log4j2 configuration.
 
 To enable configuration-related logging, set the Java system property
 ``-Dorg.apache.flume.log.printconfig=true``. This can either be passed on the command line or by
 setting this in the ``JAVA_OPTS`` variable in *flume-env.sh*.
 
 To enable data logging, set the Java system property ``-Dorg.apache.flume.log.rawdata=true``
-in the same way described above. For most components, the log4j logging level must also be set to
+in the same way described above. For most components, the log4j2 logging level must also be set to
 DEBUG or TRACE to make event-specific logging appear in the Flume logs.
 
 Here is an example of enabling both configuration logging and raw data logging while also
-setting the Log4j loglevel to DEBUG for console output::
+setting the log4j2 logging level to DEBUG for console output::
 
-  $ bin/flume-ng agent --conf conf --conf-file example.conf --name a1 -Dflume.root.logger=DEBUG,console -Dorg.apache.flume.log.printconfig=true -Dorg.apache.flume.log.rawdata=true
+  $ bin/flume-ng agent --conf conf --conf-file example.conf --name a1 -Dflume.root.logger.level=DEBUG -Dflume.root.logger.appender=Console -Dorg.apache.flume.log.printconfig=true -Dorg.apache.flume.log.rawdata=true
 
 
 Zookeeper based Configuration
@@ -287,7 +288,7 @@ Following is how the Zookeeper Node tree would look like for agents a1 and a2
 
 Once the configuration file is uploaded, start the agent with following options
 
-  $ bin/flume-ng agent --conf conf -z zkhost:2181,zkhost1:2181 -p /flume --name a1 -Dflume.root.logger=INFO,console
+  $ bin/flume-ng agent --conf conf -z zkhost:2181,zkhost1:2181 -p /flume --name a1 -Dflume.root.logger.level=INFO -Dflume.root.logger.appender=Console
 
 ==================   ================  =========================================================================
 Argument Name        Default           Description

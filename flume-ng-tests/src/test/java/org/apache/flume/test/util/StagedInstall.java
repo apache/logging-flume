@@ -55,9 +55,11 @@ public class StagedInstall {
       "flume.dist.tarball";
 
   public static final String ENV_FLUME_LOG_DIR = "flume.log.dir";
-  public static final String ENV_FLUME_ROOT_LOGGER = "flume.root.logger";
-  public static final String ENV_FLUME_ROOT_LOGGER_VALUE = "DEBUG,LOGFILE";
   public static final String ENV_FLUME_LOG_FILE = "flume.log.file";
+  public static final String ENV_FLUME_ROOT_LOGGER_LEVEL = "flume.root.logger.level";
+  public static final String ENV_FLUME_ROOT_LOGGER_LEVEL_VALUE = "DEBUG";
+  public static final String ENV_FLUME_ROOT_LOGGER_APPENDER = "flume.root.logger.appender";
+  public static final String ENV_FLUME_ROOT_LOGGER_APPENDER_VALUE = "LogFile";
 
   private final File stageDir;
   private final File baseDir;
@@ -156,9 +158,11 @@ public class StagedInstall {
     builder.add("--conf-file", configFilePath);
     builder.add("--name", agentName);
     builder.add("-D" + ENV_FLUME_LOG_DIR + "=" + logDirPath);
-    builder.add("-D" + ENV_FLUME_ROOT_LOGGER + "="
-            + ENV_FLUME_ROOT_LOGGER_VALUE);
     builder.add("-D" + ENV_FLUME_LOG_FILE + "=" + logFileName);
+    builder.add("-D" + ENV_FLUME_ROOT_LOGGER_LEVEL + "="
+        + ENV_FLUME_ROOT_LOGGER_LEVEL_VALUE);
+    builder.add("-D" + ENV_FLUME_ROOT_LOGGER_APPENDER + "="
+        + ENV_FLUME_ROOT_LOGGER_APPENDER_VALUE);
 
     commandOptions.forEach((key, value) -> builder.add(key, value));
 
