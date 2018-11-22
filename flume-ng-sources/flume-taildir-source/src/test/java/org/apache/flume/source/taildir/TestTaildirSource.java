@@ -55,6 +55,8 @@ import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstant
 import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.POSITION_FILE;
 import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.FILENAME_HEADER;
 import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.FILENAME_HEADER_KEY;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.BATCH_SIZE;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.MAX_BATCH_COUNT;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -378,6 +380,61 @@ public class TestTaildirSource {
     source.process();
     assertEquals(1, source.getSourceCounter().getChannelWriteFail());
     source.stop();
+  }
+
+  @Test
+  public void testMaxBatchCount() throws IOException {
+    File f1 = new File(tmpDir, "file1");
+    File f2 = new File(tmpDir, "file2");
+    Files.write("file1line1\nfile1line2\n" +
+        "file1line3\nfile1line4\n", f1, Charsets.UTF_8);
+    Files.write("file2line1\nfile2line2\n" +
+        "file2line3\nfile2line4\n", f2, Charsets.UTF_8);
+
+    Context context = new Context();
+    context.put(POSITION_FILE, posFilePath);
+    context.put(FILE_GROUPS, "fg");
+    context.put(FILE_GROUPS_PREFIX + "fg", tmpDir.getAbsolutePath() + "/file.*");
+    context.put(BATCH_SIZE, String.valueOf(1));
+    context.put(MAX_BATCH_COUNT, String.valueOf(2));
+
+    Configurables.configure(source, context);
+    source.start();
+
+    // 2 x 4 lines will be processed in 2 rounds
+    source.process();
+    source.process();
+
+    List<Event> eventList = new ArrayList<Event>();
+    for (int i = 0; i < 8; i++) {
+      Transaction txn = channel.getTransaction();
+      txn.begin();
+      Event e = channel.take();
+      txn.commit();
+      txn.close();
+      if (e == null) {
+        break;
+      }
+      eventList.add(e);
+    }
+
+    assertEquals("1", context.getString(BATCH_SIZE));
+    assertEquals("2", context.getString(MAX_BATCH_COUNT));
+
+    assertEquals(8, eventList.size());
+
+    // the processing order of the files is not deterministic
+    String firstFile = new String(eventList.get(0).getBody()).substring(0, 5);
+    String secondFile = firstFile.equals("file1") ? "file2" : "file1";
+
+    assertEquals(firstFile + "line1", new String(eventList.get(0).getBody()));
+    assertEquals(firstFile + "line2", new String(eventList.get(1).getBody()));
+    assertEquals(secondFile + "line1", new String(eventList.get(2).getBody()));
+    assertEquals(secondFile + "line2", new String(eventList.get(3).getBody()));
+    assertEquals(firstFile + "line3", new String(eventList.get(4).getBody()));
+    assertEquals(firstFile + "line4", new String(eventList.get(5).getBody()));
+    assertEquals(secondFile + "line3", new String(eventList.get(6).getBody()));
+    assertEquals(secondFile + "line4", new String(eventList.get(7).getBody()));
   }
 
 }

@@ -88,6 +88,7 @@ public class TaildirSource extends AbstractSource implements
   private boolean fileHeader;
   private String fileHeaderKey;
   private boolean ignoreHiddenFile;
+  private Long maxBatchCount;
 
   @Override
   public synchronized void start() {
@@ -189,6 +190,12 @@ public class TaildirSource extends AbstractSource implements
             DEFAULT_FILENAME_HEADER_KEY);
     ignoreHiddenFile = context.getBoolean(IGNORE_HIDDEN_FILE,
             DEFAULT_IGNORE_HIDDEN_FILE);
+    maxBatchCount = context.getLong(MAX_BATCH_COUNT, DEFAULT_MAX_BATCH_COUNT);
+    if (maxBatchCount <= 0) {
+      maxBatchCount = DEFAULT_MAX_BATCH_COUNT;
+      logger.warn("Invalid maxBatchCount specified, initializing source "
+          + "default maxBatchCount of {}", maxBatchCount);
+    }
 
     if (sourceCounter == null) {
       sourceCounter = new SourceCounter(getName());
@@ -262,6 +269,7 @@ public class TaildirSource extends AbstractSource implements
 
   private void tailFileProcess(TailFile tf, boolean backoffWithoutNL)
       throws IOException, InterruptedException {
+    long batchCount = 0;
     while (true) {
       reader.setCurrentFile(tf);
       List<Event> events = reader.readEvents(batchSize, backoffWithoutNL);
@@ -286,6 +294,11 @@ public class TaildirSource extends AbstractSource implements
       sourceCounter.addToEventAcceptedCount(events.size());
       sourceCounter.incrementAppendBatchAcceptedCount();
       if (events.size() < batchSize) {
+        logger.debug("The events taken from " + tf.getPath() + " is less than " + batchSize);
+        break;
+      }
+      if (++batchCount >= maxBatchCount) {
+        logger.debug("The batches read from the same file is larger than " + maxBatchCount );
         break;
       }
     }

@@ -1375,6 +1375,10 @@ skipToEnd                           false                          Whether to sk
 idleTimeout                         120000                         Time (ms) to close inactive files. If the closed file is appended new lines to, this source will automatically re-open it.
 writePosInterval                    3000                           Interval time (ms) to write the last position of each file on the position file.
 batchSize                           100                            Max number of lines to read and send to the channel at a time. Using the default is usually fine.
+maxBatchCount                       Long.MAX_VALUE                 Controls the number of batches being read consecutively from the same file.
+                                                                   If the source is tailing multiple files and one of them is written at a fast rate,
+                                                                   it can prevent other files to be processed, because the busy file would be read in an endless loop.
+                                                                   In this case lower this value.
 backoffSleepIncrement               1000                           The increment for time delay before reattempting to poll for new data, when the last attempt did not find any new data.
 maxBackoffSleep                     5000                           The max time delay between each reattempt to poll for new data, when the last attempt did not find any new data.
 cachePatternMatching                true                           Listing directories and applying the filename regex pattern may be time consuming for directories
@@ -1402,6 +1406,7 @@ Example for agent named a1:
   a1.sources.r1.headers.f2.headerKey1 = value2
   a1.sources.r1.headers.f2.headerKey2 = value2-2
   a1.sources.r1.fileHeader = true
+  a1.sources.ri.maxBatchCount = 1000
 
 Twitter 1% firehose Source (experimental)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

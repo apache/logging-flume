@@ -67,4 +67,8 @@ public class TaildirSourceConfigurationConstants {
   /** Whether to ingore the hidden file. */
   public static final String IGNORE_HIDDEN_FILE = "ignoreHiddenFile";
   public static final boolean DEFAULT_IGNORE_HIDDEN_FILE = false;
+
+  /** The max number of batch reads from a file in one loop */
+  public static final String MAX_BATCH_COUNT = "maxBatchCount";
+  public static final Long DEFAULT_MAX_BATCH_COUNT = Long.MAX_VALUE;
 }
