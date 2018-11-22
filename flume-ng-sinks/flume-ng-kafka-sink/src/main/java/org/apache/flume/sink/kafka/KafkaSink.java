@@ -172,6 +172,7 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
           }
           break;
         }
+        counter.incrementEventDrainAttemptCount();
 
         byte[] eventBody = event.getBody();
         Map<String, String> headers = event.getHeaders();
