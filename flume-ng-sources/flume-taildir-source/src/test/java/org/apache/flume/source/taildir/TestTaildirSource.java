@@ -29,6 +29,7 @@ import org.apache.flume.ChannelException;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
+import org.apache.flume.PollableSource.Status;
 import org.apache.flume.Transaction;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
@@ -435,6 +436,40 @@ public class TestTaildirSource {
     assertEquals(firstFile + "line4", new String(eventList.get(5).getBody()));
     assertEquals(secondFile + "line3", new String(eventList.get(6).getBody()));
     assertEquals(secondFile + "line4", new String(eventList.get(7).getBody()));
+  }
+
+  @Test
+  public void testStatus() throws IOException {
+    File f1 = new File(tmpDir, "file1");
+    File f2 = new File(tmpDir, "file2");
+    Files.write("file1line1\nfile1line2\n" +
+        "file1line3\nfile1line4\nfile1line5\n", f1, Charsets.UTF_8);
+    Files.write("file2line1\nfile2line2\n" +
+        "file2line3\n", f2, Charsets.UTF_8);
+
+    Context context = new Context();
+    context.put(POSITION_FILE, posFilePath);
+    context.put(FILE_GROUPS, "fg");
+    context.put(FILE_GROUPS_PREFIX + "fg", tmpDir.getAbsolutePath() + "/file.*");
+    context.put(BATCH_SIZE, String.valueOf(1));
+    context.put(MAX_BATCH_COUNT, String.valueOf(2));
+
+    Configurables.configure(source, context);
+    source.start();
+
+    Status status;
+
+    status = source.process();
+    assertEquals(Status.READY, status);
+
+    status = source.process();
+    assertEquals(Status.READY, status);
+
+    status = source.process();
+    assertEquals(Status.BACKOFF, status);
+
+    status = source.process();
+    assertEquals(Status.BACKOFF, status);
   }
 
 }

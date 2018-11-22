@@ -233,22 +233,20 @@ public class TaildirSource extends AbstractSource implements
 
   @Override
   public Status process() {
-    Status status = Status.READY;
+    Status status = Status.BACKOFF;
     try {
       existingInodes.clear();
       existingInodes.addAll(reader.updateTailFiles());
       for (long inode : existingInodes) {
         TailFile tf = reader.getTailFiles().get(inode);
         if (tf.needTail()) {
-          tailFileProcess(tf, true);
+          boolean hasMoreLines = tailFileProcess(tf, true);
+          if (hasMoreLines) {
+            status = Status.READY;
+          }
         }
       }
       closeTailFiles();
-      try {
-        TimeUnit.MILLISECONDS.sleep(retryInterval);
-      } catch (InterruptedException e) {
-        logger.info("Interrupted while sleeping");
-      }
     } catch (Throwable t) {
       logger.error("Unable to tail files", t);
       sourceCounter.incrementEventReadFail();
@@ -267,14 +265,14 @@ public class TaildirSource extends AbstractSource implements
     return maxBackOffSleepInterval;
   }
 
-  private void tailFileProcess(TailFile tf, boolean backoffWithoutNL)
+  private boolean tailFileProcess(TailFile tf, boolean backoffWithoutNL)
       throws IOException, InterruptedException {
     long batchCount = 0;
     while (true) {
       reader.setCurrentFile(tf);
       List<Event> events = reader.readEvents(batchSize, backoffWithoutNL);
       if (events.isEmpty()) {
-        break;
+        return false;
       }
       sourceCounter.addToEventReceivedCount(events.size());
       sourceCounter.incrementAppendBatchReceivedCount();
@@ -295,11 +293,11 @@ public class TaildirSource extends AbstractSource implements
       sourceCounter.incrementAppendBatchAcceptedCount();
       if (events.size() < batchSize) {
         logger.debug("The events taken from " + tf.getPath() + " is less than " + batchSize);
-        break;
+        return false;
       }
       if (++batchCount >= maxBatchCount) {
         logger.debug("The batches read from the same file is larger than " + maxBatchCount );
-        break;
+        return true;
       }
     }
   }
