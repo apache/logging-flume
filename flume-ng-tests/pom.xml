@@ -57,7 +57,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
-      <artifactId>${hadoop.common.artifact.id}</artifactId>
+      <artifactId>hadoop-common</artifactId>
       <optional>true</optional>
     </dependency>
     <dependency>
