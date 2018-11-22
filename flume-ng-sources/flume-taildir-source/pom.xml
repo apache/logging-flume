@@ -32,7 +32,7 @@ limitations under the License.
 
   <properties>
     <!-- TODO fix spotbugs/pmd violations -->
-    <spotbugs.maxAllowedViolations>13</spotbugs.maxAllowedViolations>
+    <spotbugs.maxAllowedViolations>14</spotbugs.maxAllowedViolations>
     <pmd.maxAllowedViolations>3</pmd.maxAllowedViolations>
   </properties>
 
