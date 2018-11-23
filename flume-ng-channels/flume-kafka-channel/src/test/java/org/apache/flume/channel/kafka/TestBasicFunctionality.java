@@ -20,13 +20,16 @@ package org.apache.flume.channel.kafka;
 
 import org.apache.flume.Context;
 import org.apache.flume.Event;
+import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurables;
+import org.apache.flume.instrumentation.kafka.KafkaChannelCounter;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.internal.util.reflection.Whitebox;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -209,5 +212,37 @@ public class TestBasicFunctionality extends TestKafkaChannelBase {
     }
     underlying.shutdownNow();
     verify(eventsPulled);
+  }
+
+  @Test
+  public void testMetricsCount() throws Exception {
+    final KafkaChannel channel = startChannel(true);
+    ExecutorService underlying = Executors.newCachedThreadPool();
+    ExecutorCompletionService<Void> submitterSvc = new ExecutorCompletionService<Void>(underlying);
+    final List<List<Event>> events = createBaseList();
+    putEvents(channel, events, submitterSvc);
+    takeEventsWithCommittingTxn(channel,50);
+
+    KafkaChannelCounter counter =
+            (KafkaChannelCounter) Whitebox.getInternalState(channel, "counter");
+    Assert.assertEquals(50, counter.getEventPutAttemptCount());
+    Assert.assertEquals(50, counter.getEventPutSuccessCount());
+    Assert.assertEquals(50, counter.getEventTakeAttemptCount());
+    Assert.assertEquals(50, counter.getEventTakeSuccessCount());
+    channel.stop();
+  }
+
+  private void takeEventsWithCommittingTxn(KafkaChannel channel, long eventsCount) {
+    List<Event> takeEventsList = new ArrayList<>();
+    Transaction txn = channel.getTransaction();
+    txn.begin();
+    while (takeEventsList.size() < eventsCount) {
+      Event event = channel.take();
+      if (event != null) {
+        takeEventsList.add(event);
+      }
+    }
+    txn.commit();
+    txn.close();
   }
 }
