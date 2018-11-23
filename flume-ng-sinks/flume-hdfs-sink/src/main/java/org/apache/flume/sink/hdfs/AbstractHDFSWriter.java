@@ -63,7 +63,8 @@ public abstract class AbstractHDFSWriter implements HDFSWriter {
 
     if (numberOfCloseRetries > 1) {
       try {
-        timeBetweenCloseRetries = context.getLong("hdfs.callTimeout", 10000L);
+        //hdfs.callTimeout is deprecated from 1.9
+        timeBetweenCloseRetries = context.getLong("hdfs.callTimeout", 30000L);
       } catch (NumberFormatException e) {
         logger.warn("hdfs.callTimeout can not be parsed to a long: " +
                     context.getLong("hdfs.callTimeout"));

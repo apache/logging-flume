@@ -90,7 +90,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable, BatchSi
    * Default length of time we wait for blocking BucketWriter calls
    * before timing out the operation. Intended to prevent server hangs.
    */
-  private static final long defaultCallTimeout = 10000;
+  private static final long defaultCallTimeout = 30000;
   /**
    * Default number of threads available for tasks
    * such as append/open/close/flush with hdfs.

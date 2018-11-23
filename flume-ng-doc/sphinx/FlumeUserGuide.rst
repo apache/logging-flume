@@ -2397,8 +2397,6 @@ hdfs.fileType           SequenceFile  File format: currently ``SequenceFile``, `
 hdfs.maxOpenFiles       5000          Allow only this number of open files. If this number is exceeded, the oldest file is closed.
 hdfs.minBlockReplicas   --            Specify minimum number of replicas per HDFS block. If not specified, it comes from the default Hadoop config in the classpath.
 hdfs.writeFormat        Writable      Format for sequence file records. One of ``Text`` or ``Writable``. Set to ``Text`` before creating data files with Flume, otherwise those files cannot be read by either Apache Impala (incubating) or Apache Hive.
-hdfs.callTimeout        10000         Number of milliseconds allowed for HDFS operations, such as open, write, flush, close.
-                                      This number should be increased if many HDFS timeout operations are occurring.
 hdfs.threadsPoolSize    10            Number of threads per HDFS sink for HDFS IO ops (open, write, etc.)
 hdfs.rollTimerPoolSize  1             Number of threads per HDFS sink for scheduling timed file rolling
 hdfs.kerberosPrincipal  --            Kerberos user principal for accessing secure HDFS
@@ -2420,6 +2418,14 @@ serializer              ``TEXT``      Other possible options include ``avro_even
                                       fully-qualified class name of an implementation of the
                                       ``EventSerializer.Builder`` interface.
 serializer.*
+======================  ============  ======================================================================
+
+Deprecated Properties
+
+Name                    Default       Description
+======================  ============  ======================================================================
+hdfs.callTimeout        30000         Number of milliseconds allowed for HDFS operations, such as open, write, flush, close.
+                                      This number should be increased if many HDFS timeout operations are occurring.
 ======================  ============  ======================================================================
 
 Example for agent named a1:
