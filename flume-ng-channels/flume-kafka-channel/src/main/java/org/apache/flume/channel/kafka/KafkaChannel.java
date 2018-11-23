@@ -454,6 +454,7 @@ public class KafkaChannel extends BasicChannelSemantics {
               new ProducerRecord<String, byte[]>(topic.get(), key,
                                                  serializeValue(event, parseAsFlumeEvent)));
         }
+        counter.incrementEventPutAttemptCount();
       } catch (NumberFormatException e) {
         throw new ChannelException("Non integer partition id specified", e);
       } catch (Exception e) {
@@ -518,6 +519,7 @@ public class KafkaChannel extends BasicChannelSemantics {
           } else {
             return null;
           }
+          counter.incrementEventTakeAttemptCount();
         } catch (Exception ex) {
           logger.warn("Error while getting events from Kafka. This is usually caused by " +
                       "trying to read a non-flume event. Ensure the setting for " +
