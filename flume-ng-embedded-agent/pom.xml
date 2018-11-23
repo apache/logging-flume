@@ -74,8 +74,8 @@ limitations under the License.
     </dependency>
 
     <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-1.2-api</artifactId>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
       <!-- only used for tests -->
       <optional>true</optional>
     </dependency>
