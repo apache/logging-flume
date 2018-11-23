@@ -853,6 +853,15 @@ the commands including the passwords will be saved to the command history.)
   performed on the truststore when it is opened by the JDK.
 
 
+Source and sink batch sizes and channel transaction capacities
+--------------------------------------------------------------
+
+Sources and sinks can have a batch size parameter that determines the maximum number of events they
+process in one batch. This happens within a channel transaction that has an upper limit called
+transaction capacity. Batch size must be smaller than the channel's transaction capacity.
+There is an explicit check to prevent incompatible settings. This check happens
+whenever the configuration is read.
+
 Flume Sources
 -------------
 
