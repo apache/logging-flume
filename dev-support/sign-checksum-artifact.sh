@@ -36,11 +36,9 @@ fi
 
 # The tools we need.
 GPG=$(find_in_path gpg)
-MD5=$(find_in_path md5sum md5)
-SHA1=$(find_in_path sha1sum shasum)
+SHA512=$(find_in_path sha512sum)
 
 # Now sign and checksum the artifact.
 set -x
 $GPG --sign $ARTIFACT
-$MD5 < $ARTIFACT > $ARTIFACT.md5
-$SHA1 < $ARTIFACT > $ARTIFACT.sha1
+$SHA512 < $ARTIFACT > $ARTIFACT.sha512

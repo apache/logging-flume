@@ -91,6 +91,7 @@ limitations under the License.
     <mvn-assembly-plugin.version>3.1.0</mvn-assembly-plugin.version>
     <mvn-build-helper-plugin>3.0.0</mvn-build-helper-plugin>
     <mvn-checkstyle-plugin.version>3.0.0</mvn-checkstyle-plugin.version>
+    <mvn-checksum-plugin.version>1.7</mvn-checksum-plugin.version>
     <mvn-clean-plugin.version>3.1.0</mvn-clean-plugin.version>
     <mvn-compiler-plugin.version>3.8.0</mvn-compiler-plugin.version>
     <mvn-gpg-plugin.version>1.6</mvn-gpg-plugin.version>
@@ -669,6 +670,12 @@ limitations under the License.
               </goals>
             </execution>
           </executions>
+        </plugin>
+
+        <plugin>
+          <groupId>net.nicoulaj.maven.plugins</groupId>
+          <artifactId>checksum-maven-plugin</artifactId>
+          <version>${mvn-checksum-plugin.version}</version>
         </plugin>
       </plugins>
     </pluginManagement>
