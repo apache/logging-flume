@@ -54,6 +54,35 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>net.nicoulaj.maven.plugins</groupId>
+        <artifactId>checksum-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>checksum</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>files</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <algorithms>
+            <algorithm>SHA-512</algorithm>
+          </algorithms>
+          <attachChecksums>true</attachChecksums>
+          <csvSummary>false</csvSummary>
+          <fileSets>
+            <fileSet>
+              <directory>${project.build.directory}</directory>
+              <includes>
+                <include>*.tar.gz</include>
+              </includes>
+            </fileSet>
+          </fileSets>
+          <failIfNoFiles>false</failIfNoFiles><!-- usually, no file to do checksum: don't consider error -->
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 
