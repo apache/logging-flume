@@ -123,11 +123,12 @@ public class StagedInstall {
   }
 
   public synchronized void startAgent(String name, Properties properties) throws Exception {
-    startAgent(name, properties, new HashMap<>());
+    startAgent(name, properties, new HashMap<>(), new HashMap<>());
   }
 
   public synchronized void startAgent(
-      String name, Properties properties,  Map<String, String> environmentVariables)
+      String name, Properties properties,  Map<String, String> environmentVariables,
+      Map<String, String> commandOptions)
       throws Exception {
     Preconditions.checkArgument(!name.isEmpty(), "agent name must not be empty");
     Preconditions.checkNotNull(properties, "properties object must not be null");
@@ -158,6 +159,8 @@ public class StagedInstall {
     builder.add("-D" + ENV_FLUME_ROOT_LOGGER + "="
             + ENV_FLUME_ROOT_LOGGER_VALUE);
     builder.add("-D" + ENV_FLUME_LOG_FILE + "=" + logFileName);
+
+    commandOptions.forEach((key, value) -> builder.add(key, value));
 
     List<String> cmdArgs = builder.build();
 
