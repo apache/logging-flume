@@ -33,9 +33,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Scanner;
 import java.util.Set;
@@ -54,6 +59,7 @@ public class TestConfig {
 
   private Properties agentProps;
   private Map<String, String> agentEnv;
+  private Map<String, String> agentOptions;
   private File sinkOutputDir1;
   private File sinkOutputDir2;
   private File sinkOutputDir3;
@@ -73,6 +79,8 @@ public class TestConfig {
 
     agentProps = new Properties();
     agentEnv = new HashMap<>();
+    agentOptions = new HashMap<>();
+    agentOptions.put("-C", getAdditionalClassPath());
 
     // Create the rest of the properties file
     agentProps.put("agent.sources.seq-01.type", "seq");
@@ -135,6 +143,12 @@ public class TestConfig {
     agentProps.put("agent.configfilters", "filter-01 filter-02 filter-03");
   }
 
+  private String getAdditionalClassPath() throws Exception {
+    URL resource = this.getClass().getClassLoader().getResource("classpath.txt");
+    Path path = Paths.get(Objects.requireNonNull(resource).getPath());
+    return Files.readAllLines(path).stream().findFirst().orElse("");
+  }
+
   @After
   public void teardown() throws Exception {
     StagedInstall.getInstance().stopAgent();
@@ -164,7 +178,7 @@ public class TestConfig {
   public void testConfigReplacement() throws Exception {
     LOGGER.debug("testConfigReplacement() started.");
 
-    StagedInstall.getInstance().startAgent("agent", agentProps, agentEnv);
+    StagedInstall.getInstance().startAgent("agent", agentProps, agentEnv, agentOptions);
 
     TimeUnit.SECONDS.sleep(10); // Wait for sources and sink to process files
 
@@ -183,7 +197,7 @@ public class TestConfig {
 
     agentProps.put("agent.channels.mem-01.transactionCapacity", "10");
     agentProps.put("agent.sinks.roll-01.sink.batchSize", "20");
-    StagedInstall.getInstance().startAgent("agent", agentProps, agentEnv);
+    StagedInstall.getInstance().startAgent("agent", agentProps, agentEnv, agentOptions);
 
     TimeUnit.SECONDS.sleep(10); // Wait for sources and sink to process files
 
