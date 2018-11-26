@@ -4782,6 +4782,9 @@ The ``generateUniqId.sh`` will return ``1234`` with an exit code ``0``.
 Hadoop Credential Store Config Filter
 -------------------------------------
 
+A hadoop-common library needed on the classpath for this feature (2.6+ version).
+If hadoop is installed the agent adds it to the classpath automatically
+
 =============================================== ========== ==============================================
 Property Name                                   Default                        Description
 =============================================== ========== ==============================================
