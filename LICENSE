@@ -209,6 +209,7 @@ their respective licenses.
 
 
 For 
+ apache-log4j-extras-<version>.jar:
  avro-<version>.jar:
  avro-ipc-<version>.jar:
  commons-cli-<version>.jar:
@@ -252,10 +253,7 @@ For
  kite-data-hive-<version>.jar:
  kite-hadoop-compatibility-<version>.jar:
  libthrift-<version>.jar:
- log4j-1.2-api-<version>.jar:
- log4j-api-<version>.jar:
- log4j-core-<version>.jar:
- log4j-slf4j-impl-<version>.jar:
+ log4j-<version>.jar:
  lz4-java-<version>.jar:
  mapdb-<version>.jar:
  metrics-core-<version>.jar:
@@ -451,6 +449,7 @@ For
 
 For 
  slf4j-api-<version>.jar:
+ slf4j-log4j12-<version>.jar:
 
   MIT license
   
