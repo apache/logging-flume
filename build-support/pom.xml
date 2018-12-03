@@ -27,5 +27,8 @@ limitations under the License.
     <description>Build tools and Configuration</description>
     <properties>
         <maven.site.skip>true</maven.site.skip>
+        <maven.deploy.skip>true</maven.deploy.skip>
+        <maven.jar.skip>true</maven.jar.skip>
+        <gpg.skip>true</gpg.skip>
     </properties>
 </project>

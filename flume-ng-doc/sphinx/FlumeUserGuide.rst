@@ -2430,8 +2430,7 @@ Deprecated Properties
 
 Name                    Default       Description
 ======================  ============  ======================================================================
-hdfs.callTimeout        30000         Number of milliseconds allowed for HDFS operations, such as open, write, flush, close.
-                                      This number should be increased if many HDFS timeout operations are occurring.
+hdfs.callTimeout        30000         Number of milliseconds allowed for HDFS operations, such as open, write, flush, close. This number should be increased if many HDFS timeout operations are occurring.
 ======================  ============  ======================================================================
 
 Example for agent named a1:

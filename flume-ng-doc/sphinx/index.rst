@@ -46,7 +46,7 @@ Overview
 --------
 
 - `Project information <project-info.html>`_
-- `Download Apache Flume <http://www.apache.org/dyn/closer.cgi/incubator/flume>`_
+- `Download Apache Flume <http://www.apache.org/dyn/closer.cgi/flume>`_
 - `Flume Wiki <http://cwiki.apache.org/confluence/display/FLUME>`_
 - `Getting Started Guide <http://cwiki.apache.org/confluence/display/FLUME/Getting+Started>`_
 - `Flume Issue Tracking (JIRA) <https://issues.apache.org/jira/browse/FLUME>`_

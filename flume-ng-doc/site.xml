@@ -26,7 +26,7 @@
   <version position="none"/>
 
   <poweredBy>
-    <logo name="Flume" href="http://incubator.apache.org/flume"
+    <logo name="Flume" href="http://flume.apache.org/"
           img="_static/flume-logo.png" />
   </poweredBy>
 

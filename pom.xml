@@ -599,6 +599,7 @@ limitations under the License.
               <!-- include ONLY flume multi-module dependencies -->
               <dependencySourceInclude>org.apache.flume:*</dependencySourceInclude>
             </dependencySourceIncludes>
+            <additionalparam>-Xdoclint:none</additionalparam>
           </configuration>
         </plugin>
 
