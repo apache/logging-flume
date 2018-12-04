@@ -24,12 +24,13 @@ limitations under the License.
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <groupId>org.apache.flume.flume-ng-configfilters</groupId>
     <artifactId>flume-ng-environment-variable-config-filter</artifactId>
     <name>Flume NG Environment Variable Config Filter</name>
 
     <dependencies>
         <dependency>
-            <groupId>org.apache.flume</groupId>
+            <groupId>org.apache.flume.flume-ng-configfilters</groupId>
             <artifactId>flume-ng-config-filter-api</artifactId>
         </dependency>
         <dependency>

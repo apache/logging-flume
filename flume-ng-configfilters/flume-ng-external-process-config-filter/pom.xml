@@ -25,6 +25,7 @@ limitations under the License.
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <groupId>org.apache.flume.flume-ng-configfilters</groupId>
     <artifactId>flume-ng-external-process-config-filter</artifactId>
     <name>Flume NG External Process Config Filter</name>
 
@@ -34,7 +35,7 @@ limitations under the License.
             <artifactId>slf4j-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.apache.flume</groupId>
+            <groupId>org.apache.flume.flume-ng-configfilters</groupId>
             <artifactId>flume-ng-config-filter-api</artifactId>
         </dependency>
         <dependency>

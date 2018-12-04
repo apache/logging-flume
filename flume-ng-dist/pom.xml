@@ -70,7 +70,6 @@
           <algorithms>
             <algorithm>SHA-512</algorithm>
           </algorithms>
-          <attachChecksums>true</attachChecksums>
           <csvSummary>false</csvSummary>
           <fileSets>
             <fileSet>
@@ -192,19 +191,19 @@
       <artifactId>flume-taildir-source</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume</groupId>
+      <groupId>org.apache.flume.flume-ng-configfilters</groupId>
       <artifactId>flume-ng-environment-variable-config-filter</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume</groupId>
+      <groupId>org.apache.flume.flume-ng-configfilters</groupId>
       <artifactId>flume-ng-hadoop-credential-store-config-filter</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume</groupId>
+      <groupId>org.apache.flume.flume-ng-configfilters</groupId>
       <artifactId>flume-ng-external-process-config-filter</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume</groupId>
+      <groupId>org.apache.flume.flume-ng-configfilters</groupId>
       <artifactId>flume-ng-config-filter-api</artifactId>
     </dependency>
     <dependency>

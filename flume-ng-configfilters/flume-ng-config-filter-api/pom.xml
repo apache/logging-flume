@@ -24,6 +24,7 @@ limitations under the License.
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <groupId>org.apache.flume.flume-ng-configfilters</groupId>
     <artifactId>flume-ng-config-filter-api</artifactId>
     <name>Flume NG Config Filters API</name>
 

@@ -6,6 +6,7 @@ CONTENTS
 3. Major changes in this Release
 4. How to Get Involved
 5. How to Report Issues
+6. Important notice about configuration change in the next Release
 
 1. What is Apache Flume
 Flume is a distributed, reliable, and available service for
@@ -38,3 +39,8 @@ https://cwiki.apache.org/confluence/display/FLUME/How+to+Contribute
 5. How to Report Issues
 The Apache Flume project uses JIRA for issue tracking. Please report any issues
 you find at http://issues.apache.org/jira/browse/FLUME
+
+6. Important notice about configuration change in the next Release
+Flume 1.x has been distributed with Log4j 1.x until version 1.9.0.
+From the next minor release Flume is going to be distributed with Log4j 2.x.
+This is going to require logger configuration changes in existing installations during upgrade.

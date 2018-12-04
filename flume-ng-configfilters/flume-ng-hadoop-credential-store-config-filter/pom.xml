@@ -24,6 +24,7 @@ limitations under the License.
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <groupId>org.apache.flume.flume-ng-configfilters</groupId>
     <artifactId>flume-ng-hadoop-credential-store-config-filter</artifactId>
     <dependencies>
         <dependency>
@@ -36,7 +37,7 @@ limitations under the License.
             <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>org.apache.flume</groupId>
+            <groupId>org.apache.flume.flume-ng-configfilters</groupId>
             <artifactId>flume-ng-config-filter-api</artifactId>
         </dependency>
         <!-- test dependencies -->

@@ -1211,25 +1211,25 @@ limitations under the License.
       </dependency>
 
       <dependency>
-        <groupId>org.apache.flume</groupId>
+        <groupId>org.apache.flume.flume-ng-configfilters</groupId>
         <artifactId>flume-ng-environment-variable-config-filter</artifactId>
         <version>${project.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>org.apache.flume</groupId>
+        <groupId>org.apache.flume.flume-ng-configfilters</groupId>
         <artifactId>flume-ng-hadoop-credential-store-config-filter</artifactId>
         <version>${project.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>org.apache.flume</groupId>
+        <groupId>org.apache.flume.flume-ng-configfilters</groupId>
         <artifactId>flume-ng-external-process-config-filter</artifactId>
         <version>${project.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>org.apache.flume</groupId>
+        <groupId>org.apache.flume.flume-ng-configfilters</groupId>
         <artifactId>flume-ng-config-filter-api</artifactId>
         <version>${project.version}</version>
       </dependency>
