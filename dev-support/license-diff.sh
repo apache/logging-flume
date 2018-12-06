@@ -20,8 +20,7 @@
 # Script to compare LICENSE file content and distributed jars
 # use after flume-ng-dist target has been generated (mvn clean package)
 ################################################################################
-PROJECT_ROOT="$(dirname $(readlink -f $0))/.."
-
+PROJECT_ROOT="$(cd $(dirname $0)/..; pwd)"
 
 echo "LICENSE file <---------> jar files"
 diff -y <(grep .jar: ${PROJECT_ROOT}/LICENSE | sed -E 's/:|\s+//g' | sort) <(ls ${PROJECT_ROOT}/flume-ng-dist/target/apache-flume-*-bin/apache-flume-*-bin/lib/*.jar |xargs -n1 basename |grep -v flume | sed -E 's/(.+)-([^-]+).jar/\1-<version>.jar/' | uniq | sort)
