@@ -18,9 +18,9 @@
 -->
 
 <assembly
-  xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
+  xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/2.0.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
+  xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
 
   <id>src</id>
 
@@ -32,8 +32,10 @@
   <baseDirectory>apache-flume-${project.version}-src</baseDirectory>
 
    <fileSets>
+
     <fileSet>
       <directory>../</directory>
+      <useDefaultExcludes>false</useDefaultExcludes>
 
       <excludes>
         <exclude>**/target/**</exclude>
@@ -44,7 +46,7 @@
         <exclude>**/.settings/**</exclude>
         <exclude>lib/**</exclude>
         <exclude>**/.DS_Store</exclude>
-        <exclude>./mvn/wrapper/maven-wrapper.jar</exclude>
+        <exclude>**/./mvn/wrapper/maven-wrapper.jar</exclude>
       </excludes>
     </fileSet>
   </fileSets>

@@ -254,6 +254,9 @@ Signing is done by the maven-gpg-plugin using the `sign` profile in the verify p
 Checksum generation for the source and binary artifacts is done by checksum-maven-plugin
 in the verify phase, an SHA512 checksum is generated
 
+To avoid unwanted files in the source artifact, create a fresh working copy or 
+run `git clean -xdf` to remove any extra files (this will remove git ignored files like the .idea folder). 
+
       mvn clean package -Psign -DskipTests
 
 The generated artifacts can be found in the `flume-ng-dist/target` directory
