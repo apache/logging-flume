@@ -14,9 +14,9 @@
    limitations under the License.
 
 
-===============================
+================================
 Flume 1.10.0-SNAPSHOT User Guide
-===============================
+================================
 
 Introduction
 ============
@@ -34,18 +34,6 @@ of event data including but not limited to network traffic data, social-media-ge
 email messages and pretty much any data source possible.
 
 Apache Flume is a top level project at the Apache Software Foundation.
-
-There are currently two release code lines available, versions 0.9.x and 1.x.
-
-Documentation for the 0.9.x track is available at
-`the Flume 0.9.x User Guide <http://archive.cloudera.com/cdh/3/flume/UserGuide/>`_.
-
-This documentation applies to the 1.4.x track.
-
-New and existing users are encouraged to use the 1.x releases so as to
-leverage the performance improvements and configuration flexibilities available
-in the latest architecture.
-
 
 System Requirements
 -------------------
