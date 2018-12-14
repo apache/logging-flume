@@ -35,8 +35,8 @@ public abstract class AbstractScribeClient {
 
   protected final ScribeCLIClientConfiguration conf;
   protected long startTimeMs;
-  protected static AtomicLong totalEventsSend = new AtomicLong(0);
-  protected static AtomicLong totalRpcLatency = new AtomicLong(0);
+  protected static final AtomicLong totalEventsSend = new AtomicLong(0);
+  protected static final AtomicLong totalRpcLatency = new AtomicLong(0);
 
   public AbstractScribeClient(ScribeCLIClientConfiguration configuration) {
     Preconditions.checkNotNull(configuration, "configuration shouldn't be null");

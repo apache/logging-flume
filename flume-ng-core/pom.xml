@@ -33,6 +33,9 @@ limitations under the License.
     <!-- TODO fix spotbugs violations -->
     <spotbugs.maxAllowedViolations>115</spotbugs.maxAllowedViolations>
     <pmd.maxAllowedViolations>112</pmd.maxAllowedViolations>
+    <spotbugs.excludeBugsFile>${project.basedir}/src/main/java/org/apache/flume/client/scribe/Scribe.java</spotbugs.excludeBugsFile>
+    <spotbugs.excludeBugsFile>${project.basedir}/src/main/java/org/apache/flume/client/scribe/LogEntry.java</spotbugs.excludeBugsFile>
+    <spotbugs.excludeBugsFile>${project.basedir}/src/main/java/org/apache/flume/client/scribe/ResultCode.java</spotbugs.excludeBugsFile>
   </properties>
 
   <build>

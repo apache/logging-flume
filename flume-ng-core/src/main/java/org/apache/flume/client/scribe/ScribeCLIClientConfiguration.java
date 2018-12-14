@@ -25,6 +25,7 @@ import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.lang.StringUtils;
 
 public class ScribeCLIClientConfiguration {
   public String server;
@@ -116,7 +117,7 @@ public class ScribeCLIClientConfiguration {
     rpcBatchSize = (commandLine.hasOption(BATCH_RPC_SIZE_FLAG)) ?
         Integer.parseInt(commandLine.getOptionValue(BATCH_RPC_SIZE_FLAG)) : DEFAULT_RPC_BATCH_SIZE;
     rpcMode = commandLine.hasOption(RPC_MODE_FLAG) ?
-        RpcMode.valueOf(commandLine.getOptionValue(RPC_MODE_FLAG).toUpperCase())
+        RpcMode.valueOf(StringUtils.upperCase(commandLine.getOptionValue(RPC_MODE_FLAG)))
         : DEFAULT_RPC_MODE;
     runTimeSec = (commandLine.hasOption(RUN_TIME_SECONDS_FLAG)) ?
         Long.parseLong(commandLine.getOptionValue(RUN_TIME_SECONDS_FLAG)) : DEFAULT_RUN_TIME_SEC;
