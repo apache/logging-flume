@@ -47,14 +47,14 @@ public abstract class AbstractScribeClient {
     if (conf.runTimeSec <= 0) {
       return false;
     }
-    return  (startTimeMs + (conf.runTimeSec * 1000L) <= System.currentTimeMillis());
+    return  startTimeMs + conf.runTimeSec * 1000L <= System.currentTimeMillis();
   }
 
   public boolean isEnoughEventSent() {
     if (conf.eventNumberToSend <= 0) {
       return false;
     }
-    return  (totalEventsSend.get() >= conf.eventNumberToSend);
+    return  totalEventsSend.get() >= conf.eventNumberToSend;
   }
 
   public boolean shouldStop() {

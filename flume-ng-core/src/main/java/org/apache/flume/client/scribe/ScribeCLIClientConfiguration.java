@@ -97,29 +97,29 @@ public class ScribeCLIClientConfiguration {
       return false;
     }
 
-    if ((!commandLine.hasOption(SERVER_FLAG)) || (!commandLine.hasOption(PORT_FLAG))) {
+    if (!commandLine.hasOption(SERVER_FLAG) || !commandLine.hasOption(PORT_FLAG)) {
       throw new ParseException(
           "You must specify both --server and --port");
     }
     server = commandLine.getOptionValue(SERVER_FLAG);
     port = Integer.parseInt(commandLine.getOptionValue(PORT_FLAG));
 
-    ioDepth = (commandLine.hasOption(IO_DEPTH_FLAG)) ?
+    ioDepth = commandLine.hasOption(IO_DEPTH_FLAG) ?
         Integer.parseInt(commandLine.getOptionValue(IO_DEPTH_FLAG)) : DEFAULT_IO_DEPTH;
-    epm = (commandLine.hasOption(EPM_FLAG)) ?
+    epm = commandLine.hasOption(EPM_FLAG) ?
         Integer.parseInt(commandLine.getOptionValue(EPM_FLAG)) : DEFAULT_EPM;
-    eventNumberToSend = (commandLine.hasOption(EVENT_NUM_TO_SEND_FLAG)) ?
+    eventNumberToSend = commandLine.hasOption(EVENT_NUM_TO_SEND_FLAG) ?
         Long.parseLong(commandLine.getOptionValue(EVENT_NUM_TO_SEND_FLAG)) : DEFAULT_EVENT_TO_SEND;
-    eventLength = (commandLine.hasOption(EVENT_LENGTH_FLAG)) ?
+    eventLength = commandLine.hasOption(EVENT_LENGTH_FLAG) ?
         Integer.parseInt(commandLine.getOptionValue(EVENT_LENGTH_FLAG)) : DEFAULT_EVENT_LENGTH;
     categoryName = commandLine.hasOption(CATEGORY_NAME_FLAG) ?
         commandLine.getOptionValue(CATEGORY_NAME_FLAG) : DEFAULT_CATEGORY_NAME;
-    rpcBatchSize = (commandLine.hasOption(BATCH_RPC_SIZE_FLAG)) ?
+    rpcBatchSize = commandLine.hasOption(BATCH_RPC_SIZE_FLAG) ?
         Integer.parseInt(commandLine.getOptionValue(BATCH_RPC_SIZE_FLAG)) : DEFAULT_RPC_BATCH_SIZE;
     rpcMode = commandLine.hasOption(RPC_MODE_FLAG) ?
         RpcMode.valueOf(StringUtils.upperCase(commandLine.getOptionValue(RPC_MODE_FLAG)))
         : DEFAULT_RPC_MODE;
-    runTimeSec = (commandLine.hasOption(RUN_TIME_SECONDS_FLAG)) ?
+    runTimeSec = commandLine.hasOption(RUN_TIME_SECONDS_FLAG) ?
         Long.parseLong(commandLine.getOptionValue(RUN_TIME_SECONDS_FLAG)) : DEFAULT_RUN_TIME_SEC;
     return true;
   }
