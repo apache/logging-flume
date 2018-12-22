@@ -48,7 +48,7 @@ import com.google.common.base.Preconditions;
  * EmbeddedAgent gives Flume users the ability to embed simple agents in
  * applications. This Agent is mean to be much simpler than a traditional
  * agent and as such it's more restrictive than what can be configured
- * for a traditional agent. For specifics see the Flume User Guide.
+ * for a traditional agent. For specifics see the Flume Developer Guide.
  */
 @InterfaceAudience.Public
 @InterfaceStability.Stable
