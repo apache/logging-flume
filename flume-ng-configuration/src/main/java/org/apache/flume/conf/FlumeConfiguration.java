@@ -576,7 +576,7 @@ public class FlumeConfiguration {
               srcContext.put(BasicConfigurationConstants.CONFIG_CHANNELS,
                   this.getSpaceDelimitedList(channels));
             }
-            if ((configSpecified && srcConf.isNotFoundConfigClass()) ||
+            if ((configSpecified && !srcConf.isNotFoundConfigClass()) ||
                 !configSpecified) {
               newContextMap.put(sourceName, srcContext);
             } else if (configSpecified) {
