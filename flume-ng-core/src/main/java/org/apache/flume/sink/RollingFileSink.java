@@ -99,7 +99,7 @@ public class RollingFileSink extends AbstractSink implements Configurable, Batch
 
     batchSize = context.getInteger("sink.batchSize", defaultBatchSize);
 
-    if (!this.directory.exists()){
+    if (!this.directory.exists()) {
       this.directory.mkdirs();
     }
 
