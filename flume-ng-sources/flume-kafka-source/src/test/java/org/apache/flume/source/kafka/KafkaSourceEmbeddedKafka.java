@@ -76,6 +76,7 @@ public class KafkaSourceEmbeddedKafka {
     props.put("port", String.valueOf(serverPort));
     props.put("log.dir", dir.getAbsolutePath());
     props.put("offsets.topic.replication.factor", "1");
+    props.put("auto.create.topics.enable", "false");
     if (properties != null) {
       props.putAll(properties);
     }

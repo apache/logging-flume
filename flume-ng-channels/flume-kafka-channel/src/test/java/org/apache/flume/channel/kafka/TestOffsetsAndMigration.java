@@ -22,6 +22,7 @@ import kafka.zk.KafkaZkClient;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.Transaction;
+import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -189,5 +190,21 @@ public class TestOffsetsAndMigration extends TestKafkaChannelBase {
       Assert.assertFalse("Channel should not read the 10th message", finals.contains(10));
       Assert.assertTrue("Channel should read the 11th message", finals.contains(11));
     }
+  }
+
+  @Test
+  public void testMigrateZookeeperOffsetsWhenTopicNotExists() throws Exception {
+    topic = findUnusedTopic();
+
+    Context context = prepareDefaultContext(false);
+    context.put(ZOOKEEPER_CONNECT_FLUME_KEY, testUtil.getZkUrl());
+    context.put(GROUP_ID_FLUME, "testMigrateOffsets-nonExistingTopic");
+    KafkaChannel channel = createChannel(context);
+
+    channel.start();
+
+    Assert.assertEquals(LifecycleState.START, channel.getLifecycleState());
+
+    channel.stop();
   }
 }
