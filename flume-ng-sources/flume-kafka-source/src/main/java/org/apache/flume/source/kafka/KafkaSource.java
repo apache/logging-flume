@@ -593,7 +593,8 @@ public class KafkaSource extends AbstractPollableSource
       Map<TopicPartition, OffsetAndMetadata> newKafkaOffsets =
           getKafkaOffsets(consumer, topicStr);
       log.debug("Offsets committed: {}", newKafkaOffsets);
-      if (!newKafkaOffsets.keySet().containsAll(zookeeperOffsets.keySet())) {
+      if (newKafkaOffsets == null
+          || !newKafkaOffsets.keySet().containsAll(zookeeperOffsets.keySet())) {
         throw new FlumeException("Offsets could not be committed");
       }
     }
