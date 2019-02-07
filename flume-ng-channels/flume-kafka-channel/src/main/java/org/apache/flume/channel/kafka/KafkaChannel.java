@@ -318,6 +318,10 @@ public class KafkaChannel extends BasicChannelSemantics {
             Time.SYSTEM, "kafka.server", "SessionExpireListener");
          KafkaConsumer<String, byte[]> consumer = new KafkaConsumer<>(consumerProps)) {
       Map<TopicPartition, OffsetAndMetadata> kafkaOffsets = getKafkaOffsets(consumer);
+      if (kafkaOffsets == null) {
+        logger.warn("Topic " + topicStr + " not found in Kafka. Offset migration will be skipped.");
+        return;
+      }
       if (!kafkaOffsets.isEmpty()) {
         logger.info("Found Kafka offsets for topic {}. Will not migrate from zookeeper", topicStr);
         logger.debug("Offsets found: {}", kafkaOffsets);
@@ -338,7 +342,8 @@ public class KafkaChannel extends BasicChannelSemantics {
       // Read the offsets to verify they were committed
       Map<TopicPartition, OffsetAndMetadata> newKafkaOffsets = getKafkaOffsets(consumer);
       logger.debug("Offsets committed: {}", newKafkaOffsets);
-      if (!newKafkaOffsets.keySet().containsAll(zookeeperOffsets.keySet())) {
+      if (newKafkaOffsets == null
+          || !newKafkaOffsets.keySet().containsAll(zookeeperOffsets.keySet())) {
         throw new FlumeException("Offsets could not be committed");
       }
     }
@@ -347,13 +352,16 @@ public class KafkaChannel extends BasicChannelSemantics {
 
   private Map<TopicPartition, OffsetAndMetadata> getKafkaOffsets(
       KafkaConsumer<String, byte[]> client) {
-    Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
+    Map<TopicPartition, OffsetAndMetadata> offsets = null;
     List<PartitionInfo> partitions = client.partitionsFor(topicStr);
-    for (PartitionInfo partition : partitions) {
-      TopicPartition key = new TopicPartition(topicStr, partition.partition());
-      OffsetAndMetadata offsetAndMetadata = client.committed(key);
-      if (offsetAndMetadata != null) {
-        offsets.put(key, offsetAndMetadata);
+    if (partitions != null) {
+      offsets = new HashMap<>();
+      for (PartitionInfo partition : partitions) {
+        TopicPartition key = new TopicPartition(topicStr, partition.partition());
+        OffsetAndMetadata offsetAndMetadata = client.committed(key);
+        if (offsetAndMetadata != null) {
+          offsets.put(key, offsetAndMetadata);
+        }
       }
     }
     return offsets;
