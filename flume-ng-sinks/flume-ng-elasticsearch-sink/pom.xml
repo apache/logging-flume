@@ -17,21 +17,18 @@
  <parent>
     <artifactId>flume-ng-sinks</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.8.0-SNAPSHOT</version>
+    <version>1.10.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.apache.flume.flume-ng-sinks</groupId>
   <artifactId>flume-ng-elasticsearch-sink</artifactId>
   <name>Flume NG ElasticSearch Sink</name>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
+  <properties>
+    <!-- TODO fix spotbugs/pmd violations -->
+    <spotbugs.maxAllowedViolations>8</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>10</pmd.maxAllowedViolations>
+  </properties>
 
   <dependencies>
 
@@ -68,8 +65,14 @@
     </dependency>
 
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-1.2-api</artifactId>
       <scope>test</scope>
     </dependency>
 

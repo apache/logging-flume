@@ -85,8 +85,12 @@ public class PollingPropertiesFileConfigurationProvider
 
     executorService.shutdown();
     try {
-      while (!executorService.awaitTermination(500, TimeUnit.MILLISECONDS)) {
-        LOGGER.debug("Waiting for file watcher to terminate");
+      if (!executorService.awaitTermination(500, TimeUnit.MILLISECONDS)) {
+        LOGGER.debug("File watcher has not terminated. Forcing shutdown of executor.");
+        executorService.shutdownNow();
+        while (!executorService.awaitTermination(500, TimeUnit.MILLISECONDS)) {
+          LOGGER.debug("Waiting for file watcher to terminate");
+        }
       }
     } catch (InterruptedException e) {
       LOGGER.debug("Interrupted while waiting for file watcher to terminate");

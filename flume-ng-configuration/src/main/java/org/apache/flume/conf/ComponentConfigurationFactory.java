@@ -21,6 +21,7 @@ import java.util.Locale;
 import org.apache.flume.conf.ComponentConfiguration.ComponentType;
 import org.apache.flume.conf.channel.ChannelConfiguration.ChannelConfigurationType;
 import org.apache.flume.conf.channel.ChannelSelectorConfiguration.ChannelSelectorConfigurationType;
+import org.apache.flume.conf.configfilter.ConfigFilterConfiguration.ConfigFilterConfigurationType;
 import org.apache.flume.conf.sink.SinkConfiguration.SinkConfigurationType;
 import org.apache.flume.conf.sink.SinkGroupConfiguration;
 import org.apache.flume.conf.sink.SinkProcessorConfiguration.SinkProcessorConfigurationType;
@@ -46,6 +47,9 @@ public class ComponentConfigurationFactory {
         switch (component) {
           case SOURCE:
             return SourceConfigurationType.valueOf(type.toUpperCase(Locale.ENGLISH))
+                .getConfiguration(name);
+          case CONFIG_FILTER:
+            return ConfigFilterConfigurationType.valueOf(type.toUpperCase(Locale.ENGLISH))
                 .getConfiguration(name);
           case SINK:
             return SinkConfigurationType.valueOf(type.toUpperCase(Locale.ENGLISH))

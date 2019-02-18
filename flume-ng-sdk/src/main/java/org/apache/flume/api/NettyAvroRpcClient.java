@@ -33,6 +33,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -79,7 +80,7 @@ import org.slf4j.LoggerFactory;
  * The connections are intended to be opened before clients are given access so
  * that the object cannot ever be in an inconsistent when exposed to users.
  */
-public class NettyAvroRpcClient extends AbstractRpcClient implements RpcClient {
+public class NettyAvroRpcClient extends SSLContextAwareAbstractRpcClient {
 
   private ExecutorService callTimeoutPool;
   private final ReentrantLock stateLock = new ReentrantLock();
@@ -90,12 +91,6 @@ public class NettyAvroRpcClient extends AbstractRpcClient implements RpcClient {
   private ConnState connState;
 
   private InetSocketAddress address;
-  private boolean enableSsl;
-  private boolean trustAllCerts;
-  private String truststore;
-  private String truststorePassword;
-  private String truststoreType;
-  private final List<String> excludeProtocols = new LinkedList<String>();
 
   private Transceiver transceiver;
   private AvroSourceProtocol.Callback avroClient;
@@ -146,13 +141,14 @@ public class NettyAvroRpcClient extends AbstractRpcClient implements RpcClient {
             bossExecutor, workerExecutor,
             enableDeflateCompression, enableSsl, trustAllCerts,
             compressionLevel, truststore, truststorePassword, truststoreType,
-            excludeProtocols, maxIoWorkers);
+            excludeProtocols, includeProtocols, excludeCipherSuites, includeCipherSuites,
+            maxIoWorkers);
         } else {
           socketChannelFactory = new SSLCompressionChannelFactory(
             bossExecutor, workerExecutor,
             enableDeflateCompression, enableSsl, trustAllCerts,
             compressionLevel, truststore, truststorePassword, truststoreType,
-            excludeProtocols);
+            excludeProtocols, includeProtocols, excludeCipherSuites, includeCipherSuites);
         }
       } else {
         if (maxIoWorkers >= 1) {
@@ -492,24 +488,7 @@ public class NettyAvroRpcClient extends AbstractRpcClient implements RpcClient {
       stateLock.unlock();
     }
 
-    // batch size
-    String strBatchSize = properties.getProperty(
-        RpcClientConfigurationConstants.CONFIG_BATCH_SIZE);
-    logger.debug("Batch size string = " + strBatchSize);
-    batchSize = RpcClientConfigurationConstants.DEFAULT_BATCH_SIZE;
-    if (strBatchSize != null && !strBatchSize.isEmpty()) {
-      try {
-        int parsedBatch = Integer.parseInt(strBatchSize);
-        if (parsedBatch < 1) {
-          logger.warn("Invalid value for batchSize: {}; Using default value.", parsedBatch);
-        } else {
-          batchSize = parsedBatch;
-        }
-      } catch (NumberFormatException e) {
-        logger.warn("Batchsize is not valid for RpcClient: " + strBatchSize +
-            ". Default value assigned.", e);
-      }
-    }
+    batchSize = parseBatchSize(properties);
 
     // host and port
     String hostNames = properties.getProperty(
@@ -598,26 +577,7 @@ public class NettyAvroRpcClient extends AbstractRpcClient implements RpcClient {
       }
     }
 
-    enableSsl = Boolean.parseBoolean(properties.getProperty(
-        RpcClientConfigurationConstants.CONFIG_SSL));
-    trustAllCerts = Boolean.parseBoolean(properties.getProperty(
-        RpcClientConfigurationConstants.CONFIG_TRUST_ALL_CERTS));
-    truststore = properties.getProperty(
-        RpcClientConfigurationConstants.CONFIG_TRUSTSTORE);
-    truststorePassword = properties.getProperty(
-        RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_PASSWORD);
-    truststoreType = properties.getProperty(
-        RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_TYPE, "JKS");
-    String excludeProtocolsStr = properties.getProperty(
-        RpcClientConfigurationConstants.CONFIG_EXCLUDE_PROTOCOLS);
-    if (excludeProtocolsStr == null) {
-      excludeProtocols.add("SSLv3");
-    } else {
-      excludeProtocols.addAll(Arrays.asList(excludeProtocolsStr.split(" ")));
-      if (!excludeProtocols.contains("SSLv3")) {
-        excludeProtocols.add("SSLv3");
-      }
-    }
+    configureSSL(properties);
 
     String maxIoWorkersStr = properties.getProperty(RpcClientConfigurationConstants.MAX_IO_WORKERS);
     if (!StringUtils.isEmpty(maxIoWorkersStr)) {
@@ -631,7 +591,7 @@ public class NettyAvroRpcClient extends AbstractRpcClient implements RpcClient {
     }
 
     if (maxIoWorkers < 1) {
-      logger.warn("Using default maxIOWorkers");
+      logger.info("Using default maxIOWorkers");
       maxIoWorkers = -1;
     }
 
@@ -683,12 +643,16 @@ public class NettyAvroRpcClient extends AbstractRpcClient implements RpcClient {
     private final String truststore;
     private final String truststorePassword;
     private final String truststoreType;
-    private final List<String> excludeProtocols;
+    private final Set<String> excludeProtocols;
+    private final Set<String> includeProtocols;
+    private final Set<String> excludeCipherSuites;
+    private final Set<String> includeCipherSuites;
 
     public SSLCompressionChannelFactory(Executor bossExecutor, Executor workerExecutor,
         boolean enableCompression, boolean enableSsl, boolean trustAllCerts,
         int compressionLevel, String truststore, String truststorePassword,
-        String truststoreType, List<String> excludeProtocols) {
+        String truststoreType, Set<String> excludeProtocols, Set<String> includeProtocols,
+        Set<String> excludeCipherSuites, Set<String> includeCipherSuites) {
       super(bossExecutor, workerExecutor);
       this.enableCompression = enableCompression;
       this.enableSsl = enableSsl;
@@ -698,12 +662,16 @@ public class NettyAvroRpcClient extends AbstractRpcClient implements RpcClient {
       this.truststorePassword = truststorePassword;
       this.truststoreType = truststoreType;
       this.excludeProtocols = excludeProtocols;
+      this.includeProtocols = includeProtocols;
+      this.excludeCipherSuites = excludeCipherSuites;
+      this.includeCipherSuites = includeCipherSuites;
     }
 
     public SSLCompressionChannelFactory(Executor bossExecutor, Executor workerExecutor,
         boolean enableCompression, boolean enableSsl, boolean trustAllCerts,
         int compressionLevel, String truststore, String truststorePassword,
-        String truststoreType, List<String> excludeProtocols, int maxIOWorkers) {
+        String truststoreType, Set<String> excludeProtocols, Set<String> includeProtocols,
+        Set<String> excludeCipherSuites, Set<String> includeCipherSuites, int maxIOWorkers) {
       super(bossExecutor, workerExecutor, maxIOWorkers);
       this.enableCompression = enableCompression;
       this.enableSsl = enableSsl;
@@ -713,6 +681,9 @@ public class NettyAvroRpcClient extends AbstractRpcClient implements RpcClient {
       this.truststorePassword = truststorePassword;
       this.truststoreType = truststoreType;
       this.excludeProtocols = excludeProtocols;
+      this.includeProtocols = includeProtocols;
+      this.excludeCipherSuites = excludeCipherSuites;
+      this.includeCipherSuites = includeCipherSuites;
     }
 
     @Override
@@ -733,12 +704,10 @@ public class NettyAvroRpcClient extends AbstractRpcClient implements RpcClient {
             KeyStore keystore = null;
 
             if (truststore != null) {
-              if (truststorePassword == null) {
-                throw new NullPointerException("truststore password is null");
-              }
               InputStream truststoreStream = new FileInputStream(truststore);
               keystore = KeyStore.getInstance(truststoreType);
-              keystore.load(truststoreStream, truststorePassword.toCharArray());
+              keystore.load(truststoreStream,
+                  truststorePassword != null ? truststorePassword.toCharArray() : null);
             }
 
             TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
@@ -752,14 +721,28 @@ public class NettyAvroRpcClient extends AbstractRpcClient implements RpcClient {
           sslContext.init(null, managers, null);
           SSLEngine sslEngine = sslContext.createSSLEngine();
           sslEngine.setUseClientMode(true);
+
           List<String> enabledProtocols = new ArrayList<String>();
           for (String protocol : sslEngine.getEnabledProtocols()) {
-            if (!excludeProtocols.contains(protocol)) {
+            if ((includeProtocols.isEmpty() || includeProtocols.contains(protocol))
+                && !excludeProtocols.contains(protocol)) {
               enabledProtocols.add(protocol);
             }
           }
           sslEngine.setEnabledProtocols(enabledProtocols.toArray(new String[0]));
+
+          List<String> enabledCipherSuites = new ArrayList<String>();
+          for (String suite : sslEngine.getEnabledCipherSuites()) {
+            if ((includeCipherSuites.isEmpty() || includeCipherSuites.contains(suite))
+                && !excludeCipherSuites.contains(suite)) {
+              enabledCipherSuites.add(suite);
+            }
+          }
+          sslEngine.setEnabledCipherSuites(enabledCipherSuites.toArray(new String[0]));
+
           logger.info("SSLEngine protocols enabled: " +
+              Arrays.asList(sslEngine.getEnabledProtocols()));
+          logger.info("SSLEngine cipher suites enabled: " +
               Arrays.asList(sslEngine.getEnabledProtocols()));
           // addFirst() will make SSL handling the first stage of decoding
           // and the last stage of encoding this must be added after

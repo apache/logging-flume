@@ -16,18 +16,20 @@
   <parent>
     <artifactId>flume-shared</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.8.0-SNAPSHOT</version>
+    <version>1.10.0-SNAPSHOT</version>
   </parent>
   <groupId>org.apache.flume.flume-shared</groupId>
   <artifactId>flume-shared-kafka-test</artifactId>
   <name>Flume Shared Kafka Test Utils</name>
 
+  <properties>
+    <!-- TODO fix spotbugs/pmd violations -->
+    <spotbugs.maxAllowedViolations>1</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>1</pmd.maxAllowedViolations>
+  </properties>
+
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
@@ -70,13 +72,12 @@
 
     <dependency>
       <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka_2.10</artifactId>
+      <artifactId>kafka_2.11</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-clients</artifactId>
-      <version>${kafka.version}</version>
       <scope>provided</scope>
     </dependency>
 

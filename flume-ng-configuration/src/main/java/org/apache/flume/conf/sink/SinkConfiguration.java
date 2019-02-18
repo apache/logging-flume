@@ -55,12 +55,6 @@ public class SinkConfiguration extends ComponentConfiguration {
 
   @Override
   public String toString(int indentCount) {
-    StringBuilder indentSb = new StringBuilder("");
-
-    for (int i = 0; i < indentCount; i++) {
-      indentSb.append(FlumeConfiguration.INDENTSTEP);
-    }
-
     String basicStr = super.toString(indentCount);
     StringBuilder sb = new StringBuilder();
     sb.append(basicStr).append(FlumeConfiguration.INDENTSTEP).append(
@@ -142,6 +136,13 @@ public class SinkConfiguration extends ComponentConfiguration {
     ASYNCHBASE("org.apache.flume.sink.hbase.HBaseSinkConfiguration"),
 
     /**
+     * HBase2 sink
+     *
+     * @see org.apache.flume.sink.hbase2.HBase2Sink
+     */
+    HBASE2("org.apache.flume.sink.hbase2.HBase2SinkConfiguration"),
+
+    /**
      * MorphlineSolr sink
      *
      * @see org.apache.flume.sink.solr.morphline.MorphlineSolrSink
@@ -176,7 +177,7 @@ public class SinkConfiguration extends ComponentConfiguration {
     @SuppressWarnings("unchecked")
     public SinkConfiguration getConfiguration(String name)
         throws ConfigurationException {
-      if (this.equals(SinkConfigurationType.OTHER)) {
+      if (this == OTHER) {
         return new SinkConfiguration(name);
       }
       Class<? extends SinkConfiguration> clazz;

@@ -41,6 +41,7 @@ import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.lifecycle.LifecycleSupervisor;
 import org.apache.flume.lifecycle.LifecycleSupervisor.SupervisorPolicy;
+import org.apache.flume.util.SSLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +53,7 @@ import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Application {
 
@@ -65,6 +67,7 @@ public class Application {
   private final LifecycleSupervisor supervisor;
   private MaterializedConfiguration materializedConfiguration;
   private MonitorService monitorServer;
+  private final ReentrantLock lifecycleLock = new ReentrantLock();
 
   public Application() {
     this(new ArrayList<LifecycleAware>(0));
@@ -75,23 +78,45 @@ public class Application {
     supervisor = new LifecycleSupervisor();
   }
 
-  public synchronized void start() {
-    for (LifecycleAware component : components) {
-      supervisor.supervise(component,
-          new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
+  public void start() {
+    lifecycleLock.lock();
+    try {
+      for (LifecycleAware component : components) {
+        supervisor.supervise(component,
+            new SupervisorPolicy.AlwaysRestartPolicy(), LifecycleState.START);
+      }
+    } finally {
+      lifecycleLock.unlock();
     }
   }
 
   @Subscribe
-  public synchronized void handleConfigurationEvent(MaterializedConfiguration conf) {
-    stopAllComponents();
-    startAllComponents(conf);
+  public void handleConfigurationEvent(MaterializedConfiguration conf) {
+    try {
+      lifecycleLock.lockInterruptibly();
+      stopAllComponents();
+      startAllComponents(conf);
+    } catch (InterruptedException e) {
+      logger.info("Interrupted while trying to handle configuration event");
+      return;
+    } finally {
+      // If interrupted while trying to lock, we don't own the lock, so must not attempt to unlock
+      if (lifecycleLock.isHeldByCurrentThread()) {
+        lifecycleLock.unlock();
+      }
+    }
   }
 
-  public synchronized void stop() {
-    supervisor.stop();
-    if (monitorServer != null) {
-      monitorServer.stop();
+  public void stop() {
+    lifecycleLock.lock();
+    stopAllComponents();
+    try {
+      supervisor.stop();
+      if (monitorServer != null) {
+        monitorServer.stop();
+      }
+    } finally {
+      lifecycleLock.unlock();
     }
   }
 
@@ -227,8 +252,7 @@ public class Application {
   public static void main(String[] args) {
 
     try {
-
-      boolean isZkConfigured = false;
+      SSLUtil.initGlobalSSLParameters();
 
       Options options = new Options();
 
@@ -270,10 +294,12 @@ public class Application {
       String agentName = commandLine.getOptionValue('n');
       boolean reload = !commandLine.hasOption("no-reload-conf");
 
+      boolean isZkConfigured = false;
       if (commandLine.hasOption('z') || commandLine.hasOption("zkConnString")) {
         isZkConfigured = true;
       }
-      Application application = null;
+
+      Application application;
       if (isZkConfigured) {
         // get options
         String zkConnectionStr = commandLine.getOptionValue('z');

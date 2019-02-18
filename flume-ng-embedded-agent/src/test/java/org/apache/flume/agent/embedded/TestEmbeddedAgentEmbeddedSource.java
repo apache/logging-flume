@@ -75,21 +75,21 @@ public class TestEmbeddedAgentEmbeddedSource {
 
     config = new MaterializedConfiguration() {
       @Override
-      public ImmutableMap<String, SourceRunner> getSourceRunners() {
+      public Map<String, SourceRunner> getSourceRunners() {
         Map<String, SourceRunner> result = Maps.newHashMap();
         result.put("source", sourceRunner);
         return ImmutableMap.copyOf(result);
       }
 
       @Override
-      public ImmutableMap<String, SinkRunner> getSinkRunners() {
+      public Map<String, SinkRunner> getSinkRunners() {
         Map<String, SinkRunner> result = Maps.newHashMap();
         result.put("sink", sinkRunner);
         return ImmutableMap.copyOf(result);
       }
 
       @Override
-      public ImmutableMap<String, Channel> getChannels() {
+      public Map<String, Channel> getChannels() {
         Map<String, Channel> result = Maps.newHashMap();
         result.put("channel", channel);
         return ImmutableMap.copyOf(result);

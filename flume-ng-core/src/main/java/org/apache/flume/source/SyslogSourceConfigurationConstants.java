@@ -61,6 +61,7 @@ public final class SyslogSourceConfigurationConstants {
 
   public static final String CONFIG_PORT_HEADER = "portHeader";
 
+  @Deprecated
   public static final String DEFAULT_PORT_HEADER = "port";
 
   public static final String CONFIG_READBUF_SIZE = "readBufferBytes";
@@ -73,6 +74,9 @@ public final class SyslogSourceConfigurationConstants {
   public static final String CONFIG_KEEP_FIELDS_VERSION = "version";
   public static final String CONFIG_KEEP_FIELDS_TIMESTAMP = "timestamp";
   public static final String CONFIG_KEEP_FIELDS_HOSTNAME = "hostname";
+
+  public static final String CONFIG_CLIENT_IP_HEADER = "clientIPHeader";
+  public static final String CONFIG_CLIENT_HOSTNAME_HEADER = "clientHostnameHeader";
 
   private SyslogSourceConfigurationConstants() {
     // Disable explicit creation of objects.

@@ -23,28 +23,18 @@ limitations under the License.
   <parent>
     <artifactId>flume-ng-sinks</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.8.0-SNAPSHOT</version>
+    <version>1.10.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.apache.flume.flume-ng-sinks</groupId>
   <artifactId>flume-dataset-sink</artifactId>
   <name>Flume NG Kite Dataset Sink</name>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
-        <version>2.3.7</version>
-        <inherited>true</inherited>
-        <extensions>true</extensions>
-      </plugin>
-    </plugins>
-  </build>
+  <properties>
+    <!-- TODO fix spotbugspmd violations -->
+    <spotbugs.maxAllowedViolations>8</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>11</pmd.maxAllowedViolations>
+  </properties>
 
   <dependencies>
 
@@ -101,7 +91,6 @@ limitations under the License.
       -->
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-common</artifactId>
-      <version>${hadoop2.version}</version>
       <optional>true</optional>
     </dependency>
 
@@ -124,13 +113,17 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-minicluster</artifactId>
-      <version>${hadoop2.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
       <scope>test</scope>
     </dependency>
 
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-1.2-api</artifactId>
       <scope>test</scope>
     </dependency>
 

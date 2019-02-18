@@ -37,6 +37,8 @@ public class JMSSourceConfiguration {
 
   public static final String MESSAGE_SELECTOR = "messageSelector";
 
+  public static final String CLIENT_ID = "clientId";
+
   public static final String USERNAME = "userName";
 
   public static final String PASSWORD_FILE = "passwordFile";
@@ -57,5 +59,11 @@ public class JMSSourceConfiguration {
 
   public static final String CONVERTER_CHARSET = CONVERTER + ".charset";
   public static final String CONVERTER_CHARSET_DEFAULT = "UTF-8";
+
+  public static final String CREATE_DURABLE_SUBSCRIPTION = "createDurableSubscription";
+  public static final boolean DEFAULT_CREATE_DURABLE_SUBSCRIPTION = false;
+
+  public static final String DURABLE_SUBSCRIPTION_NAME = "durableSubscriptionName";
+  public static final String DEFAULT_DURABLE_SUBSCRIPTION_NAME = "";
 
 }

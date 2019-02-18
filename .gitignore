@@ -20,3 +20,4 @@ derby.log
 *.iws
 nb-configuration.xml
 .DS_Store
+/.mvn/wrapper/maven-wrapper.jar

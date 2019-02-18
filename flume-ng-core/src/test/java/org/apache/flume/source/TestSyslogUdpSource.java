@@ -20,6 +20,7 @@ package org.apache.flume.source;
 
 import com.google.common.base.Charsets;
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelException;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -31,6 +32,7 @@ import org.apache.flume.conf.Configurables;
 import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -38,10 +40,14 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doThrow;
 
 public class TestSyslogUdpSource {
   private static final org.slf4j.Logger logger =
@@ -61,6 +67,10 @@ public class TestSyslogUdpSource {
       data1;
 
   private void init(String keepFields) {
+    init(keepFields, new Context());
+  }
+
+  private void init(String keepFields, Context context) {
     source = new SyslogUDPSource();
     channel = new MemoryChannel();
 
@@ -73,7 +83,7 @@ public class TestSyslogUdpSource {
     rcs.setChannels(channels);
 
     source.setChannelProcessor(new ChannelProcessor(rcs));
-    Context context = new Context();
+
     context.put("host", InetAddress.getLoopbackAddress().getHostAddress());
     context.put("port", String.valueOf(TEST_SYSLOG_PORT));
     context.put("keepFields", keepFields);
@@ -185,15 +195,7 @@ public class TestSyslogUdpSource {
   public void testSourceCounter() throws Exception {
     init("true");
 
-    source.start();
-    DatagramPacket datagramPacket = createDatagramPacket("test".getBytes());
-    sendDatagramPacket(datagramPacket);
-
-    Transaction txn = channel.getTransaction();
-    txn.begin();
-
-    channel.take();
-    commitAndCloseTransaction(txn);
+    doCounterCommon();
 
     // Retrying up to 10 times while the acceptedCount == 0 because the event processing in
     // SyslogUDPSource is handled on a separate thread by Netty so message delivery,
@@ -201,9 +203,45 @@ public class TestSyslogUdpSource {
     for (int i = 0; i < 10 && source.getSourceCounter().getEventAcceptedCount() == 0; i++) {
       Thread.sleep(100);
     }
-
     Assert.assertEquals(1, source.getSourceCounter().getEventAcceptedCount());
     Assert.assertEquals(1, source.getSourceCounter().getEventReceivedCount());
+  }
+
+  private void doCounterCommon() throws IOException, InterruptedException {
+    source.start();
+    DatagramPacket datagramPacket = createDatagramPacket("test".getBytes());
+    sendDatagramPacket(datagramPacket);
+  }
+
+  @Test
+  public void testSourceCounterChannelFail() throws Exception {
+    init("true");
+
+    ChannelProcessor cp = Mockito.mock(ChannelProcessor.class);
+    doThrow(new ChannelException("dummy")).when(cp).processEvent(any(Event.class));
+    source.setChannelProcessor(cp);
+
+    doCounterCommon();
+
+    for (int i = 0; i < 10 && source.getSourceCounter().getChannelWriteFail() == 0; i++) {
+      Thread.sleep(100);
+    }
+    Assert.assertEquals(1, source.getSourceCounter().getChannelWriteFail());
+  }
+
+  @Test
+  public void testSourceCounterReadFail() throws Exception {
+    init("true");
+
+    ChannelProcessor cp = Mockito.mock(ChannelProcessor.class);
+    doThrow(new RuntimeException("dummy")).when(cp).processEvent(any(Event.class));
+    source.setChannelProcessor(cp);
+
+    doCounterCommon();
+    for (int i = 0; i < 10 && source.getSourceCounter().getEventReadFail() == 0; i++) {
+      Thread.sleep(100);
+    }
+    Assert.assertEquals(1, source.getSourceCounter().getEventReadFail());
   }
 
   private DatagramPacket createDatagramPacket(byte[] payload) {
@@ -234,6 +272,44 @@ public class TestSyslogUdpSource {
       payload.append("x");
     }
     return payload.toString();
+  }
+
+  @Test
+  public void testClientHeaders() throws IOException {
+    String testClientIPHeader = "testClientIPHeader";
+    String testClientHostnameHeader = "testClientHostnameHeader";
+
+
+    Context context = new Context();
+    context.put("clientIPHeader", testClientIPHeader);
+    context.put("clientHostnameHeader", testClientHostnameHeader);
+
+    init("none", context);
+
+    source.start();
+
+    DatagramPacket datagramPacket = createDatagramPacket(bodyWithTandH.getBytes());
+    sendDatagramPacket(datagramPacket);
+
+    Transaction txn = channel.getTransaction();
+    txn.begin();
+    Event e = channel.take();
+
+    commitAndCloseTransaction(txn);
+
+    source.stop();
+
+    Map<String, String> headers = e.getHeaders();
+
+    checkHeader(headers, testClientIPHeader, InetAddress.getLoopbackAddress().getHostAddress());
+    checkHeader(headers, testClientHostnameHeader, InetAddress.getLoopbackAddress().getHostName());
+  }
+
+  private static void checkHeader(Map<String, String> headers, String headerName,
+      String expectedValue) {
+    assertTrue("Missing event header: " + headerName, headers.containsKey(headerName));
+    assertEquals("Event header value does not match: " + headerName,
+        expectedValue, headers.get(headerName));
   }
 }
 

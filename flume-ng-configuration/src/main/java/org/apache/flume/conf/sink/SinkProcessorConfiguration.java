@@ -21,8 +21,6 @@ import java.util.Set;
 import org.apache.flume.Context;
 import org.apache.flume.conf.ComponentConfiguration;
 import org.apache.flume.conf.ConfigurationException;
-import org.apache.flume.conf.sink.SinkConfiguration.SinkConfigurationType;
-import org.apache.flume.conf.source.SourceConfiguration;
 
 public class SinkProcessorConfiguration extends ComponentConfiguration {
   protected Set<String> sinks;

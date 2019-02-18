@@ -33,7 +33,9 @@ import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
 import org.apache.flume.Transaction;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
+import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.sink.AbstractSink;
 import org.apache.hadoop.conf.Configuration;
@@ -41,6 +43,7 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.zookeeper.ZKConfig;
 import org.hbase.async.AtomicIncrementRequest;
+import org.hbase.async.Config;
 import org.hbase.async.HBaseClient;
 import org.hbase.async.PutRequest;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
@@ -99,13 +102,16 @@ import java.util.concurrent.locks.ReentrantLock;
  * multiple increments are returned by the serializer, then HBase failure
  * will cause them to be re-written, when HBase comes back up.
  */
-public class AsyncHBaseSink extends AbstractSink implements Configurable {
+public class AsyncHBaseSink extends AbstractSink implements Configurable, BatchSizeSupported {
 
   private String tableName;
   private byte[] columnFamily;
   private long batchSize;
   private static final Logger logger = LoggerFactory.getLogger(AsyncHBaseSink.class);
   private AsyncHbaseEventSerializer serializer;
+
+  @VisibleForTesting
+  Config asyncClientConfig;
   private String eventSerializerType;
   private Context serializerContext;
   private HBaseClient client;
@@ -329,6 +335,10 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
 
   @Override
   public void configure(Context context) {
+    if (!HBaseVersionCheck.hasVersionLessThan2(logger)) {
+      throw new ConfigurationException(
+              "HBase major version number must be less than 2 for asynchbase sink. ");
+    }
     tableName = context.getString(HBaseSinkConfigurationConstants.CONFIG_TABLE);
     String cf = context.getString(
         HBaseSinkConfigurationConstants.CONFIG_COLUMN_FAMILY);
@@ -417,6 +427,19 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
         context.getInteger(HBaseSinkConfigurationConstants.CONFIG_MAX_CONSECUTIVE_FAILS,
                            HBaseSinkConfigurationConstants.DEFAULT_MAX_CONSECUTIVE_FAILS);
 
+
+    Map<String, String> asyncProperties
+            = context.getSubProperties(HBaseSinkConfigurationConstants.ASYNC_PREFIX);
+    asyncClientConfig = new Config();
+    asyncClientConfig.overrideConfig(
+            HBaseSinkConfigurationConstants.ASYNC_ZK_QUORUM_KEY, zkQuorum
+    );
+    asyncClientConfig.overrideConfig(
+            HBaseSinkConfigurationConstants.ASYNC_ZK_BASEPATH_KEY, zkBaseDir
+    );
+    for (String property: asyncProperties.keySet()) {
+      asyncClientConfig.overrideConfig(property, asyncProperties.get(property));
+    }
   }
 
   @VisibleForTesting
@@ -427,6 +450,11 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
   @VisibleForTesting
   boolean isConfNull() {
     return conf == null;
+  }
+
+  @Override
+  public long getBatchSize() {
+    return batchSize;
   }
 
   @Override
@@ -445,7 +473,7 @@ public class AsyncHBaseSink extends AbstractSink implements Configurable {
     sinkCallbackPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
         .setNameFormat(this.getName() + " HBase Call Pool").build());
     logger.info("Callback pool created");
-    client = new HBaseClient(zkQuorum, zkBaseDir,
+    client = new HBaseClient(asyncClientConfig,
         new NioClientSocketChannelFactory(sinkCallbackPool, sinkCallbackPool));
 
     final CountDownLatch latch = new CountDownLatch(1);

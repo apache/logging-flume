@@ -30,10 +30,11 @@ public class TestRpcClient {
 
   public static final String CONFIG_FILE_PRCCLIENT_TEST =
       "rpc-client-test.properties";
+  private int port;
 
   @Before
   public void setUp() throws Exception {
-    StagedInstall.getInstance().startAgent(
+    port = StagedInstall.getInstance().startAgent(
         "rpccagent", CONFIG_FILE_PRCCLIENT_TEST);
   }
 
@@ -44,8 +45,8 @@ public class TestRpcClient {
 
   @Test
   public void testRpcClient() throws Exception {
-    StagedInstall.waitUntilPortOpens("localhost", 12121, 20000);
-    RpcClient client = RpcClientFactory.getDefaultInstance("localhost", 12121);
+    StagedInstall.waitUntilPortOpens("localhost", port, 20000);
+    RpcClient client = RpcClientFactory.getDefaultInstance("localhost", port);
     String[] text = {"foo", "bar", "xyz", "abc"};
     for (String str : text) {
       client.append(EventBuilder.withBody(str.getBytes()));

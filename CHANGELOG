@@ -1,3 +1,142 @@
+Release Notes - Flume - Version 1.9.0
+
+** New Feature
+    * [FLUME-2071] - Flume Context doesn't support float or double configuration values.
+    * [FLUME-2442] - Need an alternative to providing clear text passwords in flume config
+    * [FLUME-3142] - Adding HBase2 sink
+
+** Improvement
+    * [FLUME-2653] - Allow inUseSuffix to be null/empty
+    * [FLUME-2854] - Parameterize jetty version in pom
+    * [FLUME-2977] - Upgrade RAT to 0.12
+    * [FLUME-3050] - add counters for error conditions and expose to monitor URL
+    * [FLUME-3182] - Please add support for SSL/TLS for syslog (tcp) & multi_port syslog (tcp) sources
+    * [FLUME-3186] - Make asyncHbaseClient configuration parameters available from flume config
+    * [FLUME-3223] - Flume HDFS Sink should retry close prior to performing a recoverLease
+    * [FLUME-3227] - Add Rate Limiter to StressSource
+    * [FLUME-3239] - Do not rename files in SpoolDirectorySource
+    * [FLUME-3246] - Validate flume configuration to prevent larger source batch size than the channel transaction capacity
+    * [FLUME-3269] - Support JSSE keystore/trustore -D system properties
+    * [FLUME-3275] - Components supporting SSL/TLS should be able to specify protocol list
+    * [FLUME-3276] - Components supporting SSL/TLS should be able to specify cipher suite list
+    * [FLUME-3280] - Improve maven build to help code reviews by adding static code analyzer to it
+    * [FLUME-3281] - Update to Kafka 2.0 client
+    * [FLUME-3282] - Use slf4j in every component
+
+** Bug
+    * [FLUME-1282] - Flume 1.x build fails on Maven 2
+    * [FLUME-2232] - Add findbugs to Flume build
+    * [FLUME-2436] - Make hadoop-2 the default build profile
+    * [FLUME-2464] - Remove hadoop-2 profile
+    * [FLUME-2786] -  It will enter a deadlock state when modify the conf file before I stop flume-ng
+    * [FLUME-2894] - Flume components should stop in the correct order (graceful shutdown)
+    * [FLUME-2973] - Deadlock in hdfs sink
+    * [FLUME-2976] - Exception when JMS source tries to connect to a Weblogic server without authentication
+    * [FLUME-2988] - Kafka Sink metrics missing eventDrainAttemptCount
+    * [FLUME-2989] - Kafka Channel metrics missing eventTakeAttemptCount and eventPutAttemptCount
+    * [FLUME-3056] - TestApplication hangs indefinitely
+    * [FLUME-3101] - taildir source may endless loop when tail a file
+    * [FLUME-3106] - When batchSize of sink greater than transactionCapacity of Memory Channel, Flume can produce endless data
+    * [FLUME-3107] - When batchSize of sink greater than transactionCapacity of File Channel, Flume can produce endless data
+    * [FLUME-3114] - Upgrade commons-httpclient library dependency
+    * [FLUME-3117] - Application  can be dead loop when call System.exit()  in methodconfigure
+    * [FLUME-3133] - Add a ipHeader config in Syslog Sources
+    * [FLUME-3201] - Fix SyslogUtil to handle RFC3164 format in december correctly
+    * [FLUME-3218] - Fix external process config filter test
+    * [FLUME-3222] - java.nio.file.NoSuchFileException thrown when files are being deleted from the TAILDIR source
+    * [FLUME-3237] - Handling RuntimeExceptions coming from the JMS provider in JMSSource
+    * [FLUME-3253] - JP Morgan Chase scan shows vulnerabilities for Splunk App using Apache Flume 1.8
+    * [FLUME-3265] - Cannot set batch-size for LoadBalancingRpcClient
+    * [FLUME-3270] - Close JMS resources in JMSMessageConsumer constructor in case of failure
+    * [FLUME-3278] - Handling -D keystore parameters in Kafka components
+    * [FLUME-3294] - Fix polling logic in TaildirSource
+    * [FLUME-3298] - Make hadoop-common optional in flume-ng-hadoop-credential-store-config-filter
+    * [FLUME-3299] - Fix log4j scopes in pom files
+
+** Sub-task
+    * [FLUME-3158] - Upgrade surefire version and config
+    * [FLUME-3243] - Increase the default of hdfs.callTimeout and document it's deprecation
+
+** Test
+    * [FLUME-3195] - Split up the TestKafkaChannel class
+
+** Wish
+    * [FLUME-3087] - Change log level from WARN to INFO when using default "maxIOWorkers" value.
+
+** Task
+    * [FLUME-3183] - Maven: generate SHA-512 checksum during deploy
+
+** Dependency upgrade
+    * [FLUME-2698] - Upgrade Jetty Version
+    * [FLUME-3115] - Upgrade netty library dependency
+    * [FLUME-3194] - upgrade derby to the latest (1.14.1.0) version
+
+
+Release Notes - Flume - Version v1.8.0
+
+** New Feature
+    * [FLUME-2171] - Add Interceptor to remove headers from event
+    * [FLUME-2917] - Provide netcat UDP source as alternative to TCP
+    * [FLUME-2993] - Support environment variables in configuration files
+
+** Improvement
+    * [FLUME-1520] - Timestamp interceptor should support custom headers
+    * [FLUME-2945] - Bump java target version to 1.8
+    * [FLUME-3020] - Improve HDFSEventSink Escape Ingestion by more then 10x by not getting InetAddress on every record
+    * [FLUME-3025] - Expose FileChannel.open on JMX
+    * [FLUME-3072] - Add IP address to headers in flume log4j appender
+    * [FLUME-3092] - Extend the FileChannel's monitoring metrics
+    * [FLUME-3100] - Support arbitrary header substitution for topic of Kafka
+    * [FLUME-3144] - Improve Log4jAppender's performance by allowing logging collection of messages
+
+** Bug
+    * [FLUME-2620] - File channel throws NullPointerException if a header value is null
+    * [FLUME-2752] - Flume AvroSource will leak the memory and the OOM will be happened.
+    * [FLUME-2812] - Exception in thread "SinkRunner-PollingRunner-DefaultSinkProcessor" java.lang.Error: Maximum permit count exceeded
+    * [FLUME-2857] - Kafka Source/Channel/Sink does not restore default values when live update config
+    * [FLUME-2905] - NetcatSource - Socket not closed when an exception is encountered during start() leading to file descriptor leaks
+    * [FLUME-2991] - ExecSource command execution starts before starting the sourceCounter
+    * [FLUME-3027] - Kafka Channel should clear offsets map after commit
+    * [FLUME-3031] - sequence source should reset its counter for event body on channel exception
+    * [FLUME-3043] - KafkaSink SinkCallback throws NullPointerException when Log4J level is debug
+    * [FLUME-3046] - Kafka Sink and Source Configuration Improvements
+    * [FLUME-3049] - Wrapping the exception into SecurityException in UGIExecutor.execute hides the original one
+    * [FLUME-3057] - Build fails due to unsupported snappy-java version on ppc64le
+    * [FLUME-3080] - Close failure in HDFS Sink might cause data loss
+    * [FLUME-3083] - Taildir source can miss events if file updated in same second as file close
+    * [FLUME-3085] - HDFS Sink can skip flushing some BucketWriters, might lead to data loss
+    * [FLUME-3112] - Upgrade jackson-core library dependency
+    * [FLUME-3127] - Upgrade libfb303 library dependency
+    * [FLUME-3131] - Upgrade spring framework library dependencies
+    * [FLUME-3132] - Upgrade tomcat jasper library dependencies
+    * [FLUME-3135] - property logger in org.apache.flume.interceptor.RegexFilteringInterceptor confused
+    * [FLUME-3141] - Small typo found in RegexHbaseEventSerializer.java
+    * [FLUME-3152] - Add Flume Metric for Backup Checkpoint Errors
+    * [FLUME-3155] - Use batch mode in mvn to fix Travis CI error
+    * [FLUME-3157] - Refactor TestHDFSEventSinkOnMiniCluster to not use LeaseManager private API
+    * [FLUME-3173] - Upgrade joda-time
+    * [FLUME-3174] - HdfsSink AWS S3A authentication does not work on JDK 8
+    * [FLUME-3175] - Javadoc generation fails due to Java8's strict doclint
+
+** Documentation
+    * [FLUME-2175] - Update Developer Guide with notes on how to upgrade Protocol Buffer version
+    * [FLUME-2817] - Sink for multi-agent flow example in user guide is set up incorrectly
+
+** Wish
+    * [FLUME-2579] - JMS source support durable subscriptions and message listening
+
+** Question
+    * [FLUME-2427] - java.lang.NoSuchMethodException and warning on HDFS (S3) sink 
+
+** Task
+    * [FLUME-3093] - Groundwork for version changes in root pom
+    * [FLUME-3154] - Add HBase client version check to AsyncHBaseSink and HBaseSink
+
+** Test
+    * [FLUME-2997] - Fix flaky junit test in SpillableMemoryChannel
+    * [FLUME-3002] - Some tests in TestBucketWriter are flaky
+
+
 Release Notes - Flume - Version v1.7.0
 
 ** New Feature

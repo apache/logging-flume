@@ -27,6 +27,7 @@ import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.FlumeException;
 import org.apache.flume.client.avro.ReliableSpoolingFileEventReader;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.serialization.DecodeErrorPolicy;
@@ -45,7 +46,7 @@ import java.util.concurrent.TimeUnit;
 import static org.apache.flume.source.SpoolDirectorySourceConfigurationConstants.*;
 
 public class SpoolDirectorySource extends AbstractSource
-    implements Configurable, EventDrivenSource {
+    implements Configurable, EventDrivenSource, BatchSizeSupported {
 
   private static final Logger logger = LoggerFactory.getLogger(SpoolDirectorySource.class);
 
@@ -77,6 +78,7 @@ public class SpoolDirectorySource extends AbstractSource
   private ConsumeOrder consumeOrder;
   private int pollDelay;
   private boolean recursiveDirectorySearch;
+  private String trackingPolicy;
 
   @Override
   public synchronized void start() {
@@ -104,6 +106,8 @@ public class SpoolDirectorySource extends AbstractSource
           .decodeErrorPolicy(decodeErrorPolicy)
           .consumeOrder(consumeOrder)
           .recursiveDirectorySearch(recursiveDirectorySearch)
+          .trackingPolicy(trackingPolicy)
+          .sourceCounter(sourceCounter)
           .build();
     } catch (IOException ioe) {
       throw new FlumeException("Error instantiating spooling event parser",
@@ -193,6 +197,7 @@ public class SpoolDirectorySource extends AbstractSource
     if (sourceCounter == null) {
       sourceCounter = new SourceCounter(getName());
     }
+    trackingPolicy = context.getString(TRACKING_POLICY, DEFAULT_TRACKING_POLICY);
   }
 
   @VisibleForTesting
@@ -232,7 +237,13 @@ public class SpoolDirectorySource extends AbstractSource
     return recursiveDirectorySearch;
   }
 
-  private class SpoolDirectoryRunnable implements Runnable {
+  @Override
+  public long getBatchSize() {
+    return batchSize;
+  }
+
+  @VisibleForTesting
+  protected class SpoolDirectoryRunnable implements Runnable {
     private ReliableSpoolingFileEventReader reader;
     private SourceCounter sourceCounter;
 
@@ -245,9 +256,12 @@ public class SpoolDirectorySource extends AbstractSource
     @Override
     public void run() {
       int backoffInterval = 250;
+      boolean readingEvents = false;
       try {
         while (!Thread.interrupted()) {
+          readingEvents = true;
           List<Event> events = reader.readEvents(batchSize);
+          readingEvents = false;
           if (events.isEmpty()) {
             break;
           }
@@ -261,6 +275,7 @@ public class SpoolDirectorySource extends AbstractSource
             logger.warn("The channel is full, and cannot write data now. The " +
                 "source will try again after " + backoffInterval +
                 " milliseconds");
+            sourceCounter.incrementChannelWriteFail();
             hitChannelFullException = true;
             backoffInterval = waitAndGetNewBackoffInterval(backoffInterval);
             continue;
@@ -268,6 +283,7 @@ public class SpoolDirectorySource extends AbstractSource
             logger.warn("The channel threw an exception, and cannot write data now. The " +
                 "source will try again after " + backoffInterval +
                 " milliseconds");
+            sourceCounter.incrementChannelWriteFail();
             hitChannelException = true;
             backoffInterval = waitAndGetNewBackoffInterval(backoffInterval);
             continue;
@@ -280,6 +296,11 @@ public class SpoolDirectorySource extends AbstractSource
         logger.error("FATAL: " + SpoolDirectorySource.this.toString() + ": " +
             "Uncaught exception in SpoolDirectorySource thread. " +
             "Restart or reconfigure Flume to continue processing.", t);
+        if (readingEvents) {
+          sourceCounter.incrementEventReadFail();
+        } else {
+          sourceCounter.incrementGenericProcessingFail();
+        }
         hasFatalError = true;
         Throwables.propagate(t);
       }

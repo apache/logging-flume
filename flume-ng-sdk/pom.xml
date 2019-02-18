@@ -21,12 +21,18 @@ limitations under the License.
   <parent>
     <artifactId>flume-parent</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.8.0-SNAPSHOT</version>
+    <version>1.10.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>flume-ng-sdk</artifactId>
   <name>Flume NG SDK</name>
   <description>Flume Software Development Kit: Stable public API for integration with Flume 1.x</description>
+
+  <properties>
+    <!-- TODO fix spotbugs/pmd violations -->
+    <spotbugs.maxAllowedViolations>67</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>131</pmd.maxAllowedViolations>
+  </properties>
 
   <profiles>
     <profile>
@@ -100,7 +106,7 @@ limitations under the License.
         <plugin>
           <groupId>org.eclipse.m2e</groupId>
           <artifactId>lifecycle-mapping</artifactId>
-          <version>1.0.0</version>
+          <version>${lifecycle-mapping.version}</version>
           <configuration>
             <lifecycleMappingMetadata>
               <pluginExecutions>
@@ -121,7 +127,7 @@ limitations under the License.
                   <pluginExecutionFilter>
                     <groupId>com.thoughtworks.paranamer</groupId>
                     <artifactId>paranamer-maven-plugin</artifactId>
-                    <versionRange>[2.3,)</versionRange>
+                    <versionRange>[${mvn-paranamer-plugin.version},)</versionRange>
                     <goals>
                       <goal>generate</goal>
                     </goals>
@@ -203,10 +209,15 @@ limitations under the License.
     </dependency>
 
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
-      <!-- only used for tests -->
-      <optional>true</optional>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-1.2-api</artifactId>
+      <scope>test</scope>
     </dependency>
 
     <dependency>

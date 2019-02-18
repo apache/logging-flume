@@ -249,6 +249,17 @@ And commit the changes.
 
 ### Generating and signing the source artifacts
 
+Generation of the source artifact is created by the maven-assembly-plugin in the package phase.
+Signing is done by the maven-gpg-plugin using the `sign` profile in the verify phase
+Checksum generation for the source and binary artifacts is done by checksum-maven-plugin
+in the verify phase, an SHA512 checksum is generated
+
+      mvn clean package -Psign -DskipTests
+
+The generated artifacts can be found in the `flume-ng-dist/target` directory
+
+If you would like to create it manually, the previous process is:
+
 There is a script in the Flume source tree for generating and signing the Flume
 source artifacts. Once the release candidate is tagged, generate the source
 release with the following steps.
@@ -349,7 +360,7 @@ will have a numeric id associated with it that will be used later
     $ cd public_html
     $ mkdir apache-flume-X.Y.Z-rcN
     $ cd apache-flume-X.Y.Z-rcN
-    $ wget --no-check-certificate https://repository.apache.org/content/repositories/orgapacheflume-XXXX/org/apache/flume/flume-ng-dist/X.Y.Z/flume-ng-dist-X.Y.Z-bin.tar.gz{,.{asc,md5,sha1}}
+    $ wget --no-check-certificate https://repository.apache.org/content/repositories/orgapacheflume-XXXX/org/apache/flume/flume-ng-dist/X.Y.Z/flume-ng-dist-X.Y.Z-bin.tar.gz{,.{asc,sha512}}
     $ for file in flume-ng-dist-*; do mv $file $(echo $file | sed -e "s/flume-ng-dist/apache-flume/g");done
 
 
@@ -371,7 +382,7 @@ Send an email to dev@flume.apache.org list. For example,
 
     *** Please cast your vote within the next 72 hours ***
 
-    The tarball (*.tar.gz), signature (*.asc), and checksums (*.md5, *.sha1)
+    The tarball (*.tar.gz), signature (*.asc), and checksums (*.sha512)
     for the source and binary artifacts can be found here:
       https://people.apache.org/~mpercy/flume/apache-flume-X.Y.Z-RC1/
 

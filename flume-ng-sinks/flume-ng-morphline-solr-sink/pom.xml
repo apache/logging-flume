@@ -21,20 +21,20 @@ limitations under the License.
   <parent>
     <artifactId>flume-ng-sinks</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.8.0-SNAPSHOT</version>
+    <version>1.10.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.apache.flume.flume-ng-sinks</groupId>
   <artifactId>flume-ng-morphline-solr-sink</artifactId>
-  <version>1.8.0-SNAPSHOT</version>
   <name>Flume NG Morphline Solr Sink</name>
 
   <properties>
+    <!-- TODO fix spotbugspmd violations -->
+    <spotbugs.maxAllowedViolations>6</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>6</pmd.maxAllowedViolations>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <solr.version>4.3.0</solr.version>
-    <solr.expected.version>4.3.0</solr.expected.version> <!-- sanity check to verify we actually run against the expected version rather than some outdated version -->
-    <slf4j.version>1.6.1</slf4j.version>
-    <surefire.version>2.12.4</surefire.version>
+    <solr.version>${solr-global.version}</solr.version>
+    <solr.expected.version>${solr-global.version}</solr.expected.version> <!-- sanity check to verify we actually run against the expected version rather than some outdated version -->
   </properties>
 
   <dependencies>
@@ -63,13 +63,6 @@ limitations under the License.
       <optional>true</optional>
     </dependency>
 
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>jcl-over-slf4j</artifactId>
-      <version>${slf4j.version}</version> <!-- flume provides 1.7.2 and solr depends on 1.6.4 -->
-      <scope>provided</scope>
-    </dependency>
-
     <dependency> <!-- see http://lucene.apache.org/solr -->
       <groupId>org.apache.solr</groupId>
       <artifactId>solr-test-framework</artifactId>
@@ -92,11 +85,34 @@ limitations under the License.
     </dependency>
 
     <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-jcl</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-1.2-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-all</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -105,33 +121,20 @@ limitations under the License.
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>${surefire.version}</version>
         <configuration>
           <argLine>-Dtests.locale=en_us</argLine>
           <redirectTestOutputToFile>true</redirectTestOutputToFile>
-          <systemPropertyVariables>
-            <!--<solr.expected.version>${solr.expected.version}</solr.expected.version>-->
-          </systemPropertyVariables>
         </configuration>
       </plugin>
 
       <plugin>
         <groupId>org.apache.rat</groupId>
         <artifactId>apache-rat-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>test.rat</id>
-            <phase>test</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-            <configuration>
-              <excludes>
-                <exclude>src/test/resources/**</exclude>
-              </excludes>
-            </configuration>
-          </execution>
-        </executions>
+        <configuration>
+          <excludes>
+            <exclude>src/test/resources/**</exclude>
+          </excludes>
+        </configuration>
       </plugin>
 
     </plugins>

@@ -23,7 +23,7 @@ limitations under the License.
   <parent>
     <artifactId>flume-parent</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.8.0-SNAPSHOT</version>
+    <version>1.10.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.apache.flume</groupId>
@@ -31,31 +31,10 @@ limitations under the License.
   <name>Flume Shared Utils</name>
   <packaging>pom</packaging>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
 
   <modules>
+    <module>flume-shared-kafka</module>
     <module>flume-shared-kafka-test</module>
   </modules>
-
-  <profiles>
-
-    <profile>
-      <id>hadoop-1.0</id>
-      <activation>
-        <property>
-          <name>flume.hadoop.profile</name>
-          <value>1</value>
-        </property>
-      </activation>
-    </profile>
-
-  </profiles>
 
 </project>

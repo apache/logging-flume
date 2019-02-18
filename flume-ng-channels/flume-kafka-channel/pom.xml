@@ -21,12 +21,18 @@ limitations under the License.
   <parent>
     <artifactId>flume-ng-channels</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.8.0-SNAPSHOT</version>
+    <version>1.10.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>org.apache.flume.flume-ng-channels</groupId>
   <artifactId>flume-kafka-channel</artifactId>
+
+  <properties>
+    <!-- TODO fix spotbugs/pmd violations -->
+    <spotbugs.maxAllowedViolations>13</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>13</pmd.maxAllowedViolations>
+  </properties>
 
   <dependencies>
     <dependency>
@@ -39,27 +45,37 @@ limitations under the License.
     </dependency>
     <dependency>
       <groupId>org.apache.flume.flume-shared</groupId>
+      <artifactId>flume-shared-kafka</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flume.flume-shared</groupId>
       <artifactId>flume-shared-kafka-test</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka_2.10</artifactId>
-      <version>${kafka.version}</version>
+      <artifactId>kafka_2.11</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-clients</artifactId>
-      <version>${kafka.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.flume.flume-ng-sinks</groupId>
       <artifactId>flume-ng-kafka-sink</artifactId>
-      <version>${project.version}</version>
       <classifier>tests</classifier>
       <scope>test</scope>
     </dependency>
-
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-all</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
 </project>

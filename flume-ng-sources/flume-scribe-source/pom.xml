@@ -23,12 +23,18 @@ limitations under the License.
   <parent>
     <artifactId>flume-ng-sources</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.8.0-SNAPSHOT</version>
+    <version>1.10.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.apache.flume.flume-ng-sources</groupId>
   <artifactId>flume-scribe-source</artifactId>
   <name>Flume Scribe Source</name>
+
+  <properties>
+    <!-- TODO fix spotbugs/pmd violations -->
+    <spotbugs.maxAllowedViolations>19</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>76</pmd.maxAllowedViolations>
+  </properties>
 
   <profiles>
     <profile>
@@ -106,7 +112,7 @@ limitations under the License.
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-compiler-plugin</artifactId>
-              <version>2.3.2</version>
+              <version>${mvn-compiler-plugin.version}</version>
               <configuration>
                 <source>1.6</source>
                 <target>1.6</target>
@@ -150,8 +156,14 @@ limitations under the License.
     </dependency>
 
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-1.2-api</artifactId>
       <scope>test</scope>
     </dependency>
 
@@ -161,8 +173,9 @@ limitations under the License.
     </dependency>
 
     <dependency>
-      <groupId>org.mortbay.jetty</groupId>
-      <artifactId>servlet-api</artifactId>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-all</artifactId>
+      <scope>test</scope>
     </dependency>
 
   </dependencies>

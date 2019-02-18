@@ -16,9 +16,11 @@
 # under the License.
 
 language: java
+jdk:
+  - oraclejdk8
 before_install:
   - export MAVEN_SKIP_RC="true" # Travis has settings in /etc/mavenrc. We want to override them. See https://github.com/travis-ci/travis-ci/issues/4613
 install:
   - # Skip mvn install. See https://docs.travis-ci.com/user/languages/java/
 script:
-  - MAVEN_OPTS="-Xms512m -Xmx1024m -XX:PermSize=256m -XX:MaxPermSize=512m" mvn clean install -DskipTests
+  - MAVEN_OPTS="-Xms512m -Xmx1024m" ./mvnw clean install -DskipTests -B -fae

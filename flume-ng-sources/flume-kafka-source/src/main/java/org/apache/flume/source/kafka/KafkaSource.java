@@ -17,6 +17,7 @@
 package org.apache.flume.source.kafka;
 
 import java.io.ByteArrayInputStream;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -28,11 +29,12 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
+import kafka.cluster.Broker;
 import kafka.cluster.BrokerEndPoint;
-import kafka.utils.ZKGroupTopicDirs;
-import kafka.utils.ZkUtils;
+import kafka.zk.KafkaZkClient;
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.specific.SpecificDatumReader;
@@ -41,11 +43,13 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.conf.LogPrivacyUtil;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.instrumentation.kafka.KafkaSourceCounter;
+import org.apache.flume.shared.kafka.KafkaSSLUtil;
 import org.apache.flume.source.AbstractPollableSource;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.kafka.clients.CommonClientConfigs;
@@ -57,16 +61,19 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.common.protocol.SecurityProtocol;
+import org.apache.kafka.common.network.ListenerName;
+import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.security.JaasUtils;
+import org.apache.kafka.common.utils.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Optional;
-import scala.Option;
 
 import static org.apache.flume.source.kafka.KafkaSourceConstants.*;
-import static scala.collection.JavaConverters.asJavaListConverter;
+
+import scala.Option;
+import scala.collection.JavaConverters;
 
 /**
  * A Source for Kafka which reads messages from kafka topics.
@@ -94,7 +101,7 @@ import static scala.collection.JavaConverters.asJavaListConverter;
  * <p>
  */
 public class KafkaSource extends AbstractPollableSource
-        implements Configurable {
+        implements Configurable, BatchSizeSupported {
   private static final Logger log = LoggerFactory.getLogger(KafkaSource.class);
 
   // Constants used only for offset migration zookeeper connections
@@ -126,7 +133,15 @@ public class KafkaSource extends AbstractPollableSource
   private String zookeeperConnect;
   private String bootstrapServers;
   private String groupId = DEFAULT_GROUP_ID;
+  @Deprecated
   private boolean migrateZookeeperOffsets = DEFAULT_MIGRATE_ZOOKEEPER_OFFSETS;
+  private String topicHeader = null;
+  private boolean setTopicHeader;
+
+  @Override
+  public long getBatchSize() {
+    return batchUpperLimit;
+  }
 
   /**
    * This class is a helper to subscribe for topics by using
@@ -180,7 +195,6 @@ public class KafkaSource extends AbstractPollableSource
   @Override
   protected Status doProcess() throws EventDeliveryException {
     final String batchUUID = UUID.randomUUID().toString();
-    byte[] kafkaMessage;
     String kafkaKey;
     Event event;
     byte[] eventBody;
@@ -197,22 +211,20 @@ public class KafkaSource extends AbstractPollableSource
         if (it == null || !it.hasNext()) {
           // Obtaining new records
           // Poll time is remainder time for current batch.
-          ConsumerRecords<String, byte[]> records = consumer.poll(
-                  Math.max(0, maxBatchEndTime - System.currentTimeMillis()));
+          long durMs = Math.max(0L, maxBatchEndTime - System.currentTimeMillis());
+          Duration duration = Duration.ofMillis(durMs);
+          ConsumerRecords<String, byte[]> records = consumer.poll(duration);
           it = records.iterator();
 
           // this flag is set to true in a callback when some partitions are revoked.
           // If there are any records we commit them.
-          if (rebalanceFlag.get()) {
-            rebalanceFlag.set(false);
+          if (rebalanceFlag.compareAndSet(true, false)) {
             break;
           }
           // check records after poll
           if (!it.hasNext()) {
-            if (log.isDebugEnabled()) {
-              counter.incrementKafkaEmptyCount();
-              log.debug("Returning with backoff. No more data to read");
-            }
+            counter.incrementKafkaEmptyCount();
+            log.debug("Returning with backoff. No more data to read");
             // batch time exceeded
             break;
           }
@@ -221,7 +233,6 @@ public class KafkaSource extends AbstractPollableSource
         // get next message
         ConsumerRecord<String, byte[]> message = it.next();
         kafkaKey = message.key();
-        kafkaMessage = message.value();
 
         if (useAvroEventFormat) {
           //Assume the event is in Avro format using the AvroFlumeEvent schema
@@ -250,12 +261,17 @@ public class KafkaSource extends AbstractPollableSource
           headers.put(KafkaSourceConstants.TIMESTAMP_HEADER,
               String.valueOf(System.currentTimeMillis()));
         }
-        if (!headers.containsKey(KafkaSourceConstants.TOPIC_HEADER)) {
-          headers.put(KafkaSourceConstants.TOPIC_HEADER, message.topic());
+        // Only set the topic header if setTopicHeader and it isn't already populated
+        if (setTopicHeader && !headers.containsKey(topicHeader)) {
+          headers.put(topicHeader, message.topic());
         }
         if (!headers.containsKey(KafkaSourceConstants.PARTITION_HEADER)) {
           headers.put(KafkaSourceConstants.PARTITION_HEADER,
               String.valueOf(message.partition()));
+        }
+        if (!headers.containsKey(OFFSET_HEADER)) {
+          headers.put(OFFSET_HEADER,
+              String.valueOf(message.offset()));
         }
 
         if (kafkaKey != null) {
@@ -312,6 +328,7 @@ public class KafkaSource extends AbstractPollableSource
       return Status.BACKOFF;
     } catch (Exception e) {
       log.error("KafkaSource EXCEPTION, {}", e);
+      counter.incrementEventReadOrChannelFail(e);
       return Status.BACKOFF;
     }
   }
@@ -400,6 +417,12 @@ public class KafkaSource extends AbstractPollableSource
       log.info("Group ID was not specified. Using {} as the group id.", groupId);
     }
 
+    setTopicHeader = context.getBoolean(KafkaSourceConstants.SET_TOPIC_HEADER,
+                                        KafkaSourceConstants.DEFAULT_SET_TOPIC_HEADER);
+
+    topicHeader = context.getString(KafkaSourceConstants.TOPIC_HEADER,
+                                    KafkaSourceConstants.DEFAULT_TOPIC_HEADER);
+
     setConsumerProps(context);
 
     if (log.isDebugEnabled() && LogPrivacyUtil.allowLogPrintConfig()) {
@@ -445,6 +468,8 @@ public class KafkaSource extends AbstractPollableSource
     }
     kafkaProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG,
                    KafkaSourceConstants.DEFAULT_AUTO_COMMIT);
+
+    KafkaSSLUtil.addGlobalSSLParameters(kafkaProps);
   }
 
   /**
@@ -452,18 +477,21 @@ public class KafkaSource extends AbstractPollableSource
    * Allows for backwards compatibility of the zookeeperConnect configuration.
    */
   private String lookupBootstrap(String zookeeperConnect, SecurityProtocol securityProtocol) {
-    ZkUtils zkUtils = ZkUtils.apply(zookeeperConnect, ZK_SESSION_TIMEOUT, ZK_CONNECTION_TIMEOUT,
-        JaasUtils.isZkSecurityEnabled());
-    try {
-      List<BrokerEndPoint> endPoints =
-          asJavaListConverter(zkUtils.getAllBrokerEndPointsForChannel(securityProtocol)).asJava();
+    try (KafkaZkClient zkClient = KafkaZkClient.apply(zookeeperConnect,
+            JaasUtils.isZkSecurityEnabled(), ZK_SESSION_TIMEOUT, ZK_CONNECTION_TIMEOUT, 10,
+            Time.SYSTEM, "kafka.server", "SessionExpireListener")) {
+      List<Broker> brokerList =
+              JavaConverters.seqAsJavaListConverter(zkClient.getAllBrokersInCluster()).asJava();
+      List<BrokerEndPoint> endPoints = brokerList.stream()
+              .map(broker -> broker.brokerEndPoint(
+                  ListenerName.forSecurityProtocol(securityProtocol))
+              )
+              .collect(Collectors.toList());
       List<String> connections = new ArrayList<>();
       for (BrokerEndPoint endPoint : endPoints) {
         connections.add(endPoint.connectionString());
       }
       return StringUtils.join(connections, ',');
-    } finally {
-      zkUtils.close();
     }
   }
 
@@ -516,8 +544,6 @@ public class KafkaSource extends AbstractPollableSource
     // Subscribe for topics by already specified strategy
     subscriber.subscribe(consumer, new SourceRebalanceListener(rebalanceFlag));
 
-    // Connect to kafka. 1 second is optimal time.
-    it = consumer.poll(1000).iterator();
     log.info("Kafka source {} started.", getName());
     counter.start();
   }
@@ -528,17 +554,23 @@ public class KafkaSource extends AbstractPollableSource
       consumer.wakeup();
       consumer.close();
     }
-    counter.stop();
+    if (counter != null) {
+      counter.stop();
+    }
     log.info("Kafka Source {} stopped. Metrics: {}", getName(), counter);
   }
 
   private void migrateOffsets(String topicStr) {
-    ZkUtils zkUtils = ZkUtils.apply(zookeeperConnect, ZK_SESSION_TIMEOUT, ZK_CONNECTION_TIMEOUT,
-        JaasUtils.isZkSecurityEnabled());
-    KafkaConsumer<String, byte[]> consumer = new KafkaConsumer<>(kafkaProps);
-    try {
+    try (KafkaZkClient zkClient = KafkaZkClient.apply(zookeeperConnect,
+            JaasUtils.isZkSecurityEnabled(), ZK_SESSION_TIMEOUT, ZK_CONNECTION_TIMEOUT, 10,
+            Time.SYSTEM, "kafka.server", "SessionExpireListener");
+         KafkaConsumer<String, byte[]> consumer = new KafkaConsumer<>(kafkaProps)) {
       Map<TopicPartition, OffsetAndMetadata> kafkaOffsets =
           getKafkaOffsets(consumer, topicStr);
+      if (kafkaOffsets == null) {
+        log.warn("Topic " + topicStr + " not found in Kafka. Offset migration will be skipped.");
+        return;
+      }
       if (!kafkaOffsets.isEmpty()) {
         log.info("Found Kafka offsets for topic " + topicStr +
             ". Will not migrate from zookeeper");
@@ -548,7 +580,7 @@ public class KafkaSource extends AbstractPollableSource
 
       log.info("No Kafka offsets found. Migrating zookeeper offsets");
       Map<TopicPartition, OffsetAndMetadata> zookeeperOffsets =
-          getZookeeperOffsets(zkUtils, topicStr);
+          getZookeeperOffsets(zkClient, consumer, topicStr);
       if (zookeeperOffsets.isEmpty()) {
         log.warn("No offsets to migrate found in Zookeeper");
         return;
@@ -561,42 +593,42 @@ public class KafkaSource extends AbstractPollableSource
       Map<TopicPartition, OffsetAndMetadata> newKafkaOffsets =
           getKafkaOffsets(consumer, topicStr);
       log.debug("Offsets committed: {}", newKafkaOffsets);
-      if (!newKafkaOffsets.keySet().containsAll(zookeeperOffsets.keySet())) {
+      if (newKafkaOffsets == null
+          || !newKafkaOffsets.keySet().containsAll(zookeeperOffsets.keySet())) {
         throw new FlumeException("Offsets could not be committed");
       }
-    } finally {
-      zkUtils.close();
-      consumer.close();
     }
   }
 
   private Map<TopicPartition, OffsetAndMetadata> getKafkaOffsets(
       KafkaConsumer<String, byte[]> client, String topicStr) {
-    Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
+    Map<TopicPartition, OffsetAndMetadata> offsets = null;
     List<PartitionInfo> partitions = client.partitionsFor(topicStr);
-    for (PartitionInfo partition : partitions) {
-      TopicPartition key = new TopicPartition(topicStr, partition.partition());
-      OffsetAndMetadata offsetAndMetadata = client.committed(key);
-      if (offsetAndMetadata != null) {
-        offsets.put(key, offsetAndMetadata);
+    if (partitions != null) {
+      offsets = new HashMap<>();
+      for (PartitionInfo partition : partitions) {
+        TopicPartition key = new TopicPartition(topicStr, partition.partition());
+        OffsetAndMetadata offsetAndMetadata = client.committed(key);
+        if (offsetAndMetadata != null) {
+          offsets.put(key, offsetAndMetadata);
+        }
       }
     }
     return offsets;
   }
 
-  private Map<TopicPartition, OffsetAndMetadata> getZookeeperOffsets(ZkUtils client,
-                                                                     String topicStr) {
+  private Map<TopicPartition, OffsetAndMetadata> getZookeeperOffsets(
+          KafkaZkClient zkClient, KafkaConsumer<String, byte[]> consumer, String topicStr) {
+
     Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
-    ZKGroupTopicDirs topicDirs = new ZKGroupTopicDirs(groupId, topicStr);
-    List<String> partitions = asJavaListConverter(
-        client.getChildrenParentMayNotExist(topicDirs.consumerOffsetDir())).asJava();
-    for (String partition : partitions) {
-      TopicPartition key = new TopicPartition(topicStr, Integer.valueOf(partition));
-      Option<String> data = client.readDataMaybeNull(
-          topicDirs.consumerOffsetDir() + "/" + partition)._1();
-      if (data.isDefined()) {
-        Long offset = Long.valueOf(data.get());
-        offsets.put(key, new OffsetAndMetadata(offset));
+    List<PartitionInfo> partitions = consumer.partitionsFor(topicStr);
+    for (PartitionInfo partition : partitions) {
+      TopicPartition topicPartition = new TopicPartition(topicStr, partition.partition());
+      Option<Object> optionOffset = zkClient.getConsumerOffset(groupId, topicPartition);
+      if (optionOffset.nonEmpty()) {
+        Long offset = (Long) optionOffset.get();
+        OffsetAndMetadata offsetAndMetadata = new OffsetAndMetadata(offset);
+        offsets.put(topicPartition, offsetAndMetadata);
       }
     }
     return offsets;

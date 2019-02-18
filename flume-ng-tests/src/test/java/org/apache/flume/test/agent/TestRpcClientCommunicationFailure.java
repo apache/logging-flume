@@ -36,11 +36,11 @@ public class TestRpcClientCommunicationFailure {
   public void testFailure() throws Exception {
     try {
 
-      StagedInstall.getInstance().startAgent(
+      int port = StagedInstall.getInstance().startAgent(
           "rpccagent", CONFIG_FILE_PRCCLIENT_TEST);
-      StagedInstall.waitUntilPortOpens("localhost", 12121, 20000);
+      StagedInstall.waitUntilPortOpens("localhost", port, 20000);
       RpcClient client = RpcClientFactory.getDefaultInstance(
-          "localhost", 12121);
+          "localhost", port);
       String[] text = {"foo", "bar", "xyz", "abc"};
       for (String str : text) {
         client.append(EventBuilder.withBody(str.getBytes()));

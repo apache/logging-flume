@@ -63,4 +63,8 @@ public class TaildirSourceConfigurationConstants {
   /** Whether to include absolute path filename in a header. */
   public static final String FILENAME_HEADER = "fileHeader";
   public static final boolean DEFAULT_FILE_HEADER = false;
+
+  /** The max number of batch reads from a file in one loop */
+  public static final String MAX_BATCH_COUNT = "maxBatchCount";
+  public static final Long DEFAULT_MAX_BATCH_COUNT = Long.MAX_VALUE;
 }

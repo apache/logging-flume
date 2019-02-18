@@ -28,8 +28,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Clock;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -93,6 +98,7 @@ public class SyslogUtils {
   public static final Integer MIN_SIZE = 10;
   public static final Integer DEFAULT_SIZE = 2500;
   private final boolean isUdp;
+  private Clock clock;
   private boolean isBadEvent;
   private boolean isIncompleteEvent;
   private Integer maxSize;
@@ -184,18 +190,55 @@ public class SyslogUtils {
     return body;
   }
 
+  public static String getIP(SocketAddress socketAddress) {
+    try {
+      InetSocketAddress inetSocketAddress = (InetSocketAddress) socketAddress;
+      String ip = inetSocketAddress.getAddress().getHostAddress();
+      if (ip != null) {
+        return ip;
+      } else {
+        throw new NullPointerException("The returned IP is null");
+      }
+    } catch (Exception e) {
+      logger.warn("Unable to retrieve client IP address", e);
+    }
+    // return a safe value instead of null
+    return "";
+  }
+
+  public static String getHostname(SocketAddress socketAddress) {
+    try {
+      InetSocketAddress inetSocketAddress = (InetSocketAddress) socketAddress;
+      String hostname = inetSocketAddress.getHostName();
+      if (hostname != null) {
+        return hostname;
+      } else {
+        throw new NullPointerException("The returned hostname is null");
+      }
+    } catch (Exception e) {
+      logger.warn("Unable to retrieve client hostname", e);
+    }
+    // return a safe value instead of null
+    return "";
+  }
+
   public SyslogUtils() {
     this(false);
   }
 
   public SyslogUtils(boolean isUdp) {
     this(DEFAULT_SIZE,
-        new HashSet<String>(Arrays.asList(SyslogSourceConfigurationConstants.DEFAULT_KEEP_FIELDS)),
+        new HashSet<>(Arrays.asList(SyslogSourceConfigurationConstants.DEFAULT_KEEP_FIELDS)),
         isUdp);
   }
 
-  public SyslogUtils(Integer eventSize, Set<String> keepFields, boolean isUdp) {
+  public SyslogUtils(Integer defaultSize, Set<String> keepFields, boolean isUdp) {
+    this(defaultSize, keepFields, isUdp, Clock.system(Clock.systemDefaultZone().getZone()));
+  }
+
+  public SyslogUtils(Integer eventSize, Set<String> keepFields, boolean isUdp, Clock clock) {
     this.isUdp = isUdp;
+    this.clock = clock;
     isBadEvent = false;
     isIncompleteEvent = false;
     maxSize = (eventSize < MIN_SIZE) ? MIN_SIZE : eventSize;
@@ -364,12 +407,13 @@ public class SyslogUtils {
             }
             // Add year to timestamp if needed
             if (fmt.addYear) {
-              value = String.valueOf(Calendar.getInstance().get(Calendar.YEAR)) + value;
+              value = clock.instant().atOffset(ZoneOffset.UTC).get(ChronoField.YEAR) + value;
             }
             // try the available time formats to timestamp
             for (int dt = 0; dt < fmt.dateFormat.size(); dt++) {
               try {
                 Date parsedDate = fmt.dateFormat.get(dt).parse(value);
+
                 /*
                  * Some code to try and add some smarts to the year insertion.
                  * Original code just added the current year which was okay-ish, but around
@@ -384,8 +428,8 @@ public class SyslogUtils {
                  * 1 month in the future) of timestamps.
                  */
                 if (fmt.addYear) {
-                  Calendar cal = Calendar.getInstance();
-                  cal.setTime(parsedDate);
+                  Calendar calParsed = Calendar.getInstance();
+                  calParsed.setTime(parsedDate);
                   Calendar calMinusOneMonth = Calendar.getInstance();
                   calMinusOneMonth.setTime(parsedDate);
                   calMinusOneMonth.add(Calendar.MONTH, -1);
@@ -394,19 +438,21 @@ public class SyslogUtils {
                   calPlusElevenMonths.setTime(parsedDate);
                   calPlusElevenMonths.add(Calendar.MONTH, +11);
 
-                  if (cal.getTimeInMillis() > System.currentTimeMillis() &&
-                      calMinusOneMonth.getTimeInMillis() > System.currentTimeMillis()) {
+                  long currentTimeMillis = clock.millis();
+
+                  if (calParsed.getTimeInMillis() > currentTimeMillis &&
+                      calMinusOneMonth.getTimeInMillis() > currentTimeMillis) {
                     //Need to roll back a year
                     Calendar c1 = Calendar.getInstance();
                     c1.setTime(parsedDate);
                     c1.add(Calendar.YEAR, -1);
                     parsedDate = c1.getTime();
-                  } else if (cal.getTimeInMillis() < System.currentTimeMillis() &&
-                             calPlusElevenMonths.getTimeInMillis() < System.currentTimeMillis()) {
+                  } else if (calParsed.getTimeInMillis() < currentTimeMillis &&
+                             calPlusElevenMonths.getTimeInMillis() < currentTimeMillis) {
                     //Need to roll forward a year
                     Calendar c1 = Calendar.getInstance();
                     c1.setTime(parsedDate);
-                    c1.add(Calendar.YEAR, -1);
+                    c1.add(Calendar.YEAR, +1);
                     parsedDate = c1.getTime();
                   }
                 }

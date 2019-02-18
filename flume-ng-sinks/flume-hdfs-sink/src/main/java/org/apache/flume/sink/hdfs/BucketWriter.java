@@ -48,6 +48,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -67,7 +68,7 @@ class BucketWriter {
   private static final Integer staticLock = new Integer(1);
   private Method isClosedMethod = null;
 
-  private HDFSWriter writer;
+  private final HDFSWriter writer;
   private final long rollInterval;
   private final long rollSize;
   private final long rollCount;
@@ -108,11 +109,11 @@ class BucketWriter {
   private boolean mockFsInjected = false;
 
   private final long retryInterval;
-  private final int maxRenameTries;
+  private final int maxRetries;
 
   // flag that the bucket writer was closed due to idling and thus shouldn't be
   // reopened. Not ideal, but avoids internals of owners
-  protected boolean closed = false;
+  protected AtomicBoolean closed = new AtomicBoolean();
   AtomicInteger renameTries = new AtomicInteger(0);
 
   BucketWriter(long rollInterval, long rollSize, long rollCount, long batchSize,
@@ -123,7 +124,7 @@ class BucketWriter {
       SinkCounter sinkCounter, int idleTimeout, WriterCallback onCloseCallback,
       String onCloseCallbackPath, long callTimeout,
       ExecutorService callTimeoutPool, long retryInterval,
-      int maxCloseTries) {
+      int maxRetries) {
     this(rollInterval, rollSize, rollCount, batchSize,
             context, filePath, fileName, inUsePrefix,
             inUseSuffix, fileSuffix, codeC,
@@ -132,7 +133,7 @@ class BucketWriter {
             sinkCounter, idleTimeout, onCloseCallback,
             onCloseCallbackPath, callTimeout,
             callTimeoutPool, retryInterval,
-            maxCloseTries, new SystemClock());
+            maxRetries, new SystemClock());
   }
 
   BucketWriter(long rollInterval, long rollSize, long rollCount, long batchSize,
@@ -143,7 +144,7 @@ class BucketWriter {
            SinkCounter sinkCounter, int idleTimeout, WriterCallback onCloseCallback,
            String onCloseCallbackPath, long callTimeout,
            ExecutorService callTimeoutPool, long retryInterval,
-           int maxCloseTries, Clock clock) {
+           int maxRetries, Clock clock) {
     this.rollInterval = rollInterval;
     this.rollSize = rollSize;
     this.rollCount = rollCount;
@@ -167,7 +168,7 @@ class BucketWriter {
     fileExtensionCounter = new AtomicLong(clock.currentTimeMillis());
 
     this.retryInterval = retryInterval;
-    this.maxRenameTries = maxCloseTries;
+    this.maxRetries = maxRetries;
     isOpen = false;
     isUnderReplicated = false;
     this.writer.configure(context);
@@ -178,12 +179,6 @@ class BucketWriter {
     this.fileSystem = fs;
     mockFsInjected = true;
   }
-
-  @VisibleForTesting
-  void setMockStream(HDFSWriter dataWriter) {
-    this.writer = dataWriter;
-  }
-
 
   /**
    * Clear the class counters
@@ -312,51 +307,87 @@ class BucketWriter {
    * method will not cause the bucket writer to be dereferenced from the HDFS
    * sink that owns it. This method should be used only when size or count
    * based rolling closes this file.
-   * @throws IOException On failure to rename if temp file exists.
-   * @throws InterruptedException
    */
-  public synchronized void close() throws IOException, InterruptedException {
+  public void close() throws InterruptedException {
     close(false);
   }
 
   private CallRunner<Void> createCloseCallRunner() {
     return new CallRunner<Void>() {
-      private final HDFSWriter localWriter = writer;
       @Override
       public Void call() throws Exception {
-        localWriter.close(); // could block
+        writer.close(); // could block
         return null;
       }
     };
   }
 
-  private Callable<Void> createScheduledRenameCallable() {
+  private class CloseHandler implements Callable<Void> {
+    private final String path = bucketPath;
+    private int closeTries = 0;
 
-    return new Callable<Void>() {
-      private final String path = bucketPath;
-      private final String finalPath = targetPath;
-      private FileSystem fs = fileSystem;
-      private int renameTries = 1; // one attempt is already done
+    @Override
+    public Void call() throws Exception {
+      close(false);
+      return null;
+    }
 
-      @Override
-      public Void call() throws Exception {
-        if (renameTries >= maxRenameTries) {
-          LOG.warn("Unsuccessfully attempted to rename " + path + " " +
-              maxRenameTries + " times. File may still be open.");
-          return null;
+    /**
+     * Tries to close the writer. Repeats the close if the maximum number
+     * of retries is not reached or an immediate close is not reuqested.
+     * If all close attempts were unsuccessful we try to recover the lease.
+     * @param immediate An immediate close is required
+     */
+    public void close(boolean immediate) {
+      closeTries++;
+      boolean shouldRetry = closeTries < maxRetries && !immediate;
+      try {
+        callWithTimeout(createCloseCallRunner());
+        sinkCounter.incrementConnectionClosedCount();
+      } catch (InterruptedException | IOException e) {
+        LOG.warn("Closing file: " + path + " failed. Will " +
+            "retry again in " + retryInterval + " seconds.", e);
+        if (timedRollerPool != null && !timedRollerPool.isTerminated()) {
+          if (shouldRetry) {
+            timedRollerPool.schedule(this, retryInterval, TimeUnit.SECONDS);
+          }
+        } else {
+          LOG.warn("Cannot retry close any more timedRollerPool is null or terminated");
         }
-        renameTries++;
-        try {
-          renameBucket(path, finalPath, fs);
-        } catch (Exception e) {
-          LOG.warn("Renaming file: " + path + " failed. Will " +
-              "retry again in " + retryInterval + " seconds.", e);
-          timedRollerPool.schedule(this, retryInterval, TimeUnit.SECONDS);
-          return null;
+        if (!shouldRetry) {
+          LOG.warn("Unsuccessfully attempted to close " + path + " " +
+                  maxRetries + " times. Initializing lease recovery.");
+          sinkCounter.incrementConnectionFailedCount();
+          recoverLease();
         }
+      }
+    }
+  }
+
+  private class ScheduledRenameCallable implements Callable<Void> {
+    private final String path = bucketPath;
+    private final String finalPath = targetPath;
+    private FileSystem fs = fileSystem;
+    private int renameTries = 1; // one attempt is already done
+
+    @Override
+    public Void call() throws Exception {
+      if (renameTries >= maxRetries) {
+        LOG.warn("Unsuccessfully attempted to rename " + path + " " +
+                maxRetries + " times. File may still be open.");
         return null;
       }
-    };
+      renameTries++;
+      try {
+        renameBucket(path, finalPath, fs);
+      } catch (Exception e) {
+        LOG.warn("Renaming file: " + path + " failed. Will " +
+            "retry again in " + retryInterval + " seconds.", e);
+        timedRollerPool.schedule(this, retryInterval, TimeUnit.SECONDS);
+        return null;
+      }
+      return null;
+    }
   }
 
   /**
@@ -375,14 +406,28 @@ class BucketWriter {
     }
   }
 
+  public void close(boolean callCloseCallback) throws InterruptedException {
+    close(callCloseCallback, false);
+  }
+
   /**
    * Close the file handle and rename the temp file to the permanent filename.
    * Safe to call multiple times. Logs HDFSWriter.close() exceptions.
-   * @throws IOException On failure to rename if temp file exists.
-   * @throws InterruptedException
    */
-  public synchronized void close(boolean callCloseCallback)
-      throws IOException, InterruptedException {
+  public void close(boolean callCloseCallback, boolean immediate)
+      throws InterruptedException {
+    if (callCloseCallback) {
+      if (closed.compareAndSet(false, true)) {
+        runCloseAction(); //remove from the cache as soon as possible
+      } else {
+        LOG.warn("This bucketWriter is already closing or closed.");
+      }
+    }
+    doClose(immediate);
+  }
+
+  private synchronized void doClose(boolean immediate)
+      throws InterruptedException {
     checkAndThrowInterruptedException();
     try {
       flush();
@@ -391,18 +436,8 @@ class BucketWriter {
     }
 
     LOG.info("Closing {}", bucketPath);
-    CallRunner<Void> closeCallRunner = createCloseCallRunner();
     if (isOpen) {
-      try {
-        callWithTimeout(closeCallRunner);
-        sinkCounter.incrementConnectionClosedCount();
-      } catch (IOException e) {
-        LOG.warn("failed to close() HDFSWriter for file (" + bucketPath +
-                 "). Exception follows.", e);
-        sinkCounter.incrementConnectionFailedCount();
-        // starting lease recovery process, see FLUME-3080
-        recoverLease();
-      }
+      new CloseHandler().close(immediate);
       isOpen = false;
     } else {
       LOG.info("HDFSWriter is already closed: {}", bucketPath);
@@ -427,13 +462,9 @@ class BucketWriter {
         LOG.warn("failed to rename() file (" + bucketPath +
                  "). Exception follows.", e);
         sinkCounter.incrementConnectionFailedCount();
-        final Callable<Void> scheduledRename = createScheduledRenameCallable();
+        final Callable<Void> scheduledRename =  new ScheduledRenameCallable();
         timedRollerPool.schedule(scheduledRename, retryInterval, TimeUnit.SECONDS);
       }
-    }
-    if (callCloseCallback) {
-      runCloseAction();
-      closed = true;
     }
   }
 
@@ -534,7 +565,7 @@ class BucketWriter {
     // force a new bucket writer to be created. Roll count and roll size will
     // just reuse this one
     if (!isOpen) {
-      if (closed) {
+      if (closed.get()) {
         throw new BucketClosedException("This bucket writer was closed and " +
           "this handle is thus no longer valid");
       }
@@ -582,12 +613,7 @@ class BucketWriter {
       LOG.warn("Caught IOException writing to HDFSWriter ({}). Closing file (" +
           bucketPath + ") and rethrowing exception.",
           e.getMessage());
-      try {
-        close(true);
-      } catch (IOException e2) {
-        LOG.warn("Caught IOException while closing file (" +
-             bucketPath + "). Exception follows.", e2);
-      }
+      close(true);
       throw e;
     }
 

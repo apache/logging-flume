@@ -23,7 +23,7 @@ limitations under the License.
   <parent>
     <artifactId>flume-parent</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.8.0-SNAPSHOT</version>
+    <version>1.10.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.apache.flume</groupId>
@@ -31,70 +31,18 @@ limitations under the License.
   <name>Flume NG Sinks</name>
   <packaging>pom</packaging>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
-
   <modules>
     <module>flume-hdfs-sink</module>
     <module>flume-irc-sink</module>
     <module>flume-ng-hbase-sink</module>
+    <module>flume-ng-hbase2-sink</module>
     <module>flume-ng-elasticsearch-sink</module>
     <module>flume-ng-morphline-solr-sink</module>
     <module>flume-ng-kafka-sink</module>
     <module>flume-ng-cassandra-sink</module>
     <module>flume-http-sink</module>
+    <module>flume-dataset-sink</module>
+    <module>flume-hive-sink</module>
   </modules>
-
-  <profiles>
-
-    <profile>
-      <id>hadoop-1.0</id>
-      <activation>
-        <property>
-          <name>flume.hadoop.profile</name>
-          <value>1</value>
-        </property>
-      </activation>
-    </profile>
-
-    <profile>
-      <id>hadoop-2</id>
-      <activation>
-        <property>
-          <name>flume.hadoop.profile</name>
-          <value>2</value>
-        </property>
-      </activation>
-      <!-- add the flume-dataset-sink, which is only compatible with hadoop-2
-           -->
-      <modules>
-        <module>flume-dataset-sink</module>
-        <module>flume-hive-sink</module>
-      </modules>
-    </profile>
-
-    <profile>
-      <id>hbase-1</id>
-      <activation>
-        <property>
-          <name>!flume.hadoop.profile</name>
-        </property>
-      </activation>
-      <!-- add the flume-dataset-sink, which is only compatible with hadoop-2
-           -->
-      <modules>
-        <module>flume-dataset-sink</module>
-        <module>flume-hive-sink</module>
-      </modules>
-    </profile>
-
-
-  </profiles>
 
 </project>

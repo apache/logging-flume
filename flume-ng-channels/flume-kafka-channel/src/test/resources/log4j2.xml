@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Licensed to the Apache Software Foundation (ASF) under one or more
+ contributor license agreements.  See the NOTICE file distributed with
+ this work for additional information regarding copyright ownership.
+ The ASF licenses this file to You under the Apache License, Version 2.0
+ (the "License"); you may not use this file except in compliance with
+ the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+
+-->
+<Configuration status="OFF">
+  <Properties>
+    <Property name="kafka.logs.dir">target/logs</Property>
+  </Properties>
+  <Appenders>
+    <Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout pattern="%d (%t) [%p - %l] %m%n" />
+    </Console>
+    <RollingFile name="kafka" fileName="${kafka.logs.dir}/server.log" filePattern="${kafka.logs.dir}/server.log.%i">
+      <PatternLayout pattern="[%d] %p %m (%c)%n" />
+      <CronTriggeringPolicy schedule="0 0 0 * * ?"/>
+    </RollingFile>
+    <RollingFile name="stateChange" fileName="${kafka.logs.dir}/state-change.log" filePattern="${kafka.logs.dir}/state-change.log.%i">
+      <PatternLayout pattern="[%d] %p %m (%c)%n" />
+      <CronTriggeringPolicy schedule="0 0 0 * * ?"/>
+    </RollingFile>
+    <RollingFile name="request" fileName="${kafka.logs.dir}/kafka-request.log" filePattern="${kafka.logs.dir}/kafka-request.log.%i">
+      <PatternLayout pattern="[%d] %p %m (%c)%n" />
+      <CronTriggeringPolicy schedule="0 0 0 * * ?"/>
+    </RollingFile>
+    <RollingFile name="cleaner" fileName="${kafka.logs.dir}/log-cleaner.log" filePattern="${kafka.logs.dir}/log-cleaner.log.%i">
+      <PatternLayout pattern="[%d] %p %m (%c)%n" />
+      <CronTriggeringPolicy schedule="0 0 0 * * ?"/>
+    </RollingFile>
+    <RollingFile name="controller" fileName="${kafka.logs.dir}/controller.log" filePattern="${kafka.logs.dir}/controller.log.%i">
+      <PatternLayout pattern="[%d] %p %m (%c)%n" />
+      <CronTriggeringPolicy schedule="0 0 0 * * ?"/>
+    </RollingFile>
+  </Appenders>
+
+  <Loggers>
+    <Logger name="kafka" level="info">
+      <AppenderRef ref="kafka"/>
+    </Logger>
+    <Logger name="kafka.network.RequestChannel.*" level="WARN" additivity="false">
+      <AppenderRef ref="request"/>
+    </Logger>
+    <Logger name="kafka.request.logger" level="WARN" additivity="false">
+      <AppenderRef ref="request"/>
+    </Logger>
+    <Logger name="kafka.controller" level="TRACE" additivity="false">
+      <AppenderRef ref="controller"/>
+    </Logger>
+    <Logger name="kafka.log.cleaner" level="INFO" additivity="false">
+      <AppenderRef ref="cleaner"/>
+    </Logger>
+    <Logger name="state.change.logger" level="TRACE" additivity="false">
+      <AppenderRef ref="stateChange"/>
+    </Logger>
+    <Root level="INFO">
+      <AppenderRef ref="Console" />
+    </Root>
+  </Loggers>
+</Configuration>

@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 
-import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.naming.InitialContext;
@@ -42,11 +41,12 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.PollableSource.Status;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.conf.Configurable;
+import org.apache.flume.instrumentation.SourceCounter;
 import org.junit.Test;
+import org.mockito.internal.util.reflection.Whitebox;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 
@@ -57,7 +57,6 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
   private InitialContext initialContext;
   private ChannelProcessor channelProcessor;
   private List<Event> events;
-  private JMSMessageConsumerFactory consumerFactory;
   private InitialContextFactory contextFactory;
   private File baseDir;
   private File passwordFile;
@@ -78,17 +77,12 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
         return null;
       }
     }).when(channelProcessor).processEventBatch(any(List.class));
-    consumerFactory = mock(JMSMessageConsumerFactory.class);
     consumer = spy(create());
-    when(consumerFactory.create(any(InitialContext.class), any(ConnectionFactory.class),
-                                anyString(), any(JMSDestinationType.class),
-                                any(JMSDestinationLocator.class), anyString(), anyInt(), anyLong(),
-                                any(JMSMessageConverter.class), any(Optional.class),
-                                any(Optional.class))).thenReturn(consumer);
     when(initialContext.lookup(anyString())).thenReturn(connectionFactory);
     contextFactory = mock(InitialContextFactory.class);
     when(contextFactory.create(any(Properties.class))).thenReturn(initialContext);
-    source = new JMSSource(consumerFactory, contextFactory);
+    source = spy(new JMSSource(contextFactory));
+    doReturn(consumer).when(source).createConsumer();
     source.setName("JMSSource-" + UUID.randomUUID());
     source.setChannelProcessor(channelProcessor);
     context = new Context();
@@ -143,14 +137,9 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
     source.configure(context);
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void testStartConsumerCreateThrowsException() throws Exception {
-    when(consumerFactory.create(any(InitialContext.class), any(ConnectionFactory.class),
-                                anyString(), any(JMSDestinationType.class),
-                                any(JMSDestinationLocator.class), anyString(), anyInt(), anyLong(),
-                                any(JMSMessageConverter.class), any(Optional.class),
-                                any(Optional.class))).thenThrow(new RuntimeException());
+    doThrow(new RuntimeException("Expected")).when(source).createConsumer();
     source.configure(context);
     source.start();
     try {
@@ -351,7 +340,30 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
       Assert.assertEquals(Status.BACKOFF, source.process());
     }
     Assert.assertEquals(Status.BACKOFF, source.process());
+    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(source, "sourceCounter");
+    Assert.assertEquals(1, sc.getEventReadFail());
     verify(consumer, times(attempts + 1)).rollback();
     verify(consumer, times(1)).close();
   }
+
+  @Test
+  public void testErrorCounterEventReadFail() throws Exception {
+    source.configure(context);
+    source.start();
+    when(consumer.take()).thenThrow(new RuntimeException("dummy"));
+    source.process();
+    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(source, "sourceCounter");
+    Assert.assertEquals(1, sc.getEventReadFail());
+  }
+
+  @Test
+  public void testErrorCounterChannelWriteFail() throws Exception {
+    source.configure(context);
+    source.start();
+    when(source.getChannelProcessor()).thenThrow(new ChannelException("dummy"));
+    source.process();
+    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(source, "sourceCounter");
+    Assert.assertEquals(1, sc.getChannelWriteFail());
+  }
+
 }

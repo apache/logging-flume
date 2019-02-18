@@ -570,7 +570,7 @@ public class TestAsyncHBaseSink {
    *
    * @param table
    * @param numEvents Number of events inserted into the table
-   * @return
+   * @return array of byte array
    * @throws IOException
    */
   private byte[][] getResults(HTable table, int numEvents) throws IOException {

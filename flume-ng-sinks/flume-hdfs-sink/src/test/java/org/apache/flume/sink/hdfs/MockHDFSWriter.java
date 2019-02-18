@@ -19,10 +19,14 @@
 package org.apache.flume.sink.hdfs;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.apache.hadoop.io.compress.CompressionCodec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MockHDFSWriter implements HDFSWriter {
 
@@ -31,6 +35,17 @@ public class MockHDFSWriter implements HDFSWriter {
   private int bytesWritten = 0;
   private int eventsWritten = 0;
   private String filePath = null;
+  private static final Logger logger = LoggerFactory.getLogger(MockHDFSWriter.class);
+  private int numberOfRetriesRequired;
+  public volatile AtomicInteger currentCloseAttempts = new AtomicInteger(0);
+
+  public MockHDFSWriter(int numberOfRetriesRequired) {
+    this.numberOfRetriesRequired = numberOfRetriesRequired;
+  }
+
+  public MockHDFSWriter() {
+    this.numberOfRetriesRequired = 0;
+  }
 
   public int getFilesOpened() {
     return filesOpened;
@@ -50,13 +65,6 @@ public class MockHDFSWriter implements HDFSWriter {
 
   public String getOpenedFilePath() {
     return filePath;
-  }
-
-  public void clear() {
-    filesOpened = 0;
-    filesClosed = 0;
-    bytesWritten = 0;
-    eventsWritten = 0;
   }
 
   public void configure(Context context) {
@@ -85,6 +93,14 @@ public class MockHDFSWriter implements HDFSWriter {
 
   public void close() throws IOException {
     filesClosed++;
+    int curr = currentCloseAttempts.incrementAndGet();
+    logger.info("Attempting to close: '" + currentCloseAttempts + "' of '" +
+        numberOfRetriesRequired + "'");
+    if (curr >= numberOfRetriesRequired || numberOfRetriesRequired == 0) {
+      logger.info("closing file");
+    } else {
+      throw new IOException("MockIOException");
+    }
   }
 
   @Override

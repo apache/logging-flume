@@ -98,7 +98,7 @@ public abstract class ComponentConfiguration {
   }
 
   public String toString(int indentCount) {
-    StringBuilder indentSb = new StringBuilder("");
+    StringBuilder indentSb = new StringBuilder();
 
     for (int i = 0; i < indentCount; i++) {
       indentSb.append(FlumeConfiguration.INDENTSTEP);
@@ -126,6 +126,7 @@ public abstract class ComponentConfiguration {
 
   public enum ComponentType {
     OTHER(null),
+    CONFIG_FILTER("ConfigFilter"),
     SOURCE("Source"),
     SINK("Sink"),
     SINK_PROCESSOR("SinkProcessor"),

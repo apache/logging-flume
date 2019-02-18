@@ -83,5 +83,5 @@ message FlumeEvent {
 
 message FlumeEventHeader {
   required string key = 1;
-  required string value = 2;
+  optional string value = 2;
 }

@@ -56,7 +56,7 @@ public interface RpcClient {
    * resources.</p>
    *
    * @param event
-   * @return
+   *
    * @throws EventDeliveryException when an error prevents event delivery.
    */
   public void append(Event event) throws EventDeliveryException;
@@ -79,7 +79,7 @@ public interface RpcClient {
    * resources.</p>
    *
    * @param events List of events to send
-   * @return
+   *
    * @throws EventDeliveryException when an error prevents event delivery.
    */
   public void appendBatch(List<Event> events) throws

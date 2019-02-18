@@ -17,13 +17,19 @@
 
 package org.apache.flume.source.taildir;
 
+import static org.mockito.Mockito.anyListOf;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
+
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelException;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
+import org.apache.flume.PollableSource.Status;
 import org.apache.flume.Transaction;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
@@ -34,11 +40,15 @@ import org.apache.flume.lifecycle.LifecycleState;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.mockito.internal.util.reflection.Whitebox;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.FILE_GROUPS;
 import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.FILE_GROUPS_PREFIX;
@@ -46,6 +56,8 @@ import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstant
 import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.POSITION_FILE;
 import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.FILENAME_HEADER;
 import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.FILENAME_HEADER_KEY;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.BATCH_SIZE;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.MAX_BATCH_COUNT;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -202,8 +214,7 @@ public class TestTaildirSource {
     }
   }
 
-  @Test
-  public void testFileConsumeOrder() throws IOException {
+  private ArrayList<String> prepareFileConsumeOrder() throws IOException {
     System.out.println(tmpDir.toString());
     // 1) Create 1st file
     File f1 = new File(tmpDir, "file1");
@@ -257,13 +268,31 @@ public class TestTaildirSource {
     f3.setLastModified(System.currentTimeMillis());
 
     // 4) Consume the files
-    ArrayList<String> consumedOrder = Lists.newArrayList();
     Context context = new Context();
     context.put(POSITION_FILE, posFilePath);
     context.put(FILE_GROUPS, "g1");
     context.put(FILE_GROUPS_PREFIX + "g1", tmpDir.getAbsolutePath() + "/.*");
 
     Configurables.configure(source, context);
+
+    // 6) Ensure consumption order is in order of last update time
+    ArrayList<String> expected = Lists.newArrayList(line1, line2, line3,    // file1
+        line1b, line2b, line3b, // file2
+        line1d, line2d, line3d, // file4
+        line1c, line2c, line3c  // file3
+    );
+    for (int i = 0; i != expected.size(); ++i) {
+      expected.set(i, expected.get(i).trim());
+    }
+
+    return expected;
+  }
+
+  @Test
+  public void testFileConsumeOrder() throws IOException {
+    ArrayList<String> consumedOrder = Lists.newArrayList();
+    ArrayList<String> expected = prepareFileConsumeOrder();
+
     source.start();
     source.process();
     Transaction txn = channel.getTransaction();
@@ -278,21 +307,11 @@ public class TestTaildirSource {
 
     System.out.println(consumedOrder);
 
-    // 6) Ensure consumption order is in order of last update time
-    ArrayList<String> expected = Lists.newArrayList(line1, line2, line3,    // file1
-                                                    line1b, line2b, line3b, // file2
-                                                    line1d, line2d, line3d, // file4
-                                                    line1c, line2c, line3c  // file3
-                                                   );
-    for (int i = 0; i != expected.size(); ++i) {
-      expected.set(i, expected.get(i).trim());
-    }
     assertArrayEquals("Files not consumed in expected order", expected.toArray(),
                       consumedOrder.toArray());
   }
 
-  @Test
-  public void testPutFilenameHeader() throws IOException {
+  private File configureSource()  throws IOException {
     File f1 = new File(tmpDir, "file1");
     Files.write("f1\n", f1, Charsets.UTF_8);
 
@@ -304,6 +323,13 @@ public class TestTaildirSource {
     context.put(FILENAME_HEADER_KEY, "path");
 
     Configurables.configure(source, context);
+
+    return f1;
+  }
+
+  @Test
+  public void testPutFilenameHeader() throws IOException {
+    File f1 = configureSource();
     source.start();
     source.process();
     Transaction txn = channel.getTransaction();
@@ -316,4 +342,134 @@ public class TestTaildirSource {
     assertEquals(f1.getAbsolutePath(),
             e.getHeaders().get("path"));
   }
+
+  @Test
+  public void testErrorCounterEventReadFail() throws Exception {
+    configureSource();
+    source.start();
+    ReliableTaildirEventReader reader = Mockito.mock(ReliableTaildirEventReader.class);
+    Whitebox.setInternalState(source, "reader", reader);
+    when(reader.updateTailFiles()).thenReturn(Collections.singletonList(123L));
+    when(reader.getTailFiles()).thenThrow(new RuntimeException("hello"));
+    source.process();
+    assertEquals(1, source.getSourceCounter().getEventReadFail());
+    source.stop();
+  }
+
+  @Test
+  public void testErrorCounterFileHandlingFail() throws Exception {
+    configureSource();
+    Whitebox.setInternalState(source, "idleTimeout", 0);
+    Whitebox.setInternalState(source, "checkIdleInterval", 60);
+    source.start();
+    ReliableTaildirEventReader reader = Mockito.mock(ReliableTaildirEventReader.class);
+    when(reader.getTailFiles()).thenThrow(new RuntimeException("hello"));
+    Whitebox.setInternalState(source, "reader", reader);
+    TimeUnit.MILLISECONDS.sleep(200);
+    assertTrue(0 < source.getSourceCounter().getGenericProcessingFail());
+    source.stop();
+  }
+
+  @Test
+  public void testErrorCounterChannelWriteFail() throws Exception {
+    prepareFileConsumeOrder();
+    ChannelProcessor cp = Mockito.mock(ChannelProcessor.class);
+    source.setChannelProcessor(cp);
+    doThrow(new ChannelException("dummy")).doNothing().when(cp)
+        .processEventBatch(anyListOf(Event.class));
+    source.start();
+    source.process();
+    assertEquals(1, source.getSourceCounter().getChannelWriteFail());
+    source.stop();
+  }
+
+  @Test
+  public void testMaxBatchCount() throws IOException {
+    File f1 = new File(tmpDir, "file1");
+    File f2 = new File(tmpDir, "file2");
+    Files.write("file1line1\nfile1line2\n" +
+        "file1line3\nfile1line4\n", f1, Charsets.UTF_8);
+    Files.write("file2line1\nfile2line2\n" +
+        "file2line3\nfile2line4\n", f2, Charsets.UTF_8);
+
+    Context context = new Context();
+    context.put(POSITION_FILE, posFilePath);
+    context.put(FILE_GROUPS, "fg");
+    context.put(FILE_GROUPS_PREFIX + "fg", tmpDir.getAbsolutePath() + "/file.*");
+    context.put(BATCH_SIZE, String.valueOf(1));
+    context.put(MAX_BATCH_COUNT, String.valueOf(2));
+
+    Configurables.configure(source, context);
+    source.start();
+
+    // 2 x 4 lines will be processed in 2 rounds
+    source.process();
+    source.process();
+
+    List<Event> eventList = new ArrayList<Event>();
+    for (int i = 0; i < 8; i++) {
+      Transaction txn = channel.getTransaction();
+      txn.begin();
+      Event e = channel.take();
+      txn.commit();
+      txn.close();
+      if (e == null) {
+        break;
+      }
+      eventList.add(e);
+    }
+
+    assertEquals("1", context.getString(BATCH_SIZE));
+    assertEquals("2", context.getString(MAX_BATCH_COUNT));
+
+    assertEquals(8, eventList.size());
+
+    // the processing order of the files is not deterministic
+    String firstFile = new String(eventList.get(0).getBody()).substring(0, 5);
+    String secondFile = firstFile.equals("file1") ? "file2" : "file1";
+
+    assertEquals(firstFile + "line1", new String(eventList.get(0).getBody()));
+    assertEquals(firstFile + "line2", new String(eventList.get(1).getBody()));
+    assertEquals(secondFile + "line1", new String(eventList.get(2).getBody()));
+    assertEquals(secondFile + "line2", new String(eventList.get(3).getBody()));
+    assertEquals(firstFile + "line3", new String(eventList.get(4).getBody()));
+    assertEquals(firstFile + "line4", new String(eventList.get(5).getBody()));
+    assertEquals(secondFile + "line3", new String(eventList.get(6).getBody()));
+    assertEquals(secondFile + "line4", new String(eventList.get(7).getBody()));
+  }
+
+  @Test
+  public void testStatus() throws IOException {
+    File f1 = new File(tmpDir, "file1");
+    File f2 = new File(tmpDir, "file2");
+    Files.write("file1line1\nfile1line2\n" +
+        "file1line3\nfile1line4\nfile1line5\n", f1, Charsets.UTF_8);
+    Files.write("file2line1\nfile2line2\n" +
+        "file2line3\n", f2, Charsets.UTF_8);
+
+    Context context = new Context();
+    context.put(POSITION_FILE, posFilePath);
+    context.put(FILE_GROUPS, "fg");
+    context.put(FILE_GROUPS_PREFIX + "fg", tmpDir.getAbsolutePath() + "/file.*");
+    context.put(BATCH_SIZE, String.valueOf(1));
+    context.put(MAX_BATCH_COUNT, String.valueOf(2));
+
+    Configurables.configure(source, context);
+    source.start();
+
+    Status status;
+
+    status = source.process();
+    assertEquals(Status.READY, status);
+
+    status = source.process();
+    assertEquals(Status.READY, status);
+
+    status = source.process();
+    assertEquals(Status.BACKOFF, status);
+
+    status = source.process();
+    assertEquals(Status.BACKOFF, status);
+  }
+
 }

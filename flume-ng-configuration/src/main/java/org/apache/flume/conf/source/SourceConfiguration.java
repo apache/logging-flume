@@ -128,7 +128,7 @@ public class SourceConfiguration extends ComponentConfiguration {
     ChannelSelectorType[] values = ChannelSelectorType.values();
     for (ChannelSelectorType value : values) {
       if (value.toString().equalsIgnoreCase(type)) return value;
-      String clName = value.getChannelSelectorClassName();
+      String clName = value.getClassName();
       if (clName != null && clName.equalsIgnoreCase(type)) return value;
     }
     return null;
@@ -214,7 +214,14 @@ public class SourceConfiguration extends ComponentConfiguration {
      *
      * @see org.apache.flume.source.taildir.TaildirSource
      */
-    TAILDIR("org.apache.flume.source.taildir.TaildirSourceConfiguration")
+    TAILDIR("org.apache.flume.source.taildir.TaildirSourceConfiguration"),
+
+    /**
+     * Netcat UDP Source
+     *
+     * @see org.apache.flume.source.NetcatUdpSource
+     */
+    NETCATUDP("org.apache.flume.conf.source.NetcatUdpSourceConfiguration")
     ;
 
     private String srcConfigurationName;
@@ -224,13 +231,13 @@ public class SourceConfiguration extends ComponentConfiguration {
     }
 
     public String getSourceConfigurationType() {
-      return this.getSourceConfigurationType();
+      return this.srcConfigurationName;
     }
 
     @SuppressWarnings("unchecked")
     public SourceConfiguration getConfiguration(String name)
         throws ConfigurationException {
-      if (this.equals(SourceConfigurationType.OTHER)) {
+      if (this == OTHER) {
         return new SourceConfiguration(name);
       }
       Class<? extends SourceConfiguration> clazz = null;

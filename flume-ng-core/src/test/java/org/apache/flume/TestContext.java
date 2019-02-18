@@ -63,6 +63,17 @@ public class TestContext {
     assertNull(context.getLong("test"));
     assertEquals(new Long(Long.MAX_VALUE), context.getLong("test", Long.MAX_VALUE));
 
+    context.put("test", "0.1");
+    assertEquals(new Float(0.1), context.getFloat("test"));
+    context.clear();
+    assertNull(context.getFloat("test"));
+    assertEquals(new Float(1.1), context.getFloat("test",1.1F));
+
+    context.put("test", "0.1");
+    assertEquals(new Double(0.1), context.getDouble("test"));
+    context.clear();
+    assertNull(context.getDouble("test"));
+    assertEquals(new Double(1.1), context.getDouble("test",1.1));
   }
 
   @Test

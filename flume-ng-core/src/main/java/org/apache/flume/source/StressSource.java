@@ -23,12 +23,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.flume.source.shaded.guava.RateLimiter;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.event.EventBuilder;
 import org.slf4j.Logger;
@@ -53,7 +55,8 @@ import org.slf4j.LoggerFactory;
  *
  * See {@link StressSource#configure(Context)} for configuration options.
  */
-public class StressSource extends AbstractPollableSource implements Configurable {
+public class StressSource extends AbstractPollableSource
+        implements Configurable, BatchSizeSupported {
 
   private static final Logger logger = LoggerFactory.getLogger(StressSource.class);
 
@@ -66,6 +69,7 @@ public class StressSource extends AbstractPollableSource implements Configurable
   private Event event;
   private List<Event> eventBatchList;
   private List<Event> eventBatchListToProcess;
+  private RateLimiter limiter;
 
   public StressSource() {
     counterGroup = new CounterGroup();
@@ -88,6 +92,13 @@ public class StressSource extends AbstractPollableSource implements Configurable
     batchSize = context.getInteger("batchSize", 1);
     /* Size of events to be generated. */
     int size = context.getInteger("size", 500);
+
+    int rateLimit = context.getInteger("maxEventsPerSecond", 0);
+    if (rateLimit > 0) {
+      limiter = RateLimiter.create(rateLimit);
+    } else {
+      limiter = null;
+    }
 
     prepEventData(size);
   }
@@ -123,6 +134,9 @@ public class StressSource extends AbstractPollableSource implements Configurable
       lastSent = batchSize;
 
       if (batchSize == 1) {
+        if (limiter != null) {
+          limiter.acquire();
+        }
         getChannelProcessor().processEvent(event);
       } else {
         long eventsLeft = maxTotalEvents - totalEventSent;
@@ -133,6 +147,12 @@ public class StressSource extends AbstractPollableSource implements Configurable
           eventBatchListToProcess = eventBatchList;
         }
         lastSent = eventBatchListToProcess.size();
+
+        if (limiter != null) {
+          //Cast is safe because eventsLeft must be <= batchSize which is an int
+          limiter.acquire((int)lastSent);
+        }
+
         getChannelProcessor().processEventBatch(eventBatchListToProcess);
       }
 
@@ -152,5 +172,10 @@ public class StressSource extends AbstractPollableSource implements Configurable
   @Override
   protected void doStop() throws FlumeException {
     logger.info("Stress source do stop. Metrics:{}", counterGroup);
+  }
+
+  @Override
+  public long getBatchSize() {
+    return batchSize;
   }
 }

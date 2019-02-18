@@ -19,6 +19,7 @@
 package org.apache.flume.channel.file;
 
 import com.google.common.io.Files;
+import org.apache.flume.channel.file.instrumentation.FileChannelCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,19 +32,22 @@ class EventQueueBackingStoreFactory {
 
   private EventQueueBackingStoreFactory() {}
 
-  static EventQueueBackingStore get(File checkpointFile, int capacity,
-                                    String name) throws Exception {
-    return get(checkpointFile, capacity, name, true);
+  static EventQueueBackingStore get(
+      File checkpointFile, int capacity, String name, FileChannelCounter counter
+  ) throws Exception {
+    return get(checkpointFile, capacity, name, counter, true);
   }
 
-  static EventQueueBackingStore get(File checkpointFile, int capacity,
-                                    String name, boolean upgrade) throws Exception {
-    return get(checkpointFile, null, capacity, name, upgrade, false, false);
+  static EventQueueBackingStore get(
+      File checkpointFile, int capacity, String name, FileChannelCounter counter, boolean upgrade
+  ) throws Exception {
+    return get(checkpointFile, null, capacity, name, counter, upgrade, false, false);
   }
 
-  static EventQueueBackingStore get(File checkpointFile, File backupCheckpointDir,
-                                    int capacity, String name, boolean upgrade,
-                                    boolean shouldBackup, boolean compressBackup) throws Exception {
+  static EventQueueBackingStore get(
+      File checkpointFile, File backupCheckpointDir, int capacity, String name,
+      FileChannelCounter counter, boolean upgrade, boolean shouldBackup, boolean compressBackup
+  ) throws Exception {
     File metaDataFile = Serialization.getMetaDataFile(checkpointFile);
     RandomAccessFile checkpointFileHandle = null;
     try {
@@ -69,21 +73,21 @@ class EventQueueBackingStoreFactory {
           throw new IOException("Cannot create " + checkpointFile);
         }
         return new EventQueueBackingStoreFileV3(checkpointFile,
-            capacity, name, backupCheckpointDir, shouldBackup, compressBackup);
+            capacity, name, counter, backupCheckpointDir, shouldBackup, compressBackup);
       }
       // v3 due to meta file, version will be checked by backing store
       if (metaDataExists) {
         return new EventQueueBackingStoreFileV3(checkpointFile, capacity,
-            name, backupCheckpointDir, shouldBackup, compressBackup);
+            name, counter, backupCheckpointDir, shouldBackup, compressBackup);
       }
       checkpointFileHandle = new RandomAccessFile(checkpointFile, "r");
       int version = (int) checkpointFileHandle.readLong();
       if (Serialization.VERSION_2 == version) {
         if (upgrade) {
           return upgrade(checkpointFile, capacity, name, backupCheckpointDir,
-              shouldBackup, compressBackup);
+              shouldBackup, compressBackup, counter);
         }
-        return new EventQueueBackingStoreFileV2(checkpointFile, capacity, name);
+        return new EventQueueBackingStoreFileV2(checkpointFile, capacity, name, counter);
       }
       LOG.error("Found version " + Integer.toHexString(version) + " in " +
           checkpointFile);
@@ -100,12 +104,13 @@ class EventQueueBackingStoreFactory {
     }
   }
 
-  private static EventQueueBackingStore upgrade(File checkpointFile, int capacity, String name,
-                                                File backupCheckpointDir, boolean shouldBackup,
-                                                boolean compressBackup) throws Exception {
+  private static EventQueueBackingStore upgrade(
+      File checkpointFile, int capacity, String name, File backupCheckpointDir,
+      boolean shouldBackup, boolean compressBackup, FileChannelCounter counter
+  ) throws Exception {
     LOG.info("Attempting upgrade of " + checkpointFile + " for " + name);
     EventQueueBackingStoreFileV2 backingStoreV2 =
-        new EventQueueBackingStoreFileV2(checkpointFile, capacity, name);
+        new EventQueueBackingStoreFileV2(checkpointFile, capacity, name, counter);
     String backupName = checkpointFile.getName() + "-backup-"
         + System.currentTimeMillis();
     Files.copy(checkpointFile,
@@ -113,7 +118,7 @@ class EventQueueBackingStoreFactory {
     File metaDataFile = Serialization.getMetaDataFile(checkpointFile);
     EventQueueBackingStoreFileV3.upgrade(backingStoreV2, checkpointFile,
         metaDataFile);
-    return new EventQueueBackingStoreFileV3(checkpointFile, capacity, name,
+    return new EventQueueBackingStoreFileV3(checkpointFile, capacity, name, counter,
         backupCheckpointDir, shouldBackup, compressBackup);
   }
 

@@ -33,7 +33,9 @@ import org.apache.flume.Transaction;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.auth.FlumeAuthenticationUtil;
 import org.apache.flume.auth.PrivilegedExecutor;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
+import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.sink.AbstractSink;
 import org.apache.hadoop.conf.Configuration;
@@ -89,7 +91,7 @@ import java.util.NavigableMap;
  * multiple increments are returned by the serializer, then HBase failure
  * will cause them to be re-written, when HBase comes back up.
  */
-public class HBaseSink extends AbstractSink implements Configurable {
+public class HBaseSink extends AbstractSink implements Configurable, BatchSizeSupported {
   private String tableName;
   private byte[] columnFamily;
   private HTable table;
@@ -197,6 +199,10 @@ public class HBaseSink extends AbstractSink implements Configurable {
   @SuppressWarnings("unchecked")
   @Override
   public void configure(Context context) {
+    if (!HBaseVersionCheck.hasVersionLessThan2(logger)) {
+      throw new ConfigurationException(
+          "HBase major version number must be less than 2 for hbase-sink.");
+    }
     tableName = context.getString(HBaseSinkConfigurationConstants.CONFIG_TABLE);
     String cf = context.getString(
         HBaseSinkConfigurationConstants.CONFIG_COLUMN_FAMILY);
@@ -548,6 +554,11 @@ public class HBaseSink extends AbstractSink implements Configurable {
   @InterfaceAudience.Private
   HbaseEventSerializer getSerializer() {
     return serializer;
+  }
+
+  @Override
+  public long getBatchSize() {
+    return batchSize;
   }
 
   @VisibleForTesting

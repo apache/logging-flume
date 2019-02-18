@@ -21,6 +21,8 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelException;
+import org.apache.flume.ChannelFullException;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -28,13 +30,17 @@ import org.apache.flume.Transaction;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
+import org.apache.flume.client.avro.ReliableSpoolingFileEventReader;
 import org.apache.flume.conf.Configurables;
+import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Matchers;
+import org.mockito.Mockito;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -496,5 +502,69 @@ public class TestSpoolDirectorySource {
     txn.commit();
     txn.close();
     source.stop();
+  }
+
+
+  private SourceCounter errorCounterCommonInit() {
+    SourceCounter sc = new SourceCounter("dummy");
+    sc.start();
+    Context context = new Context();
+    context.put(SpoolDirectorySourceConfigurationConstants.SPOOL_DIRECTORY,
+        tmpDir.getAbsolutePath());
+    Configurables.configure(source, context);
+    return sc;
+  }
+
+  @Test
+  public void testErrorCounters() throws Exception {
+    SourceCounter sc = errorCounterCommonInit();
+
+    ChannelProcessor cp = Mockito.mock(ChannelProcessor.class);
+    Mockito.doThrow(new ChannelException("dummy"))
+        .doThrow(new ChannelFullException("dummy"))
+        .doThrow(new RuntimeException("runtime"))
+        .when(cp).processEventBatch(Matchers.anyListOf(Event.class));
+    source.setChannelProcessor(cp);
+
+    ReliableSpoolingFileEventReader reader = Mockito.mock(ReliableSpoolingFileEventReader.class);
+    List<Event> events = new ArrayList<>();
+    events.add(Mockito.mock(Event.class));
+    Mockito.doReturn(events)
+        .doReturn(events)
+        .doReturn(events)
+        .doThrow(new IOException("dummy"))
+        .when(reader).readEvents(Mockito.anyInt());
+
+    Runnable runner = source. new SpoolDirectoryRunnable(reader, sc);
+    try {
+      runner.run();
+    } catch (Exception ex) {
+      //Expected
+    }
+    Assert.assertEquals(2, sc.getChannelWriteFail());
+    Assert.assertEquals(1, sc.getGenericProcessingFail());
+  }
+
+  @Test
+  public void testErrorCounterEventReadFail() throws Exception {
+    SourceCounter sc = errorCounterCommonInit();
+
+    ChannelProcessor cp = Mockito.mock(ChannelProcessor.class);
+    source.setChannelProcessor(cp);
+
+    ReliableSpoolingFileEventReader reader = Mockito.mock(ReliableSpoolingFileEventReader.class);
+    List<Event> events = new ArrayList<>();
+    events.add(Mockito.mock(Event.class));
+    Mockito.doReturn(events)
+        .doThrow(new IOException("dummy"))
+        .when(reader).readEvents(Mockito.anyInt());
+
+    Runnable runner = source. new SpoolDirectoryRunnable(reader, sc);
+    try {
+      runner.run();
+    } catch (Exception ex) {
+      //Expected
+    }
+    Assert.assertEquals(1, sc.getEventReadFail());
   }
 }

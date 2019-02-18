@@ -40,7 +40,6 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
-import org.apache.hadoop.hdfs.server.namenode.LeaseManager;
 import org.apache.hadoop.hdfs.server.namenode.NameNodeAdapter;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -294,6 +293,7 @@ public class TestHDFSEventSinkOnMiniCluster {
     sinkCtx.put("hdfs.path", nnURL + outputDir);
     sinkCtx.put("hdfs.fileType", HDFSWriterFactory.DataStreamType);
     sinkCtx.put("hdfs.batchSize", Integer.toString(1));
+    sinkCtx.put("hdfs.retryInterval", "10"); //to speed up test
 
     HDFSEventSink sink = new HDFSEventSink();
     sink.setName("simpleHDFSTest-hdfs-sink");
@@ -532,6 +532,7 @@ public class TestHDFSEventSinkOnMiniCluster {
     ctx.put("hdfs.fileType", HDFSWriterFactory.DataStreamType);
     ctx.put("hdfs.batchSize", Integer.toString(1));
     ctx.put("hdfs.callTimeout", Integer.toString(1000));
+    ctx.put("hdfs.retryInterval", "10"); //to speed up test
 
     HDFSWriter hdfsWriter = new HDFSDataStream() {
       @Override
@@ -570,18 +571,18 @@ public class TestHDFSEventSinkOnMiniCluster {
     Assert.assertEquals(1, statuses.length);
 
     String filePath = statuses[0].getPath().toUri().getPath();
-    LeaseManager lm = NameNodeAdapter.getLeaseManager(cluster.getNamesystem());
 
-    Object lease = lm.getLeaseByPath(filePath);
+    // -1 in case that the lease doesn't exist.
+    long leaseRenewalTime = NameNodeAdapter.getLeaseRenewalTime(cluster.getNameNode(), filePath);
     // wait until the NameNode recovers the lease
-    for (int i = 0; i < 10 && lease != null; i++) {
+    for (int i = 0; (i < 10) && (leaseRenewalTime != -1L); i++) {
       TimeUnit.SECONDS.sleep(1);
-      lease = lm.getLeaseByPath(filePath);
+      leaseRenewalTime = NameNodeAdapter.getLeaseRenewalTime(cluster.getNameNode(), filePath);
     }
 
     // There should be no lease for the given path even if close failed as the BucketWriter
     // explicitly calls the recoverLease()
-    Assert.assertNull(lease);
+    Assert.assertEquals(-1L, leaseRenewalTime);
 
     if (!KEEP_DATA) {
       fs.delete(outputDirPath, true);

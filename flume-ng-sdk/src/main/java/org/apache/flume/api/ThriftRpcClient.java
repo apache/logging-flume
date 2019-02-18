@@ -40,7 +40,6 @@ import java.io.FileInputStream;
 import java.nio.ByteBuffer;
 import java.security.KeyStore;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -62,7 +61,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class ThriftRpcClient extends AbstractRpcClient {
+public class ThriftRpcClient extends SSLContextAwareAbstractRpcClient {
   private static final Logger LOGGER = LoggerFactory.getLogger(ThriftRpcClient.class);
 
   /**
@@ -72,7 +71,6 @@ public class ThriftRpcClient extends AbstractRpcClient {
   public static final String BINARY_PROTOCOL = "binary";
   public static final String COMPACT_PROTOCOL = "compact";
 
-  private int batchSize;
   private long requestTimeout;
   private final Lock stateLock;
   private State connState;
@@ -83,12 +81,6 @@ public class ThriftRpcClient extends AbstractRpcClient {
   private final AtomicLong threadCounter;
   private final Random random = new Random();
   private String protocol;
-
-  private boolean enableSsl;
-  private String truststore;
-  private String truststorePassword;
-  private String truststoreType;
-  private final List<String> excludeProtocols = new LinkedList<String>();
 
   public ThriftRpcClient() {
     stateLock = new ReentrantLock(true);
@@ -105,12 +97,6 @@ public class ThriftRpcClient extends AbstractRpcClient {
         return t;
       }
     });
-  }
-
-
-  @Override
-  public int getBatchSize() {
-    return batchSize;
   }
 
   @Override
@@ -299,9 +285,7 @@ public class ThriftRpcClient extends AbstractRpcClient {
             + "choose from. Defaulting to 'compact'.");
         protocol = COMPACT_PROTOCOL;
       }
-      batchSize = Integer.parseInt(properties.getProperty(
-          RpcClientConfigurationConstants.CONFIG_BATCH_SIZE,
-          RpcClientConfigurationConstants.DEFAULT_BATCH_SIZE.toString()));
+      batchSize = parseBatchSize(properties);
       requestTimeout = Long.parseLong(properties.getProperty(
           RpcClientConfigurationConstants.CONFIG_REQUEST_TIMEOUT,
           String.valueOf(
@@ -322,27 +306,7 @@ public class ThriftRpcClient extends AbstractRpcClient {
         connectionPoolSize = RpcClientConfigurationConstants
             .DEFAULT_CONNECTION_POOL_SIZE;
       }
-
-      enableSsl = Boolean.parseBoolean(properties.getProperty(
-          RpcClientConfigurationConstants.CONFIG_SSL));
-      if (enableSsl) {
-        truststore = properties.getProperty(
-            RpcClientConfigurationConstants.CONFIG_TRUSTSTORE);
-        truststorePassword = properties.getProperty(
-            RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_PASSWORD);
-        truststoreType = properties.getProperty(
-            RpcClientConfigurationConstants.CONFIG_TRUSTSTORE_TYPE, "JKS");
-        String excludeProtocolsStr = properties.getProperty(
-            RpcClientConfigurationConstants.CONFIG_EXCLUDE_PROTOCOLS);
-        if (excludeProtocolsStr == null) {
-          excludeProtocols.add("SSLv3");
-        } else {
-          excludeProtocols.addAll(Arrays.asList(excludeProtocolsStr.split(" ")));
-          if (!excludeProtocols.contains("SSLv3")) {
-            excludeProtocols.add("SSLv3");
-          }
-        }
-      }
+      configureSSL(properties);
 
       connectionManager = new ConnectionPoolManager(connectionPoolSize);
       connState = State.READY;
@@ -391,7 +355,8 @@ public class ThriftRpcClient extends AbstractRpcClient {
 
         // Create the TSocket from that
         tsocket = createSSLSocket(
-            sslSockFactory, hostname, port, 120000, excludeProtocols);
+            sslSockFactory, hostname, port, 120000, excludeProtocols,
+            includeProtocols, excludeCipherSuites, includeCipherSuites);
       } else {
         tsocket = new TSocket(hostname, port);
       }
@@ -529,7 +494,8 @@ public class ThriftRpcClient extends AbstractRpcClient {
       KeyStore ts = null;
       if (truststore != null && truststoreType != null) {
         ts = KeyStore.getInstance(truststoreType);
-        ts.load(new FileInputStream(truststore), truststorePassword.toCharArray());
+        ts.load(new FileInputStream(truststore),
+            truststorePassword != null ? truststorePassword.toCharArray() : null);
         tmf.init(ts);
       }
 
@@ -543,7 +509,8 @@ public class ThriftRpcClient extends AbstractRpcClient {
   }
 
   private static TSocket createSSLSocket(SSLSocketFactory factory, String host,
-                                         int port, int timeout, List<String> excludeProtocols)
+      int port, int timeout, Set<String> excludeProtocols, Set<String> includeProtocols,
+      Set<String> excludeCipherSuites, Set<String> includeCipherSuites)
       throws FlumeException {
     try {
       SSLSocket socket = (SSLSocket) factory.createSocket(host, port);
@@ -551,11 +518,22 @@ public class ThriftRpcClient extends AbstractRpcClient {
 
       List<String> enabledProtocols = new ArrayList<String>();
       for (String protocol : socket.getEnabledProtocols()) {
-        if (!excludeProtocols.contains(protocol)) {
+        if ((includeProtocols.isEmpty() || includeProtocols.contains(protocol))
+            && !excludeProtocols.contains(protocol)) {
           enabledProtocols.add(protocol);
         }
       }
       socket.setEnabledProtocols(enabledProtocols.toArray(new String[0]));
+
+      List<String> enabledCipherSuites = new ArrayList<String>();
+      for (String suite : socket.getEnabledCipherSuites()) {
+        if ((includeCipherSuites.isEmpty() || includeCipherSuites.contains(suite))
+            && !excludeCipherSuites.contains(suite)) {
+          enabledCipherSuites.add(suite);
+        }
+      }
+      socket.setEnabledCipherSuites(enabledCipherSuites.toArray(new String[0]));
+
       return new TSocket(socket);
     } catch (Exception e) {
       throw new FlumeException("Could not connect to " + host + " on port " + port, e);

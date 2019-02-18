@@ -22,7 +22,7 @@
   <parent>
     <artifactId>flume-ng-sources</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.8.0-SNAPSHOT</version>
+    <version>1.10.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -30,14 +30,11 @@
   <artifactId>flume-kafka-source</artifactId>
   <name>Flume Kafka Source</name>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
+  <properties>
+    <!-- TODO fix spotbugs/pmd violations -->
+    <spotbugs.maxAllowedViolations>16</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>32</pmd.maxAllowedViolations>
+  </properties>
 
   <dependencies>
     <dependency>
@@ -50,13 +47,16 @@
     </dependency>
     <dependency>
       <groupId>org.apache.flume.flume-shared</groupId>
+      <artifactId>flume-shared-kafka</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flume.flume-shared</groupId>
       <artifactId>flume-shared-kafka-test</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka_2.10</artifactId>
-      <version>${kafka.version}</version>
+      <artifactId>kafka_2.11</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.zookeeper</groupId>
@@ -69,12 +69,16 @@
     <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-clients</artifactId>
-      <version>${kafka.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka_2.10</artifactId>
+      <artifactId>kafka_2.11</artifactId>
       <classifier>test</classifier>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

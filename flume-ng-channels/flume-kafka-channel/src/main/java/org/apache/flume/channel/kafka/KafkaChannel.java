@@ -20,8 +20,7 @@ package org.apache.flume.channel.kafka;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
-import kafka.utils.ZKGroupTopicDirs;
-import kafka.utils.ZkUtils;
+import kafka.zk.KafkaZkClient;
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.DecoderFactory;
@@ -38,6 +37,7 @@ import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.conf.LogPrivacyUtil;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.instrumentation.kafka.KafkaChannelCounter;
+import org.apache.flume.shared.kafka.KafkaSSLUtil;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
@@ -54,6 +54,7 @@ import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.security.JaasUtils;
+import org.apache.kafka.common.utils.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Option;
@@ -62,6 +63,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -77,7 +79,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.*;
-import static scala.collection.JavaConverters.asJavaListConverter;
 
 public class KafkaChannel extends BasicChannelSemantics {
 
@@ -101,6 +102,7 @@ public class KafkaChannel extends BasicChannelSemantics {
   private String groupId = DEFAULT_GROUP_ID;
   private String partitionHeader = null;
   private Integer staticPartitionId;
+  @Deprecated
   private boolean migrateZookeeperOffsets = DEFAULT_MIGRATE_ZOOKEEPER_OFFSETS;
 
   // used to indicate if a rebalance has occurred during the current transaction
@@ -268,6 +270,8 @@ public class KafkaChannel extends BasicChannelSemantics {
     // Defaults overridden based on config
     producerProps.putAll(ctx.getSubProperties(KAFKA_PRODUCER_PREFIX));
     producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootStrapServers);
+
+    KafkaSSLUtil.addGlobalSSLParameters(producerProps);
   }
 
   protected Properties getProducerProps() {
@@ -285,6 +289,8 @@ public class KafkaChannel extends BasicChannelSemantics {
     consumerProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootStrapServers);
     consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
     consumerProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+
+    KafkaSSLUtil.addGlobalSSLParameters(consumerProps);
   }
 
   protected Properties getConsumerProps() {
@@ -307,11 +313,15 @@ public class KafkaChannel extends BasicChannelSemantics {
   }
 
   private void migrateOffsets() {
-    ZkUtils zkUtils = ZkUtils.apply(zookeeperConnect, ZK_SESSION_TIMEOUT, ZK_CONNECTION_TIMEOUT,
-        JaasUtils.isZkSecurityEnabled());
-    KafkaConsumer<String, byte[]> consumer = new KafkaConsumer<>(consumerProps);
-    try {
+    try (KafkaZkClient zkClient = KafkaZkClient.apply(zookeeperConnect,
+            JaasUtils.isZkSecurityEnabled(), ZK_SESSION_TIMEOUT, ZK_CONNECTION_TIMEOUT, 10,
+            Time.SYSTEM, "kafka.server", "SessionExpireListener");
+         KafkaConsumer<String, byte[]> consumer = new KafkaConsumer<>(consumerProps)) {
       Map<TopicPartition, OffsetAndMetadata> kafkaOffsets = getKafkaOffsets(consumer);
+      if (kafkaOffsets == null) {
+        logger.warn("Topic " + topicStr + " not found in Kafka. Offset migration will be skipped.");
+        return;
+      }
       if (!kafkaOffsets.isEmpty()) {
         logger.info("Found Kafka offsets for topic {}. Will not migrate from zookeeper", topicStr);
         logger.debug("Offsets found: {}", kafkaOffsets);
@@ -319,7 +329,8 @@ public class KafkaChannel extends BasicChannelSemantics {
       }
 
       logger.info("No Kafka offsets found. Migrating zookeeper offsets");
-      Map<TopicPartition, OffsetAndMetadata> zookeeperOffsets = getZookeeperOffsets(zkUtils);
+      Map<TopicPartition, OffsetAndMetadata> zookeeperOffsets =
+              getZookeeperOffsets(zkClient, consumer);
       if (zookeeperOffsets.isEmpty()) {
         logger.warn("No offsets to migrate found in Zookeeper");
         return;
@@ -331,41 +342,42 @@ public class KafkaChannel extends BasicChannelSemantics {
       // Read the offsets to verify they were committed
       Map<TopicPartition, OffsetAndMetadata> newKafkaOffsets = getKafkaOffsets(consumer);
       logger.debug("Offsets committed: {}", newKafkaOffsets);
-      if (!newKafkaOffsets.keySet().containsAll(zookeeperOffsets.keySet())) {
+      if (newKafkaOffsets == null
+          || !newKafkaOffsets.keySet().containsAll(zookeeperOffsets.keySet())) {
         throw new FlumeException("Offsets could not be committed");
       }
-    } finally {
-      zkUtils.close();
-      consumer.close();
     }
   }
 
+
   private Map<TopicPartition, OffsetAndMetadata> getKafkaOffsets(
       KafkaConsumer<String, byte[]> client) {
-    Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
+    Map<TopicPartition, OffsetAndMetadata> offsets = null;
     List<PartitionInfo> partitions = client.partitionsFor(topicStr);
-    for (PartitionInfo partition : partitions) {
-      TopicPartition key = new TopicPartition(topicStr, partition.partition());
-      OffsetAndMetadata offsetAndMetadata = client.committed(key);
-      if (offsetAndMetadata != null) {
-        offsets.put(key, offsetAndMetadata);
+    if (partitions != null) {
+      offsets = new HashMap<>();
+      for (PartitionInfo partition : partitions) {
+        TopicPartition key = new TopicPartition(topicStr, partition.partition());
+        OffsetAndMetadata offsetAndMetadata = client.committed(key);
+        if (offsetAndMetadata != null) {
+          offsets.put(key, offsetAndMetadata);
+        }
       }
     }
     return offsets;
   }
 
-  private Map<TopicPartition, OffsetAndMetadata> getZookeeperOffsets(ZkUtils client) {
+  private Map<TopicPartition, OffsetAndMetadata> getZookeeperOffsets(
+          KafkaZkClient zkClient, KafkaConsumer<String, byte[]> consumer) {
     Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
-    ZKGroupTopicDirs topicDirs = new ZKGroupTopicDirs(groupId, topicStr);
-    List<String> partitions = asJavaListConverter(
-        client.getChildrenParentMayNotExist(topicDirs.consumerOffsetDir())).asJava();
-    for (String partition : partitions) {
-      TopicPartition key = new TopicPartition(topicStr, Integer.valueOf(partition));
-      Option<String> data = client.readDataMaybeNull(
-          topicDirs.consumerOffsetDir() + "/" + partition)._1();
-      if (data.isDefined()) {
-        Long offset = Long.valueOf(data.get());
-        offsets.put(key, new OffsetAndMetadata(offset));
+    List<PartitionInfo> partitions = consumer.partitionsFor(topicStr);
+    for (PartitionInfo partition : partitions) {
+      TopicPartition topicPartition = new TopicPartition(topicStr, partition.partition());
+      Option<Object> optionOffset = zkClient.getConsumerOffset(groupId, topicPartition);
+      if (optionOffset.nonEmpty()) {
+        Long offset = (Long) optionOffset.get();
+        OffsetAndMetadata offsetAndMetadata = new OffsetAndMetadata(offset);
+        offsets.put(topicPartition, offsetAndMetadata);
       }
     }
     return offsets;
@@ -450,6 +462,7 @@ public class KafkaChannel extends BasicChannelSemantics {
               new ProducerRecord<String, byte[]>(topic.get(), key,
                                                  serializeValue(event, parseAsFlumeEvent)));
         }
+        counter.incrementEventPutAttemptCount();
       } catch (NumberFormatException e) {
         throw new ChannelException("Non integer partition id specified", e);
       } catch (Exception e) {
@@ -514,6 +527,7 @@ public class KafkaChannel extends BasicChannelSemantics {
           } else {
             return null;
           }
+          counter.incrementEventTakeAttemptCount();
         } catch (Exception ex) {
           logger.warn("Error while getting events from Kafka. This is usually caused by " +
                       "trying to read a non-flume event. Ensure the setting for " +
@@ -685,7 +699,7 @@ public class KafkaChannel extends BasicChannelSemantics {
     private void poll() {
       logger.trace("Polling with timeout: {}ms channel-{}", pollTimeout, getName());
       try {
-        records = consumer.poll(pollTimeout);
+        records = consumer.poll(Duration.ofMillis(pollTimeout));
         recordIterator = records.iterator();
         logger.debug("{} returned {} records from last poll", getName(), records.count());
       } catch (WakeupException e) {
