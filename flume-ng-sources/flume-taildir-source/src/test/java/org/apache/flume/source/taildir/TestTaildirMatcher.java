@@ -114,18 +114,18 @@ public class TestTaildirMatcher {
 
     append("file1");
     files = filesToNames(tm.getMatchingFiles());
-    assertEquals(msgAfterNewFileCreated, 2, files.size());
-    assertTrue(msgAfterNewFileCreated, files.contains("file0"));
-    assertTrue(msgAfterNewFileCreated, files.contains("file1"));
+    assertEquals(msgAfterAppend, 2, files.size());
+    assertTrue(msgAfterAppend, files.contains("file0"));
+    assertTrue(msgAfterAppend, files.contains("file1"));
 
     append("file2");
     append("file3");
     files = filesToNames(tm.getMatchingFiles());
-    assertEquals(msgAfterAppend, 4, files.size());
-    assertTrue(msgAfterAppend, files.contains("file0"));
-    assertTrue(msgAfterAppend, files.contains("file1"));
-    assertTrue(msgAfterAppend, files.contains("file2"));
-    assertTrue(msgAfterAppend, files.contains("file3"));
+    assertEquals(msgAfterNewFileCreated, 4, files.size());
+    assertTrue(msgAfterNewFileCreated, files.contains("file0"));
+    assertTrue(msgAfterNewFileCreated, files.contains("file1"));
+    assertTrue(msgAfterNewFileCreated, files.contains("file2"));
+    assertTrue(msgAfterNewFileCreated, files.contains("file3"));
 
     this.files.get("file0").delete();
     files = filesToNames(tm.getMatchingFiles());
