@@ -47,11 +47,9 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.apache.avro.io.BinaryEncoder;
@@ -102,8 +100,6 @@ import com.google.common.collect.Lists;
 import junit.framework.Assert;
 import kafka.zk.KafkaZkClient;
 
-
-
 public class TestKafkaSource {
   private static final Logger log = LoggerFactory.getLogger(TestKafkaSource.class);
 
@@ -112,7 +108,7 @@ public class TestKafkaSource {
   private Context context;
   private List<Event> events;
 
-  private final List<String> usedTopics = new ArrayList<>();
+  private final List<String> usedTopics = new ArrayList<String>();
   private String topic0;
   private String topic1;
   private String topic2;

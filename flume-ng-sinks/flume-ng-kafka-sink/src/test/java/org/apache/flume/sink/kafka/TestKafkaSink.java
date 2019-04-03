@@ -19,11 +19,6 @@
 package org.apache.flume.sink.kafka;
 
 import com.google.common.base.Charsets;
-
-import kafka.admin.AdminUtils;
-import kafka.admin.RackAwareMode;
-import kafka.utils.ZkUtils;
-
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.specific.SpecificDatumReader;
@@ -60,7 +55,6 @@ import org.mockito.internal.util.reflection.Whitebox;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -478,8 +472,10 @@ public class TestKafkaSink {
       // ignore
     }
 
-    checkMessageAndHeaderArrived(msg, TestConstants.KAFKA_HEADER_TOPIC, new RecordHeaders(new Header[]{
-        new RecordHeader(TestConstants.HEADER_1_KEY, TestConstants.HEADER_1_VALUE.getBytes())}));
+    checkMessageAndHeaderArrived(msg, TestConstants.KAFKA_HEADER_TOPIC,
+        new RecordHeaders(new Header[]{
+            new RecordHeader(TestConstants.HEADER_1_KEY,
+                TestConstants.HEADER_1_VALUE.getBytes())}));
 
   }
 

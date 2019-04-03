@@ -17,7 +17,6 @@
 package org.apache.flume.source.kafka;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -337,7 +336,8 @@ public class KafkaSource extends AbstractPollableSource
     }
   }
   
-  private static Map<String, String> createHeaders(ConsumerRecord<String, byte[]> message, boolean useKafkaHeader) {
+  private static Map<String, String> createHeaders(
+      ConsumerRecord<String, byte[]> message, boolean useKafkaHeader) {
     if (useKafkaHeader) {
       return toStringMap(message.headers());
     } else {
