@@ -657,7 +657,7 @@ public class KafkaChannel extends BasicChannelSemantics {
                   new SpecificDatumReader<AvroFlumeEvent>(AvroFlumeEvent.class));
         }
         AvroFlumeEvent event = reader.get().read(null, decoder);
-        body = event.getBody();
+        body = event.getBody().array();
       } else {
         body = record.value();
       }
