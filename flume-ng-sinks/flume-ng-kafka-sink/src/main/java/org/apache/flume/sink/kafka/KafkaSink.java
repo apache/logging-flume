@@ -18,6 +18,7 @@
 
 package org.apache.flume.sink.kafka;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import org.apache.avro.io.BinaryEncoder;
@@ -437,7 +438,7 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
   private Headers toKafkaHeaders(Map<String, String> headers) {
     Headers kafkaHeaders = new RecordHeaders();
     for (Entry<String, String> header : headers.entrySet()) {
-      kafkaHeaders.add(header.getKey(), header.getValue().getBytes());
+      kafkaHeaders.add(header.getKey(), header.getValue().getBytes(Charsets.UTF_8));
     }
     return kafkaHeaders;
   }
