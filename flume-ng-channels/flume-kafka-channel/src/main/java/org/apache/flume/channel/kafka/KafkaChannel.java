@@ -462,7 +462,8 @@ public class KafkaChannel extends BasicChannelSemantics {
         if (useKafkaHeader) {
           producerRecords.get().add(
               new ProducerRecord<String, byte[]>(topic.get(), partitionId, key,
-                                                 serializeValue(event, parseAsFlumeEvent), toKafkaHeaders(event.getHeaders())));
+                                                 serializeValue(event, parseAsFlumeEvent),
+                                                 toKafkaHeaders(event.getHeaders())));
         } else if (partitionId != null) {
           producerRecords.get().add(
               new ProducerRecord<String, byte[]>(topic.get(), partitionId, key,
@@ -646,9 +647,10 @@ public class KafkaChannel extends BasicChannelSemantics {
       return bytes;
     }
 
-    private Event deserializeEvent(ConsumerRecord<String, byte[]> record, boolean parseAsFlumeEvent, boolean useKafkaHeader) throws IOException {
-      byte[] body;
-      if(parseAsFlumeEvent) {
+    private Event deserializeEvent(ConsumerRecord<String, byte[]> record,
+        boolean parseAsFlumeEvent,
+        boolean useKafkaHeader) throws IOException {
+      if (parseAsFlumeEvent) {
         ByteArrayInputStream in =
                 new ByteArrayInputStream(record.value());
         decoder = DecoderFactory.get().directBinaryDecoder(in, decoder);
@@ -657,15 +659,19 @@ public class KafkaChannel extends BasicChannelSemantics {
                   new SpecificDatumReader<AvroFlumeEvent>(AvroFlumeEvent.class));
         }
         AvroFlumeEvent event = reader.get().read(null, decoder);
-        body = event.getBody().array();
+        return EventBuilder.withBody(event.getBody().array(), toStringMap(event.getHeaders()));
       } else {
-        body = record.value();
+        return EventBuilder.withBody(record.value(), createHeaders(record, useKafkaHeader));
       }
-      if(useKafkaHeader) {
-        return EventBuilder.withBody(body, toStringMap(record.headers()));
-      } else {
-        return EventBuilder.withBody(body);
-      }
+    }
+  }
+
+  private static Map<String, String> createHeaders(
+      ConsumerRecord<String, byte[]> record, boolean useKafkaHeader) {
+    if (useKafkaHeader) {
+      return toStringMap(record.headers());
+    } else {
+      return new HashMap<String, String>(4);
     }
   }
 
@@ -691,13 +697,6 @@ public class KafkaChannel extends BasicChannelSemantics {
     }
     return stringMap;
   }
-  private static Headers toKafkaHeaders(Map<String, String> headers) {
-    Headers kafkaHeaders = new RecordHeaders();
-    for (Entry<String, String> header : headers.entrySet()) {
-      kafkaHeaders.add(header.getKey(), header.getValue().getBytes());
-    }
-    return kafkaHeaders;
-  }
 
   private static Map<String, String> toStringMap(Headers headers) {
     Map<String, String> stringMap = new HashMap<String, String>();
@@ -705,6 +704,14 @@ public class KafkaChannel extends BasicChannelSemantics {
       stringMap.put(header.key(), new String(header.value()));
     }
     return stringMap;
+  }
+
+  private static Headers toKafkaHeaders(Map<String, String> headers) {
+    Headers kafkaHeaders = new RecordHeaders();
+    for (Entry<String, String> header : headers.entrySet()) {
+      kafkaHeaders.add(header.getKey(), header.getValue().getBytes());
+    }
+    return kafkaHeaders;
   }
 
   /* Object to store our consumer */

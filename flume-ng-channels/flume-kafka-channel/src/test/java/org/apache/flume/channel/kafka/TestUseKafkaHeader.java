@@ -23,8 +23,6 @@ import org.apache.flume.Transaction;
 import org.apache.flume.event.EventBuilder;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.header.Header;
-import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.junit.Assert;
 import org.junit.Test;
 
