@@ -2565,7 +2565,7 @@ Example for agent named a1:
  a1.sinks.k1.hive.metastore = thrift://127.0.0.1:9083
  a1.sinks.k1.hive.database = logsdb
  a1.sinks.k1.hive.table = weblogs
- a1.sinks.k1.hive.partition = asia,%{country},%y-%m-%d-%H-%M
+ a1.sinks.k1.hive.partition = asia,%{country},%Y-%m-%d-%H-%M
  a1.sinks.k1.useLocalTimeStamp = false
  a1.sinks.k1.round = true
  a1.sinks.k1.roundValue = 10
@@ -4280,7 +4280,7 @@ Example for agent named a1:
 
   a1.sinks.k1.type = hdfs
   a1.sinks.k1.channel = c1
-  a1.sinks.k1.hdfs.path = /flume/events/%y-%m-%d/%H%M/%S
+  a1.sinks.k1.hdfs.path = /flume/events/%Y-%m-%d/%H%M/%S
   a1.sinks.k1.serializer = avro_event
   a1.sinks.k1.serializer.compressionCodec = snappy
 
