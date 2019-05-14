@@ -539,7 +539,7 @@ linked to form multiple flows:
   <Agent>.channels = <Channel1> <Channel2>
 
 Then you can link the sources and sinks to their corresponding channels (for
-sources) of channel (for sinks) to setup two different flows. For example, if
+sources) or channel (for sinks) to setup two different flows. For example, if
 you need to setup two flows in an agent, one going from an external avro client
 to external HDFS and another from output of a tail to avro sink, then here's a
 config to do that:
