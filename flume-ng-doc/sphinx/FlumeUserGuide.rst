@@ -109,6 +109,9 @@ There's also a memory channel which simply stores the events in an in-memory
 queue, which is faster but any events still left in the memory channel when an
 agent process dies can't be recovered.
 
+Flume's `KafkaChannel` uses Apache Kafka to stage events. Using a replicated
+Kafka topic as a channel helps avoiding event loss in case of a disk failure.
+
 Setup
 =====
 
@@ -245,7 +248,7 @@ Logging raw data
 ~~~~~~~~~~~~~~~~
 
 
-Logging the raw stream of data flowing through the ingest pipeline is not desired behaviour in
+Logging the raw stream of data flowing through the ingest pipeline is not desired behavior in
 many production environments because this may result in leaking sensitive data or security related
 configurations, such as secret keys, to Flume log files.
 By default, Flume will not log such information. On the other hand, if the data pipeline is broken,
@@ -1248,7 +1251,7 @@ recursiveDirectorySearch  false           Whether to monitor sub directories for
 maxBackoff                4000            The maximum time (in millis) to wait between consecutive attempts to
                                           write to the channel(s) if the channel is full. The source will start at
                                           a low backoff and increase it exponentially each time the channel throws a
-                                          ChannelException, upto the value specified by this parameter.
+                                          ChannelException, up to the value specified by this parameter.
 batchSize                 100             Granularity at which to batch transfer to the channel
 inputCharset              UTF-8           Character set used by deserializers that treat the input file as text.
 decodeErrorPolicy         ``FAIL``        What to do when we see a non-decodable character in the input file.
@@ -1260,7 +1263,7 @@ deserializer              ``LINE``        Specify the deserializer used to parse
                                           Defaults to parsing each line as an event. The class specified must implement
                                           ``EventDeserializer.Builder``.
 deserializer.*                            Varies per event deserializer.
-bufferMaxLines            --              (Obselete) This option is now ignored.
+bufferMaxLines            --              (Obsolete) This option is now ignored.
 bufferMaxLineLength       5000            (Deprecated) Maximum length of a line in the commit buffer. Use deserializer.maxLineLength instead.
 selector.type             replicating     replicating or multiplexing
 selector.*                                Depends on the selector.type value
@@ -1412,7 +1415,7 @@ Twitter 1% firehose Source (experimental)
   Use at your own risk.
 
 Experimental source that connects via Streaming API to the 1% sample twitter
-firehose, continously downloads tweets, converts them to Avro format and
+firehose, continuously downloads tweets, converts them to Avro format and
 sends Avro events to a downstream Flume sink. Requires the consumer and
 access tokens and secrets of a Twitter developer account.
 Required properties are in **bold**.
@@ -1460,7 +1463,7 @@ Property Name                       Default      Description
 **kafka.bootstrap.servers**         --           List of brokers in the Kafka cluster used by the source
 kafka.consumer.group.id             flume        Unique identified of consumer group. Setting the same id in multiple sources or agents
                                                  indicates that they are part of the same consumer group
-**kafka.topics**                    --           Comma-separated list of topics the kafka consumer will read messages from.
+**kafka.topics**                    --           Comma-separated list of topics the Kafka consumer will read messages from.
 **kafka.topics.regex**              --           Regex that defines set of topics the source is subscribed on. This property has higher priority
                                                  than ``kafka.topics`` and overrides ``kafka.topics`` if exists.
 batchSize                           1000         Maximum number of messages written to Channel in one batch
@@ -1505,8 +1508,8 @@ Property Name                    Default              Description
 ===============================  ===================  ================================================================================================
 topic                            --                   Use kafka.topics
 groupId                          flume                Use kafka.consumer.group.id
-zookeeperConnect                 --                   Is no longer supported by kafka consumer client since 0.9.x. Use kafka.bootstrap.servers
-                                                      to establish connection with kafka cluster
+zookeeperConnect                 --                   Is no longer supported by Kafka consumer client since 0.9.x. Use kafka.bootstrap.servers
+                                                      to establish connection with Kafka cluster
 migrateZookeeperOffsets          true                 When no Kafka stored offset is found, look up the offsets in Zookeeper and commit them to Kafka.
                                                       This should be true to support seamless Kafka client migration from older versions of Flume.
                                                       Once migrated this can be set to false, though that should generally not be required.
@@ -1579,7 +1582,7 @@ Example configuration with server side authentication and data encryption.
     a1.sources.source1.kafka.consumer.ssl.truststore.location=/path/to/truststore.jks
     a1.sources.source1.kafka.consumer.ssl.truststore.password=<password to access the truststore>
 
-Specyfing the truststore is optional here, the global truststore can be used instead.
+Specifying the truststore is optional here, the global truststore can be used instead.
 For more details about the global SSL setup, see the `SSL/TLS support`_ section.
 
 Note: By default the property ``ssl.endpoint.identification.algorithm``
@@ -3580,7 +3583,7 @@ pollTimeout                              500                         The amount 
                                                                      https://kafka.apache.org/090/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html#poll(long)
 defaultPartitionId                       --                          Specifies a Kafka partition ID (integer) for all events in this channel to be sent to, unless
                                                                      overriden by ``partitionIdHeader``. By default, if this property is not set, events will be
-                                                                     distributed by the Kafka Producer's partitioner - including by ``key`` if specified (or by a 
+                                                                     distributed by the Kafka Producer's partitioner - including by ``key`` if specified (or by a
                                                                      partitioner specified by ``kafka.partitioner.class``).
 partitionIdHeader                        --                          When set, the producer will take the value of the field named using the value of this property
                                                                      from the event header and send the message to the specified partition of the topic. If the
