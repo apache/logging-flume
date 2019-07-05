@@ -193,7 +193,7 @@ public class ChannelProcessor implements Configurable {
 
         tx.commit();
       } catch (Throwable t) {
-        tx.rollback();
+        tryRollbackForException(tx, t);
         if (t instanceof Error) {
           LOG.error("Error while writing to required channel: " + reqChannel, t);
           throw (Error) t;
@@ -204,9 +204,7 @@ public class ChannelProcessor implements Configurable {
               "channel: " + reqChannel, t);
         }
       } finally {
-        if (tx != null) {
-          tx.close();
-        }
+        tx.close();
       }
     }
 
@@ -225,15 +223,13 @@ public class ChannelProcessor implements Configurable {
 
         tx.commit();
       } catch (Throwable t) {
-        tx.rollback();
+        tryRollbackForException(tx, t);
         LOG.error("Unable to put batch on optional channel: " + optChannel, t);
         if (t instanceof Error) {
           throw (Error) t;
         }
       } finally {
-        if (tx != null) {
-          tx.close();
-        }
+        tx.close();
       }
     }
   }
@@ -269,7 +265,7 @@ public class ChannelProcessor implements Configurable {
 
         tx.commit();
       } catch (Throwable t) {
-        tx.rollback();
+        tryRollbackForException(tx, t);
         if (t instanceof Error) {
           LOG.error("Error while writing to required channel: " + reqChannel, t);
           throw (Error) t;
@@ -298,7 +294,7 @@ public class ChannelProcessor implements Configurable {
 
         tx.commit();
       } catch (Throwable t) {
-        tx.rollback();
+        tryRollbackForException(tx, t);
         LOG.error("Unable to put event on optional channel: " + optChannel, t);
         if (t instanceof Error) {
           throw (Error) t;
@@ -308,6 +304,16 @@ public class ChannelProcessor implements Configurable {
           tx.close();
         }
       }
+    }
+  }
+
+  private void tryRollbackForException(Transaction tx, Throwable cause) {
+    try {
+      tx.rollback();
+    } catch (RuntimeException | Error e) {
+      LOG.error("Exception occurred during transaction rollback. " +
+              "Logging original exception and propagating this one", cause);
+      throw e;
     }
   }
 }
