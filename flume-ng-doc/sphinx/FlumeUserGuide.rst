@@ -490,10 +490,10 @@ component:
   <Agent>.sources.<Source>.<someProperty> = <someValue>
 
   # properties for channels
-  <Agent>.channel.<Channel>.<someProperty> = <someValue>
+  <Agent>.channels.<Channel>.<someProperty> = <someValue>
 
   # properties for sinks
-  <Agent>.sources.<Sink>.<someProperty> = <someValue>
+  <Agent>.sinks.<Sink>.<someProperty> = <someValue>
 
 The property "type" needs to be set for each component for Flume to understand
 what kind of object it needs to be. Each source, sink and channel type has its
