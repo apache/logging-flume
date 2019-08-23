@@ -379,4 +379,9 @@ public class MemoryChannel extends BasicChannelSemantics {
   int getBytesRemainingValue() {
     return bytesRemaining.availablePermits();
   }
+
+  @Override
+  public long getChannelRemainSize() {
+    return channelCounter.getChannelSize();
+  }
 }

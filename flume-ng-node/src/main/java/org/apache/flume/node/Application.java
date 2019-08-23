@@ -60,6 +60,7 @@ public class Application {
 
   public static final String CONF_MONITOR_CLASS = "flume.monitoring.type";
   public static final String CONF_MONITOR_PREFIX = "flume.monitoring.";
+  public static final long CONF_WAIT_CHANNEL_DRAIN_INTERVAL = 3000;
 
   private final List<LifecycleAware> components;
   private final LifecycleSupervisor supervisor;
@@ -89,6 +90,7 @@ public class Application {
   }
 
   public synchronized void stop() {
+    stopAllComponents();
     supervisor.stop();
     if (monitorServer != null) {
       monitorServer.stop();
@@ -105,6 +107,27 @@ public class Application {
           supervisor.unsupervise(entry.getValue());
         } catch (Exception e) {
           logger.error("Error while stopping {}", entry.getValue(), e);
+        }
+      }
+
+      /*
+       * wait until all events within the channels are consumed.
+       */
+      for (Entry<String, Channel> entry :
+              this.materializedConfiguration.getChannels().entrySet()) {
+        try {
+          logger.info("Checking Channel " + entry.getKey() + " size");
+          while (true) {
+            if (entry.getValue().getChannelRemainSize() < 1) {
+              logger.info("Channel " + entry.getKey() + " is empty");
+              break;
+            }
+
+            logger.info("Channel " + entry.getKey() + " size " + entry.getValue().getChannelRemainSize());
+            Thread.sleep(CONF_WAIT_CHANNEL_DRAIN_INTERVAL);
+          }
+        } catch (Exception e) {
+          logger.error("Error while Checking {}", entry.getValue(), e);
         }
       }
 

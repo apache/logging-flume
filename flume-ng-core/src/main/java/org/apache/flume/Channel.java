@@ -86,4 +86,9 @@ public interface Channel extends LifecycleAware, NamedComponent {
    * @return the transaction instance associated with this channel.
    */
   public Transaction getTransaction();
+
+  /**
+   * @return the remain size of this channel.
+   */
+  public long getChannelRemainSize();
 }

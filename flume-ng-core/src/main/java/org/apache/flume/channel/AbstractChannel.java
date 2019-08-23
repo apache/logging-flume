@@ -69,6 +69,8 @@ public abstract class AbstractChannel
   @Override
   public void configure(Context context) {}
 
+  public long getChannelRemainSize() { return 0;}
+
   public String toString() {
     return this.getClass().getName() + "{name: " + name + "}";
   }
