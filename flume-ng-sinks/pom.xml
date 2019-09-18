@@ -39,6 +39,7 @@ limitations under the License.
     <module>flume-ng-elasticsearch-sink</module>
     <module>flume-ng-morphline-solr-sink</module>
     <module>flume-ng-kafka-sink</module>
+    <module>flume-ng-kudu-sink</module>
     <module>flume-http-sink</module>
     <module>flume-dataset-sink</module>
     <module>flume-hive-sink</module>
