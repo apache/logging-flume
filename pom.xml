@@ -112,8 +112,6 @@ limitations under the License.
     <system-rules.version>1.17.0</system-rules.version>
     <thrift.version>0.9.3</thrift.version>
     <twitter4j.version>3.0.3</twitter4j.version>
-    <xalan.version>2.7.2</xalan.version>
-    <xerces.version>2.9.1</xerces.version>
     <wiremock.version>1.53</wiremock.version>
     <zookeeper.version>3.4.5</zookeeper.version>
   </properties>
