@@ -50,7 +50,7 @@ limitations under the License.
     <asynchbase.version>1.7.0</asynchbase.version>
     <avro.version>1.7.4</avro.version>
     <bundle-plugin.version>2.3.7</bundle-plugin.version>
-    <checkstyle.tool.version>8.12</checkstyle.tool.version>
+    <checkstyle.tool.version>8.18</checkstyle.tool.version>
     <codehaus.jackson.version>1.9.3</codehaus.jackson.version>
     <commons-cli.version>1.2</commons-cli.version>
     <commons-codec.version>1.8</commons-codec.version>
