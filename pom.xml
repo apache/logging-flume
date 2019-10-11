@@ -103,7 +103,7 @@ limitations under the License.
     <mvn-spotbugs-plugin.version>3.1.7</mvn-spotbugs-plugin.version>
     <mvn-surefire-plugin.version>2.22.1</mvn-surefire-plugin.version>
     <netty.version>3.10.6.Final</netty.version>
-    <netty-all.version>4.1.17.Final</netty-all.version>
+    <netty-all.version>4.1.42.Final</netty-all.version>
     <protobuf.version>2.5.0</protobuf.version>
     <rat.version>0.12</rat.version>
     <snappy-java.version>1.1.4</snappy-java.version>
