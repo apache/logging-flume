@@ -65,3 +65,4 @@ We recommend you set the following Maven options:
 
 To compile Flume and build a distribution tarball, run `mvn install` from the
 top level directory. The artifacts will be placed under `flume-ng-dist/target/`.
+foo
