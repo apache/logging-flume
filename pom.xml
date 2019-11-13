@@ -77,7 +77,7 @@ limitations under the License.
     <httpclient.version>4.5.3</httpclient.version>
     <irclib.version>1.10</irclib.version>
     <jersey.version>1.8</jersey.version>
-    <jetty.version>9.4.6.v20170531</jetty.version>
+    <jetty.version>9.4.22.v20191022</jetty.version>
     <joda-time.version>2.9.9</joda-time.version>
     <junit.version>4.10</junit.version>
     <kafka.version>2.0.1</kafka.version>
