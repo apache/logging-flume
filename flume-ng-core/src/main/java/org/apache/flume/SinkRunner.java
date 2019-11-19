@@ -166,6 +166,13 @@ public class SinkRunner implements LifecycleAware {
           } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
           }
+        } catch (Throwable th){
+          logger.error("sink process failure",th);
+          try {
+            Thread.sleep(maxBackoffSleep);
+          } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+          }
         }
       }
       logger.debug("Polling runner exiting. Metrics:{}", counterGroup);
