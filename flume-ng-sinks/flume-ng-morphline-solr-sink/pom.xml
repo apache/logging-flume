@@ -24,6 +24,14 @@ limitations under the License.
     <version>1.10.0-SNAPSHOT</version>
   </parent>
 
+  <repositories>
+    <!-- Needed for the ua_parser:ua-parser dependency in Kite. -->
+    <repository>
+      <id>wso2</id>
+      <url>http://dist.wso2.org/maven2/</url>
+    </repository>
+  </repositories>
+
   <groupId>org.apache.flume.flume-ng-sinks</groupId>
   <artifactId>flume-ng-morphline-solr-sink</artifactId>
   <name>Flume NG Morphline Solr Sink</name>
