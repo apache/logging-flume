@@ -68,7 +68,7 @@ limitations under the License.
                       fi
                       for THRIFT_FILE in `ls $THRIFT_DIR/*.thrift 2&gt; /dev/null`
                       do
-                        thrift --gen java:hashcode -o $JAVA_DIR $THRIFT_FILE
+                        thrift --gen java -o $JAVA_DIR $THRIFT_FILE
                       done
                       SRC_DIR=$JAVA_DIR/gen-java/com/cloudera/flume/handlers/thrift
                       DEST_DIR=src/main/java/com/cloudera/flume/handlers/thrift
