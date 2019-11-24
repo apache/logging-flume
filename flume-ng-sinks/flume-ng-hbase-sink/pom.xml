@@ -119,6 +119,13 @@
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-client</artifactId>
       <optional>true</optional>
+      <exclusions>
+        <exclusion>
+          <!-- hbase-annotations depends on tools.jar which was removed in JDK9 -->
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-annotations</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
@@ -126,6 +133,13 @@
       <artifactId>hbase-client</artifactId>
       <classifier>tests</classifier>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <!-- hbase-annotations depends on tools.jar which was removed in JDK9 -->
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-annotations</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
 
@@ -133,6 +147,13 @@
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-server</artifactId>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <!-- hbase-annotations depends on tools.jar which was removed in JDK9 -->
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-annotations</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
@@ -140,6 +161,13 @@
       <artifactId>hbase-server</artifactId>
       <classifier>tests</classifier>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <!-- hbase-annotations depends on tools.jar which was removed in JDK9 -->
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-annotations</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <!-- There should be no need for Flume to include the following two
@@ -152,12 +180,26 @@
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-common</artifactId>
       <optional>true</optional>
+      <exclusions>
+        <exclusion>
+          <!-- hbase-annotations depends on tools.jar which was removed in JDK9 -->
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-annotations</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase-testing-util</artifactId>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <!-- hbase-annotations depends on tools.jar which was removed in JDK9 -->
+          <groupId>org.apache.hbase</groupId>
+          <artifactId>hbase-annotations</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
