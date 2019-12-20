@@ -34,6 +34,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -341,27 +342,18 @@ public class TaildirSource extends AbstractSource implements
     }
   }
 
-  private void writePosition() {
-    File file = new File(positionFilePath);
-    FileWriter writer = null;
-    try {
-      writer = new FileWriter(file);
-      if (!existingInodes.isEmpty()) {
-        String json = toPosInfoJson();
-        writer.write(json);
-      }
-    } catch (Throwable t) {
-      logger.error("Failed writing positionFile", t);
-      sourceCounter.incrementGenericProcessingFail();
-    } finally {
-      try {
-        if (writer != null) writer.close();
-      } catch (IOException e) {
-        logger.error("Error: " + e.getMessage(), e);
-        sourceCounter.incrementGenericProcessingFail();
-      }
+    private void writePosition() {
+        File file = new File(positionFilePath);
+        try {
+            if (!existingInodes.isEmpty()) {
+                String json = toPosInfoJson();
+                FileUtils.write(file, json, "UTF-8", false);
+            }
+        } catch (Throwable t) {
+            logger.error("Failed writing positionFile", t);
+            sourceCounter.incrementGenericProcessingFail();
+        }
     }
-  }
 
   private String toPosInfoJson() {
     @SuppressWarnings("rawtypes")
