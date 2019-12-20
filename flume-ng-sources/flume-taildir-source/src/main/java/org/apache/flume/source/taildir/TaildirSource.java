@@ -20,6 +20,7 @@ package org.apache.flume.source.taildir;
 import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.*;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -341,18 +342,18 @@ public class TaildirSource extends AbstractSource implements
     }
   }
 
-  private void writePosition() {
-    File file = new File(positionFilePath);
-    try {
-      if (!existingInodes.isEmpty()) {
-        String json = toPosInfoJson();
-        FileUtils.write(file, json, "UTF-8", false);
-      }
-    } catch (Throwable t) {
-      logger.error("Failed writing positionFile", t);
-      sourceCounter.incrementGenericProcessingFail();
+    private void writePosition() {
+        File file = new File(positionFilePath);
+        try {
+            if (!existingInodes.isEmpty()) {
+                String json = toPosInfoJson();
+                FileUtils.write(file, json, "UTF-8", false);
+            }
+        } catch (Throwable t) {
+            logger.error("Failed writing positionFile", t);
+            sourceCounter.incrementGenericProcessingFail();
+        }
     }
-  }
 
   private String toPosInfoJson() {
     @SuppressWarnings("rawtypes")
