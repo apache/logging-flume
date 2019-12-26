@@ -20,7 +20,6 @@ package org.apache.flume.source.taildir;
 import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.*;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
