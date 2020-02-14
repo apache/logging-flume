@@ -86,6 +86,7 @@ public class TestHiveWriter {
     // 1) Start metastore
     conf = new HiveConf(this.getClass());
     TestUtil.setConfValues(conf);
+    TxnDbUtil.setConfValues(conf);
     if (metaStoreURI != null) {
       conf.setVar(HiveConf.ConfVars.METASTOREURIS, metaStoreURI);
     }
@@ -99,8 +100,8 @@ public class TestHiveWriter {
   @Before
   public void setUp() throws Exception {
     // 1) prepare hive
-    TxnDbUtil.cleanDb();
-    TxnDbUtil.prepDb();
+    TxnDbUtil.cleanDb(conf);
+    TxnDbUtil.prepDb(conf);
 
     // 1) Setup tables
     TestUtil.dropDB(conf, dbName);

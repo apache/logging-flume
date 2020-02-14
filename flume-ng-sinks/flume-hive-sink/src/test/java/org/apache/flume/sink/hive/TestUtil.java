@@ -58,6 +58,8 @@ public class TestUtil {
     conf.setVar(HiveConf.ConfVars.HIVE_TXN_MANAGER, txnMgr);
     conf.setBoolVar(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY, true);
     conf.set("fs.raw.impl", RawFileSystem.class.getName());
+    conf.setBoolVar(HiveConf.ConfVars.METASTORE_SCHEMA_VERIFICATION, false);
+    conf.set("datanucleus.schema.autoCreateAll", "true");
   }
 
   public static void createDbAndTable(Driver driver, String databaseName,
