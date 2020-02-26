@@ -80,7 +80,7 @@ limitations under the License.
     <jetty.version>9.4.6.v20170531</jetty.version>
     <joda-time.version>2.9.9</joda-time.version>
     <junit.version>4.10</junit.version>
-    <kafka.version>2.0.1</kafka.version>
+    <kafka.version>2.3.1</kafka.version>
     <kite.version>1.0.0</kite.version>
     <kudu.version>1.10.0</kudu.version>
     <lifecycle-mapping.version>1.0.0</lifecycle-mapping.version>
@@ -116,7 +116,7 @@ limitations under the License.
     <xalan.version>2.7.2</xalan.version>
     <xerces.version>2.9.1</xerces.version>
     <wiremock.version>1.53</wiremock.version>
-    <zookeeper.version>3.4.5</zookeeper.version>
+    <zookeeper.version>3.4.13</zookeeper.version>
   </properties>
 
   <modules>
