@@ -759,7 +759,8 @@ public class NettyAvroRpcClient extends SSLContextAwareAbstractRpcClient {
   }
 
   /**
-   * Permissive trust manager accepting any certificate
+   * Permissive trust manager accepting any certificate,
+   * it is not secure
    */
   private static class PermissiveTrustManager implements X509TrustManager {
     @Override
