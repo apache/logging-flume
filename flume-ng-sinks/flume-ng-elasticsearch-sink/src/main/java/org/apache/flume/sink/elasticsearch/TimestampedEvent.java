@@ -49,7 +49,7 @@ final class TimestampedEvent extends SimpleEvent {
       this.timestamp = DateTimeUtils.currentTimeMillis();
       headers.put("timestamp", String.valueOf(timestamp ));
     } else {
-      this.timestamp = Long.valueOf(timestampString);
+      this.timestamp = Long.parseLong(timestampString);
     }
     setHeaders(headers);
   }

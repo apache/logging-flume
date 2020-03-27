@@ -71,7 +71,6 @@ public class ElasticSearchClientFactory {
       return new ElasticSearchTransportClient(serializer);
     } else if (clientType.equalsIgnoreCase(TransportClient) && indexBuilder != null)  {
       return new ElasticSearchTransportClient(indexBuilder);
-    } else if (clientType.equalsIgnoreCase(RestClient)) {
     }
     throw new NoSuchClientTypeException();
   }

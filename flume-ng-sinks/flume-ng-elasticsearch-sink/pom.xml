@@ -25,8 +25,8 @@
   <name>Flume NG ElasticSearch Sink</name>
 
   <properties>
-    <!-- TODO fix spotbugs/pmd violations -->
-    <spotbugs.maxAllowedViolations>8</spotbugs.maxAllowedViolations>
+    <!-- TODO fix pmd violations -->
+    <spotbugs.maxAllowedViolations>0</spotbugs.maxAllowedViolations>
     <pmd.maxAllowedViolations>10</pmd.maxAllowedViolations>
   </properties>
 

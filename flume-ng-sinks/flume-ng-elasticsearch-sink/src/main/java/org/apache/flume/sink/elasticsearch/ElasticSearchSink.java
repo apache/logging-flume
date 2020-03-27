@@ -305,9 +305,8 @@ public class ElasticSearchSink extends AbstractSink implements Configurable, Bat
         throw new IllegalArgumentException(serializerClazz
             + " is not an ElasticSearchEventSerializer");
       }
-    } catch (Exception e) {
-      logger.error("Could not instantiate event serializer.", e);
-      Throwables.propagate(e);
+    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+      throw new RuntimeException("Could not instantiate index name builder.", e);
     }
 
     if (sinkCounter == null) {
@@ -331,13 +330,8 @@ public class ElasticSearchSink extends AbstractSink implements Configurable, Bat
       indexNameBuilder = clazz.newInstance();
       indexnameBuilderContext.put(INDEX_NAME, indexName);
       indexNameBuilder.configure(indexnameBuilderContext);
-    } catch (Exception e) {
-      logger.error("Could not instantiate index name builder.", e);
-      Throwables.propagate(e);
-    }
-
-    if (sinkCounter == null) {
-      sinkCounter = new SinkCounter(getName());
+    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+      throw new RuntimeException("Could not instantiate index name builder.", e);
     }
 
     Preconditions.checkState(StringUtils.isNotBlank(indexName),
@@ -419,7 +413,7 @@ public class ElasticSearchSink extends AbstractSink implements Configurable, Bat
       } else if (matcher.group(2).equals("d")) {
         return TimeUnit.DAYS.toMillis(Integer.parseInt(matcher.group(1)));
       } else if (matcher.group(2).equals("w")) {
-        return TimeUnit.DAYS.toMillis(7 * Integer.parseInt(matcher.group(1)));
+        return TimeUnit.DAYS.toMillis(7L * (long)Integer.parseInt(matcher.group(1)));
       } else if (matcher.group(2).equals("")) {
         logger.info("TTL qualifier is empty. Defaulting to day qualifier.");
         return TimeUnit.DAYS.toMillis(Integer.parseInt(matcher.group(1)));

@@ -105,7 +105,7 @@ public class  ElasticSearchRestClient implements ElasticSearchClient {
     parameters.put(INDEX_OPERATION_NAME, indexParameters);
 
     Gson gson = new Gson();
-    synchronized (bulkBuilder) {
+    synchronized (this) {
       bulkBuilder.append(gson.toJson(parameters));
       bulkBuilder.append("\n");
       bulkBuilder.append(content.toBytesArray().toUtf8());
@@ -118,7 +118,7 @@ public class  ElasticSearchRestClient implements ElasticSearchClient {
     int statusCode = 0, triesCount = 0;
     HttpResponse response = null;
     String entity;
-    synchronized (bulkBuilder) {
+    synchronized (this) {
       entity = bulkBuilder.toString();
       bulkBuilder = new StringBuilder();
     }

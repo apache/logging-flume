@@ -64,9 +64,10 @@ public class ElasticSearchDynamicSerializer implements
   private void appendHeaders(XContentBuilder builder, Event event)
       throws IOException {
     Map<String, String> headers = event.getHeaders();
-    for (String key : headers.keySet()) {
-      ContentBuilderUtil.appendField(builder, key,
-          headers.get(key).getBytes(charset));
+    for (Map.Entry<String,String> entry : headers.entrySet()) {
+      String key = entry.getKey();
+      byte[] val = entry.getValue().getBytes(charset);
+      ContentBuilderUtil.appendField(builder, key, val);
     }
   }
 

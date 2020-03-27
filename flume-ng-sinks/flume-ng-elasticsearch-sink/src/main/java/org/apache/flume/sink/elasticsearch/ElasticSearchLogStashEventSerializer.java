@@ -126,8 +126,9 @@ public class ElasticSearchLogStashEventSerializer implements
     }
 
     builder.startObject("@fields");
-    for (String key : headers.keySet()) {
-      byte[] val = headers.get(key).getBytes(charset);
+    for (Map.Entry<String,String> entry : headers.entrySet()) {
+      String key = entry.getKey();
+      byte[] val = entry.getValue().getBytes(charset);
       ContentBuilderUtil.appendField(builder, key, val);
     }
     builder.endObject();
