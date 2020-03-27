@@ -70,6 +70,11 @@ public class ElasticSearchSinkConstants {
   public static final String SERIALIZER_PREFIX = SERIALIZER + ".";
 
   /**
+   * Name of the header that will be used as the ElasticSearch document ID.
+   */
+  public static final String ID_HEADER_NAME = "idHeaderName";
+
+  /**
    * The fully qualified class name of the index name builder the sink
    * should use to determine name of index where the event should be sent.
    */

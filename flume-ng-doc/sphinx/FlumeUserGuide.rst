@@ -3054,6 +3054,12 @@ serializer.*      --                                                            
           Caution should be used in using this feature as the event submitter now has control of the indexName and indexType.
           Furthermore, if the elasticsearch REST client is used then the event submitter has control of the URL path used.
 
+.. note:: Deduplication of events in ElasticSearch can be implemented by
+          setting ``serializer.idHeaderHame`` to the name of a header which
+          should be renamed to ``_id`` in documents submitted to ElasticSearch.
+          When using the :ref:`uuid-interceptor`, it should match the
+          ``headerName`` property.
+
 Example for agent named a1:
 
 .. code-block:: properties
@@ -4458,6 +4464,8 @@ fromListSeparator      \\s*,\\s*    Regular expression used to separate multiple
 matching               --           All the headers which names match this regular expression are removed
 =====================  ===========  ===============================================================
 
+
+.. _uuid-interceptor:
 
 UUID Interceptor
 ~~~~~~~~~~~~~~~~

@@ -28,6 +28,7 @@ import org.junit.Test;
 
 import java.util.Date;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.apache.flume.sink.elasticsearch.ElasticSearchEventSerializer.charset;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
@@ -41,6 +42,7 @@ public class TestElasticSearchLogStashEventSerializer {
     Context context = new Context();
     fixture.configure(context);
 
+    String id = UUID.randomUUID().toString();
     String message = "test body";
     Map<String, String> headers = Maps.newHashMap();
     long timestamp = System.currentTimeMillis();
@@ -51,6 +53,7 @@ public class TestElasticSearchLogStashEventSerializer {
     headers.put("headerNameOne", "headerValueOne");
     headers.put("headerNameTwo", "headerValueTwo");
     headers.put("type", "sometype");
+    headers.put("_id", id);
     Event event = EventBuilder.withBody(message.getBytes(charset));
     event.setHeaders(headers);
 
@@ -70,12 +73,49 @@ public class TestElasticSearchLogStashEventSerializer {
     expected.field("source", "flume_tail_src");
     expected.field("headerNameOne", "headerValueOne");
     expected.field("type", "sometype");
+    expected.field("_id", id);
     expected.endObject();
 
     expected.endObject();
 
     XContentBuilder actual = fixture.getContentBuilder(event);
-    
+
+    JsonParser parser = new JsonParser();
+    assertEquals(parser.parse(expected.string()),parser.parse(actual.string()));
+  }
+
+  @Test
+  public void shouldDropDocumentIdHeader() throws Exception {
+    ElasticSearchLogStashEventSerializer fixture = new ElasticSearchLogStashEventSerializer();
+    Context context = new Context();
+    context.put("idHeaderName", "_id");
+    fixture.configure(context);
+
+    String id = UUID.randomUUID().toString();
+    String message = "test body";
+    Map<String, String> headers = Maps.newHashMap();
+    long timestamp = System.currentTimeMillis();
+    headers.put("timestamp", String.valueOf(timestamp));
+    headers.put("_id", id);
+    headers.put("headerNameOne", "headerValueOne");
+    headers.put("headerNameTwo", "headerValueTwo");
+    Event event = EventBuilder.withBody(message.getBytes(charset));
+    event.setHeaders(headers);
+
+    XContentBuilder expected = jsonBuilder().startObject();
+    expected.field("@message", new String(message.getBytes(), charset));
+    expected.field("@timestamp", new Date(timestamp));
+
+    expected.startObject("@fields");
+    expected.field("timestamp", String.valueOf(timestamp));
+    expected.field("headerNameTwo", "headerValueTwo");
+    expected.field("headerNameOne", "headerValueOne");
+    expected.endObject();
+
+    expected.endObject();
+
+    XContentBuilder actual = fixture.getContentBuilder(event);
+
     JsonParser parser = new JsonParser();
     assertEquals(parser.parse(expected.string()),parser.parse(actual.string()));
   }

@@ -18,6 +18,7 @@
  */
 package org.apache.flume.sink.elasticsearch;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
@@ -26,6 +27,7 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.junit.Test;
 
 import java.util.Map;
+import java.util.UUID;
 
 import static org.apache.flume.sink.elasticsearch.ElasticSearchEventSerializer.charset;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
@@ -39,11 +41,13 @@ public class TestElasticSearchDynamicSerializer {
     Context context = new Context();
     fixture.configure(context);
 
+    String id = UUID.randomUUID().toString();
     String message = "test body";
     Map<String, String> headers = Maps.newHashMap();
     headers.put("headerNameOne", "headerValueOne");
     headers.put("headerNameTwo", "headerValueTwo");
     headers.put("headerNameThree", "headerValueThree");
+    headers.put("_id", id);
     Event event = EventBuilder.withBody(message.getBytes(charset));
     event.setHeaders(headers);
 
@@ -59,6 +63,40 @@ public class TestElasticSearchDynamicSerializer {
 
     assertEquals(new String(expected.bytes().array()), new String(actual
         .bytes().array()));
+  }
 
+
+  @Test
+  public void shouldDropDocumentIdHeader() throws Exception {
+    ElasticSearchDynamicSerializer fixture = new ElasticSearchDynamicSerializer();
+    Context context = new Context();
+    context.put("idHeaderName", "id");
+    fixture.configure(context);
+
+    String id = UUID.randomUUID().toString();
+    String message = "test body";
+    Map<String, String> headers = Maps.newHashMap();
+    headers.put("headerNameOne", "headerValueOne");
+    headers.put("headerNameTwo", "headerValueTwo");
+    headers.put("headerNameThree", "headerValueThree");
+    headers.put("id", id);
+    Event event = EventBuilder.withBody(message.getBytes(charset));
+    event.setHeaders(headers);
+
+    XContentBuilder expected = jsonBuilder().startObject();
+    expected.field("body", new String(message.getBytes(), charset));
+    for (String headerName : headers.keySet()) {
+      if (StringUtils.equals(headerName, "id")) {
+        continue;
+      }
+      expected.field(headerName, new String(headers.get(headerName).getBytes(),
+          charset));
+    }
+    expected.endObject();
+
+    XContentBuilder actual = fixture.getContentBuilder(event);
+
+    assertEquals(new String(expected.bytes().array()), new String(actual
+        .bytes().array()));
   }
 }

@@ -31,6 +31,7 @@ import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.SER
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.SERIALIZER_PREFIX;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.TTL;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.TTL_REGEX;
+import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.ID_HEADER_NAME;
 import org.apache.commons.lang.StringUtils;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
@@ -106,6 +107,7 @@ public class ElasticSearchSink extends AbstractSink implements Configurable, Bat
   private Matcher matcher = pattern.matcher("");
 
   private String[] serverAddresses = null;
+  private String idHeaderName = null;
 
   private ElasticSearchClient client = null;
   private Context elasticSearchClientContext = null;
@@ -277,7 +279,14 @@ public class ElasticSearchSink extends AbstractSink implements Configurable, Bat
       clientType = context.getString(CLIENT_TYPE);
     }
 
+    if (StringUtils.isNotBlank(context.getString(ID_HEADER_NAME))) {
+      idHeaderName = context.getString(ID_HEADER_NAME);
+    }
+
     elasticSearchClientContext = new Context();
+    if (idHeaderName != null) {
+      elasticSearchClientContext.put(ID_HEADER_NAME, idHeaderName);
+    }
     elasticSearchClientContext.putAll(context.getSubProperties(CLIENT_PREFIX));
 
     String serializerClazz = DEFAULT_SERIALIZER_CLASS;
@@ -286,6 +295,9 @@ public class ElasticSearchSink extends AbstractSink implements Configurable, Bat
     }
 
     Context serializerContext = new Context();
+    if (idHeaderName != null) {
+      serializerContext.put(ID_HEADER_NAME, idHeaderName);
+    }
     serializerContext.putAll(context.getSubProperties(SERIALIZER_PREFIX));
 
     try {
