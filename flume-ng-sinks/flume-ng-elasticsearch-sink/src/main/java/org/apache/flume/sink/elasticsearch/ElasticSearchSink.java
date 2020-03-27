@@ -31,6 +31,7 @@ import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.SER
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.SERIALIZER_PREFIX;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.TTL;
 import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.TTL_REGEX;
+import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.REST_CLIENT;
 import org.apache.commons.lang.StringUtils;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
@@ -344,7 +345,8 @@ public class ElasticSearchSink extends AbstractSink implements Configurable, Bat
         "Missing Param:" + INDEX_NAME);
     Preconditions.checkState(StringUtils.isNotBlank(indexType),
         "Missing Param:" + INDEX_TYPE);
-    Preconditions.checkState(StringUtils.isNotBlank(clusterName),
+    Preconditions.checkState(
+        StringUtils.isNotBlank(clusterName) || StringUtils.equals(clientType, REST_CLIENT),
         "Missing Param:" + CLUSTER_NAME);
     Preconditions.checkState(batchSize >= 1, BATCH_SIZE
         + " must be greater than 0");

@@ -88,6 +88,16 @@ public class ElasticSearchSinkConstants {
   public static final String CLIENT_TYPE = "client";
 
   /**
+   * Value to use with CLIENT_TYPE to get the transport client.
+   */
+  public static final String TRANSPORT_CLIENT = "transport";
+
+  /**
+   * Value to use with CLIENT_TYPE to get the REST client.
+   */
+  public static final String REST_CLIENT = "rest";
+
+  /**
    * The client prefix to extract the configuration that will be passed to
    * elasticsearch client.
    */
