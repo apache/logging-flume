@@ -3045,6 +3045,9 @@ ttl               --                                                            
                                                                                            integer only e.g. a1.sinks.k1.ttl = 5 and also with a qualifier ms (millisecond), s (second), m (minute),
                                                                                            h (hour), d (day) and w (week). Example a1.sinks.k1.ttl = 5d will set TTL to 5 days. Follow
                                                                                            http://www.elasticsearch.org/guide/reference/mapping/ttl-field/ for more information.
+client            transport                                                                Set to "rest" to send data using HTTP bulk insert API.
+client.rest       org.apache.flume.sink.elasticsearch.client.HttpClient                    The HttpClientBuilder to use to create the HTTP client.
+client.rest.*     --                                                                       Properties to be passed to the HTTP client.
 serializer        org.apache.flume.sink.elasticsearch.ElasticSearchLogStashEventSerializer The ElasticSearchIndexRequestBuilderFactory or ElasticSearchEventSerializer to use. Implementations of
                                                                                            either class are accepted but ElasticSearchIndexRequestBuilderFactory is preferred.
 serializer.*      --                                                                       Properties to be passed to the serializer.
@@ -3053,6 +3056,10 @@ serializer.*      --                                                            
 .. note:: Header substitution is a handy to use the value of an event header to dynamically decide the indexName and indexType to use when storing the event.
           Caution should be used in using this feature as the event submitter now has control of the indexName and indexType.
           Furthermore, if the elasticsearch REST client is used then the event submitter has control of the URL path used.
+
+.. note:: By default, access to ElasticSearch is not authenticated.
+          Authentication to ElasticSearch can be configured by providing your
+          own implementation of the HTTPClientBuilder.
 
 Example for agent named a1:
 

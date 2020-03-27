@@ -20,21 +20,26 @@ package org.apache.flume.sink.elasticsearch.client;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
+import org.apache.commons.lang.StringUtils;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
+import org.apache.flume.conf.Configurable;
 import org.apache.flume.sink.elasticsearch.ElasticSearchEventSerializer;
 import org.apache.flume.sink.elasticsearch.IndexNameBuilder;
+import org.apache.http.client.HttpClient;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.HTTP_CLIENT;
+import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.HTTP_CLIENT_PREFIX;
+import static org.apache.flume.sink.elasticsearch.ElasticSearchSinkConstants.DEFAULT_HTTP_CLIENT_CLASS;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -59,6 +64,9 @@ public class  ElasticSearchRestClient implements ElasticSearchClient {
   private final RoundRobinList<String> serversList;
   
   private StringBuilder bulkBuilder;
+
+  private Context httpClientContext;
+  private HttpClientBuilder httpClientBuilder;
   private HttpClient httpClient;
   
   public ElasticSearchRestClient(String[] hostNames,
@@ -72,7 +80,6 @@ public class  ElasticSearchRestClient implements ElasticSearchClient {
     this.serializer = serializer;
 
     serversList = new RoundRobinList<String>(Arrays.asList(hostNames));
-    httpClient = new DefaultHttpClient();
     bulkBuilder = new StringBuilder();
   }
 
@@ -85,6 +92,34 @@ public class  ElasticSearchRestClient implements ElasticSearchClient {
 
   @Override
   public void configure(Context context) {
+
+    String clientBuilderClazz = DEFAULT_HTTP_CLIENT_CLASS;
+    if (StringUtils.isNotBlank(context.getString(HTTP_CLIENT))) {
+      clientBuilderClazz = context.getString(HTTP_CLIENT);
+    }
+
+    httpClientContext = new Context();
+    httpClientContext.putAll(context.getSubProperties(HTTP_CLIENT_PREFIX));
+
+    try {
+      @SuppressWarnings("unchecked")
+      Class<? extends Configurable> clazz = (Class<? extends Configurable>) Class
+          .forName(clientBuilderClazz);
+      Configurable builder = clazz.newInstance();
+      if (builder instanceof HttpClientBuilder) {
+        builder.configure(httpClientContext);
+        httpClientBuilder = (HttpClientBuilder)builder;
+      } else {
+        throw new IllegalArgumentException(clientBuilderClazz
+            + " is not an HttpClientBuilder");
+      }
+    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+      throw new RuntimeException("Could not instantiate the HTTP client.", e);
+    }
+
+    if (httpClient == null)  {
+      httpClient = httpClientBuilder.newHttpClient();
+    }
   }
 
   @Override

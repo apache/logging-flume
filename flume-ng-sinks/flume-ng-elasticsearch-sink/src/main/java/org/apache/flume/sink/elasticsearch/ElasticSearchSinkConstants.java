@@ -94,6 +94,17 @@ public class ElasticSearchSinkConstants {
   public static final String CLIENT_PREFIX = CLIENT_TYPE + ".";
 
   /**
+   * The HTTP client type used for sending bulks to ElasticSearch
+   */
+  public static final String HTTP_CLIENT = "rest";
+
+  /**
+   * The client prefix to extract the configuration that will be passed to
+   * the HTTP client.
+   */
+  public static final String HTTP_CLIENT_PREFIX = HTTP_CLIENT + ".";
+
+  /**
    * DEFAULTS USED BY THE SINK
    */
 
@@ -108,4 +119,6 @@ public class ElasticSearchSinkConstants {
           "sink.elasticsearch.ElasticSearchLogStashEventSerializer";
   public static final String DEFAULT_INDEX_NAME_BUILDER_CLASS =
           "org.apache.flume.sink.elasticsearch.TimeBasedIndexNameBuilder";
+  public static final String DEFAULT_HTTP_CLIENT_CLASS =
+          "org.apache.flume.sink.elasticsearch.client.HttpClientBuilder";
 }
