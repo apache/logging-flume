@@ -47,8 +47,8 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
   public @org.apache.thrift.annotation.Nullable Priority priority; // required
   public @org.apache.thrift.annotation.Nullable java.nio.ByteBuffer body; // required
   public long nanos; // required
-  public @org.apache.thrift.annotation.Nullable java.lang.String host; // required
-  public @org.apache.thrift.annotation.Nullable java.util.Map<java.lang.String,java.nio.ByteBuffer> fields; // required
+  public @org.apache.thrift.annotation.Nullable String host; // required
+  public @org.apache.thrift.annotation.Nullable java.util.Map<String,java.nio.ByteBuffer> fields; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -63,7 +63,7 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
     HOST((short)5, "host"),
     FIELDS((short)6, "fields");
 
-    private static final java.util.Map<java.lang.String, _Fields> byName = new java.util.HashMap<java.lang.String, _Fields>();
+    private static final java.util.Map<String, _Fields> byName = new java.util.HashMap<String, _Fields>();
 
     static {
       for (_Fields field : java.util.EnumSet.allOf(_Fields.class)) {
@@ -100,7 +100,7 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
      */
     public static _Fields findByThriftIdOrThrow(int fieldId) {
       _Fields fields = findByThriftId(fieldId);
-      if (fields == null) throw new java.lang.IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+      if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
       return fields;
     }
 
@@ -108,14 +108,14 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
      * Find the _Fields constant that matches name, or null if its not found.
      */
     @org.apache.thrift.annotation.Nullable
-    public static _Fields findByName(java.lang.String name) {
+    public static _Fields findByName(String name) {
       return byName.get(name);
     }
 
     private final short _thriftId;
-    private final java.lang.String _fieldName;
+    private final String _fieldName;
 
-    _Fields(short thriftId, java.lang.String fieldName) {
+    _Fields(short thriftId, String fieldName) {
       _thriftId = thriftId;
       _fieldName = fieldName;
     }
@@ -124,7 +124,7 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
       return _thriftId;
     }
 
-    public java.lang.String getFieldName() {
+    public String getFieldName() {
       return _fieldName;
     }
   }
@@ -162,8 +162,8 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
     Priority priority,
     java.nio.ByteBuffer body,
     long nanos,
-    java.lang.String host,
-    java.util.Map<java.lang.String,java.nio.ByteBuffer> fields)
+    String host,
+    java.util.Map<String,java.nio.ByteBuffer> fields)
   {
     this();
     this.timestamp = timestamp;
@@ -193,7 +193,7 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
       this.host = other.host;
     }
     if (other.isSetFields()) {
-      java.util.Map<java.lang.String,java.nio.ByteBuffer> __this__fields = new java.util.HashMap<java.lang.String,java.nio.ByteBuffer>(other.fields);
+      java.util.Map<String,java.nio.ByteBuffer> __this__fields = new java.util.HashMap<String,java.nio.ByteBuffer>(other.fields);
       this.fields = __this__fields;
     }
   }
@@ -328,11 +328,11 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
   }
 
   @org.apache.thrift.annotation.Nullable
-  public java.lang.String getHost() {
+  public String getHost() {
     return this.host;
   }
 
-  public ThriftFlumeEvent setHost(@org.apache.thrift.annotation.Nullable java.lang.String host) {
+  public ThriftFlumeEvent setHost(@org.apache.thrift.annotation.Nullable String host) {
     this.host = host;
     return this;
   }
@@ -356,19 +356,19 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
     return (this.fields == null) ? 0 : this.fields.size();
   }
 
-  public void putToFields(java.lang.String key, java.nio.ByteBuffer val) {
+  public void putToFields(String key, java.nio.ByteBuffer val) {
     if (this.fields == null) {
-      this.fields = new java.util.HashMap<java.lang.String,java.nio.ByteBuffer>();
+      this.fields = new java.util.HashMap<String,java.nio.ByteBuffer>();
     }
     this.fields.put(key, val);
   }
 
   @org.apache.thrift.annotation.Nullable
-  public java.util.Map<java.lang.String,java.nio.ByteBuffer> getFields() {
+  public java.util.Map<String,java.nio.ByteBuffer> getFields() {
     return this.fields;
   }
 
-  public ThriftFlumeEvent setFields(@org.apache.thrift.annotation.Nullable java.util.Map<java.lang.String,java.nio.ByteBuffer> fields) {
+  public ThriftFlumeEvent setFields(@org.apache.thrift.annotation.Nullable java.util.Map<String,java.nio.ByteBuffer> fields) {
     this.fields = fields;
     return this;
   }
@@ -388,13 +388,13 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
     }
   }
 
-  public void setFieldValue(_Fields field, @org.apache.thrift.annotation.Nullable java.lang.Object value) {
+  public void setFieldValue(_Fields field, @org.apache.thrift.annotation.Nullable Object value) {
     switch (field) {
     case TIMESTAMP:
       if (value == null) {
         unsetTimestamp();
       } else {
-        setTimestamp((java.lang.Long)value);
+        setTimestamp((Long)value);
       }
       break;
 
@@ -422,7 +422,7 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
       if (value == null) {
         unsetNanos();
       } else {
-        setNanos((java.lang.Long)value);
+        setNanos((Long)value);
       }
       break;
 
@@ -430,7 +430,7 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
       if (value == null) {
         unsetHost();
       } else {
-        setHost((java.lang.String)value);
+        setHost((String)value);
       }
       break;
 
@@ -438,7 +438,7 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
       if (value == null) {
         unsetFields();
       } else {
-        setFields((java.util.Map<java.lang.String,java.nio.ByteBuffer>)value);
+        setFields((java.util.Map<String,java.nio.ByteBuffer>)value);
       }
       break;
 
@@ -446,7 +446,7 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
   }
 
   @org.apache.thrift.annotation.Nullable
-  public java.lang.Object getFieldValue(_Fields field) {
+  public Object getFieldValue(_Fields field) {
     switch (field) {
     case TIMESTAMP:
       return getTimestamp();
@@ -467,13 +467,13 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
       return getFields();
 
     }
-    throw new java.lang.IllegalStateException();
+    throw new IllegalStateException();
   }
 
   /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
   public boolean isSet(_Fields field) {
     if (field == null) {
-      throw new java.lang.IllegalArgumentException();
+      throw new IllegalArgumentException();
     }
 
     switch (field) {
@@ -490,11 +490,11 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
     case FIELDS:
       return isSetFields();
     }
-    throw new java.lang.IllegalStateException();
+    throw new IllegalStateException();
   }
 
   @Override
-  public boolean equals(java.lang.Object that) {
+  public boolean equals(Object that) {
     if (that == null)
       return false;
     if (that instanceof ThriftFlumeEvent)
@@ -571,21 +571,21 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
 
     hashCode = hashCode * 8191 + org.apache.thrift.TBaseHelper.hashCode(timestamp);
 
-    hashCode = hashCode * 8191 + ((isSetPriority()) ? 131071 : 524287);
+    hashCode = hashCode * 8191 + (isSetPriority() ? 131071 : 524287);
     if (isSetPriority())
       hashCode = hashCode * 8191 + priority.getValue();
 
-    hashCode = hashCode * 8191 + ((isSetBody()) ? 131071 : 524287);
+    hashCode = hashCode * 8191 + (isSetBody() ? 131071 : 524287);
     if (isSetBody())
       hashCode = hashCode * 8191 + body.hashCode();
 
     hashCode = hashCode * 8191 + org.apache.thrift.TBaseHelper.hashCode(nanos);
 
-    hashCode = hashCode * 8191 + ((isSetHost()) ? 131071 : 524287);
+    hashCode = hashCode * 8191 + (isSetHost() ? 131071 : 524287);
     if (isSetHost())
       hashCode = hashCode * 8191 + host.hashCode();
 
-    hashCode = hashCode * 8191 + ((isSetFields()) ? 131071 : 524287);
+    hashCode = hashCode * 8191 + (isSetFields() ? 131071 : 524287);
     if (isSetFields())
       hashCode = hashCode * 8191 + fields.hashCode();
 
@@ -600,7 +600,7 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
 
     int lastComparison = 0;
 
-    lastComparison = java.lang.Boolean.valueOf(isSetTimestamp()).compareTo(other.isSetTimestamp());
+    lastComparison = Boolean.valueOf(isSetTimestamp()).compareTo(other.isSetTimestamp());
     if (lastComparison != 0) {
       return lastComparison;
     }
@@ -610,7 +610,7 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
         return lastComparison;
       }
     }
-    lastComparison = java.lang.Boolean.valueOf(isSetPriority()).compareTo(other.isSetPriority());
+    lastComparison = Boolean.valueOf(isSetPriority()).compareTo(other.isSetPriority());
     if (lastComparison != 0) {
       return lastComparison;
     }
@@ -620,7 +620,7 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
         return lastComparison;
       }
     }
-    lastComparison = java.lang.Boolean.valueOf(isSetBody()).compareTo(other.isSetBody());
+    lastComparison = Boolean.valueOf(isSetBody()).compareTo(other.isSetBody());
     if (lastComparison != 0) {
       return lastComparison;
     }
@@ -630,7 +630,7 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
         return lastComparison;
       }
     }
-    lastComparison = java.lang.Boolean.valueOf(isSetNanos()).compareTo(other.isSetNanos());
+    lastComparison = Boolean.valueOf(isSetNanos()).compareTo(other.isSetNanos());
     if (lastComparison != 0) {
       return lastComparison;
     }
@@ -640,7 +640,7 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
         return lastComparison;
       }
     }
-    lastComparison = java.lang.Boolean.valueOf(isSetHost()).compareTo(other.isSetHost());
+    lastComparison = Boolean.valueOf(isSetHost()).compareTo(other.isSetHost());
     if (lastComparison != 0) {
       return lastComparison;
     }
@@ -650,7 +650,7 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
         return lastComparison;
       }
     }
-    lastComparison = java.lang.Boolean.valueOf(isSetFields()).compareTo(other.isSetFields());
+    lastComparison = Boolean.valueOf(isSetFields()).compareTo(other.isSetFields());
     if (lastComparison != 0) {
       return lastComparison;
     }
@@ -677,8 +677,8 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
   }
 
   @Override
-  public java.lang.String toString() {
-    java.lang.StringBuilder sb = new java.lang.StringBuilder("ThriftFlumeEvent(");
+  public String toString() {
+    StringBuilder sb = new StringBuilder("ThriftFlumeEvent(");
     boolean first = true;
 
     sb.append("timestamp:");
@@ -737,7 +737,7 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
     }
   }
 
-  private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, java.lang.ClassNotFoundException {
+  private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
     try {
       // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
       __isset_bitfield = 0;
@@ -809,8 +809,8 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
             if (schemeField.type == org.apache.thrift.protocol.TType.MAP) {
               {
                 org.apache.thrift.protocol.TMap _map0 = iprot.readMapBegin();
-                struct.fields = new java.util.HashMap<java.lang.String,java.nio.ByteBuffer>(2*_map0.size);
-                @org.apache.thrift.annotation.Nullable java.lang.String _key1;
+                struct.fields = new java.util.HashMap<String,java.nio.ByteBuffer>(2*_map0.size);
+                @org.apache.thrift.annotation.Nullable String _key1;
                 @org.apache.thrift.annotation.Nullable java.nio.ByteBuffer _val2;
                 for (int _i3 = 0; _i3 < _map0.size; ++_i3)
                 {
@@ -865,7 +865,7 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
         oprot.writeFieldBegin(FIELDS_FIELD_DESC);
         {
           oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRING, struct.fields.size()));
-          for (java.util.Map.Entry<java.lang.String, java.nio.ByteBuffer> _iter4 : struct.fields.entrySet())
+          for (java.util.Map.Entry<String, java.nio.ByteBuffer> _iter4 : struct.fields.entrySet())
           {
             oprot.writeString(_iter4.getKey());
             oprot.writeBinary(_iter4.getValue());
@@ -929,7 +929,7 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
       if (struct.isSetFields()) {
         {
           oprot.writeI32(struct.fields.size());
-          for (java.util.Map.Entry<java.lang.String, java.nio.ByteBuffer> _iter5 : struct.fields.entrySet())
+          for (java.util.Map.Entry<String, java.nio.ByteBuffer> _iter5 : struct.fields.entrySet())
           {
             oprot.writeString(_iter5.getKey());
             oprot.writeBinary(_iter5.getValue());
@@ -965,8 +965,8 @@ public class ThriftFlumeEvent implements org.apache.thrift.TBase<ThriftFlumeEven
       if (incoming.get(5)) {
         {
           org.apache.thrift.protocol.TMap _map6 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-          struct.fields = new java.util.HashMap<java.lang.String,java.nio.ByteBuffer>(2*_map6.size);
-          @org.apache.thrift.annotation.Nullable java.lang.String _key7;
+          struct.fields = new java.util.HashMap<String,java.nio.ByteBuffer>(2*_map6.size);
+          @org.apache.thrift.annotation.Nullable String _key7;
           @org.apache.thrift.annotation.Nullable java.nio.ByteBuffer _val8;
           for (int _i9 = 0; _i9 < _map6.size; ++_i9)
           {

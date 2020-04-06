@@ -33,7 +33,7 @@ public enum EventStatus implements org.apache.thrift.TEnum {
 
   private final int value;
 
-  private EventStatus(int value) {
+  EventStatus(int value) {
     this.value = value;
   }
 
