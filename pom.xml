@@ -534,6 +534,7 @@ limitations under the License.
               <exclude>**/derby.log</exclude>
               <exclude>**/metastore_db/</exclude>
               <exclude>.mvn/**</exclude>
+              <exclude>**/exclude-pmd.properties</exclude>
             </excludes>
             <consoleOutput>true</consoleOutput>
           </configuration>
