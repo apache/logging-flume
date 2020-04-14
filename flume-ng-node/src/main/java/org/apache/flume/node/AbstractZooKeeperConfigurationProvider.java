@@ -74,7 +74,8 @@ public abstract class AbstractZooKeeperConfigurationProvider extends
   protected final String zkConnString;
 
   private static final String DEFAULT_PROPERTIES_IMPLEMENTATION = "java.util.Properties";
-  private static final Logger LOGGER = LoggerFactory.getLogger(AbstractZooKeeperConfigurationProvider.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(
+      AbstractZooKeeperConfigurationProvider.class);
 
   protected AbstractZooKeeperConfigurationProvider(String agentName,
       String zkConnString, String basePath) {
@@ -98,7 +99,7 @@ public abstract class AbstractZooKeeperConfigurationProvider extends
       throws IOException {
     Map<String, String> configMap = Collections.emptyMap(); 
     if (configData != null && configData.length > 0) {
-      try{
+      try {
         String fileContent = new String(configData, Charsets.UTF_8);
         String resolverClassName = System.getProperty("propertiesImplementation",
             DEFAULT_PROPERTIES_IMPLEMENTATION);
@@ -107,11 +108,11 @@ public abstract class AbstractZooKeeperConfigurationProvider extends
         Properties properties = propsclass.newInstance();
         properties.load(new StringReader(fileContent));
         configMap = toMap(properties);
-      } catch(ClassNotFoundException e){
+      } catch (ClassNotFoundException e) {
         LOGGER.error("Configuartion resolver class not found", e);
-      } catch(InstantiationException e){
+      } catch (InstantiationException e) {
         LOGGER.error("Instantiation exception", e);
-      } catch(IllegalAccessException e){
+      } catch (IllegalAccessException e) {
         LOGGER.error("Illegal access exception", e);
       }
     }
