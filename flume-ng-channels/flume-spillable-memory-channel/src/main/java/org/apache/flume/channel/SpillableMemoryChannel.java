@@ -425,6 +425,8 @@ public class SpillableMemoryChannel extends FileChannel {
           LOGGER.debug("Take Committed. Drain Order Queue state : " + drainOrder.dump());
         }
       }
+      putList.clear();
+      takeList.clear();
     }
 
     private void takeCommit() {
