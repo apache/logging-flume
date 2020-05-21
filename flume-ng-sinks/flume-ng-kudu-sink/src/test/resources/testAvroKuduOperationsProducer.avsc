@@ -1,0 +1,11 @@
+{"namespace": "org.apache.flume.sink.kudu",
+  "type": "record",
+  "name": "AvroKuduOperationsProducerTestRecord",
+  "fields": [
+    {"name": "key", "type": "int"},
+    {"name": "longField",  "type": "long"},
+    {"name": "doubleField",  "type": "double"},
+    {"name": "nullableField",  "type": ["string", "null"]},
+    {"name": "stringField", "type": "string"}
+  ]
+}

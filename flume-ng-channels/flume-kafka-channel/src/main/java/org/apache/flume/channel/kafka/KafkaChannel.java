@@ -315,7 +315,7 @@ public class KafkaChannel extends BasicChannelSemantics {
   private void migrateOffsets() {
     try (KafkaZkClient zkClient = KafkaZkClient.apply(zookeeperConnect,
             JaasUtils.isZkSecurityEnabled(), ZK_SESSION_TIMEOUT, ZK_CONNECTION_TIMEOUT, 10,
-            Time.SYSTEM, "kafka.server", "SessionExpireListener");
+            Time.SYSTEM, "kafka.server", "SessionExpireListener", scala.Option.empty());
          KafkaConsumer<String, byte[]> consumer = new KafkaConsumer<>(consumerProps)) {
       Map<TopicPartition, OffsetAndMetadata> kafkaOffsets = getKafkaOffsets(consumer);
       if (kafkaOffsets == null) {

@@ -99,7 +99,6 @@ public class ThriftLegacySource  extends AbstractSource implements
       }
 
       counterGroup.incrementAndGet("rpc.successful");
-      return;
     }
 
     public void close() {
