@@ -1486,6 +1486,7 @@ topicHeader                         topic        Defines the name of the header 
                                                  from, if the ``setTopicHeader`` property is set to ``true``. Care should be taken if combining
                                                  with the Kafka Sink ``topicHeader`` property so as to avoid sending the message back to the same
                                                  topic in a loop.
+useKafkaHeader                      false        Set true to read Kafka record headers and convert them as event header.
 kafka.consumer.security.protocol    PLAINTEXT    Set to SASL_PLAINTEXT, SASL_SSL or SSL if writing to Kafka using some level of security. See below for additional info on secure setup.
 *more consumer security props*                   If using SASL_PLAINTEXT, SASL_SSL or SSL refer to `Kafka security <http://kafka.apache.org/documentation.html#security>`_ for additional
                                                  properties that need to be set on consumer.
@@ -3170,6 +3171,7 @@ useFlumeEventFormat                 false                By default events are p
                                                          true to store events as the Flume Avro binary format. Used in conjunction with the same property
                                                          on the KafkaSource or with the parseAsFlumeEvent property on the Kafka Channel this will preserve
                                                          any Flume headers for the producing side.
+useKafkaHeader                      false                Set to true to store event headers as Kafka record headers.
 defaultPartitionId                  --                   Specifies a Kafka partition ID (integer) for all events in this channel to be sent to, unless
                                                          overriden by ``partitionIdHeader``. By default, if this property is not set, events will be
                                                          distributed by the Kafka Producer's partitioner - including by ``key`` if specified (or by a
@@ -3579,6 +3581,7 @@ parseAsFlumeEvent                        true                        Expecting A
                                                                      This should be true if Flume source is writing to the channel and false if other producers are
                                                                      writing into the topic that the channel is using. Flume source messages to Kafka can be parsed outside of Flume by using
                                                                      org.apache.flume.source.avro.AvroFlumeEvent provided by the flume-ng-sdk artifact
+useKafkaHeader                           false                       Set true to use Kafka record headers as Flume event ones transparently.
 pollTimeout                              500                         The amount of time(in milliseconds) to wait in the "poll()" call of the consumer.
                                                                      https://kafka.apache.org/090/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html#poll(long)
 defaultPartitionId                       --                          Specifies a Kafka partition ID (integer) for all events in this channel to be sent to, unless

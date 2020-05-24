@@ -41,6 +41,9 @@ public class KafkaSinkConstants {
   public static final String AVRO_EVENT = "useFlumeEventFormat";
   public static final boolean DEFAULT_AVRO_EVENT = false;
 
+  public static final String KAFKA_HEADER = "useKafkaHeader";
+  public static final boolean DEFAULT_KAFKA_HEADER = false;
+
   public static final String PARTITION_HEADER_NAME = "partitionIdHeader";
   public static final String STATIC_PARTITION_CONF = "defaultPartitionId";
 

@@ -63,6 +63,8 @@ import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.network.ListenerName;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
+import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.security.JaasUtils;
 import org.apache.kafka.common.utils.Time;
 import org.slf4j.Logger;
@@ -124,6 +126,7 @@ public class KafkaSource extends AbstractPollableSource
   private BinaryDecoder decoder = null;
 
   private boolean useAvroEventFormat;
+  private boolean useKafkaHeader;
 
   private int batchUpperLimit;
   private int maxBatchDurationMillis;
@@ -253,7 +256,7 @@ public class KafkaSource extends AbstractPollableSource
         } else {
           eventBody = message.value();
           headers.clear();
-          headers = new HashMap<String, String>(4);
+          headers = createHeaders(message, useKafkaHeader);
         }
 
         // Add headers to event (timestamp, topic, partition, key) only if they don't exist
@@ -332,6 +335,15 @@ public class KafkaSource extends AbstractPollableSource
       return Status.BACKOFF;
     }
   }
+  
+  private static Map<String, String> createHeaders(
+      ConsumerRecord<String, byte[]> message, boolean useKafkaHeader) {
+    if (useKafkaHeader) {
+      return toStringMap(message.headers());
+    } else {
+      return new HashMap<String, String>(4);
+    }
+  }
 
   /**
    * We configure the source and generate properties for the Kafka Consumer
@@ -375,6 +387,9 @@ public class KafkaSource extends AbstractPollableSource
 
     useAvroEventFormat = context.getBoolean(KafkaSourceConstants.AVRO_EVENT,
                                             KafkaSourceConstants.DEFAULT_AVRO_EVENT);
+
+    useKafkaHeader = context.getBoolean(KafkaSourceConstants.USE_KAFKA_HEADER,
+                                            KafkaSourceConstants.DEFAULT_USE_KAFKA_HEADER);
 
     if (log.isDebugEnabled()) {
       log.debug(KafkaSourceConstants.AVRO_EVENT + " set to: {}", useAvroEventFormat);
@@ -511,6 +526,14 @@ public class KafkaSource extends AbstractPollableSource
     Map<String, String> stringMap = new HashMap<String, String>();
     for (Map.Entry<CharSequence, CharSequence> entry : charSeqMap.entrySet()) {
       stringMap.put(entry.getKey().toString(), entry.getValue().toString());
+    }
+    return stringMap;
+  }
+
+  private static Map<String, String> toStringMap(Headers kafkaHeaders) {
+    Map<String, String> stringMap = new HashMap<String, String>();
+    for (Header kafkaHeader : kafkaHeaders) {
+      stringMap.put(kafkaHeader.key(), new String(kafkaHeader.value()));
     }
     return stringMap;
   }

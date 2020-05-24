@@ -17,11 +17,41 @@
 
 package org.apache.flume.source.kafka;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
-import junit.framework.Assert;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.AVRO_EVENT;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.BATCH_DURATION_MS;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.BATCH_SIZE;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.BOOTSTRAP_SERVERS;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_AUTO_COMMIT;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_TOPIC_HEADER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.KAFKA_CONSUMER_PREFIX;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.USE_KAFKA_HEADER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.OLD_GROUP_ID;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.PARTITION_HEADER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.TIMESTAMP_HEADER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPIC;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPICS;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPICS_REGEX;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.ZOOKEEPER_CONNECT_FLUME_KEY;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 
-import kafka.zk.KafkaZkClient;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.regex.Pattern;
+
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.specific.SpecificDatumWriter;
@@ -38,7 +68,6 @@ import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -46,6 +75,10 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.TopicExistsException;
+import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.internals.RecordHeader;
+import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.apache.kafka.common.security.JaasUtils;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.utils.Time;
@@ -61,39 +94,11 @@ import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.regex.Pattern;
+import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
 
-import static org.apache.flume.source.kafka.KafkaSourceConstants.AVRO_EVENT;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.BATCH_DURATION_MS;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.BATCH_SIZE;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.BOOTSTRAP_SERVERS;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_AUTO_COMMIT;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.KAFKA_CONSUMER_PREFIX;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.OLD_GROUP_ID;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.PARTITION_HEADER;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.TIMESTAMP_HEADER;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPIC;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPICS;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPICS_REGEX;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_TOPIC_HEADER;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.ZOOKEEPER_CONNECT_FLUME_KEY;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
+import junit.framework.Assert;
+import kafka.zk.KafkaZkClient;
 
 public class TestKafkaSource {
   private static final Logger log = LoggerFactory.getLogger(TestKafkaSource.class);
@@ -103,9 +108,10 @@ public class TestKafkaSource {
   private Context context;
   private List<Event> events;
 
-  private final List<String> usedTopics = new ArrayList<>();
+  private final List<String> usedTopics = new ArrayList<String>();
   private String topic0;
   private String topic1;
+  private String topic2;
 
 
   @BeforeClass
@@ -113,7 +119,6 @@ public class TestKafkaSource {
     kafkaServer = new KafkaSourceEmbeddedKafka(null);
     startupCheck();
   }
-
   @SuppressWarnings("unchecked")
   @Before
   public void setup() throws Exception {
@@ -125,6 +130,9 @@ public class TestKafkaSource {
       topic1 = findUnusedTopic();
       kafkaServer.createTopic(topic1, 3);
       usedTopics.add(topic1);
+      topic2 = findUnusedTopic();
+      kafkaServer.createTopic(topic2, 1);
+      usedTopics.add(topic2);
     } catch (TopicExistsException e) {
       //do nothing
       e.printStackTrace();
@@ -695,6 +703,36 @@ public class TestKafkaSource {
     Assert.assertEquals(e.getHeaders().get(PARTITION_HEADER), "1");
     Assert.assertEquals(e.getHeaders().get(DEFAULT_TOPIC_HEADER),"topic0");
 
+  }
+
+  @Test
+  public void testKafkaHeader() throws EventDeliveryException,
+          SecurityException, NoSuchFieldException, IllegalArgumentException,
+          IllegalAccessException, InterruptedException {
+    context.put(TOPICS, topic0);
+    context.put(BATCH_SIZE, "1");
+    context.put(USE_KAFKA_HEADER, "true");
+    kafkaSource.configure(context);
+    startKafkaSource();
+
+    Thread.sleep(500L);
+
+    kafkaServer.produce(topic0, "", "kafka header",
+        new RecordHeaders(new Header[]{new RecordHeader("k1", "v1".getBytes())}));
+
+    Thread.sleep(500L);
+    Assert.assertEquals(Status.READY, kafkaSource.process());
+    Assert.assertEquals(Status.BACKOFF, kafkaSource.process());
+    Assert.assertEquals(1, events.size());
+
+    Assert.assertEquals("kafka header", new String(events.get(0).getBody(),
+            Charsets.UTF_8));
+    Assert.assertEquals(6, events.get(0).getHeaders().size());
+    Assert.assertEquals(topic0, events.get(0).getHeaders().get("topic"));
+    Assert.assertEquals("0", events.get(0).getHeaders().get("partition"));
+    Assert.assertEquals("0", events.get(0).getHeaders().get("offset"));
+    Assert.assertTrue(events.get(0).getHeaders().containsKey("key"));
+    Assert.assertTrue(events.get(0).getHeaders().containsKey("timestamp"));
   }
 
   @Test
