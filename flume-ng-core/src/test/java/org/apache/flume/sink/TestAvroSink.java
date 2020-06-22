@@ -21,7 +21,8 @@ package org.apache.flume.sink;
 
 import com.google.common.base.Charsets;
 import org.apache.avro.AvroRemoteException;
-import org.apache.avro.ipc.NettyServer;
+import org.apache.avro.ipc.Callback;
+import org.apache.avro.ipc.netty.NettyServer;
 import org.apache.avro.ipc.Server;
 import org.apache.avro.ipc.specific.SpecificResponder;
 import org.apache.flume.Channel;
@@ -810,21 +811,20 @@ public class TestAvroSink {
   private static class MockAvroServer implements AvroSourceProtocol {
 
     @Override
-    public Status append(AvroFlumeEvent event) throws AvroRemoteException {
+    public Status append(AvroFlumeEvent event) {
       logger.debug("Received event:{}", event);
       return Status.OK;
     }
 
     @Override
-    public Status appendBatch(List<AvroFlumeEvent> events)
-        throws AvroRemoteException {
+    public Status appendBatch(List<AvroFlumeEvent> events) {
       logger.debug("Received event batch:{}", events);
       return Status.OK;
     }
 
   }
 
-  private static class DelayMockAvroServer implements AvroSourceProtocol {
+  private static class DelayMockAvroServer implements AvroSourceProtocol.Callback {
 
     private final AtomicLong delay;
 
@@ -832,28 +832,48 @@ public class TestAvroSink {
       this.delay = delay;
     }
 
-    private void sleep() throws AvroRemoteException {
+    private void sleep() throws IOException {
       try {
         Thread.sleep(delay.get());
       } catch (InterruptedException e) {
-        throw new AvroRemoteException("Interrupted while sleeping", e);
+        throw new IOException("Interrupted while sleeping", e);
       }
     }
 
     @Override
-    public Status append(AvroFlumeEvent event) throws AvroRemoteException {
-      logger.debug("Received event:{}; delaying for {}ms", event, delay);
-      sleep();
-      return Status.OK;
+    public Status append(AvroFlumeEvent event) {
+		logger.debug("Received event:{}; delaying for {}ms", event, delay);
+		try {
+			sleep();
+		} catch (IOException e) {
+		}
+		return Status.OK;
     }
 
     @Override
-    public Status appendBatch(List<AvroFlumeEvent> events)
-        throws AvroRemoteException {
+    public Status appendBatch(List<AvroFlumeEvent> events) {
       logger.debug("Received event batch:{}; delaying for {}ms", events, delay);
-      sleep();
-      return Status.OK;
+		try {
+			sleep();
+		} catch (IOException e) {
+		}
+		return Status.OK;
     }
+
+
+	  @Override
+	  public void append(AvroFlumeEvent event, org.apache.avro.ipc.Callback<Status> status)
+			  throws IOException {
+		  logger.debug("Received event:{}; delaying for {}ms", event, delay);
+		  sleep();
+	  }
+
+	  @Override
+	  public void appendBatch(List<AvroFlumeEvent> events, org.apache.avro.ipc.Callback<Status> status)
+			  throws IOException {
+		  logger.debug("Received event batch:{}; delaying for {}ms", events, delay);
+		  sleep();
+	  }
 
   }
 

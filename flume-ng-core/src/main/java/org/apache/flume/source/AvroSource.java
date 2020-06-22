@@ -20,8 +20,8 @@
 package org.apache.flume.source;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import org.apache.avro.ipc.NettyServer;
-import org.apache.avro.ipc.NettyTransceiver;
+import org.apache.avro.ipc.netty.NettyServer;
+import org.apache.avro.ipc.netty.NettyTransceiver;
 import org.apache.avro.ipc.Responder;
 import org.apache.avro.ipc.Server;
 import org.apache.avro.ipc.specific.SpecificResponder;

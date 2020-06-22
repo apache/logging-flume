@@ -324,7 +324,7 @@ limitations under the License.
 
     <dependency>
       <groupId>org.apache.avro</groupId>
-      <artifactId>avro-ipc</artifactId>
+      <artifactId>avro-ipc-netty</artifactId>
     </dependency>
 
     <dependency>
