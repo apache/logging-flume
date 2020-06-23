@@ -704,10 +704,11 @@ public class NettyAvroRpcClient extends SSLContextAwareAbstractRpcClient {
             KeyStore keystore = null;
 
             if (truststore != null) {
-              InputStream truststoreStream = new FileInputStream(truststore);
-              keystore = KeyStore.getInstance(truststoreType);
-              keystore.load(truststoreStream,
-                  truststorePassword != null ? truststorePassword.toCharArray() : null);
+              try (InputStream truststoreStream = new FileInputStream(truststore)) {
+                keystore = KeyStore.getInstance(truststoreType);
+                keystore.load(truststoreStream,
+                    truststorePassword != null ? truststorePassword.toCharArray() : null);
+              }
             }
 
             TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
