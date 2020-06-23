@@ -19,6 +19,7 @@
 package org.apache.flume.api;
 
 import junit.framework.Assert;
+
 import org.apache.avro.ipc.netty.NettyServer;
 import org.apache.avro.ipc.Responder;
 import org.apache.avro.ipc.Server;
@@ -29,7 +30,6 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
-import org.apache.flume.source.avro.AvroSourceProtocol.Callback;
 import org.apache.flume.source.avro.Status;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
@@ -334,33 +334,38 @@ public class RpcTestUtils {
   /**
    * A service that logs receipt of the request and then throws an exception
    */
-  public static class ThrowingAvroHandler implements Callback {
+  public static class ThrowingAvroHandler
+           implements AvroSourceProtocol.Callback {
 
     @Override
-    public void append(AvroFlumeEvent event, org.apache.avro.ipc.Callback<Status> callback) throws java.io.IOException {
+    public void append(AvroFlumeEvent event,
+                       org.apache.avro.ipc.Callback<Status> callback)
+            throws java.io.IOException {
       logger.info("Throwing: Received event from append(): {}",
                   new String(event.getBody().array(), Charset.forName("UTF8")));
       throw new java.io.IOException("Handler smash!");
     }
 
-	  @Override
-	  public void appendBatch(List<AvroFlumeEvent> events, org.apache.avro.ipc.Callback<Status> callback) throws java.io.IOException {
-		  logger.info("Throwing: Received {} events from appendBatch()", events.size());
-		  throw new java.io.IOException("Handler smash!");
-	  }
+    @Override
+    public Status append(AvroFlumeEvent event) {
+      logger.info("Throwing unavailable: Received event from append(): {}",
+             new String(event.getBody().array(), Charset.forName("UTF8")));
+      return null;
+    }
 
-	  @Override
-	  public Status append(AvroFlumeEvent event) {
-		  logger.info("Throwing: Received event from append(): {}",
-				  new String(event.getBody().array(), Charset.forName("UTF8")));
-		  return null;
-	  }
+    @Override
+    public void appendBatch(List<AvroFlumeEvent> events,
+                       org.apache.avro.ipc.Callback<Status> callback)
+            throws java.io.IOException {
+      logger.info("Throwing: Received {} events from appendBatch()", events.size());
+      throw new java.io.IOException("Handler smash!");
+    }
 
-	  @Override
-	  public Status appendBatch(List<AvroFlumeEvent> events) {
-		  logger.info("Throwing: Received {} events from appendBatch()", events.size());
-		  return null;
-	  }
+    @Override
+    public Status appendBatch(List<AvroFlumeEvent> events) {
+      logger.info("Throwing unavailable: Received {} events from appendBatch()", events.size());
+      return null;
+    }
   }
 
   private static class CompressionChannelPipelineFactory implements ChannelPipelineFactory {
