@@ -32,7 +32,8 @@ limitations under the License.
 
   <properties>
     <!-- TODO fix spotbugs violations -->
-    <spotbugs.maxAllowedViolations>2</spotbugs.maxAllowedViolations>
+    <spotbugs.maxAllowedViolations>5</spotbugs.maxAllowedViolations>
+	<pmd.maxAllowedViolations>37</pmd.maxAllowedViolations>
     <thrift.executable>${env.THRIFT_HOME}/bin/thrift</thrift.executable>
   </properties>
 
@@ -132,6 +133,11 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.avro</groupId>
       <artifactId>avro-ipc-netty</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.avro</groupId>
+      <artifactId>avro-ipc-jetty</artifactId>
     </dependency>
 
   </dependencies>

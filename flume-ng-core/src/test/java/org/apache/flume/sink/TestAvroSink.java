@@ -20,8 +20,6 @@
 package org.apache.flume.sink;
 
 import com.google.common.base.Charsets;
-import org.apache.avro.AvroRemoteException;
-import org.apache.avro.ipc.Callback;
 import org.apache.avro.ipc.netty.NettyServer;
 import org.apache.avro.ipc.Server;
 import org.apache.avro.ipc.specific.SpecificResponder;
@@ -842,39 +840,41 @@ public class TestAvroSink {
 
     @Override
     public Status append(AvroFlumeEvent event) {
-		logger.debug("Received event:{}; delaying for {}ms", event, delay);
-		try {
-			sleep();
-		} catch (IOException e) {
-		}
-		return Status.OK;
+      logger.debug("Received event:{}; delaying for {}ms", event, delay);
+      try {
+        sleep();
+      } catch (IOException e) {
+        logger.debug("IOException detected");
+      }
+      return Status.OK;
+    }
+
+    @Override
+    public void append(AvroFlumeEvent event,
+                   org.apache.avro.ipc.Callback<Status> status)
+            throws IOException {
+      logger.debug("Received event:{}; delaying for {}ms", event, delay);
+      sleep();
     }
 
     @Override
     public Status appendBatch(List<AvroFlumeEvent> events) {
       logger.debug("Received event batch:{}; delaying for {}ms", events, delay);
-		try {
-			sleep();
-		} catch (IOException e) {
-		}
-		return Status.OK;
+      try {
+        sleep();
+      } catch (IOException e) {
+        logger.debug("IOException detected");
+      }
+      return Status.OK;
     }
 
-
-	  @Override
-	  public void append(AvroFlumeEvent event, org.apache.avro.ipc.Callback<Status> status)
-			  throws IOException {
-		  logger.debug("Received event:{}; delaying for {}ms", event, delay);
-		  sleep();
-	  }
-
-	  @Override
-	  public void appendBatch(List<AvroFlumeEvent> events, org.apache.avro.ipc.Callback<Status> status)
-			  throws IOException {
-		  logger.debug("Received event batch:{}; delaying for {}ms", events, delay);
-		  sleep();
-	  }
-
+    @Override
+    public void appendBatch(List<AvroFlumeEvent> events,
+                         org.apache.avro.ipc.Callback<Status> status)
+            throws IOException {
+      logger.debug("Received event batch:{}; delaying for {}ms", events, delay);
+      sleep();
+    }
   }
 
   private Server createSslServer(AvroSourceProtocol protocol)
