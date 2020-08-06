@@ -185,7 +185,6 @@ public class AvroCLIClient {
     if (commandLine.hasOption("headerFile")) {
       parseHeaders(commandLine);
     }
-
     return true;
   }
 

@@ -1,0 +1,26 @@
+<!-- This file specifies a spotbugs filter for excluding reports that
+     should not be considered errors.
+     The format of this file is documented at:
+       https://spotbugs.readthedocs.io/en/latest/filter.html
+     When possible, please specify the full names of the bug codes,
+     using the pattern attribute, to make it clearer what reports are
+     being suppressed.  You can find a listing of codes at:
+       https://spotbugs.readthedocs.io/en/latest/bugDescriptions.html
+  -->
+
+<FindBugsFilter>
+
+    <!-- Ignore checking for generated classes -->
+    <Match>
+        <ClassRegex name="org.apache.flume.client.scribe.ResultCode.*"/>
+    </Match>
+
+    <Match>
+        <ClassRegex name="org.apache.flume.client.scribe.LogEntry.*"/>
+    </Match>
+
+    <Match>
+        <ClassRegex name="org.apache.flume.client.scribe.Scribe.*"/>
+    </Match>
+
+</FindBugsFilter>

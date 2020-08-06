@@ -659,6 +659,7 @@ limitations under the License.
             </execution>
           </executions>
           <configuration>
+            <excludeFilterFile>build-support/src/main/resources/config/spotbugs/spotbugs-exclude.xml</excludeFilterFile>
             <effort>Max</effort>
             <threshold>Low</threshold>
           </configuration>
@@ -668,6 +669,9 @@ limitations under the License.
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-pmd-plugin</artifactId>
           <version>${mvn-pmd-plugin.version}</version>
+          <configuration>
+            <excludeFromFailureFile>build-support/src/main/resources/config/pmd/exclude-pmd.properties</excludeFromFailureFile>
+          </configuration>
           <executions>
             <execution>
               <id>verify.pmd</id>
