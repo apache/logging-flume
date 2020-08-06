@@ -479,7 +479,7 @@ public class KafkaSource extends AbstractPollableSource
   private String lookupBootstrap(String zookeeperConnect, SecurityProtocol securityProtocol) {
     try (KafkaZkClient zkClient = KafkaZkClient.apply(zookeeperConnect,
             JaasUtils.isZkSecurityEnabled(), ZK_SESSION_TIMEOUT, ZK_CONNECTION_TIMEOUT, 10,
-            Time.SYSTEM, "kafka.server", "SessionExpireListener")) {
+            Time.SYSTEM, "kafka.server", "SessionExpireListener", scala.Option.empty())) {
       List<Broker> brokerList =
               JavaConverters.seqAsJavaListConverter(zkClient.getAllBrokersInCluster()).asJava();
       List<BrokerEndPoint> endPoints = brokerList.stream()
@@ -563,10 +563,14 @@ public class KafkaSource extends AbstractPollableSource
   private void migrateOffsets(String topicStr) {
     try (KafkaZkClient zkClient = KafkaZkClient.apply(zookeeperConnect,
             JaasUtils.isZkSecurityEnabled(), ZK_SESSION_TIMEOUT, ZK_CONNECTION_TIMEOUT, 10,
-            Time.SYSTEM, "kafka.server", "SessionExpireListener");
+            Time.SYSTEM, "kafka.server", "SessionExpireListener", scala.Option.empty());
          KafkaConsumer<String, byte[]> consumer = new KafkaConsumer<>(kafkaProps)) {
       Map<TopicPartition, OffsetAndMetadata> kafkaOffsets =
           getKafkaOffsets(consumer, topicStr);
+      if (kafkaOffsets == null) {
+        log.warn("Topic " + topicStr + " not found in Kafka. Offset migration will be skipped.");
+        return;
+      }
       if (!kafkaOffsets.isEmpty()) {
         log.info("Found Kafka offsets for topic " + topicStr +
             ". Will not migrate from zookeeper");
@@ -589,7 +593,8 @@ public class KafkaSource extends AbstractPollableSource
       Map<TopicPartition, OffsetAndMetadata> newKafkaOffsets =
           getKafkaOffsets(consumer, topicStr);
       log.debug("Offsets committed: {}", newKafkaOffsets);
-      if (!newKafkaOffsets.keySet().containsAll(zookeeperOffsets.keySet())) {
+      if (newKafkaOffsets == null
+          || !newKafkaOffsets.keySet().containsAll(zookeeperOffsets.keySet())) {
         throw new FlumeException("Offsets could not be committed");
       }
     }
@@ -597,13 +602,16 @@ public class KafkaSource extends AbstractPollableSource
 
   private Map<TopicPartition, OffsetAndMetadata> getKafkaOffsets(
       KafkaConsumer<String, byte[]> client, String topicStr) {
-    Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
+    Map<TopicPartition, OffsetAndMetadata> offsets = null;
     List<PartitionInfo> partitions = client.partitionsFor(topicStr);
-    for (PartitionInfo partition : partitions) {
-      TopicPartition key = new TopicPartition(topicStr, partition.partition());
-      OffsetAndMetadata offsetAndMetadata = client.committed(key);
-      if (offsetAndMetadata != null) {
-        offsets.put(key, offsetAndMetadata);
+    if (partitions != null) {
+      offsets = new HashMap<>();
+      for (PartitionInfo partition : partitions) {
+        TopicPartition key = new TopicPartition(topicStr, partition.partition());
+        OffsetAndMetadata offsetAndMetadata = client.committed(key);
+        if (offsetAndMetadata != null) {
+          offsets.put(key, offsetAndMetadata);
+        }
       }
     }
     return offsets;

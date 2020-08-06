@@ -33,6 +33,8 @@ import java.net.SocketAddress;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Clock;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -405,7 +407,7 @@ public class SyslogUtils {
             }
             // Add year to timestamp if needed
             if (fmt.addYear) {
-              value = String.valueOf(Calendar.getInstance().get(Calendar.YEAR)) + value;
+              value = clock.instant().atOffset(ZoneOffset.UTC).get(ChronoField.YEAR) + value;
             }
             // try the available time formats to timestamp
             for (int dt = 0; dt < fmt.dateFormat.size(); dt++) {
@@ -426,10 +428,6 @@ public class SyslogUtils {
                  * 1 month in the future) of timestamps.
                  */
                 if (fmt.addYear) {
-                  // Parsing from dateformatter without year part would use system clock
-                  // so we have to set the year part from the used clock instance
-                  parsedDate.setYear(new Date(clock.millis()).getYear());
-
                   Calendar calParsed = Calendar.getInstance();
                   calParsed.setTime(parsedDate);
                   Calendar calMinusOneMonth = Calendar.getInstance();

@@ -34,6 +34,7 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.PollableSource.Status;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.instrumentation.SourceCounter;
+import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -339,6 +340,8 @@ public class TestKafkaSource {
     kafkaSource.configure(context);
     startKafkaSource();
     Thread.sleep(500L);
+
+    assertEquals(LifecycleState.START, kafkaSource.getLifecycleState());
 
     Status status = kafkaSource.process();
     assertEquals(Status.BACKOFF, status);
@@ -845,7 +848,7 @@ public class TestKafkaSource {
     kafkaSource.stop();
   }
 
-  public void doTestMigrateZookeeperOffsets(boolean hasZookeeperOffsets, boolean hasKafkaOffsets,
+  private void doTestMigrateZookeeperOffsets(boolean hasZookeeperOffsets, boolean hasKafkaOffsets,
                                             String group) throws Exception {
     // create a topic with 1 partition for simplicity
     String topic = findUnusedTopic();
@@ -878,7 +881,7 @@ public class TestKafkaSource {
     if (hasZookeeperOffsets) {
       KafkaZkClient zkClient = KafkaZkClient.apply(kafkaServer.getZkConnectString(),
               JaasUtils.isZkSecurityEnabled(), 30000, 30000, 10, Time.SYSTEM,
-              "kafka.server", "SessionExpireListener");
+              "kafka.server", "SessionExpireListener", scala.Option.empty());
       zkClient.getConsumerOffset(group, new TopicPartition(topic, 0));
       Long offset = tenthOffset + 1;
       zkClient.setOrCreateConsumerOffset(group, new TopicPartition(topic, 0), offset);
@@ -926,6 +929,27 @@ public class TestKafkaSource {
       org.junit.Assert.assertFalse("Source should not read the 10th message", finals.contains(10));
       org.junit.Assert.assertTrue("Source should read the 11th message", finals.contains(11));
     }
+  }
+
+  @Test
+  public void testMigrateZookeeperOffsetsWhenTopicNotExists() throws Exception {
+    String topic = findUnusedTopic();
+
+    Context context = prepareDefaultContext("testMigrateOffsets-nonExistingTopic");
+    context.put(ZOOKEEPER_CONNECT_FLUME_KEY, kafkaServer.getZkConnectString());
+    context.put(TOPIC, topic);
+    KafkaSource source = new KafkaSource();
+    source.doConfigure(context);
+
+    source.setChannelProcessor(createGoodChannel());
+    source.start();
+
+    assertEquals(LifecycleState.START, source.getLifecycleState());
+
+    Status status = source.process();
+    assertEquals(Status.BACKOFF, status);
+
+    source.stop();
   }
 
   ChannelProcessor createGoodChannel() {

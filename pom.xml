@@ -62,7 +62,7 @@ limitations under the License.
     <curator.version>2.6.0</curator.version>
     <derby.version>10.14.1.0</derby.version>
     <elasticsearch.version>0.90.1</elasticsearch.version>
-    <fasterxml.jackson.version>2.9.7</fasterxml.jackson.version>
+    <fasterxml.jackson.version>2.9.10</fasterxml.jackson.version>
     <fest-reflect.version>1.4</fest-reflect.version>
     <geronimo-jms.version>1.1.1</geronimo-jms.version>
     <gson.version>2.2.2</gson.version>
@@ -72,6 +72,7 @@ limitations under the License.
     <hbase.version>1.0.0</hbase.version>
     <hbase2.jetty.version>9.3.19.v20170502</hbase2.jetty.version>
     <hbase2.version>2.0.0</hbase2.version>
+    <hive.version>1.0.0</hive.version>
     <httpcore.version>4.4.6</httpcore.version>
     <httpclient.version>4.5.3</httpclient.version>
     <irclib.version>1.10</irclib.version>
@@ -79,11 +80,11 @@ limitations under the License.
     <jetty.version>9.4.6.v20170531</jetty.version>
     <joda-time.version>2.9.9</joda-time.version>
     <junit.version>4.10</junit.version>
-    <kafka.version>2.0.1</kafka.version>
+    <kafka.version>2.3.1</kafka.version>
     <kite.version>1.0.0</kite.version>
-    <hive.version>1.0.0</hive.version>
+    <kudu.version>1.10.0</kudu.version>
     <lifecycle-mapping.version>1.0.0</lifecycle-mapping.version>
-    <log4j.version>2.10.0</log4j.version>
+    <log4j.version>2.11.2</log4j.version>
     <mapdb.version>0.9.9</mapdb.version>
     <mina.version>2.0.4</mina.version>
     <mockito.version>1.9.0</mockito.version>
@@ -110,12 +111,12 @@ limitations under the License.
     <solr-global.version>4.3.0</solr-global.version>
     <slf4j.version>1.7.25</slf4j.version>
     <system-rules.version>1.17.0</system-rules.version>
-    <thrift.version>0.9.3</thrift.version>
+    <thrift.version>0.13.0</thrift.version>
     <twitter4j.version>3.0.3</twitter4j.version>
     <xalan.version>2.7.2</xalan.version>
     <xerces.version>2.9.1</xerces.version>
     <wiremock.version>1.53</wiremock.version>
-    <zookeeper.version>3.4.5</zookeeper.version>
+    <zookeeper.version>3.4.13</zookeeper.version>
   </properties>
 
   <modules>
@@ -533,6 +534,7 @@ limitations under the License.
               <exclude>**/derby.log</exclude>
               <exclude>**/metastore_db/</exclude>
               <exclude>.mvn/**</exclude>
+              <exclude>**/exclude-pmd.properties</exclude>
             </excludes>
             <consoleOutput>true</consoleOutput>
           </configuration>

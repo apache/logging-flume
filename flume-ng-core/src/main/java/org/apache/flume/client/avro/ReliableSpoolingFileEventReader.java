@@ -180,20 +180,22 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
     Preconditions.checkState(spoolDirectory.isDirectory(),
         "Path is not a directory: " + spoolDirectory.getAbsolutePath());
 
-    // Do a canary test to make sure we have access to spooling directory
-    try {
-      File canary = File.createTempFile("flume-spooldir-perm-check-", ".canary",
-          spoolDirectory);
-      Files.write(canary.toPath(), "testing flume file permissions\n".getBytes());
-      List<String> lines = Files.readAllLines(canary.toPath(), Charsets.UTF_8);
-      Preconditions.checkState(!lines.isEmpty(), "Empty canary file %s", canary);
-      if (!canary.delete()) {
-        throw new IOException("Unable to delete canary file " + canary);
+    if(trackingPolicy.equalsIgnoreCase(TrackingPolicy.RENAME.name())) {
+      // Do a canary test to make sure we have access to spooling directory
+      try {
+        File canary = File.createTempFile("flume-spooldir-perm-check-", ".canary",
+                spoolDirectory);
+        Files.write(canary.toPath(), "testing flume file permissions\n".getBytes());
+        List<String> lines = Files.readAllLines(canary.toPath(), Charsets.UTF_8);
+        Preconditions.checkState(!lines.isEmpty(), "Empty canary file %s", canary);
+        if (!canary.delete()) {
+          throw new IOException("Unable to delete canary file " + canary);
+        }
+        logger.debug("Successfully created and deleted canary file: {}", canary);
+      } catch (IOException e) {
+        throw new FlumeException("Unable to read and modify files" +
+                " in the spooling directory: " + spoolDirectory, e);
       }
-      logger.debug("Successfully created and deleted canary file: {}", canary);
-    } catch (IOException e) {
-      throw new FlumeException("Unable to read and modify files" +
-          " in the spooling directory: " + spoolDirectory, e);
     }
 
     this.spoolDirectory = spoolDirectory;

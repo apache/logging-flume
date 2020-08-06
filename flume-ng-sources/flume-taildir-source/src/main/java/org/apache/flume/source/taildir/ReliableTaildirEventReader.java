@@ -73,7 +73,7 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
     Preconditions.checkNotNull(positionFilePath);
 
     if (logger.isDebugEnabled()) {
-      logger.debug("Initializing {} with directory={}, metaDir={}",
+      logger.debug("Initializing {} with directory={}",
           new Object[] { ReliableTaildirEventReader.class.getSimpleName(), filePaths });
     }
 
