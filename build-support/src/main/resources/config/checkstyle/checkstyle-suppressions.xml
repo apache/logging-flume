@@ -30,6 +30,7 @@ under the License.
     <!-- Suppress all style checks for generated code -->
     <suppress checks=".*"
               files="generated-sources|com[/\\]cloudera[/\\]flume[/\\]handlers[/\\]thrift|org[/\\]apache[/\\]flume[/\\]thrift[/\\]|org[/\\]apache[/\\]flume[/\\]source[/\\]scribe|ProtosFactory.java|avro"/>
+
     <!-- The "legacy" sources have a weird camelCaps package name -->
     <suppress checks="PackageName"
               files="org[/\\]apache[/\\]flume[/\\]source[/\\]avroLegacy|org[/\\]apache[/\\]flume[/\\]source[/\\]thriftLegacy"/>
