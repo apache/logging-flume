@@ -2283,16 +2283,19 @@ Flume should use ScribeSource based on Thrift with compatible transfering protoc
 For deployment of Scribe please follow the guide from Facebook.
 Required properties are in **bold**.
 
-====================  ===========  ==============================================
-Property Name         Default      Description
-====================  ===========  ==============================================
-**type**              --           The component type name, needs to be ``org.apache.flume.source.scribe.ScribeSource``
-port                  1499         Port that Scribe should be connected
-maxReadBufferBytes    16384000     Thrift Default FrameBuffer Size
-workerThreads         5            Handing threads number in Thrift
+====================    ===========  ==============================================
+Property Name           Default      Description
+====================    ===========  ==============================================
+**type**                --           The component type name, needs to be ``org.apache.flume.source.scribe.ScribeSource``
+port                    1499         Port that Scribe should be connected
+maxReadBufferBytes      16384000     Thrift Default FrameBuffer Size
+maxThriftFrameSizeBytes 16384000     The max allowed frame size of thrift RPC request
+thriftServer            ThshaServer  Could be ThshaServer, TThreadedSelectorServer or TThreadPoolServer
+workerThreads           5            Handing threads number in Thrift, will be max thread allowed while using TThreadPoolServer
+selectorThreads         4            Selector threads number in Thrift while using TThreadedSelectorServer
 selector.type
 selector.*
-====================  ===========  ==============================================
+====================    ===========  ==============================================
 
 Example for agent named a1:
 
