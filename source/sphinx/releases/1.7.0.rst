@@ -1,0 +1,131 @@
+===============
+Version 1.7.0
+===============
+
+.. rubric:: Status of this release
+
+Apache Flume 1.7.0 is the tenth release of Flume as an Apache top-level project
+(TLP). Apache Flume 1.7.0 is production-ready software.
+
+.. rubric:: Release Documentation
+
+* `Flume 1.7.0 User Guide <content/1.7.0/FlumeUserGuide.html>`__ (also in `pdf <content/1.7.0/FlumeUserGuide.pdf>`__)
+* `Flume 1.7.0 Developer Guide <content/1.7.0/FlumeDeveloperGuide.html>`__ (also in `pdf <content/1.7.0/FlumeDeveloperGuide.pdf>`__)
+* `Flume 1.7.0 API Documentation <content/1.7.0/apidocs/index.html>`__
+
+.. rubric:: Changes
+
+Release Notes - Flume - Version v1.7.0
+
+** New Feature
+    * [`FLUME-2498 <https://issues.apache.org/jira/browse/FLUME-2498>`__] - Implement Taildir Source
+
+** Improvement
+    * [`FLUME-1899 <https://issues.apache.org/jira/browse/FLUME-1899>`__] - Make SpoolDir work with Sub-Directories
+    * [`FLUME-2526 <https://issues.apache.org/jira/browse/FLUME-2526>`__] - Build flume by jdk 7 in default
+    * [`FLUME-2628 <https://issues.apache.org/jira/browse/FLUME-2628>`__] - Add an optional parameter to specify the expected input text encoding for the netcat sourcef the netcat source
+    * [`FLUME-2704 <https://issues.apache.org/jira/browse/FLUME-2704>`__] - Configurable poll delay for spooling directory source
+    * [`FLUME-2718 <https://issues.apache.org/jira/browse/FLUME-2718>`__] - HTTP Source to support generic Stream Handler
+    * [`FLUME-2729 <https://issues.apache.org/jira/browse/FLUME-2729>`__] - Allow pollableSource backoff times to be configurable
+    * [`FLUME-2755 <https://issues.apache.org/jira/browse/FLUME-2755>`__] - Kafka Source reading multiple topics
+    * [`FLUME-2781 <https://issues.apache.org/jira/browse/FLUME-2781>`__] - A Kafka Channel defined as parseAsFlumeEvent=false cannot be correctly used by a Flume source
+    * [`FLUME-2799 <https://issues.apache.org/jira/browse/FLUME-2799>`__] - Kafka Source - Message Offset and Partition add to headers
+    * [`FLUME-2801 <https://issues.apache.org/jira/browse/FLUME-2801>`__] - Performance improvement on TailDir source
+    * [`FLUME-2810 <https://issues.apache.org/jira/browse/FLUME-2810>`__] - Add static Schema URL to AvroEventSerializer configuration
+    * [`FLUME-2820 <https://issues.apache.org/jira/browse/FLUME-2820>`__] - Support New Kafka APIs
+    * [`FLUME-2852 <https://issues.apache.org/jira/browse/FLUME-2852>`__] - Kafka Source/Sink should optionally read/write Flume records
+    * [`FLUME-2868 <https://issues.apache.org/jira/browse/FLUME-2868>`__] - Kafka Channel partition topic by key
+    * [`FLUME-2872 <https://issues.apache.org/jira/browse/FLUME-2872>`__] - Kafka Sink should be able to select which header as the key
+    * [`FLUME-2875 <https://issues.apache.org/jira/browse/FLUME-2875>`__] - Allow RollingFileSink to specify a file prefix and a file extension.
+    * [`FLUME-2909 <https://issues.apache.org/jira/browse/FLUME-2909>`__] - Bump Rat version
+    * [`FLUME-2910 <https://issues.apache.org/jira/browse/FLUME-2910>`__] - AsyncHBaseSink - Failure callbacks should log the exception that caused them
+    * [`FLUME-2911 <https://issues.apache.org/jira/browse/FLUME-2911>`__] - Add includePattern option in SpoolDirectorySource configuration
+    * [`FLUME-2918 <https://issues.apache.org/jira/browse/FLUME-2918>`__] - TaildirSource is underperforming with huge parent directories
+    * [`FLUME-2937 <https://issues.apache.org/jira/browse/FLUME-2937>`__] - Integrate checkstyle for non-test classes
+    * [`FLUME-2941 <https://issues.apache.org/jira/browse/FLUME-2941>`__] - Integrate checkstyle for test classes
+    * [`FLUME-2954 <https://issues.apache.org/jira/browse/FLUME-2954>`__] - make raw data appearing in log messages explicit
+    * [`FLUME-2955 <https://issues.apache.org/jira/browse/FLUME-2955>`__] - Add file path to the header in TaildirSource
+    * [`FLUME-2959 <https://issues.apache.org/jira/browse/FLUME-2959>`__] - Fix issues with flume-checkstyle module
+    * [`FLUME-2982 <https://issues.apache.org/jira/browse/FLUME-2982>`__] - Add localhost escape sequence to HDFS sink
+    * [`FLUME-2999 <https://issues.apache.org/jira/browse/FLUME-2999>`__] - Kafka channel and sink should enable statically assigned partition per event via header
+    * [`FLUME-2821 <https://issues.apache.org/jira/browse/FLUME-2821>`__] - Flume-Kafka Source with new Consumer
+    * [`FLUME-2822 <https://issues.apache.org/jira/browse/FLUME-2822>`__] - Flume-Kafka-Sink with new Producer
+    * [`FLUME-2823 <https://issues.apache.org/jira/browse/FLUME-2823>`__] - Flume-Kafka-Channel with new APIs
+
+** Bug
+    * [`FLUME-1668 <https://issues.apache.org/jira/browse/FLUME-1668>`__] - Hdfs Sink File Rollover
+    * [`FLUME-2132 <https://issues.apache.org/jira/browse/FLUME-2132>`__] - Exception while syncing from Flume to HDFS
+    * [`FLUME-2143 <https://issues.apache.org/jira/browse/FLUME-2143>`__] - Flume build occasionally fails with OutOfMemoryError on Windows.
+    * [`FLUME-2215 <https://issues.apache.org/jira/browse/FLUME-2215>`__] - ResettableFileInputStream can't support  ucs-4 character
+    * [`FLUME-2318 <https://issues.apache.org/jira/browse/FLUME-2318>`__] - SpoolingDirectory is unable to handle empty files
+    * [`FLUME-2448 <https://issues.apache.org/jira/browse/FLUME-2448>`__] - Building flume from trunk failing with dependency error
+    * [`FLUME-2484 <https://issues.apache.org/jira/browse/FLUME-2484>`__] - NullPointerException in Kafka Sink test
+    * [`FLUME-2485 <https://issues.apache.org/jira/browse/FLUME-2485>`__] - Thrift Source tests fail on Oracle JDK 8
+    * [`FLUME-2514 <https://issues.apache.org/jira/browse/FLUME-2514>`__] - Some TestFileChannelRestart tests are extremely slow
+    * [`FLUME-2567 <https://issues.apache.org/jira/browse/FLUME-2567>`__] - Remove unneeded repository declarations in pom.xml
+    * [`FLUME-2573 <https://issues.apache.org/jira/browse/FLUME-2573>`__] - flume-ng --conf parameter is not used when starting a flume agent
+    * [`FLUME-2593 <https://issues.apache.org/jira/browse/FLUME-2593>`__] - ResettableFileInputStream returns negate values from read() method
+    * [`FLUME-2619 <https://issues.apache.org/jira/browse/FLUME-2619>`__] - Spooldir source does not log channel exceptions
+    * [`FLUME-2632 <https://issues.apache.org/jira/browse/FLUME-2632>`__] - High CPU on KafkaSink
+    * [`FLUME-2652 <https://issues.apache.org/jira/browse/FLUME-2652>`__] - Documented transaction handling semantics incorrect
+    * [`FLUME-2660 <https://issues.apache.org/jira/browse/FLUME-2660>`__] - Add documentation for EventValidator
+    * [`FLUME-2672 <https://issues.apache.org/jira/browse/FLUME-2672>`__] - NPE in KafkaSourceCounter
+    * [`FLUME-2712 <https://issues.apache.org/jira/browse/FLUME-2712>`__] - Optional channel errors slows down the Source to Main channel event rate
+    * [`FLUME-2725 <https://issues.apache.org/jira/browse/FLUME-2725>`__] - HDFS Sink does not use configured timezone for rounding
+    * [`FLUME-2732 <https://issues.apache.org/jira/browse/FLUME-2732>`__] - Make maximum tolerated failures before shutting down and recreating client in AsyncHbaseSink configurable
+    * [`FLUME-2734 <https://issues.apache.org/jira/browse/FLUME-2734>`__] - Kafka Channel timeout property is overridden by default value
+    * [`FLUME-2738 <https://issues.apache.org/jira/browse/FLUME-2738>`__] - Async HBase sink FD leak on client shutdown
+    * [`FLUME-2746 <https://issues.apache.org/jira/browse/FLUME-2746>`__] - How to include this Flume Patch in Flume 1.5.2 ?
+    * [`FLUME-2749 <https://issues.apache.org/jira/browse/FLUME-2749>`__] - Kerberos configuration error when using short names in multiple HDFS Sinks
+    * [`FLUME-2751 <https://issues.apache.org/jira/browse/FLUME-2751>`__] - Upgrade Derby version to 10.11.1.1
+    * [`FLUME-2753 <https://issues.apache.org/jira/browse/FLUME-2753>`__] - Error when specifying empty replace string in Search and Replace Interceptor
+    * [`FLUME-2754 <https://issues.apache.org/jira/browse/FLUME-2754>`__] - Hive Sink skipping first transaction in each Batch of Hive Transactions
+    * [`FLUME-2761 <https://issues.apache.org/jira/browse/FLUME-2761>`__] - Move Hive sink out of preview mode
+    * [`FLUME-2763 <https://issues.apache.org/jira/browse/FLUME-2763>`__] - flume_env script should handle jvm parameters like -javaagent -agentpath -agentlib
+    * [`FLUME-2773 <https://issues.apache.org/jira/browse/FLUME-2773>`__] - TailDirSource throws FileNotFound Exception if ~/.flume directory is not created already
+    * [`FLUME-2797 <https://issues.apache.org/jira/browse/FLUME-2797>`__] - SyslogTcpSource uses Deprecated Class + Deprecate SyslogTcpSource
+    * [`FLUME-2798 <https://issues.apache.org/jira/browse/FLUME-2798>`__] - Malformed Syslog messages can lead to OutOfMemoryException
+    * [`FLUME-2804 <https://issues.apache.org/jira/browse/FLUME-2804>`__] - Hive sink - abort remaining transactions on shutdown
+    * [`FLUME-2806 <https://issues.apache.org/jira/browse/FLUME-2806>`__] - flume-ng.ps1 Error running script to start an agent on Windows
+    * [`FLUME-2835 <https://issues.apache.org/jira/browse/FLUME-2835>`__] -  Hive Sink tests need to create table with transactional property set
+    * [`FLUME-2841 <https://issues.apache.org/jira/browse/FLUME-2841>`__] - Upgrade commons-collections to 3.2.2
+    * [`FLUME-2844 <https://issues.apache.org/jira/browse/FLUME-2844>`__] - ChannelCounter of SpillableMemoryChannel doesn't register actually.
+    * [`FLUME-2881 <https://issues.apache.org/jira/browse/FLUME-2881>`__] - Windows Launch Script fails in plugins dir code
+    * [`FLUME-2886 <https://issues.apache.org/jira/browse/FLUME-2886>`__] - Optional Channels can cause OOMs
+    * [`FLUME-2889 <https://issues.apache.org/jira/browse/FLUME-2889>`__] - Fixes to  DateTime computations
+    * [`FLUME-2891 <https://issues.apache.org/jira/browse/FLUME-2891>`__] - Revert FLUME-2712 and FLUME-2886
+    * [`FLUME-2897 <https://issues.apache.org/jira/browse/FLUME-2897>`__] - AsyncHBase sink NPE when Channel.getTransaction() fails
+    * [`FLUME-2901 <https://issues.apache.org/jira/browse/FLUME-2901>`__] - Document Kerberos setup for Kafka channel
+    * [`FLUME-2908 <https://issues.apache.org/jira/browse/FLUME-2908>`__] - NetcatSource - SocketChannel not closed when session is broken
+    * [`FLUME-2913 <https://issues.apache.org/jira/browse/FLUME-2913>`__] - Flume classpath too long
+    * [`FLUME-2915 <https://issues.apache.org/jira/browse/FLUME-2915>`__] - The kafka channel using new APIs will be stuck when the sink is avro sink
+    * [`FLUME-2920 <https://issues.apache.org/jira/browse/FLUME-2920>`__] - Kafka Channel Should Not Commit Offsets When Stopping
+    * [`FLUME-2922 <https://issues.apache.org/jira/browse/FLUME-2922>`__] - HDFSSequenceFile Should Sync Writer
+    * [`FLUME-2923 <https://issues.apache.org/jira/browse/FLUME-2923>`__] - Bump AsyncHBase version
+    * [`FLUME-2936 <https://issues.apache.org/jira/browse/FLUME-2936>`__] - KafkaSource tests arbitrarily fail
+    * [`FLUME-2939 <https://issues.apache.org/jira/browse/FLUME-2939>`__] - Upgrade recursive SpoolDir to use Java7 features
+    * [`FLUME-2948 <https://issues.apache.org/jira/browse/FLUME-2948>`__] - Docs: Fixed parameters on Replicating Channel Selector documentation example
+    * [`FLUME-2949 <https://issues.apache.org/jira/browse/FLUME-2949>`__] - Flume fails to build on Windows
+    * [`FLUME-2950 <https://issues.apache.org/jira/browse/FLUME-2950>`__] - ReliableSpoolingFileEventReader.rollCurrentFile is broken
+    * [`FLUME-2952 <https://issues.apache.org/jira/browse/FLUME-2952>`__] - SyslogAgent possible NPE on stop()
+    * [`FLUME-2972 <https://issues.apache.org/jira/browse/FLUME-2972>`__] - Handle offset migration in the new Kafka Channel
+    * [`FLUME-2974 <https://issues.apache.org/jira/browse/FLUME-2974>`__] - Some tests are broken in TestReliableSpoolingFileEventReader and TestSpoolingFileLineReader
+    * [`FLUME-2983 <https://issues.apache.org/jira/browse/FLUME-2983>`__] - Handle offset migration in the new Kafka Source
+
+** Documentation
+    * [`FLUME-2575 <https://issues.apache.org/jira/browse/FLUME-2575>`__] - FLUME-2548 brings SSLv2Hello back for Avro Sink, but UG says it is one of the protocols to exclude
+    * [`FLUME-2713 <https://issues.apache.org/jira/browse/FLUME-2713>`__] - Document Fault Tolerant Config parameters in FlumeUserGuide
+    * [`FLUME-2737 <https://issues.apache.org/jira/browse/FLUME-2737>`__] - Documentation for Pollable Source config parameters introduced in FLUME-2729
+    * [`FLUME-2783 <https://issues.apache.org/jira/browse/FLUME-2783>`__] - Update Website Team page with new Committer's
+    * [`FLUME-2890 <https://issues.apache.org/jira/browse/FLUME-2890>`__] - Typo in Twitter source warning
+    * [`FLUME-2934 <https://issues.apache.org/jira/browse/FLUME-2934>`__] - Document new cachePatternMatching option for TaildirSource
+    * [`FLUME-2963 <https://issues.apache.org/jira/browse/FLUME-2963>`__] - FlumeUserGuide - error in Kafka Source properties table
+    * [`FLUME-2971 <https://issues.apache.org/jira/browse/FLUME-2971>`__] - Document secure Kafka Sink/Source/Channel setup
+    * [`FLUME-2975 <https://issues.apache.org/jira/browse/FLUME-2975>`__] - Minor mistake in NetCat Source example in documentation
+    * [`FLUME-2998 <https://issues.apache.org/jira/browse/FLUME-2998>`__] - Add missing configuration parameter to SequenceSource docs
+
+** Task
+    * [`FLUME-2935 <https://issues.apache.org/jira/browse/FLUME-2935>`__] - Bump java target version to 1.7
+
+** Test
+    * [`FLUME-3003 <https://issues.apache.org/jira/browse/FLUME-3003>`__] - testSourceCounter in TestSyslogUdpSource is flaky
