@@ -1,0 +1,41 @@
+=============
+Version 1.3.1
+=============
+
+.. rubric:: Status of this release
+
+This release is the third release of Apache Flume as an Apache top level project and
+is the third release that is considered ready for production use. This release is 
+primarily a maintenance release for Flume 1.3.0, and includes
+several bug fixes and performance enhancements.
+
+.. rubric:: Release Documentation
+
+* `Flume User Guide <content/1.3.1/FlumeUserGuide.pdf>`_
+* `Flume Developer Guide <content/1.3.1/FlumeDeveloperGuide.pdf>`_
+* `API Documentation <content/1.3.1/apidocs/index.html>`_
+
+.. rubric:: Changes
+
+
+** Bug
+    * [FLUME-1761] - FileChannel can NPE when log metadata file is empty
+    * [FLUME-1763] - FileChannel Checkpoints should not be done without free space
+    * [FLUME-1773] - File Channel worker thread should not be daemon
+    * [FLUME-1774] - EventBackingStoreFactory error message asks user to delete checkpoint which is now done automatically
+    * [FLUME-1775] - FileChannel Log Background worker should catch Throwable
+    * [FLUME-1788] - Flume Thrift source can fail intermittently because of a race condition in Thrift server implementation on some Linux systems
+    * [FLUME-1789] - Unit tests TestJCEFileKeyProvider and TestFileChannelEncryption fail with IBM JDK and flume-1.3.0
+    * [FLUME-1795] - Flume thrift legacy source does not have proper logging configured
+
+
+
+** Improvement
+    * [FLUME-1571] - Channels should check for positive capacity and transaction capacity values
+    * [FLUME-1699] - Make the rename of the meta file platform neutral
+    * [FLUME-1762] - File Channel should recover automatically if the checkpoint is incomplete or bad by deleting the contents of the checkpoint directory
+    * [FLUME-1790] - Commands in EncryptionTestUtils comments require high encryption pack to be installed
+    * [FLUME-1794] - FileChannel check for full disks in the background
+
+
+

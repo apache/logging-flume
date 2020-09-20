@@ -1,0 +1,227 @@
+=============
+Version 1.4.0
+=============
+
+.. rubric:: Status of this release
+
+Apache Flume 1.4.0 is the fourth release of Flume as an Apache top-level project
+(TLP). Apache Flume 1.4.0 is production-ready software.
+
+.. rubric:: Release Documentation
+
+* `Flume 1.4.0 User Guide <content/1.4.0/FlumeUserGuide.html>`__ (also in `pdf <content/1.4.0/FlumeUserGuide.pdf>`__)
+* `Flume 1.4.0 Developer Guide <content/1.4.0/FlumeDeveloperGuide.html>`__ (also in `pdf <content/1.4.0/FlumeDeveloperGuide.pdf>`__)
+* `Flume 1.4.0 API Documentation <content/1.4.0/apidocs/index.html>`__
+
+.. rubric:: Changes
+
+
+Release Notes - Flume - Version v1.4.0
+
+* New Feature
+
+  * [`FLUME-924 <https://issues.apache.org/jira/browse/FLUME-924>`__] - Implement a JMS source for Flume NG
+  * [`FLUME-997 <https://issues.apache.org/jira/browse/FLUME-997>`__] - Support secure transport mechanism
+  * [`FLUME-1502 <https://issues.apache.org/jira/browse/FLUME-1502>`__] - Support for running simple configurations embedded in host process
+  * [`FLUME-1516 <https://issues.apache.org/jira/browse/FLUME-1516>`__] - FileChannel Write Dual Checkpoints to avoid replays
+  * [`FLUME-1632 <https://issues.apache.org/jira/browse/FLUME-1632>`__] - Persist progress on each file in file spooling client/source
+  * [`FLUME-1735 <https://issues.apache.org/jira/browse/FLUME-1735>`__] - Add support for a plugins.d directory
+  * [`FLUME-1894 <https://issues.apache.org/jira/browse/FLUME-1894>`__] - Implement Thrift RPC
+  * [`FLUME-1917 <https://issues.apache.org/jira/browse/FLUME-1917>`__] - FileChannel group commit (coalesce fsync)
+  * [`FLUME-2010 <https://issues.apache.org/jira/browse/FLUME-2010>`__] - Support Avro records in Log4jAppender and the HDFS Sink
+  * [`FLUME-2048 <https://issues.apache.org/jira/browse/FLUME-2048>`__] - Avro container file deserializer
+  * [`FLUME-2070 <https://issues.apache.org/jira/browse/FLUME-2070>`__] - Add a Flume Morphline Solr Sink
+
+* Improvement
+
+  * [`FLUME-1076 <https://issues.apache.org/jira/browse/FLUME-1076>`__] - Sink batch sizes vary wildy
+  * [`FLUME-1100 <https://issues.apache.org/jira/browse/FLUME-1100>`__] - HDFSWriterFactory and HDFSFormatterFactory should allow extension
+  * [`FLUME-1571 <https://issues.apache.org/jira/browse/FLUME-1571>`__] - Channels should check for positive capacity and transaction capacity values
+  * [`FLUME-1586 <https://issues.apache.org/jira/browse/FLUME-1586>`__] - File Channel should support verifying integrity of individual events.
+  * [`FLUME-1652 <https://issues.apache.org/jira/browse/FLUME-1652>`__] - Logutils.getLogs could NPE
+  * [`FLUME-1661 <https://issues.apache.org/jira/browse/FLUME-1661>`__] - ExecSource cannot execute complex Unix commands
+  * [`FLUME-1677 <https://issues.apache.org/jira/browse/FLUME-1677>`__] - Add File-channel dependency to flume-ng-node's pom.xml
+  * [`FLUME-1699 <https://issues.apache.org/jira/browse/FLUME-1699>`__] - Make the rename of the meta file platform neutral
+  * [`FLUME-1702 <https://issues.apache.org/jira/browse/FLUME-1702>`__] - HDFSEventSink should write to a hidden file as opposed to a .tmp file
+  * [`FLUME-1740 <https://issues.apache.org/jira/browse/FLUME-1740>`__] - Remove contrib/ directory from Flume NG
+  * [`FLUME-1745 <https://issues.apache.org/jira/browse/FLUME-1745>`__] - FlumeConfiguration Eats Exceptions
+  * [`FLUME-1756 <https://issues.apache.org/jira/browse/FLUME-1756>`__] - Avro client should be able to use load balancing RPC
+  * [`FLUME-1757 <https://issues.apache.org/jira/browse/FLUME-1757>`__] - Improve configuration of hbase serializers
+  * [`FLUME-1762 <https://issues.apache.org/jira/browse/FLUME-1762>`__] - File Channel should recover automatically if the checkpoint is incomplete or bad by deleting the contents of the checkpoint directory
+  * [`FLUME-1768 <https://issues.apache.org/jira/browse/FLUME-1768>`__] - Multiplexing channel selector should allow optional-only channels
+  * [`FLUME-1769 <https://issues.apache.org/jira/browse/FLUME-1769>`__] - Replicating channel selector should support optional channels
+  * [`FLUME-1770 <https://issues.apache.org/jira/browse/FLUME-1770>`__] - Flume should have serializer which supports serializer the headers to a simple string
+  * [`FLUME-1777 <https://issues.apache.org/jira/browse/FLUME-1777>`__] - AbstractSource does not provide enough implementation for sub-classes
+  * [`FLUME-1790 <https://issues.apache.org/jira/browse/FLUME-1790>`__] - Commands in EncryptionTestUtils comments require high encryption pack to be installed
+  * [`FLUME-1794 <https://issues.apache.org/jira/browse/FLUME-1794>`__] - FileChannel check for full disks in the background
+  * [`FLUME-1800 <https://issues.apache.org/jira/browse/FLUME-1800>`__] - Docs for spooling source durability changes
+  * [`FLUME-1808 <https://issues.apache.org/jira/browse/FLUME-1808>`__] - ElasticSearchSink is missing log4.properties
+  * [`FLUME-1821 <https://issues.apache.org/jira/browse/FLUME-1821>`__] - Support configuration of hbase instances to be used in AsyncHBaseSink from flume config
+  * [`FLUME-1847 <https://issues.apache.org/jira/browse/FLUME-1847>`__] - NPE in SourceConfiguration
+  * [`FLUME-1848 <https://issues.apache.org/jira/browse/FLUME-1848>`__] - HDFSDataStream logger is actually for a sequence file
+  * [`FLUME-1855 <https://issues.apache.org/jira/browse/FLUME-1855>`__] - Sequence gen source should be able to stop after a fixed number of events
+  * [`FLUME-1864 <https://issues.apache.org/jira/browse/FLUME-1864>`__] - Allow hdfs idle callback to clean up closed bucket writers
+  * [`FLUME-1874 <https://issues.apache.org/jira/browse/FLUME-1874>`__] - Ship with log4j.properties file that has a reliable time based rolling policy
+  * [`FLUME-1876 <https://issues.apache.org/jira/browse/FLUME-1876>`__] - Document hadoop dependency of FileChannel when used with EmbeddedAgent
+  * [`FLUME-1878 <https://issues.apache.org/jira/browse/FLUME-1878>`__] - FileChannel replay should print status every 10000 events
+  * [`FLUME-1886 <https://issues.apache.org/jira/browse/FLUME-1886>`__] - Add a JMS enum type to SourceType so that users don't need to enter FQCN for JMSSource
+  * [`FLUME-1889 <https://issues.apache.org/jira/browse/FLUME-1889>`__] - Add HBASE and ASYNC_HBASE enum types to SinkType so that users don't need to enter FQCNs
+  * [`FLUME-1906 <https://issues.apache.org/jira/browse/FLUME-1906>`__] - Ability to disable WAL for put operation in HBaseSink
+  * [`FLUME-1915 <https://issues.apache.org/jira/browse/FLUME-1915>`__] - Enhance NettyAvroRpcClient and the use of NettyServer to optionally use compression
+  * [`FLUME-1926 <https://issues.apache.org/jira/browse/FLUME-1926>`__] - Optionally timeout Avro Sink Rpc Clients to avoid stickiness
+  * [`FLUME-1940 <https://issues.apache.org/jira/browse/FLUME-1940>`__] - Log a snapshot of Flume metrics on shutdown
+  * [`FLUME-1945 <https://issues.apache.org/jira/browse/FLUME-1945>`__] - HBase Serializer allow key from regular expression group
+  * [`FLUME-1976 <https://issues.apache.org/jira/browse/FLUME-1976>`__] - JMS Source document should provide instruction on JMS implementation jars
+  * [`FLUME-1977 <https://issues.apache.org/jira/browse/FLUME-1977>`__] - JMS Source connectionFactory property is not documented
+  * [`FLUME-1992 <https://issues.apache.org/jira/browse/FLUME-1992>`__] - ElasticSearch dependency is marked optional
+  * [`FLUME-1994 <https://issues.apache.org/jira/browse/FLUME-1994>`__] - Add ELASTICSEARCH enum type to SinkType to eliminate need for FQCN in agent configuration files
+  * [`FLUME-2004 <https://issues.apache.org/jira/browse/FLUME-2004>`__] - Need to capture metrics on the Flume exec source such as events received, rejected, etc.
+  * [`FLUME-2005 <https://issues.apache.org/jira/browse/FLUME-2005>`__] - Minor improvements to Flume assembly config
+  * [`FLUME-2008 <https://issues.apache.org/jira/browse/FLUME-2008>`__] - it would be very convenient to have a fat jar of flume-ng-log4jappender
+  * [`FLUME-2009 <https://issues.apache.org/jira/browse/FLUME-2009>`__] - Flume project throws error when imported into Eclipse IDE (Juno)
+  * [`FLUME-2013 <https://issues.apache.org/jira/browse/FLUME-2013>`__] - Parametrize java source and target version in the main pom file
+  * [`FLUME-2015 <https://issues.apache.org/jira/browse/FLUME-2015>`__] - ElasticSearchSink: need access to IndexRequestBuilder instance during flume event processing
+  * [`FLUME-2046 <https://issues.apache.org/jira/browse/FLUME-2046>`__] - Typo in HBaseSink java doc
+  * [`FLUME-2049 <https://issues.apache.org/jira/browse/FLUME-2049>`__] - Compile ElasticSearchSink with elasticsearch 0.90
+  * [`FLUME-2062 <https://issues.apache.org/jira/browse/FLUME-2062>`__] - make it possible for HBase sink to deposit event headers into corresponding column qualifiers
+  * [`FLUME-2063 <https://issues.apache.org/jira/browse/FLUME-2063>`__] - Add Configurable charset to RegexHbaseEventSerializer
+  * [`FLUME-2076 <https://issues.apache.org/jira/browse/FLUME-2076>`__] - JMX metrics support for HTTP Source
+  * [`FLUME-2093 <https://issues.apache.org/jira/browse/FLUME-2093>`__] - binary tarball that is created by flume's assembly shouldn't contain sources
+  * [`FLUME-2100 <https://issues.apache.org/jira/browse/FLUME-2100>`__] - Increase default batchSize of Morphline Solr Sink
+  * [`FLUME-2105 <https://issues.apache.org/jira/browse/FLUME-2105>`__] - Add docs for MorphlineSolrSink
+
+* Bug
+
+  * [`FLUME-1110 <https://issues.apache.org/jira/browse/FLUME-1110>`__] - HDFS Sink throws IllegalStateException when flume-daemon shuts down
+  * [`FLUME-1153 <https://issues.apache.org/jira/browse/FLUME-1153>`__] - flume-ng script is missing some agent options in help output
+  * [`FLUME-1175 <https://issues.apache.org/jira/browse/FLUME-1175>`__] - RollingFileSink complains of Bad File Descriptor upon a reconfig event
+  * [`FLUME-1262 <https://issues.apache.org/jira/browse/FLUME-1262>`__] - Move doc generation to a different profile
+  * [`FLUME-1285 <https://issues.apache.org/jira/browse/FLUME-1285>`__] - FileChannel has a dependency on Hadoop IO classes
+  * [`FLUME-1296 <https://issues.apache.org/jira/browse/FLUME-1296>`__] - Lifecycle supervisor should check if the monitor service is still running before supervising
+  * [`FLUME-1511 <https://issues.apache.org/jira/browse/FLUME-1511>`__] - Scribe-source doesn't handle zero message request correctly.
+  * [`FLUME-1676 <https://issues.apache.org/jira/browse/FLUME-1676>`__] - ExecSource should provide a configurable charset
+  * [`FLUME-1688 <https://issues.apache.org/jira/browse/FLUME-1688>`__] - Bump AsyncHBase version to 1.4.1
+  * [`FLUME-1709 <https://issues.apache.org/jira/browse/FLUME-1709>`__] - HDFS CompressedDataStream doesn't support serializer parameter
+  * [`FLUME-1720 <https://issues.apache.org/jira/browse/FLUME-1720>`__] - LICENSE file contain entry for protobuf-<version>.jar, however proper artifact name is protobuf-java-<version>.jar
+  * [`FLUME-1731 <https://issues.apache.org/jira/browse/FLUME-1731>`__] - SpoolableDirectorySource should have configurable support for deleting files it has already completed instead of renaming
+  * [`FLUME-1741 <https://issues.apache.org/jira/browse/FLUME-1741>`__] - ElasticSearch tests leave directory data/elasticsearch/nodes/ lying around
+  * [`FLUME-1748 <https://issues.apache.org/jira/browse/FLUME-1748>`__] - HDFS Sink should check if the thread is interrupted before performing any HDFS operations
+  * [`FLUME-1755 <https://issues.apache.org/jira/browse/FLUME-1755>`__] - Load balancing RPC client has issues with downed hosts
+  * [`FLUME-1766 <https://issues.apache.org/jira/browse/FLUME-1766>`__] - AvroSource throws confusing exception when configured without a port
+  * [`FLUME-1772 <https://issues.apache.org/jira/browse/FLUME-1772>`__] - AbstractConfigurationProvider should remove component which throws exception from configure method.
+  * [`FLUME-1773 <https://issues.apache.org/jira/browse/FLUME-1773>`__] - File Channel worker thread should not be daemon
+  * [`FLUME-1774 <https://issues.apache.org/jira/browse/FLUME-1774>`__] - EventBackingStoreFactory error message asks user to delete checkpoint which is now done automatically
+  * [`FLUME-1775 <https://issues.apache.org/jira/browse/FLUME-1775>`__] - FileChannel Log Background worker should catch Throwable
+  * [`FLUME-1776 <https://issues.apache.org/jira/browse/FLUME-1776>`__] - Several modules require commons-lang but do not declare this in the pom
+  * [`FLUME-1778 <https://issues.apache.org/jira/browse/FLUME-1778>`__] - Upgrade Flume to use Avro 1.7.3
+  * [`FLUME-1784 <https://issues.apache.org/jira/browse/FLUME-1784>`__] - JMSource fix minor documentation problem and parameter name
+  * [`FLUME-1788 <https://issues.apache.org/jira/browse/FLUME-1788>`__] - Flume Thrift source can fail intermittently because of a race condition in Thrift server implementation on some Linux systems
+  * [`FLUME-1789 <https://issues.apache.org/jira/browse/FLUME-1789>`__] - Unit tests TestJCEFileKeyProvider and TestFileChannelEncryption fail with IBM JDK and flume-1.3.0
+  * [`FLUME-1795 <https://issues.apache.org/jira/browse/FLUME-1795>`__] - Flume thrift legacy source does not have proper logging configured
+  * [`FLUME-1797 <https://issues.apache.org/jira/browse/FLUME-1797>`__] - TestFlumeConfiguration is in com.apache.flume.conf namespace. 
+  * [`FLUME-1799 <https://issues.apache.org/jira/browse/FLUME-1799>`__] - Generated source tarball is missing flume-ng-embedded-agent
+  * [`FLUME-1802 <https://issues.apache.org/jira/browse/FLUME-1802>`__] - Missing parameter --conf in example of the Flume User Guide
+  * [`FLUME-1803 <https://issues.apache.org/jira/browse/FLUME-1803>`__] - Generated dist tarball is missing flume-ng-embedded-agent
+  * [`FLUME-1804 <https://issues.apache.org/jira/browse/FLUME-1804>`__] - JMS source not included in binary dist
+  * [`FLUME-1805 <https://issues.apache.org/jira/browse/FLUME-1805>`__] - Embedded agent deps should be specified in dependencyManagement section of pom
+  * [`FLUME-1818 <https://issues.apache.org/jira/browse/FLUME-1818>`__] - Support various layouts in log4jappender
+  * [`FLUME-1819 <https://issues.apache.org/jira/browse/FLUME-1819>`__] - ExecSource don't flush the cache if there is no input entries
+  * [`FLUME-1820 <https://issues.apache.org/jira/browse/FLUME-1820>`__] - Should not be possible for RPC client to block indefinitely on close()
+  * [`FLUME-1822 <https://issues.apache.org/jira/browse/FLUME-1822>`__] - Update javadoc for FlumeConfiguration
+  * [`FLUME-1823 <https://issues.apache.org/jira/browse/FLUME-1823>`__] - LoadBalancingRpcClient method must throw exception if it is called after close is called.
+  * [`FLUME-1824 <https://issues.apache.org/jira/browse/FLUME-1824>`__] - Inflights can complete successfully even if checkpoint fails
+  * [`FLUME-1828 <https://issues.apache.org/jira/browse/FLUME-1828>`__] - ResettableInputStream should support seek()
+  * [`FLUME-1834 <https://issues.apache.org/jira/browse/FLUME-1834>`__] - Userguide on trunk is missing some memory channel props
+  * [`FLUME-1835 <https://issues.apache.org/jira/browse/FLUME-1835>`__] - Flume User Guide has wrong prop in Load Balancing Sink Selector
+  * [`FLUME-1844 <https://issues.apache.org/jira/browse/FLUME-1844>`__] - HDFSEventSink should have option to use RawLocalFileSystem
+  * [`FLUME-1845 <https://issues.apache.org/jira/browse/FLUME-1845>`__] - Document plugin.d directory structure
+  * [`FLUME-1849 <https://issues.apache.org/jira/browse/FLUME-1849>`__] - Embedded Agent doesn't shutdown supervisor
+  * [`FLUME-1852 <https://issues.apache.org/jira/browse/FLUME-1852>`__] - Issues with EmbeddedAgentConfiguration
+  * [`FLUME-1854 <https://issues.apache.org/jira/browse/FLUME-1854>`__] - Application class can deadlock if stopped immediately after start
+  * [`FLUME-1863 <https://issues.apache.org/jira/browse/FLUME-1863>`__] - EmbeddedAgent pom must pull in file channel
+  * [`FLUME-1865 <https://issues.apache.org/jira/browse/FLUME-1865>`__] - Rename the Sequence File formatters to Serializer to be consistent with the rest of Flume
+  * [`FLUME-1866 <https://issues.apache.org/jira/browse/FLUME-1866>`__] - ChannelProcessor is not logging ChannelExceptions.
+  * [`FLUME-1867 <https://issues.apache.org/jira/browse/FLUME-1867>`__] - There's no option to set hostname for HTTPSource
+  * [`FLUME-1868 <https://issues.apache.org/jira/browse/FLUME-1868>`__] - FlumeUserGuide mentions wrong FQCN for JSONHandler
+  * [`FLUME-1869 <https://issues.apache.org/jira/browse/FLUME-1869>`__] - Request to add "HTTP" source type to SourceType.java
+  * [`FLUME-1870 <https://issues.apache.org/jira/browse/FLUME-1870>`__] - Flume sends non-numeric values with type as float to Ganglia causing ganglia to crash
+  * [`FLUME-1872 <https://issues.apache.org/jira/browse/FLUME-1872>`__] - SpoolingDirectorySource doesn't delete tracker file when deletePolicy is "immediate"
+  * [`FLUME-1879 <https://issues.apache.org/jira/browse/FLUME-1879>`__] - Secure HBase documentation
+  * [`FLUME-1880 <https://issues.apache.org/jira/browse/FLUME-1880>`__] - Double-logging of created HDFS files
+  * [`FLUME-1882 <https://issues.apache.org/jira/browse/FLUME-1882>`__] - Allow case-insensitive deserializer value for SpoolDirectorySource
+  * [`FLUME-1890 <https://issues.apache.org/jira/browse/FLUME-1890>`__] - Flume should set the hbase keytab and principal in HBase conf object.
+  * [`FLUME-1891 <https://issues.apache.org/jira/browse/FLUME-1891>`__] - Fast replay runs even when checkpoint exists.
+  * [`FLUME-1893 <https://issues.apache.org/jira/browse/FLUME-1893>`__] - File Channel could miss possible checkpoint corruption
+  * [`FLUME-1911 <https://issues.apache.org/jira/browse/FLUME-1911>`__] - Add deprecation back to the legacy thrift code
+  * [`FLUME-1916 <https://issues.apache.org/jira/browse/FLUME-1916>`__] - HDFS sink should poll for # of active replicas. If less than required, roll the file.
+  * [`FLUME-1918 <https://issues.apache.org/jira/browse/FLUME-1918>`__] - File Channel cannot handle capacity of more than 500 Million events
+  * [`FLUME-1922 <https://issues.apache.org/jira/browse/FLUME-1922>`__] - HDFS Sink should optionally insert the timestamp at the sink
+  * [`FLUME-1924 <https://issues.apache.org/jira/browse/FLUME-1924>`__] - Bug in serializer context parsing in RollingFileSink
+  * [`FLUME-1925 <https://issues.apache.org/jira/browse/FLUME-1925>`__] - HDFS timeouts should not starve other threads
+  * [`FLUME-1929 <https://issues.apache.org/jira/browse/FLUME-1929>`__] - CheckpointRebuilder main method does not work
+  * [`FLUME-1930 <https://issues.apache.org/jira/browse/FLUME-1930>`__] - Inflights should clean up executors on close.
+  * [`FLUME-1931 <https://issues.apache.org/jira/browse/FLUME-1931>`__] - HDFS Sink has a commons-lang dependency which is missing in pom
+  * [`FLUME-1932 <https://issues.apache.org/jira/browse/FLUME-1932>`__] - no-reload-conf command line param does not work
+  * [`FLUME-1937 <https://issues.apache.org/jira/browse/FLUME-1937>`__] - Issue with maxUnderReplication in HDFS sink
+  * [`FLUME-1939 <https://issues.apache.org/jira/browse/FLUME-1939>`__] - FlumeEventQueue must check if file is open before setting the length of the file
+  * [`FLUME-1943 <https://issues.apache.org/jira/browse/FLUME-1943>`__] - ExecSource tests failing on Jenkins
+  * [`FLUME-1948 <https://issues.apache.org/jira/browse/FLUME-1948>`__] - plugins.d directory(ies) should be separately overridable, independent of FLUME_HOME
+  * [`FLUME-1949 <https://issues.apache.org/jira/browse/FLUME-1949>`__] - Documentation for sink processor lists incorrect default
+  * [`FLUME-1955 <https://issues.apache.org/jira/browse/FLUME-1955>`__] - fileSuffix does not work with compressed streams
+  * [`FLUME-1958 <https://issues.apache.org/jira/browse/FLUME-1958>`__] - Remove attlasian-ide-plugin.xml from the repo
+  * [`FLUME-1964 <https://issues.apache.org/jira/browse/FLUME-1964>`__] - hdfs sink depends on commons-io but does not specify it in the pom
+  * [`FLUME-1965 <https://issues.apache.org/jira/browse/FLUME-1965>`__] - Thrift sink alias doesn't exist
+  * [`FLUME-1969 <https://issues.apache.org/jira/browse/FLUME-1969>`__] - Update user Guide to explain the purpose of minimumRequiredSpace setting for FileChannel
+  * [`FLUME-1974 <https://issues.apache.org/jira/browse/FLUME-1974>`__] - Thrift compatibility issue with hbase-0.92
+  * [`FLUME-1975 <https://issues.apache.org/jira/browse/FLUME-1975>`__] - Use TThreadedSelectServer in ThriftSource if it is available
+  * [`FLUME-1980 <https://issues.apache.org/jira/browse/FLUME-1980>`__] - Log4jAppender should optionally drop events if append fails
+  * [`FLUME-1981 <https://issues.apache.org/jira/browse/FLUME-1981>`__] - Rpc client expiration can be done in a more thread-safe way
+  * [`FLUME-1986 <https://issues.apache.org/jira/browse/FLUME-1986>`__] - doTestInflightCorrupts should not commit transactions  
+  * [`FLUME-1993 <https://issues.apache.org/jira/browse/FLUME-1993>`__] - On Windows, when using the spooling directory source, there is a file sharing violation when trying to delete tracker file
+  * [`FLUME-2002 <https://issues.apache.org/jira/browse/FLUME-2002>`__] - Flume RPC Client creates 2 threads per each log attempt if the remote flume agent goes down
+  * [`FLUME-2011 <https://issues.apache.org/jira/browse/FLUME-2011>`__] - "mvn test" fails
+  * [`FLUME-2012 <https://issues.apache.org/jira/browse/FLUME-2012>`__] - Two tests fail on Mac OS (saying they fail to load native library) with Java 7
+  * [`FLUME-2014 <https://issues.apache.org/jira/browse/FLUME-2014>`__] - Race condition when using local timestamp with BucketPath
+  * [`FLUME-2023 <https://issues.apache.org/jira/browse/FLUME-2023>`__] - Flume must login to secure HBase before creating the HTable instance
+  * [`FLUME-2025 <https://issues.apache.org/jira/browse/FLUME-2025>`__] - ThriftSource throws NPE in stop() if start() failed because socket open failed or if thrift server instance creation threw.
+  * [`FLUME-2026 <https://issues.apache.org/jira/browse/FLUME-2026>`__] - TestHTTPSource should use any available port rather than a hardcoded port number
+  * [`FLUME-2027 <https://issues.apache.org/jira/browse/FLUME-2027>`__] - Check for default replication fails on federated cluster in hdfs sink
+  * [`FLUME-2032 <https://issues.apache.org/jira/browse/FLUME-2032>`__] - HDFSEventSink doesn't work in Windows
+  * [`FLUME-2036 <https://issues.apache.org/jira/browse/FLUME-2036>`__] - Make hostname optional for HTTPSource
+  * [`FLUME-2042 <https://issues.apache.org/jira/browse/FLUME-2042>`__] - log4jappender timeout should be configurable
+  * [`FLUME-2043 <https://issues.apache.org/jira/browse/FLUME-2043>`__] - JMS Source removed on failure to create configuration
+  * [`FLUME-2044 <https://issues.apache.org/jira/browse/FLUME-2044>`__] - HDFS Sink impersonation fails after the first file
+  * [`FLUME-2051 <https://issues.apache.org/jira/browse/FLUME-2051>`__] - Surefire 2.12 cannot run a single test on Windows. Upgrade to 2.12.3
+  * [`FLUME-2054 <https://issues.apache.org/jira/browse/FLUME-2054>`__] - Support Version Info  on Windows  and fix failure of TestVersionInfo 
+  * [`FLUME-2057 <https://issues.apache.org/jira/browse/FLUME-2057>`__] - Failures in  FileChannel's TestEventQueueBackingStoreFactory  on Windows
+  * [`FLUME-2060 <https://issues.apache.org/jira/browse/FLUME-2060>`__] - Failure in TestLog.testReplaySucceedsWithUnusedEmptyLogMetaDataFastReplay test on Windows
+  * [`FLUME-2072 <https://issues.apache.org/jira/browse/FLUME-2072>`__] - JMX metrics support for HBase Sink
+  * [`FLUME-2081 <https://issues.apache.org/jira/browse/FLUME-2081>`__] - JMX metrics support for SpoolDir
+  * [`FLUME-2082 <https://issues.apache.org/jira/browse/FLUME-2082>`__] - JMX support for Seq Generator Source
+  * [`FLUME-2083 <https://issues.apache.org/jira/browse/FLUME-2083>`__] - Avro Source should not start if SSL is enabled and keystore cannot be opened
+  * [`FLUME-2098 <https://issues.apache.org/jira/browse/FLUME-2098>`__] - Make Solr sink depend on the CDK version of morphlines
+
+* Documentation
+
+  * [`FLUME-1621 <https://issues.apache.org/jira/browse/FLUME-1621>`__] - Document new MemoryChannel parameters in Flume User Guide
+  * [`FLUME-1910 <https://issues.apache.org/jira/browse/FLUME-1910>`__] - Add thrift RPC documentation
+  * [`FLUME-1953 <https://issues.apache.org/jira/browse/FLUME-1953>`__] - Fix dev guide error that says sink can read from multiple channels
+  * [`FLUME-1962 <https://issues.apache.org/jira/browse/FLUME-1962>`__] - Document proper specification of lzo codec as lzop in Flume User Guide
+  * [`FLUME-1979 <https://issues.apache.org/jira/browse/FLUME-1979>`__] - Wrong propname for connection reset interval in avro sink
+  * [`FLUME-2030 <https://issues.apache.org/jira/browse/FLUME-2030>`__] - Documentation of Configuration Changes JMSSource, HBaseSink, AsyncHBaseSink and ElasticSearchSink
+
+* Task
+
+  * [`FLUME-1686 <https://issues.apache.org/jira/browse/FLUME-1686>`__] - Exclude target directories & Eclipse files from rat checks
+  * [`FLUME-2094 <https://issues.apache.org/jira/browse/FLUME-2094>`__] - Remove the deprecated - Recoverable Memory Channel
+
+* Sub-task
+
+  * [`FLUME-1626 <https://issues.apache.org/jira/browse/FLUME-1626>`__] - Support Hbase security in Hbase sink
+  * [`FLUME-1630 <https://issues.apache.org/jira/browse/FLUME-1630>`__] - Flume configuration code could be improved
+  * [`FLUME-1674 <https://issues.apache.org/jira/browse/FLUME-1674>`__] - Documentation / Wiki
+  * [`FLUME-1896 <https://issues.apache.org/jira/browse/FLUME-1896>`__] - Implement Thrift RpcClient
+  * [`FLUME-1897 <https://issues.apache.org/jira/browse/FLUME-1897>`__] - Implement Thrift Sink
+  * [`FLUME-1898 <https://issues.apache.org/jira/browse/FLUME-1898>`__] - Implement Thrift Source
+  * [`FLUME-2102 <https://issues.apache.org/jira/browse/FLUME-2102>`__] - Update LICENSE file for Flume 1.4.0
+
