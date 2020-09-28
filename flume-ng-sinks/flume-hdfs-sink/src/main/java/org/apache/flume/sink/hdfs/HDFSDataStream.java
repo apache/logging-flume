@@ -45,6 +45,11 @@ public class HDFSDataStream extends AbstractHDFSWriter {
   private EventSerializer serializer;
   private boolean useRawLocalFileSystem;
 
+  /**
+   * load hdfs.append.support parameter from config file
+   */
+  private boolean enabledAppendSupports;
+
   @Override
   public void configure(Context context) {
     super.configure(context);
@@ -52,6 +57,8 @@ public class HDFSDataStream extends AbstractHDFSWriter {
     serializerType = context.getString("serializer", "TEXT");
     useRawLocalFileSystem = context.getBoolean("hdfs.useRawLocalFileSystem",
         false);
+    enabledAppendSupports = context.getBoolean("hdfs.append.support", false);
+
     serializerContext =
         new Context(context.getSubProperties(EventSerializer.CTX_PREFIX));
     logger.info("Serializer = " + serializerType + ", UseRawLocalFileSystem = "
@@ -103,6 +110,8 @@ public class HDFSDataStream extends AbstractHDFSWriter {
   @Override
   public void open(String filePath) throws IOException {
     Configuration conf = new Configuration();
+    conf.set("hdfs.append.support", String.valueOf(enabledAppendSupports));
+
     Path dstPath = new Path(filePath);
     FileSystem hdfs = getDfs(conf, dstPath);
     doOpen(conf, dstPath, hdfs);
