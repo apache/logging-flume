@@ -345,9 +345,10 @@ public class TaildirSource extends AbstractSource implements
     File file = new File(positionFilePath);
     FileWriter writer = null;
     try {
-      writer = new FileWriter(file);
+      
       if (!existingInodes.isEmpty()) {
         String json = toPosInfoJson();
+        writer = new FileWriter(file);
         writer.write(json);
       }
     } catch (Throwable t) {
