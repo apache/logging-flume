@@ -67,4 +67,8 @@ public class TaildirSourceConfigurationConstants {
   /** The max number of batch reads from a file in one loop */
   public static final String MAX_BATCH_COUNT = "maxBatchCount";
   public static final Long DEFAULT_MAX_BATCH_COUNT = Long.MAX_VALUE;
+
+  /** Whether to support file rotation in case it only checks inode nor both inode and file name */
+  public static final String INODE_ONLY = "inodeOnly";
+  public static final Boolean DEFAULT_INODE_ONLY = false;
 }
