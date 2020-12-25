@@ -49,7 +49,7 @@ import java.util.Map.Entry;
 public class ReliableTaildirEventReader implements ReliableEventReader {
   private static final Logger logger = LoggerFactory.getLogger(ReliableTaildirEventReader.class);
 
-  private final List<TaildirMatcher> taildirCache;
+  private final List<TailMatcher> taildirCache;
   private final Table<String, String, String> headerTable;
 
   private TailFile currentFile = null;
@@ -64,12 +64,14 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
   /**
    * Create a ReliableTaildirEventReader to watch the given directory.
    */
-  private ReliableTaildirEventReader(Map<String, String> filePaths,
+  private ReliableTaildirEventReader(Map<String, String> filePaths, Map<String, String> filePathsIncludeChild,
       Table<String, String, String> headerTable, String positionFilePath,
       boolean skipToEnd, boolean addByteOffset, boolean cachePatternMatching,
       boolean annotateFileName, String fileNameHeader) throws IOException {
     // Sanity checks
-    Preconditions.checkNotNull(filePaths);
+    if (filePaths == null && filePathsIncludeChild == null) {
+      throw new NullPointerException();
+    }
     Preconditions.checkNotNull(positionFilePath);
 
     if (logger.isDebugEnabled()) {
@@ -77,10 +79,18 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
           new Object[] { ReliableTaildirEventReader.class.getSimpleName(), filePaths });
     }
 
-    List<TaildirMatcher> taildirCache = Lists.newArrayList();
-    for (Entry<String, String> e : filePaths.entrySet()) {
-      taildirCache.add(new TaildirMatcher(e.getKey(), e.getValue(), cachePatternMatching));
+    List<TailMatcher> taildirCache = Lists.newArrayList();
+    if (filePaths!=null){
+      for (Entry<String, String> e : filePaths.entrySet()) {
+        taildirCache.add(new TaildirMatcher(e.getKey(), e.getValue(), cachePatternMatching));
+      }
     }
+    if (filePathsIncludeChild!=null){
+      for (Map.Entry<String, String> e : filePathsIncludeChild.entrySet()) {
+        taildirCache.add(new TaildirIncludeChildMatcher(e.getKey(), e.getValue(), cachePatternMatching));
+      }
+    }
+
     logger.info("taildirCache: " + taildirCache.toString());
     logger.info("headerTable: " + headerTable.toString());
 
@@ -239,7 +249,7 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
     updateTime = System.currentTimeMillis();
     List<Long> updatedInodes = Lists.newArrayList();
 
-    for (TaildirMatcher taildir : taildirCache) {
+    for (TailMatcher taildir : taildirCache) {
       Map<String, String> headers = headerTable.row(taildir.getFileGroup());
 
       for (File f : taildir.getMatchingFiles()) {
@@ -247,6 +257,7 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
         try {
           inode = getInode(f);
         } catch (NoSuchFileException e) {
+          taildir.deleteFileCache(f);
           logger.info("File has been deleted in the meantime: " + e.getMessage());
           continue;
         }
@@ -299,6 +310,7 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
    */
   public static class Builder {
     private Map<String, String> filePaths;
+    private Map<String, String> filePathsIncludeChild;
     private Table<String, String, String> headerTable;
     private String positionFilePath;
     private boolean skipToEnd;
@@ -311,6 +323,11 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
 
     public Builder filePaths(Map<String, String> filePaths) {
       this.filePaths = filePaths;
+      return this;
+    }
+
+    public Builder filePathsIncludeChild(Map<String, String> filePathsIncludeChild) {
+      this.filePathsIncludeChild = filePathsIncludeChild;
       return this;
     }
 
@@ -350,7 +367,7 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
     }
 
     public ReliableTaildirEventReader build() throws IOException {
-      return new ReliableTaildirEventReader(filePaths, headerTable, positionFilePath, skipToEnd,
+      return new ReliableTaildirEventReader(filePaths, filePathsIncludeChild, headerTable, positionFilePath, skipToEnd,
                                             addByteOffset, cachePatternMatching,
                                             annotateFileName, fileNameHeader);
     }
