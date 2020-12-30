@@ -64,7 +64,8 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
   /**
    * Create a ReliableTaildirEventReader to watch the given directory.
    */
-  private ReliableTaildirEventReader(Map<String, String> filePaths, Map<String, String> filePathsIncludeChild,
+  private ReliableTaildirEventReader(Map<String, String> filePaths,
+      Map<String, String> filePathsIncludeChild,
       Table<String, String, String> headerTable, String positionFilePath,
       boolean skipToEnd, boolean addByteOffset, boolean cachePatternMatching,
       boolean annotateFileName, String fileNameHeader) throws IOException {
@@ -76,18 +77,19 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
 
     if (logger.isDebugEnabled()) {
       logger.debug("Initializing {} with directory={}",
-          new Object[] { ReliableTaildirEventReader.class.getSimpleName(), filePaths });
+              new Object[]{ReliableTaildirEventReader.class.getSimpleName(), filePaths});
     }
 
     List<TailMatcher> taildirCache = Lists.newArrayList();
-    if (filePaths!=null){
+    if (filePaths != null) {
       for (Entry<String, String> e : filePaths.entrySet()) {
         taildirCache.add(new TaildirMatcher(e.getKey(), e.getValue(), cachePatternMatching));
       }
     }
-    if (filePathsIncludeChild!=null){
+    if (filePathsIncludeChild != null) {
       for (Map.Entry<String, String> e : filePathsIncludeChild.entrySet()) {
-        taildirCache.add(new TaildirIncludeChildMatcher(e.getKey(), e.getValue(), cachePatternMatching));
+        taildirCache.add(
+                new TaildirIncludeChildMatcher(e.getKey(), e.getValue(), cachePatternMatching));
       }
     }
 
@@ -367,7 +369,8 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
     }
 
     public ReliableTaildirEventReader build() throws IOException {
-      return new ReliableTaildirEventReader(filePaths, filePathsIncludeChild, headerTable, positionFilePath, skipToEnd,
+      return new ReliableTaildirEventReader(filePaths, filePathsIncludeChild, headerTable,
+                                            positionFilePath, skipToEnd,
                                             addByteOffset, cachePatternMatching,
                                             annotateFileName, fileNameHeader);
     }

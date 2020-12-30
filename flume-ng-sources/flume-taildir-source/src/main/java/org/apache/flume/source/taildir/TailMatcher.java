@@ -26,9 +26,9 @@ import java.util.List;
  * Identifies and caches the files matched
  */
 public interface TailMatcher {
-    List<File> getMatchingFiles();
+  List<File> getMatchingFiles();
 
-    String getFileGroup();
+  String getFileGroup();
 
-    void deleteFileCache(File f);
+  void deleteFileCache(File f);
 }

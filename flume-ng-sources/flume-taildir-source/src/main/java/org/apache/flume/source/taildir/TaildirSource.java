@@ -157,7 +157,8 @@ public class TaildirSource extends AbstractSource implements
   public synchronized void configure(Context context) {
     String fileGroups = context.getString(FILE_GROUPS);
     String fileGroupsIncludeChild = context.getString(FILE_GROUPS_INCLUDE_CHILD);
-    Preconditions.checkState(fileGroups != null || fileGroupsIncludeChild !=null, "Missing param: " + FILE_GROUPS);
+    Preconditions.checkState(fileGroups != null ||
+            fileGroupsIncludeChild != null, "Missing param: " + FILE_GROUPS);
 
     Map<String, String> filePathsMap = context.getSubProperties(FILE_GROUPS_PREFIX);
     if (!filePathsMap.isEmpty()) {
@@ -167,12 +168,14 @@ public class TaildirSource extends AbstractSource implements
               "Mapping for tailing files is empty or invalid: '" + FILE_GROUPS_PREFIX + "'");
     }
 
-    Map<String, String> filePathsIncludeChildMap = context.getSubProperties(FILE_GROUPS_INCLUDE_CHILD_PREFIX);
-    if (!filePathsIncludeChildMap.isEmpty()){
+    Map<String, String> filePathsIncludeChildMap =
+            context.getSubProperties(FILE_GROUPS_INCLUDE_CHILD_PREFIX);
+    if (!filePathsIncludeChildMap.isEmpty()) {
       filePathsIncludeChild = selectByKeys(filePathsIncludeChildMap,
               fileGroupsIncludeChild.split("\\s+"));
       Preconditions.checkState(!filePathsIncludeChild.isEmpty(),
-              "Mapping for tailing files is empty or invalid: '" + FILE_GROUPS_INCLUDE_CHILD_PREFIX + "'");
+              "Mapping for tailing files is empty or invalid: '" +
+                      FILE_GROUPS_INCLUDE_CHILD_PREFIX + "'");
     }
 
     String homePath = System.getProperty("user.home").replace('\\', '/');
