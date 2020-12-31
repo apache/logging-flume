@@ -180,6 +180,7 @@ public class TaildirMatcher implements TailMatcher {
    *
    * @see #getMatchingFilesNoCache()
    */
+  @Override
   public List<File> getMatchingFiles() {
     long now = TimeUnit.SECONDS.toMillis(
         TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()));
@@ -279,6 +280,7 @@ public class TaildirMatcher implements TailMatcher {
     return fileGroup.hashCode();
   }
 
+  @Override
   public String getFileGroup() {
     return fileGroup;
   }
@@ -287,7 +289,7 @@ public class TaildirMatcher implements TailMatcher {
   // This matcher object is updated all caches will be automatically refreshed,
   // so there is no need to delete them
   @Override
-  public void deleteFileCache(File f) {
+  public void deleteFileCache(File file) {
 
   }
 

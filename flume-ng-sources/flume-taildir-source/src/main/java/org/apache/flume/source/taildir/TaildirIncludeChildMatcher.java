@@ -106,7 +106,7 @@ public class TaildirIncludeChildMatcher implements TailMatcher {
     // with the file regular that needs to be matched
     // Note that if "/" is not written at the end of the path,
     // the end field will be treated as a regular
-    String filePatternParent = "";
+    String filePatternParent;
 
     if (filePattern.charAt(filePattern.length() - 1) == '/') {
       filePatternParent = filePattern;
@@ -176,6 +176,7 @@ public class TaildirIncludeChildMatcher implements TailMatcher {
    * No directories. If nothing matches then returns an empty list. If I/O issue occurred then
    * returns the list collected to the point when exception was thrown.
    */
+  @Override
   public List<File> getMatchingFiles() {
     boolean lastMatchedFilesHasChange = false;
 
@@ -286,8 +287,9 @@ public class TaildirIncludeChildMatcher implements TailMatcher {
   private static void getFileGroupChild(File fileGroup, Set<File> fileGroupList) {
     fileGroupList.add(fileGroup);
 
-    if (fileGroup.listFiles() != null) {
-      for (File child : fileGroup.listFiles()) {
+    File[] listFiles = fileGroup.listFiles();
+    if (listFiles != null) {
+      for (File child : listFiles) {
         if (Files.isDirectory(child.toPath())) {
           getFileGroupChild(child, fileGroupList);
         }
@@ -342,16 +344,17 @@ public class TaildirIncludeChildMatcher implements TailMatcher {
     return fileGroup.hashCode();
   }
 
+  @Override
   public String getFileGroup() {
     return fileGroup;
   }
 
   @Override
-  public void deleteFileCache(File f) {
-    this.lastMatchedFiles.remove(f);
+  public void deleteFileCache(File file) {
+    this.lastMatchedFiles.remove(file);
   }
 
-  private class LastTimeTuple {
+  private static class LastTimeTuple {
     // system time in milliseconds, stores the last modification time of the
     // parent directory seen by the last check, rounded to seconds
     // initial value is used in first check only when it will be replaced instantly

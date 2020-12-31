@@ -199,7 +199,7 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
       throws IOException {
     if (!committed) {
       if (currentFile == null) {
-        throw new IllegalStateException("current file does not exist. " + currentFile.getPath());
+        throw new IllegalStateException("current file does not exist. ");
       }
       logger.info("Last read was never committed - resetting position");
       long lastPos = currentFile.getPos();

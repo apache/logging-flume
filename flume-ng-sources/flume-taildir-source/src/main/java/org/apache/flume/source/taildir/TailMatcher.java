@@ -30,5 +30,5 @@ public interface TailMatcher {
 
   String getFileGroup();
 
-  void deleteFileCache(File f);
+  void deleteFileCache(File file);
 }
