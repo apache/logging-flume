@@ -70,7 +70,6 @@ import java.util.regex.Pattern;
 @InterfaceStability.Evolving
 public class TaildirIncludeChildMatcher implements TailMatcher {
   private static final Logger logger = LoggerFactory.getLogger(TaildirIncludeChildMatcher.class);
-  private static final FileSystem FS = FileSystems.getDefault();
 
   // flag from configuration to switch off caching completely
   private final boolean cachePatternMatching;

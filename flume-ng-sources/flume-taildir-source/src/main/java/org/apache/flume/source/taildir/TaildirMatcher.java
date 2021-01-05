@@ -185,7 +185,6 @@ public class TaildirMatcher implements TailMatcher {
     long now = TimeUnit.SECONDS.toMillis(
         TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()));
     long currentParentDirMTime = parentDir.lastModified();
-    List<File> result;
 
     // calculate matched files if
     // - we don't want to use cache (recalculate every time) OR
