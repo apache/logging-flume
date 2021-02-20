@@ -43,6 +43,11 @@ public class HDFSSequenceFile extends AbstractHDFSWriter {
   private boolean useRawLocalFileSystem;
   private FSDataOutputStream outStream = null;
 
+  /**
+   * load hdfs.append.support parameter from config file
+   */
+  private boolean enabledAppendSupports;
+
   public HDFSSequenceFile() {
     writer = null;
   }
@@ -56,6 +61,8 @@ public class HDFSSequenceFile extends AbstractHDFSWriter {
       SequenceFileSerializerType.Writable.name());
     useRawLocalFileSystem = context.getBoolean("hdfs.useRawLocalFileSystem",
         false);
+    enabledAppendSupports = context.getBoolean("hdfs.append.support", false);
+
     serializerContext = new Context(
             context.getSubProperties(SequenceFileSerializerFactory.CTX_PREFIX));
     serializer = SequenceFileSerializerFactory
@@ -73,6 +80,8 @@ public class HDFSSequenceFile extends AbstractHDFSWriter {
   public void open(String filePath, CompressionCodec codeC,
       CompressionType compType) throws IOException {
     Configuration conf = new Configuration();
+    conf.set("hdfs.append.support", String.valueOf(enabledAppendSupports));
+
     Path dstPath = new Path(filePath);
     FileSystem hdfs = dstPath.getFileSystem(conf);
     open(dstPath, codeC, compType, conf, hdfs);
