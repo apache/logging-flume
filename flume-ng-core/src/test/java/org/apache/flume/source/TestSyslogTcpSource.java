@@ -47,6 +47,7 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doThrow;
 
@@ -58,6 +59,9 @@ import javax.net.ssl.X509TrustManager;
 public class TestSyslogTcpSource {
   private static final org.slf4j.Logger logger =
       LoggerFactory.getLogger(TestSyslogTcpSource.class);
+  private static final String TEST_CLIENT_IP_HEADER = "testClientIPHeader";
+  private static final String TEST_CLIENT_HOSTNAME_HEADER = "testClientHostnameHeader";
+
   private SyslogTcpSource source;
   private Channel channel;
   private static final int TEST_SYSLOG_PORT = 0;
@@ -303,15 +307,25 @@ public class TestSyslogTcpSource {
 
     Map<String, String> headers = e.getHeaders();
 
-    checkHeader(headers, testClientIPHeader, InetAddress.getLoopbackAddress().getHostAddress());
-    checkHeader(headers, testClientHostnameHeader, InetAddress.getLoopbackAddress().getHostName());
+    InetAddress loopbackAddress = InetAddress.getLoopbackAddress();
+    checkHeader(headers, TEST_CLIENT_IP_HEADER, loopbackAddress.getHostAddress());
+    checkHeader(headers, TEST_CLIENT_HOSTNAME_HEADER, loopbackAddress.getHostName());
   }
 
   private static void checkHeader(Map<String, String> headers, String headerName,
       String expectedValue) {
     assertTrue("Missing event header: " + headerName, headers.containsKey(headerName));
-    assertEquals("Event header value does not match: " + headerName,
-        expectedValue, headers.get(headerName));
+
+
+    String headerValue = headers.get(headerName);
+    if (TEST_CLIENT_HOSTNAME_HEADER.equals(headerName)) {
+      if (!"localhost".equals(headerValue) && !"127.0.0.1".equals(headerValue)) {
+        fail("Expected either 'localhost' or '127.0.0.1'");
+      }
+    } else {
+      assertEquals("Event header value does not match: " + headerName,
+              expectedValue, headerValue);
+    }
   }
 }
 

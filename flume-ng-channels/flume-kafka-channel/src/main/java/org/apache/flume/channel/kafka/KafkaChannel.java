@@ -721,9 +721,9 @@ public class KafkaChannel extends BasicChannelSemantics {
     private String getOffsetMapString() {
       StringBuilder sb = new StringBuilder();
       sb.append(getName()).append(" current offsets map: ");
-      for (TopicPartition tp : offsets.keySet()) {
-        sb.append("p").append(tp.partition()).append("-")
-            .append(offsets.get(tp).offset()).append(" ");
+      for (Map.Entry<TopicPartition, OffsetAndMetadata> entry : offsets.entrySet()) {
+        sb.append("p").append(entry.getKey().partition()).append('-')
+            .append(entry.getValue().offset()).append(' ');
       }
       return sb.toString();
     }

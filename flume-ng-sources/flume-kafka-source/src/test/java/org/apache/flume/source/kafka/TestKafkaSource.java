@@ -19,7 +19,6 @@ package org.apache.flume.source.kafka;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
-import junit.framework.Assert;
 
 import kafka.zk.KafkaZkClient;
 import org.apache.avro.io.BinaryEncoder;
@@ -51,6 +50,7 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.utils.Time;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -66,6 +66,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -706,8 +707,18 @@ public class TestKafkaSource {
     context.put(OLD_GROUP_ID, "old.groupId");
     KafkaSource source = new KafkaSource();
     source.doConfigure(context);
-    String bootstrapServers = source.getBootstrapServers();
-    Assert.assertEquals(kafkaServer.getBootstrapServers(), bootstrapServers);
+    String sourceServers = source.getBootstrapServers();
+    sourceServers = sourceServers.substring(0, sourceServers.indexOf(':'));
+
+    String kafkaServers = kafkaServer.getBootstrapServers();
+    kafkaServers = kafkaServers.substring(0, kafkaServers.indexOf(':'));
+
+    List<String> possibleValues = Arrays.asList("localhost", "127.0.0.1");
+
+    if (!(possibleValues.contains(sourceServers) && possibleValues.contains(kafkaServers))) {
+      fail("Expected either 'localhost' or '127.0.0.1'. Source: "
+              + sourceServers + ", Kafka: " + kafkaServers);
+    }
   }
 
   @Test

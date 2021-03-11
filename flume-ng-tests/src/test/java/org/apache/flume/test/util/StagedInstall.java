@@ -457,7 +457,7 @@ public class StagedInstall {
               LOGGER.warn("Invalid file: " + file.getCanonicalPath());
             }
           } else {
-            StringBuilder sb = new StringBuilder("Multiple candate tarballs");
+            StringBuilder sb = new StringBuilder("Multiple candidate tarballs");
             sb.append(" found in directory ");
             sb.append(testFile.getCanonicalPath()).append(": ");
             boolean first = true;
