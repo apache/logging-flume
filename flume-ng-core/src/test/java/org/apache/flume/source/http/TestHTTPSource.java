@@ -20,7 +20,6 @@ package org.apache.flume.source.http;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import junit.framework.Assert;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
@@ -41,7 +40,9 @@ import org.apache.http.HttpResponse;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -194,6 +195,14 @@ public class TestHTTPSource {
     HttpClientBuilder builder = HttpClientBuilder.create();
     httpClient = builder.build();
     postRequest = new HttpPost("http://0.0.0.0:" + httpPort);
+    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(httpSource, "sourceCounter");
+    sc.start();
+  }
+
+  @After
+  public void tearDown() {
+    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(httpSource, "sourceCounter");
+    sc.stop();
   }
 
   @Test
@@ -284,17 +293,17 @@ public class TestHTTPSource {
   }
 
   @Test
-  public void testBigBatchDeserializarionUTF8() throws Exception {
+  public void testBigBatchDeserializationUTF8() throws Exception {
     testBatchWithVariousEncoding("UTF-8");
   }
 
   @Test
-  public void testBigBatchDeserializarionUTF16() throws Exception {
+  public void testBigBatchDeserializationUTF16() throws Exception {
     testBatchWithVariousEncoding("UTF-16");
   }
 
   @Test
-  public void testBigBatchDeserializarionUTF32() throws Exception {
+  public void testBigBatchDeserializationUTF32() throws Exception {
     testBatchWithVariousEncoding("UTF-32");
   }
 

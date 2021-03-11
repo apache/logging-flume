@@ -19,6 +19,7 @@
 package org.apache.flume.source;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import org.apache.flume.Event;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -633,7 +634,9 @@ public class TestSyslogUtils {
 
     String hostname = SyslogUtils.getHostname(socketAddress);
 
-    assertEquals("localhost", hostname);
+    if (!"localhost".equals(hostname) && !"127.0.0.1".equals(hostname)) {
+      fail("Expected either 'localhost' or '127.0.0.1'");
+    }
   }
 
   @Test

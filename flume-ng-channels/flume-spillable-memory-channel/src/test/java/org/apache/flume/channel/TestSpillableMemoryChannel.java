@@ -21,6 +21,10 @@
 package org.apache.flume.channel;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -50,19 +54,33 @@ public class TestSpillableMemoryChannel {
   public TemporaryFolder fileChannelDir = new TemporaryFolder();
 
   private void configureChannel(Map<String, String> overrides) {
-    Context context = new Context();
-    File checkPointDir = fileChannelDir.newFolder("checkpoint");
-    File dataDir = fileChannelDir.newFolder("data");
-    context.put(FileChannelConfiguration.CHECKPOINT_DIR, checkPointDir.getAbsolutePath());
-    context.put(FileChannelConfiguration.DATA_DIRS, dataDir.getAbsolutePath());
-    // Set checkpoint for 5 seconds otherwise test will run out of memory
-    context.put(FileChannelConfiguration.CHECKPOINT_INTERVAL, "5000");
+    try {
+      Context context = new Context();
+      String checkpoint = "checkpoint";
+      String data = "data";
+      Path rootPath = fileChannelDir.getRoot().toPath();
+      File checkPointDir;
+      File dataDir;
+      if (!Files.exists(rootPath.resolve(checkpoint))) {
+        checkPointDir = fileChannelDir.newFolder(checkpoint);
+        dataDir = fileChannelDir.newFolder(data);
+      } else {
+        checkPointDir = rootPath.resolve(checkpoint).toFile();
+        dataDir = rootPath.resolve(data).toFile();
+      }
+      context.put(FileChannelConfiguration.CHECKPOINT_DIR, checkPointDir.getAbsolutePath());
+      context.put(FileChannelConfiguration.DATA_DIRS, dataDir.getAbsolutePath());
+      // Set checkpoint for 5 seconds otherwise test will run out of memory
+      context.put(FileChannelConfiguration.CHECKPOINT_INTERVAL, "5000");
 
-    if (overrides != null) {
-      context.putAll(overrides);
+      if (overrides != null) {
+        context.putAll(overrides);
+      }
+
+      Configurables.configure(channel, context);
+    } catch (IOException iox) {
+      throw new UncheckedIOException(iox);
     }
-
-    Configurables.configure(channel, context);
   }
 
   private void reconfigureChannel(Map<String, String> overrides) {

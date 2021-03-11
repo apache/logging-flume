@@ -41,7 +41,6 @@ import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.server.TNonblockingServer;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TThreadPoolServer;
-import org.apache.thrift.transport.TFastFramedTransport;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TNonblockingServerTransport;
 import org.apache.thrift.transport.TServerSocket;
@@ -49,6 +48,7 @@ import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TSSLTransportFactory;
 import org.apache.thrift.transport.TTransportFactory;
 import org.apache.thrift.transport.TSaslServerTransport;
+import org.apache.thrift.transport.layered.TFastFramedTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

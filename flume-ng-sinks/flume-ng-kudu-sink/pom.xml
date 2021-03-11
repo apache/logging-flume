@@ -159,6 +159,7 @@
       <activation>
         <os>
           <family>Unix</family>
+          <arch>amd64</arch>
         </os>
       </activation>
       <dependencies>
@@ -176,6 +177,7 @@
       <activation>
         <os>
           <family>mac</family>
+          <arch>amd64</arch>
         </os>
       </activation>
       <dependencies>
