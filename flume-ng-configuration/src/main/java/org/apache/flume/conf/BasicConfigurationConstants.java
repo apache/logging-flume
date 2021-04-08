@@ -36,6 +36,9 @@ public final class BasicConfigurationConstants {
   public static final String CONFIG_CHANNELS = "channels";
   public static final String CONFIG_CHANNELS_PREFIX = CONFIG_CHANNELS + ".";
 
+  public static final String CONFIG_REGISTER_SERVICES = "registerservices";
+  public static final String CONFIG_REGISTER_SERVICES_PREFIX = CONFIG_REGISTER_SERVICES + ".";
+
   public static final String CONFIG_CONFIG = "config";
   public static final String CONFIG_TYPE = "type";
 

@@ -19,12 +19,16 @@ package org.apache.flume.conf;
 import org.apache.flume.Context;
 import org.apache.flume.conf.FlumeConfiguration.AgentConfiguration;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
 
 public class TestFlumeConfigurationConfigFilter {
+  private static final Logger LOGGER =
+      LoggerFactory.getLogger(TestFlumeConfigurationConfigFilter.class);
 
   @Test
   public void testFlumeConfigFilterWorks() {

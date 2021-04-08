@@ -132,7 +132,8 @@ public abstract class ComponentConfiguration {
     SINK_PROCESSOR("SinkProcessor"),
     SINKGROUP("Sinkgroup"),
     CHANNEL("Channel"),
-    CHANNELSELECTOR("ChannelSelector");
+    CHANNELSELECTOR("ChannelSelector"),
+    REGISTER_SERVICE("RegisterService");
 
     private final String componentType;
 

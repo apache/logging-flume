@@ -22,6 +22,7 @@ package org.apache.flume.node;
 import org.apache.flume.Channel;
 import org.apache.flume.SinkRunner;
 import org.apache.flume.SourceRunner;
+import org.apache.flume.register.service.RegisterService;
 
 import java.util.Map;
 
@@ -36,6 +37,8 @@ public interface MaterializedConfiguration {
 
   public void addSinkRunner(String name, SinkRunner sinkRunner);
 
+  public void addRegisterService(String name, RegisterService service);
+
   public void addChannel(String name, Channel channel);
 
   public Map<String, SourceRunner> getSourceRunners();
@@ -44,4 +47,5 @@ public interface MaterializedConfiguration {
 
   public Map<String, Channel> getChannels();
 
+  public Map<String, RegisterService> getRegisterServices();
 }

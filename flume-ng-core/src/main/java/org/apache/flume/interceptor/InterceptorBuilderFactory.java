@@ -49,5 +49,4 @@ public class InterceptorBuilderFactory {
     }
     return clazz.newInstance();
   }
-
 }

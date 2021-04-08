@@ -56,6 +56,8 @@ import org.apache.flume.conf.channel.ChannelSelectorConfiguration;
 import org.apache.flume.conf.sink.SinkConfiguration;
 import org.apache.flume.conf.sink.SinkGroupConfiguration;
 import org.apache.flume.conf.source.SourceConfiguration;
+import org.apache.flume.register.service.RegisterService;
+import org.apache.flume.register.service.RegisterServiceFactory;
 import org.apache.flume.sink.DefaultSinkFactory;
 import org.apache.flume.sink.DefaultSinkProcessor;
 import org.apache.flume.sink.SinkGroup;
@@ -100,6 +102,7 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
       Map<String, ChannelComponent> channelComponentMap = Maps.newHashMap();
       Map<String, SourceRunner> sourceRunnerMap = Maps.newHashMap();
       Map<String, SinkRunner> sinkRunnerMap = Maps.newHashMap();
+      Map<String, RegisterService> registerServiceMap = Maps.newHashMap();
       try {
         loadChannels(agentConf, channelComponentMap);
         loadSources(agentConf, channelComponentMap, sourceRunnerMap);
@@ -127,6 +130,10 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
         }
         for (Map.Entry<String, SinkRunner> entry : sinkRunnerMap.entrySet()) {
           conf.addSinkRunner(entry.getKey(), entry.getValue());
+        }
+        loadRegisterServices(agentConf, registerServiceMap);
+        for (Entry<String, RegisterService> entry : registerServiceMap.entrySet()) {
+          conf.addRegisterService(entry.getKey(), entry.getValue());
         }
       } catch (InstantiationException ex) {
         LOGGER.error("Failed to instantiate component", ex);
@@ -534,6 +541,24 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
       }
     }
   }
+
+  private void loadRegisterServices(
+      AgentConfiguration agentConf, Map<String, RegisterService> registerServiceMap) {
+    Map<String, Context> registerServiceContextMap = agentConf.getRegisterServiceContextMap();
+    for (Entry<String, Context> entry :registerServiceContextMap.entrySet()) {
+      String registerServiceName = entry.getKey();
+      Context context = entry.getValue();
+      String registerServiceType = context.getString(BasicConfigurationConstants.CONFIG_TYPE);
+      RegisterService registerService =
+          RegisterServiceFactory.newInstance(registerServiceType);
+      Configurables.configure(registerService, context);
+      registerService.setName(registerServiceName);
+      LOGGER.info("Created register service " + registerServiceName
+          + ", type:" + registerServiceType);
+      registerServiceMap.put(registerServiceName, registerService);
+    }
+  }
+
   private static class ChannelComponent {
     final Channel channel;
     final List<String> components;
