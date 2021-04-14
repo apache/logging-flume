@@ -263,7 +263,7 @@ public class KafkaSource extends AbstractPollableSource
         }
         // Only set the topic header if setTopicHeader and it isn't already populated
         if (setTopicHeader && !headers.containsKey(topicHeader)) {
-          headers.put(topicHeader, message.topic());
+          headers.put("topicHeader", message.topic());
         }
         if (!headers.containsKey(KafkaSourceConstants.PARTITION_HEADER)) {
           headers.put(KafkaSourceConstants.PARTITION_HEADER,
