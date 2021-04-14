@@ -552,6 +552,7 @@ Feel free to post to the User's mailing list with any questions.
    mailinglists
    team
    source
+   testing
    license
 
 ..
