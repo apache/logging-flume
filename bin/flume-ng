@@ -274,6 +274,8 @@ while [ -n "$*" ] ; do
     --conf|-c)
       [ -n "$1" ] || error "Option --conf requires an argument" 1
       opt_conf=$1
+      opt_conf=$1
+      args="$args $arg $1"
       shift
       ;;
     --classpath|-C)
