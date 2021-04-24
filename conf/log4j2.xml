@@ -18,13 +18,14 @@
 -->
 <Configuration status="ERROR">
   <Properties>
-    <Property name="LOG_DIR">./logs</Property>
+    <Property name="LOG_DIR">${sys:flume.log.dir:-./logs}</Property>
+    <Property name="LOG_FILE">${sys:flume.log.file:-flume.log}</Property>
   </Properties>
   <Appenders>
     <Console name="Console" target="SYSTEM_OUT">
       <PatternLayout pattern="%d (%t) [%p - %l] %m%n" />
     </Console>
-    <RollingFile name="LogFile" fileName="${LOG_DIR}/flume.log" filePattern="${LOG_DIR}/archive/flume.log.%d{yyyyMMdd}-%i">
+    <RollingFile name="LogFile" fileName="${LOG_DIR}/${LOG_FILE}" filePattern="${LOG_DIR}/archive/${LOG_FILE}.%d{yyyyMMdd}-%i">
       <PatternLayout pattern="%d{dd MMM yyyy HH:mm:ss,SSS} %-5p [%t] (%C.%M:%L) %equals{%x}{[]}{} - %m%n" />
       <Policies>
         <!-- Roll every night at midnight or when the file reaches 100MB -->
@@ -34,7 +35,7 @@
       <DefaultRolloverStrategy min="1" max="20">
         <Delete basePath="${LOG_DIR}/archive">
           <!-- Nested conditions: the inner condition is only evaluated on files for which the outer conditions are true. -->
-          <IfFileName glob="flume.log.*">
+          <IfFileName glob="${LOG_FILE}.*">
             <!-- Only allow 1 GB of files to accumulate -->
             <IfAccumulatedFileSize exceeds="1 GB"/>
           </IfFileName>
@@ -44,13 +45,13 @@
   </Appenders>
 
   <Loggers>
-    <Logger name="org.apache.flume.lifecycle" level="info"/>
+    <Logger name="org.apache.flume.lifecycle" level="INFO"/>
     <Logger name="org.jboss" level="WARN"/>
     <Logger name="org.apache.avro.ipc.NettyTransceiver" level="WARN"/>
     <Logger name="org.apache.hadoop" level="INFO"/>
     <Logger name="org.apache.hadoop.hive" level="ERROR"/>
-    <Root level="INFO">
-      <AppenderRef ref="LogFile" />
+    <Root level="${sys:flume.root.logger.level:-INFO">
+      <AppenderRef ref="${sys:flume.root.logger.appender:-LogFile}" />
     </Root>
   </Loggers>
 </Configuration>
