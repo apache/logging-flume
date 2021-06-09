@@ -308,7 +308,7 @@ class BucketWriter {
    * sink that owns it. This method should be used only when size or count
    * based rolling closes this file.
    */
-  public void close() throws InterruptedException {
+  public void close() throws InterruptedException, IOException {
     close(false);
   }
 
@@ -338,7 +338,7 @@ class BucketWriter {
      * If all close attempts were unsuccessful we try to recover the lease.
      * @param immediate An immediate close is required
      */
-    public void close(boolean immediate) {
+    public void close(boolean immediate) throws IOException,InterruptedException {
       closeTries++;
       boolean shouldRetry = closeTries < maxRetries && !immediate;
       try {
@@ -349,7 +349,11 @@ class BucketWriter {
             "retry again in " + retryInterval + " seconds.", e);
         if (timedRollerPool != null && !timedRollerPool.isTerminated()) {
           if (shouldRetry) {
-            timedRollerPool.schedule(this, retryInterval, TimeUnit.SECONDS);
+            close(false);
+          } else {
+            LOG.error("Closing file: " + path + " failed. beyond max retry  " +
+                    maxRetries, e);
+            throw e;
           }
         } else {
           LOG.warn("Cannot retry close any more timedRollerPool is null or terminated");
@@ -406,7 +410,7 @@ class BucketWriter {
     }
   }
 
-  public void close(boolean callCloseCallback) throws InterruptedException {
+  public void close(boolean callCloseCallback) throws InterruptedException, IOException {
     close(callCloseCallback, false);
   }
 
@@ -415,7 +419,7 @@ class BucketWriter {
    * Safe to call multiple times. Logs HDFSWriter.close() exceptions.
    */
   public void close(boolean callCloseCallback, boolean immediate)
-      throws InterruptedException {
+          throws InterruptedException, IOException {
     if (callCloseCallback) {
       if (closed.compareAndSet(false, true)) {
         runCloseAction(); //remove from the cache as soon as possible
@@ -427,7 +431,7 @@ class BucketWriter {
   }
 
   private synchronized void doClose(boolean immediate)
-      throws InterruptedException {
+          throws InterruptedException, IOException {
     checkAndThrowInterruptedException();
     try {
       flush();

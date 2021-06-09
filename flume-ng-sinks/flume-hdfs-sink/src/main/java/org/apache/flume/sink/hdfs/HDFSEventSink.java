@@ -81,7 +81,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable, BatchSi
   // Time between close retries, in seconds
   private static final long defaultRetryInterval = 180;
   // Retry forever.
-  private static final int defaultTryCount = Integer.MAX_VALUE;
+  private static final int defaultTryCount = 3;
 
   public static final String IN_USE_SUFFIX_PARAM_NAME = "hdfs.inUseSuffix";
 
@@ -163,7 +163,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable, BatchSi
         // return true
         try {
           eldest.getValue().close();
-        } catch (InterruptedException e) {
+        } catch (InterruptedException | IOException e) {
           LOG.warn(eldest.getKey().toString(), e);
           Thread.currentThread().interrupt();
         }
@@ -412,14 +412,20 @@ public class HDFSEventSink extends AbstractSink implements Configurable, BatchSi
           bucketWriter.append(event);
         } catch (BucketClosedException ex) {
           LOG.info("Bucket was closed while trying to append, " +
-                   "reinitializing bucket and writing event.");
+                  "reinitializing bucket and writing event.");
           hdfsWriter = writerFactory.getWriter(fileType);
           bucketWriter = initializeBucketWriter(realPath, realName,
-            lookupPath, hdfsWriter, closeCallback);
+                  lookupPath, hdfsWriter, closeCallback);
           synchronized (sfWritersLock) {
             sfWriters.put(lookupPath, bucketWriter);
           }
           bucketWriter.append(event);
+        } catch (IOException e) {
+          transaction.rollback();
+          LOG.warn("HDFS IO error", e);
+          sinkCounter.incrementEventWriteFail();
+          sfWriters.remove(lookupPath);
+          return Status.BACKOFF;
         }
 
         // track the buckets getting written in this transaction
