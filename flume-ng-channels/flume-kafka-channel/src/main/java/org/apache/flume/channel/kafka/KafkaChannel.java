@@ -516,6 +516,18 @@ public class KafkaChannel extends BasicChannelSemantics {
             if (record.key() != null) {
               e.getHeaders().put(KEY_HEADER, record.key());
             }
+            //Add the topic to the header
+            if(null != record.topic()){
+              e.getHeaders().put(TOPIC_HEADER,record.topic());
+            }
+            //Add the offset to the header
+            if(-1 != record.offset()){
+              e.getHeaders().put(OFFSET_HEADER,String.valueOf(record.offset()));
+            }
+            //Add the timestamp to the header
+            if(-1 != record.timestamp()){
+              e.getHeaders().put(TIMESTAMP_HEADER,String.valueOf(record.timestamp()));
+            }
 
             long endTime = System.nanoTime();
             counter.addToKafkaEventGetTimer((endTime - startTime) / (1000 * 1000));

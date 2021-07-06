@@ -43,6 +43,9 @@ public class KafkaChannelConfiguration {
   public static final long DEFAULT_POLL_TIMEOUT = 500;
 
   public static final String KEY_HEADER = "key";
+  public static final String TOPIC_HEADER = "topic";
+  public static final String OFFSET_HEADER = "offset";
+  public static final String TIMESTAMP_HEADER = "timestamp";
 
   public static final String DEFAULT_AUTO_OFFSET_RESET = "earliest";
 
