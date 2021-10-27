@@ -118,12 +118,11 @@ Setup
 Setting up an agent
 -------------------
 
-Flume agent configuration is stored in a local configuration file.  This is a
-text file that follows the Java properties file format.
-Configurations for one or more agents can be specified in the same
-configuration file. The configuration file includes properties of each source,
-sink and channel in an agent and how they are wired together to form data
-flows.
+Flume agent configuration is stored in one or more configuration files that
+follow the Java properties file format. Configurations for one or more agents
+can be specified in these configuration files. The configuration includes
+properties of each source, sink and channel in an agent and how they are wired
+together to form data flows.
 
 Configuring individual components
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -225,9 +224,77 @@ The original Flume terminal will output the event in a log message.
 
 Congratulations - you've successfully configured and deployed a Flume agent! Subsequent sections cover agent configuration in much more detail.
 
-Using environment variables in configuration files
+Configuration from URIs
+~~~~~~~~~~~~~~~~~~~~~~~
+As of version 1.10.0 Flume supports being configured using URIs instead of just from local files. Direct support
+for HTTP(S), file, and classpath URIs is included. The HTTP support includes support for authentication using
+basic authorization but other authorization mechanisms may be supported by specifying the fully qualified name
+of the class that implements the AuthorizationProvider interface using the --auth-provider option. HTTP also
+supports reloading of configuration files using polling if the target server properly responds to the If-Modified-Since
+header.
+
+To specify credentials for HTTP authentication add::
+
+  --conf-user userid --conf-password password
+
+to the startup command.
+
+Multiple Configuration Files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+As of version 1.10.0 Flume supports being configured from multiple configuration files instead of just one.
+This more easily allows values to be overridden or added based on specific environments. Each file should
+be configured using its own --conf-file or --conf-uri option. However, all files should either be provided
+with --conf-file or with --conf-uri. If --conf-file and --conf-uri appear together as options all --conf-uri
+configurations will be processed before any of the --conf-file configurations are merged.
+
+For example, a configuration of::
+
+  $ bin/flume-ng agent --conf conf --conf-file example.conf --conf-uri http://localhost:80/flume.conf --conf-uri http://localhost:80/override.conf --name a1 -Dflume.root.logger=INFO,console
+
+will cause flume.conf to be read first, override.conf to be merged with it and finally example.conf would be
+merged last. If it is desirec to have example.conf be the base configuration it should be specified using the
+--conf-uri option either as::
+
+  --conf-uri classpath://example.conf
+  or
+  --conf-uri file:///example.conf
+
+depending on how it should be accessed.
+
+Using environment variables, system properies, or other properties configuration files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Flume has the ability to substitute environment variables in the configuration. For example::
+
+  a1.sources = r1
+  a1.sources.r1.type = netcat
+  a1.sources.r1.bind = 0.0.0.0
+  a1.sources.r1.port = ${env:NC_PORT}
+  a1.sources.r1.channels = c1
+
+NB: it currently works for values only, not for keys. (Ie. only on the "right side" of the `=` mark of the config lines.)
+
+As of version 1.10.0 Flume resolves configuration values using Apache Commons Text's StringSubstitutor
+class using the default set of Lookups along with a lookup that uses the configuration files as a
+source for replacement values.
+
+For example::
+  $ NC_PORT=44444 bin/flume-ng agent --conf conf --conf-file example.conf --name a1 -Dflume.root.logger=INFO,console
+
+Note the above is just an example, environment variables can be configured in other ways, including being set in `conf/flume-env.sh`.
+
+As noted, system properties are also supported, so the configuration::
+
+  a1.sources = r1
+  a1.sources.r1.type = netcat
+  a1.sources.r1.bind = 0.0.0.0
+  a1.sources.r1.port = ${sys:NC_PORT}
+  a1.sources.r1.channels = c1
+
+could be used and the startup command could be::
+
+  $ bin/flume-ng agent --conf conf --conf-file example.conf --name a1 -Dflume.root.logger=INFO,console -DNC_PORT=44444
+
+Furthermore, because multiple configuration files are allowed the first file could contain::
 
   a1.sources = r1
   a1.sources.r1.type = netcat
@@ -235,14 +302,26 @@ Flume has the ability to substitute environment variables in the configuration. 
   a1.sources.r1.port = ${NC_PORT}
   a1.sources.r1.channels = c1
 
-NB: it currently works for values only, not for keys. (Ie. only on the "right side" of the `=` mark of the config lines.)
+and the override file could contain::
 
-This can be enabled via Java system properties on agent invocation by setting `propertiesImplementation = org.apache.flume.node.EnvVarResolverProperties`.
+  NC_PORT = 44444
 
-For example::
-  $ NC_PORT=44444 bin/flume-ng agent --conf conf --conf-file example.conf --name a1 -Dflume.root.logger=INFO,console -DpropertiesImplementation=org.apache.flume.node.EnvVarResolverProperties
+In this case the startup command could be::
 
-Note the above is just an example, environment variables can be configured in other ways, including being set in `conf/flume-env.sh`.
+  $ bin/flume-ng agent --conf conf --conf-file example.conf --conf-file override.conf --name a1 -Dflume.root.logger=INFO,console
+
+Note that the method for specifying environment variables as was done in prior versions will stil work
+but has been deprecated in favor of using ${env:varName}.
+
+Using a command options file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Instead of specifying all the command options on the command line as of version 1.10.0 command
+options may be placed in either /etc/flume/flume.opts or flume.opts on the classpath. An example
+might be::
+
+  conf-file = example.conf
+  conf-file = override.conf
+  name = a1
 
 Logging raw data
 ~~~~~~~~~~~~~~~~

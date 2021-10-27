@@ -40,7 +40,7 @@ public class TestPollingPropertiesFileConfigurationProvider  {
       TestPollingPropertiesFileConfigurationProvider.class.getClassLoader()
           .getResource("flume-conf.properties").getFile());
 
-  private PollingPropertiesFileConfigurationProvider provider;
+  private UriConfigurationProvider provider;
   private File baseDir;
   private File configFile;
   private EventBus eventBus;
@@ -54,9 +54,9 @@ public class TestPollingPropertiesFileConfigurationProvider  {
     Files.copy(TESTFILE, configFile);
 
     eventBus = new EventBus("test");
-    provider =
-        new PollingPropertiesFileConfigurationProvider("host1",
-            configFile, eventBus, 1);
+    ConfigurationSource source = new FileConfigurationSource(configFile.toURI());
+    provider = new UriConfigurationProvider("host1", Lists.newArrayList(source), null,
+        eventBus, 1);
     provider.start();
     LifecycleController.waitForOneOf(provider, LifecycleState.START_OR_ERROR);
   }
