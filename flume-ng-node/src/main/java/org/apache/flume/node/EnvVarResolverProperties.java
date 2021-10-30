@@ -28,8 +28,13 @@ import java.util.regex.Pattern;
  * A class that extends the Java built-in Properties overriding
  * {@link java.util.Properties#getProperty(String)} to allow ${ENV_VAR_NAME}-style environment
  * variable inclusions
+ * @deprecated Use ${env:key} instead.
  */
+@Deprecated
 public class EnvVarResolverProperties extends Properties {
+
+  private static final long serialVersionUID = -9134232469049352862L;
+
   /**
    * @param input The input string with ${ENV_VAR_NAME}-style environment variable names
    * @return The output string with ${ENV_VAR_NAME} replaced with their environment variable values

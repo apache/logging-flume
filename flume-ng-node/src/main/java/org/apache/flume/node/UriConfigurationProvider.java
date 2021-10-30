@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,19 +18,40 @@
 package org.apache.flume.node;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
-import com.google.common.collect.Lists;
+import org.apache.flume.CounterGroup;
+import org.apache.flume.conf.ConfigurationException;
+import org.apache.flume.conf.FlumeConfiguration;
+import org.apache.flume.lifecycle.LifecycleAware;
+import org.apache.flume.lifecycle.LifecycleState;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.eventbus.EventBus;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
  * <p>
- * A configuration provider that uses properties file for specifying
- * configuration. The configuration files follow the Java properties file syntax
- * rules specified at {@link java.util.Properties#load(java.io.Reader)}. Every
- * configuration value specified in the properties file is prefixed by an
+ * A configuration provider that uses properties for specifying
+ * configuration. The configurations follow the Java properties file syntax
+ * rules specified at {@link Properties#load(java.io.Reader)}. Every
+ * configuration value specified in the properties is prefixed by an
  * <em>Agent Name</em> which helps isolate an individual agent&apos;s namespace.
  * </p>
  * <p>
- * Valid configuration files must observe the following rules for every agent
+ * Valid configurations must observe the following rules for every agent
  * namespace.
  * <ul>
  * <li>For every &lt;agent name&gt; there must be three lists specified that
@@ -94,7 +115,7 @@ import com.google.common.collect.Lists;
  * <li>Sinks not assigned to a group will be assigned to default single sink
  * groups.</li>
  * </ul>
- *
+ * <p>
  * Apart from the above required configuration values, each source, sink or
  * channel can have its own set of arbitrary configuration as required by the
  * implementation. Each of these configuration values are expressed by fully
@@ -157,14 +178,180 @@ import com.google.common.collect.Lists;
  *
  * </p>
  *
- * @see java.util.Properties#load(java.io.Reader)
- * @deprecated Use UriConfigurationProvider.
+ * @see Properties#load(java.io.Reader)
  */
-@Deprecated
-public class PropertiesFileConfigurationProvider extends UriConfigurationProvider {
+public class UriConfigurationProvider extends AbstractConfigurationProvider
+    implements LifecycleAware {
 
-  public PropertiesFileConfigurationProvider(String agentName, File file) {
-    super(agentName, Lists.newArrayList(new FileConfigurationSource(file.toURI())), null, null, 0);
-    super.start();
+  private static final Logger LOGGER = LoggerFactory.getLogger(UriConfigurationProvider.class);
+
+  private final List<ConfigurationSource> configurationSources;
+  private final File backupDirectory;
+  private final EventBus eventBus;
+  private final int interval;
+  private final CounterGroup counterGroup;
+  private LifecycleState lifecycleState = LifecycleState.IDLE;
+  private ScheduledExecutorService executorService;
+
+  public UriConfigurationProvider(String agentName, List<ConfigurationSource> sourceList,
+      String backupDirectory, EventBus eventBus, int pollInterval) {
+    super(agentName);
+    this.configurationSources = sourceList;
+    this.backupDirectory = backupDirectory != null ? new File(backupDirectory) : null;
+    this.eventBus = eventBus;
+    this.interval = pollInterval;
+    counterGroup = new CounterGroup();
+  }
+
+  @Override
+  public void start() {
+    if (eventBus != null && interval > 0) {
+      executorService = Executors.newSingleThreadScheduledExecutor(
+          new ThreadFactoryBuilder().setNameFormat("conf-file-poller-%d")
+              .build());
+
+      WatcherRunnable watcherRunnable = new WatcherRunnable(configurationSources, counterGroup,
+          eventBus);
+
+      executorService.scheduleWithFixedDelay(watcherRunnable, 0, interval,
+          TimeUnit.SECONDS);
+    }
+    lifecycleState = LifecycleState.START;
+  }
+
+  @Override
+  public void stop() {
+    if (executorService != null) {
+      executorService.shutdown();
+      try {
+        if (!executorService.awaitTermination(500, TimeUnit.MILLISECONDS)) {
+          LOGGER.debug("File watcher has not terminated. Forcing shutdown of executor.");
+          executorService.shutdownNow();
+          while (!executorService.awaitTermination(500, TimeUnit.MILLISECONDS)) {
+            LOGGER.debug("Waiting for file watcher to terminate");
+          }
+        }
+      } catch (InterruptedException e) {
+        LOGGER.debug("Interrupted while waiting for file watcher to terminate");
+        Thread.currentThread().interrupt();
+      }
+    }
+    lifecycleState = LifecycleState.STOP;
+  }
+
+  @Override
+  public LifecycleState getLifecycleState() {
+    return lifecycleState;
+  }
+
+  protected List<ConfigurationSource> getConfigurationSources() {
+    return configurationSources;
+  }
+
+  @Override
+  public FlumeConfiguration getFlumeConfiguration() {
+    Map<String, String> configMap = null;
+    Properties properties = new Properties();
+    for (ConfigurationSource configurationSource : configurationSources) {
+      try (InputStream is = configurationSource.getInputStream()) {
+        if (is != null) {
+          switch (configurationSource.getExtension()) {
+            case ConfigurationSource.JSON: case ConfigurationSource.YAML:
+            case ConfigurationSource.XML: {
+              LOGGER.warn("File extension type {} is unsupported",
+                  configurationSource.getExtension());
+              break;
+            }
+            default: {
+              properties.load(is);
+              break;
+            }
+          }
+        }
+      } catch (IOException ioe) {
+        LOGGER.warn("Unable to load properties from {}: {}", configurationSource.getUri(),
+            ioe.getMessage());
+      }
+      if (properties.size() > 0) {
+        configMap = MapResolver.resolveProperties(properties);
+      }
+    }
+    if (configMap != null) {
+      Properties props = new Properties();
+      props.putAll(configMap);
+      if (backupDirectory != null) {
+        if (backupDirectory.mkdirs()) {
+          // This is only being logged to keep Spotbugs happy. We can't ignore the result of mkdirs.
+          LOGGER.debug("Created directories for {}", backupDirectory.toString());
+        }
+        File backupFile = getBackupFile(backupDirectory, getAgentName());
+        try (OutputStream os = new FileOutputStream(backupFile)) {
+          props.store(os, "Backup created at " + LocalDateTime.now().toString());
+        } catch (IOException ioe) {
+          LOGGER.warn("Unable to create backup properties file: {}" + ioe.getMessage());
+        }
+      }
+    } else {
+      if (backupDirectory != null) {
+        File backup = getBackupFile(backupDirectory, getAgentName());
+        if (backup.exists()) {
+          Properties props = new Properties();
+          try (InputStream is = new FileInputStream(backup)) {
+            LOGGER.warn("Unable to access primary configuration. Trying backup");
+            props.load(is);
+            configMap = MapResolver.resolveProperties(props);
+          } catch (IOException ex) {
+            LOGGER.warn("Error reading backup file: {}", ex.getMessage());
+          }
+        }
+      }
+    }
+    if (configMap != null) {
+      return new FlumeConfiguration(configMap);
+    } else {
+      LOGGER.error("No configuration could be found");
+      return null;
+    }
+  }
+
+  private File getBackupFile(File backupDirectory, String agentName) {
+    if (backupDirectory != null) {
+      return new File(backupDirectory, "." + agentName + ".properties");
+    }
+    return null;
+  }
+
+  private class WatcherRunnable implements Runnable {
+
+    private List<ConfigurationSource> configurationSources;
+    private final CounterGroup counterGroup;
+    private final EventBus eventBus;
+
+    public WatcherRunnable(List<ConfigurationSource> sources, CounterGroup counterGroup,
+        EventBus eventBus) {
+      this.configurationSources = sources;
+      this.counterGroup = counterGroup;
+      this.eventBus = eventBus;
+    }
+
+    @Override
+    public void run() {
+      LOGGER.debug("Checking for changes to sources");
+
+      counterGroup.incrementAndGet("uri.checks");
+      try {
+        boolean isModified = false;
+        for (ConfigurationSource source : configurationSources) {
+          if (source.isModified()) {
+            isModified = true;
+          }
+        }
+        if (isModified) {
+          eventBus.post(getConfiguration());
+        }
+      } catch (ConfigurationException ex) {
+        LOGGER.warn("Unable to update configuration: {}", ex.getMessage());
+      }
+    }
   }
 }

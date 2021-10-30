@@ -69,6 +69,9 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+@SuppressFBWarnings("REC_CATCH_EXCEPTION")
 public abstract class AbstractConfigurationProvider implements ConfigurationProvider {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AbstractConfigurationProvider.class);
