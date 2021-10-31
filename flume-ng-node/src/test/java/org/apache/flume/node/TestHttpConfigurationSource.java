@@ -78,7 +78,7 @@ public class TestHttpConfigurationSource {
 
   @Test(expected = ConfigurationException.class)
   public void testBadCrdentials() throws Exception {
-    URI confFile = new URI("http://localhost/flume-conf.properties");
+    URI confFile = new URI("http://localhost:1080/flume-conf.properties");
     AuthorizationProvider authProvider = new BasicAuthorizationProvider("foo", "bar");
     ConfigurationSource source = new HttpConfigurationSource(confFile, authProvider, true);
   }
@@ -118,7 +118,10 @@ public class TestHttpConfigurationSource {
         String authData = headers.nextElement();
         Assert.assertTrue("Not a Basic auth header", authData.startsWith(BASIC));
         String credentials = new String(decoder.decode(authData.substring(BASIC.length())));
-        Assert.assertEquals(expectedCreds, credentials);
+        if (!expectedCreds.equals(credentials)) {
+          response.sendError(401, "Invalid credentials");
+          return;
+        }
       }
       if (request.getServletPath().equals("/flume-conf.properties")) {
         File file = new File("target/test-classes/flume-conf.properties");
