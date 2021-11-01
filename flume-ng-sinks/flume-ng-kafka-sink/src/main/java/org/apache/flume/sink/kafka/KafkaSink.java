@@ -72,7 +72,6 @@ import static org.apache.flume.sink.kafka.KafkaSinkConstants.TOPIC_CONFIG;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.KEY_SERIALIZER_KEY;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.MESSAGE_SERIALIZER_KEY;
 
-
 /**
  * A Flume Sink that can publish messages to Kafka.
  * This is a general implementation that can be used with any Flume agent and
@@ -181,9 +180,9 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
           eventTopic = headers.get(topicHeader);
           if (eventTopic == null) {
             eventTopic = BucketPath.escapeString(topic, event.getHeaders());
-            logger.debug("{} was set to true but header {} was null. Producing to {}" + 
+            logger.debug("{} was set to true but header {} was null. Producing to {}" +
                 " topic instead.",
-                new Object[]{KafkaSinkConstants.ALLOW_TOPIC_OVERRIDE_HEADER, 
+                new Object[]{KafkaSinkConstants.ALLOW_TOPIC_OVERRIDE_HEADER,
                     topicHeader, eventTopic});
           }
         } else {

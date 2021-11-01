@@ -40,7 +40,7 @@ import com.google.common.io.ByteStreams;
 
 /**
  * Flume Interceptor that executes a morphline on events that are intercepted.
- * 
+ *
  * Currently, there is a restriction in that the morphline must not generate more than one output
  * record for each input event.
  */
@@ -48,7 +48,7 @@ public class MorphlineInterceptor implements Interceptor {
 
   private final Context context;
   private final Queue<LocalMorphlineInterceptor> pool = new ConcurrentLinkedQueue<>();
-  
+
   protected MorphlineInterceptor(Context context) {
     Preconditions.checkNotNull(context);
     this.context = context;
@@ -75,7 +75,7 @@ public class MorphlineInterceptor implements Interceptor {
     returnToPool(interceptor);
     return results;
   }
-  
+
   @Override
   public Event intercept(Event event) {
     LocalMorphlineInterceptor interceptor = borrowFromPool();
@@ -87,7 +87,7 @@ public class MorphlineInterceptor implements Interceptor {
   private void returnToPool(LocalMorphlineInterceptor interceptor) {
     pool.add(interceptor);
   }
-  
+
   private LocalMorphlineInterceptor borrowFromPool() {
     LocalMorphlineInterceptor interceptor = pool.poll();
     if (interceptor == null) {
@@ -96,7 +96,6 @@ public class MorphlineInterceptor implements Interceptor {
     return interceptor;
   }
 
-  
   ///////////////////////////////////////////////////////////////////////////////
   // Nested classes:
   ///////////////////////////////////////////////////////////////////////////////
@@ -120,7 +119,6 @@ public class MorphlineInterceptor implements Interceptor {
 
   }
 
-  
   ///////////////////////////////////////////////////////////////////////////////
   // Nested classes:
   ///////////////////////////////////////////////////////////////////////////////
@@ -128,7 +126,7 @@ public class MorphlineInterceptor implements Interceptor {
 
     private final MorphlineHandlerImpl morphline;
     private final Collector collector;
-    
+
     protected LocalMorphlineInterceptor(Context context) {
       this.morphline = new MorphlineHandlerImpl();
       this.collector = new Collector();
@@ -166,13 +164,13 @@ public class MorphlineInterceptor implements Interceptor {
         return null;
       }
       if (results.size() > 1) {
-        throw new FlumeException(getClass().getName() + 
+        throw new FlumeException(getClass().getName() +
             " must not generate more than one output record per input event");
       }
-      Event result = toEvent(results.get(0));    
+      Event result = toEvent(results.get(0));
       return result;
     }
-    
+
     private Event toEvent(Record record) {
       Map<String, String> headers = new HashMap();
       Map<String, Collection<Object>> recordMap = record.getFields().asMap();
@@ -192,7 +190,7 @@ public class MorphlineInterceptor implements Interceptor {
               body = ByteStreams.toByteArray((InputStream) firstValue);
             } catch (IOException e) {
               throw new FlumeException(e);
-            }            
+            }
           } else {
             throw new FlumeException(getClass().getName()
                 + " must non generate attachments that are not a byte[] or InputStream");
@@ -204,19 +202,18 @@ public class MorphlineInterceptor implements Interceptor {
       return EventBuilder.withBody(body, headers);
     }
   }
-  
-  
+
   ///////////////////////////////////////////////////////////////////////////////
   // Nested classes:
   ///////////////////////////////////////////////////////////////////////////////
   private static final class Collector implements Command {
-    
+
     private final List<Record> results = new ArrayList();
-    
+
     public List<Record> getRecords() {
       return results;
     }
-    
+
     public void reset() {
       results.clear();
     }
@@ -225,7 +222,7 @@ public class MorphlineInterceptor implements Interceptor {
     public Command getParent() {
       return null;
     }
-    
+
     @Override
     public void notify(Record notification) {
     }
@@ -236,7 +233,7 @@ public class MorphlineInterceptor implements Interceptor {
       results.add(record);
       return true;
     }
-    
+
   }
 
 }

@@ -159,7 +159,7 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
   @Test(expected = FlumeException.class)
   public void testConfigureWithContextCreateThrowsException() throws Exception {
     when(contextFactory.create(any(Properties.class)))
-      .thenThrow(new NamingException());
+        .thenThrow(new NamingException());
     source.configure(context);
   }
 

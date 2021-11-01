@@ -20,7 +20,6 @@ package org.apache.flume.auth;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
 
-
 /**
  * PrivilegedExecutor provides the ability to execute a PrivilegedAction
  * or a PrivilegedExceptionAction. Implementors of this class, can chose to execute

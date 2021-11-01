@@ -22,7 +22,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public final class WriteOrderOracle {
 
-  private WriteOrderOracle() {}
+  private WriteOrderOracle() {
+  }
 
   private static final AtomicLong WRITER_ORDERER =
       new AtomicLong(System.currentTimeMillis());

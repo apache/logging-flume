@@ -110,7 +110,6 @@ public class KafkaChannel extends BasicChannelSemantics {
   // This isn't a Kafka property per se, but we allow it to be configurable
   private long pollTimeout = DEFAULT_POLL_TIMEOUT;
 
-
   // Track all consumers to close them eventually.
   private final List<ConsumerAndRecords> consumers =
           Collections.synchronizedList(new LinkedList<ConsumerAndRecords>());

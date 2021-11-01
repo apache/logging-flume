@@ -169,7 +169,6 @@ public class LoadBalancingSinkProcessor extends AbstractSinkProcessor {
     return status;
   }
 
-
   /**
    * <p>
    * An interface that allows the LoadBalancingSinkProcessor to use

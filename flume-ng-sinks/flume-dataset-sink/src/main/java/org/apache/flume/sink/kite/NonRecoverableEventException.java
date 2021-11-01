@@ -18,12 +18,11 @@
 
 package org.apache.flume.sink.kite;
 
-
 /**
  * A non-recoverable error trying to deliver the event.
- * 
+ *
  * Non-recoverable event delivery failures include:
- * 
+ *
  * 1. Error parsing the event body thrown from the {@link EntityParser}
  * 2. A schema mismatch between the schema of an event and the schema of the
  *    destination dataset.

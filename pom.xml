@@ -50,7 +50,7 @@ limitations under the License.
     <asynchbase.version>1.7.0</asynchbase.version>
     <avro.version>1.7.7</avro.version>
     <bundle-plugin.version>2.3.7</bundle-plugin.version>
-    <checkstyle.tool.version>8.12</checkstyle.tool.version>
+    <checkstyle.tool.version>8.45.1</checkstyle.tool.version>
     <codehaus.jackson.version>1.9.13</codehaus.jackson.version>
     <commons-cli.version>1.4</commons-cli.version>
     <commons-codec.version>1.8</commons-codec.version>
@@ -94,7 +94,7 @@ limitations under the License.
     <mvn-antrun-plugin.version>1.8</mvn-antrun-plugin.version>
     <mvn-assembly-plugin.version>3.1.0</mvn-assembly-plugin.version>
     <mvn-build-helper-plugin>3.0.0</mvn-build-helper-plugin>
-    <mvn-checkstyle-plugin.version>3.0.0</mvn-checkstyle-plugin.version>
+    <mvn-checkstyle-plugin.version>3.1.2</mvn-checkstyle-plugin.version>
     <mvn-checksum-plugin.version>1.7</mvn-checksum-plugin.version>
     <mvn-clean-plugin.version>3.1.0</mvn-clean-plugin.version>
     <mvn-compiler-plugin.version>3.8.1</mvn-compiler-plugin.version>
@@ -450,7 +450,14 @@ limitations under the License.
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
-        </plugin>
+        <dependencies>
+          <dependency>
+            <groupId>com.puppycrawl.tools</groupId>
+            <artifactId>checkstyle</artifactId>
+            <version>${checkstyle.tool.version}</version>
+          </dependency>
+        </dependencies>
+      </plugin>
       <plugin>
         <groupId>com.github.spotbugs</groupId>
         <artifactId>spotbugs-maven-plugin</artifactId>
