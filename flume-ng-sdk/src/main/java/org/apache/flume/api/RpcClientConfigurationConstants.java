@@ -134,7 +134,6 @@ public final class RpcClientConfigurationConstants {
   public static final String CONFIG_COMPRESSION_LEVEL = "compression-level";
   public static final int DEFAULT_COMPRESSION_LEVEL = 6;
 
-
   /**
    * Configuration constants for SSL support
    */

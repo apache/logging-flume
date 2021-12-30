@@ -53,7 +53,7 @@ public class BlobDeserializer implements EventDeserializer {
 
   private static final int DEFAULT_BUFFER_SIZE = 1024 * 8;
   private static final Logger LOGGER = LoggerFactory.getLogger(BlobDeserializer.class);
-      
+
   protected BlobDeserializer(Context context, ResettableInputStream in) {
     this.in = in;
     this.maxBlobLength = context.getInteger(MAX_BLOB_LENGTH_KEY, MAX_BLOB_LENGTH_DEFAULT);
@@ -89,14 +89,14 @@ public class BlobDeserializer implements EventDeserializer {
         break;
       }
     }
-    
+
     if (blob == null) {
       return null;
     } else {
       return EventBuilder.withBody(blob.toByteArray());
     }
   }
-  
+
   /**
    * Batch BLOB read
    * @param numEvents Maximum number of events to return.
@@ -145,7 +145,6 @@ public class BlobDeserializer implements EventDeserializer {
     }
   }
 
-  
   ///////////////////////////////////////////////////////////////////////////////
   // Nested classes:
   ///////////////////////////////////////////////////////////////////////////////
@@ -153,7 +152,7 @@ public class BlobDeserializer implements EventDeserializer {
   public static class Builder implements EventDeserializer.Builder {
 
     @Override
-    public BlobDeserializer build(Context context, ResettableInputStream in) {      
+    public BlobDeserializer build(Context context, ResettableInputStream in) {
       return new BlobDeserializer(context, in);
     }
 

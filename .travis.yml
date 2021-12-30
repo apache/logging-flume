@@ -15,13 +15,36 @@
 # specific language governing permissions and limitations
 # under the License.
 
-dist: trusty
-language: java
-jdk:
-  - oraclejdk8
+language: generic
+
+env:
+  global:
+    - MAVEN_PROJECTS="flume-ng-core,flume-ng-configuration,flume-ng-sdk,flume-ng-auth,flume-shared,flume-ng-configfilters,build-support,flume-ng-embedded-agent,flume-ng-sinks/flume-ng-kafka-sink,flume-ng-sinks/flume-ng-hbase2-sink,flume-ng-sources/flume-kafka-source"
+
+
+jobs:
+  include:
+    - name: "Linux amd64"
+      arch: amd64
+      dist: bionic
+    - name: "Linux aarch64"
+      arch: arm64-graviton2
+      dist: focal
+      virt: lxd
+      group: edge
+
+cache:
+  directories:
+    - $HOME/.m2
+
 before_install:
   - export MAVEN_SKIP_RC="true" # Travis has settings in /etc/mavenrc. We want to override them. See https://github.com/travis-ci/travis-ci/issues/4613
-install:
-  - # Skip mvn install. See https://docs.travis-ci.com/user/languages/java/
+  - sudo apt update
+  - sudo apt install -y openjdk-8-jdk
+  - export JAVA_HOME="/usr/lib/jvm/java-8-openjdk-${TRAVIS_CPU_ARCH}/"
+  - export PATH="$JAVA_HOME/bin:$PATH"
+
+install: true
+
 script:
-  - MAVEN_OPTS="-Xms512m -Xmx1024m" ./mvnw clean install -DskipTests -B -fae
+  - MAVEN_OPTS="-Xms1024m -Xmx1024m" travis_wait 50 ./mvnw test --quiet --fail-fast --threads 2.0C --projects "${MAVEN_PROJECTS}"

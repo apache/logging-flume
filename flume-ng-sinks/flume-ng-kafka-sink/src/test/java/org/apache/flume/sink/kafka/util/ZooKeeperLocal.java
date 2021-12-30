@@ -20,6 +20,7 @@ package org.apache.flume.sink.kafka.util;
 
 import org.apache.zookeeper.server.ServerConfig;
 import org.apache.zookeeper.server.ZooKeeperServerMain;
+import org.apache.zookeeper.server.admin.AdminServer;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +53,7 @@ public class ZooKeeperLocal {
       public void run() {
         try {
           zooKeeperServer.runFromConfig(configuration);
-        } catch (IOException e) {
+        } catch (IOException | AdminServer.AdminServerException e) {
           logger.error("Zookeeper startup failed.", e);
         }
       }

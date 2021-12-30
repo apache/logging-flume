@@ -88,7 +88,6 @@ public class Log4jAppender extends AppenderSkeleton {
 
   RpcClient rpcClient = null;
 
-
   /**
    * If this constructor is used programmatically rather than from a log4j conf
    * you must set the <tt>port</tt> and <tt>hostname</tt> and then call

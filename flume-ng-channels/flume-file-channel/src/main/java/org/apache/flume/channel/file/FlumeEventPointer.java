@@ -18,7 +18,6 @@
  */
 package org.apache.flume.channel.file;
 
-
 /**
  * Pointer to an Event on disk. This is represented in memory
  * as a long. As such there are methods to convert from this

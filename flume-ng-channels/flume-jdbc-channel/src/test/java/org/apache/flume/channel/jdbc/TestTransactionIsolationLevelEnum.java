@@ -25,7 +25,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-
 /**
  * The purpose of this test is to guard against accidental backward
  * compatibility problem since the string representation so of

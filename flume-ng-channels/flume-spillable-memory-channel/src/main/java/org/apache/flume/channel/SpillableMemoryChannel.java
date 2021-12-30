@@ -525,7 +525,7 @@ public class SpillableMemoryChannel extends FileChannel {
           }
         } catch (ChannelFullException e) { // drop lock & reattempt
           if (i == 0) {
-            Thread.sleep(overflowTimeout * 1000);
+            Thread.sleep(overflowTimeout * 1000L);
           } else {
             throw e;
           }

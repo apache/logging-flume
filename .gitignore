@@ -19,3 +19,4 @@ derby.log
 nb-configuration.xml
 .DS_Store
 /.mvn/wrapper/maven-wrapper.jar
+**/metastore_db

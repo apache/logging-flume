@@ -110,7 +110,6 @@ public class KafkaChannel extends BasicChannelSemantics {
   // This isn't a Kafka property per se, but we allow it to be configurable
   private long pollTimeout = DEFAULT_POLL_TIMEOUT;
 
-
   // Track all consumers to close them eventually.
   private final List<ConsumerAndRecords> consumers =
           Collections.synchronizedList(new LinkedList<ConsumerAndRecords>());
@@ -315,7 +314,7 @@ public class KafkaChannel extends BasicChannelSemantics {
   private void migrateOffsets() {
     try (KafkaZkClient zkClient = KafkaZkClient.apply(zookeeperConnect,
             JaasUtils.isZkSecurityEnabled(), ZK_SESSION_TIMEOUT, ZK_CONNECTION_TIMEOUT, 10,
-            Time.SYSTEM, "kafka.server", "SessionExpireListener");
+            Time.SYSTEM, "kafka.server", "SessionExpireListener", scala.Option.empty());
          KafkaConsumer<String, byte[]> consumer = new KafkaConsumer<>(consumerProps)) {
       Map<TopicPartition, OffsetAndMetadata> kafkaOffsets = getKafkaOffsets(consumer);
       if (kafkaOffsets == null) {
@@ -721,9 +720,9 @@ public class KafkaChannel extends BasicChannelSemantics {
     private String getOffsetMapString() {
       StringBuilder sb = new StringBuilder();
       sb.append(getName()).append(" current offsets map: ");
-      for (TopicPartition tp : offsets.keySet()) {
-        sb.append("p").append(tp.partition()).append("-")
-            .append(offsets.get(tp).offset()).append(" ");
+      for (Map.Entry<TopicPartition, OffsetAndMetadata> entry : offsets.entrySet()) {
+        sb.append("p").append(entry.getKey().partition()).append('-')
+            .append(entry.getValue().offset()).append(' ');
       }
       return sb.toString();
     }

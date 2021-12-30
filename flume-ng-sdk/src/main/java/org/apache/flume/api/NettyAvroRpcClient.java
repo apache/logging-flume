@@ -104,7 +104,7 @@ public class NettyAvroRpcClient extends SSLContextAwareAbstractRpcClient {
    * This constructor is intended to be called from {@link RpcClientFactory}.
    * A call to this constructor should be followed by call to configure().
    */
-  protected NettyAvroRpcClient(){
+  protected NettyAvroRpcClient() {
   }
 
   /**

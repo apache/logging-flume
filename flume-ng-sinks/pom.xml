@@ -26,10 +26,13 @@ limitations under the License.
     <version>1.10.0-SNAPSHOT</version>
   </parent>
 
-  <groupId>org.apache.flume</groupId>
   <artifactId>flume-ng-sinks</artifactId>
   <name>Flume NG Sinks</name>
   <packaging>pom</packaging>
+
+  <properties>
+    <flume.sink.kudu.enabled>true</flume.sink.kudu.enabled>
+  </properties>
 
   <modules>
     <module>flume-hdfs-sink</module>
@@ -39,10 +42,30 @@ limitations under the License.
     <module>flume-ng-elasticsearch-sink</module>
     <module>flume-ng-morphline-solr-sink</module>
     <module>flume-ng-kafka-sink</module>
-    <module>flume-ng-kudu-sink</module>
     <module>flume-http-sink</module>
     <module>flume-dataset-sink</module>
     <module>flume-hive-sink</module>
   </modules>
+
+  <profiles>
+    <profile>
+      <id>x86_64</id>
+      <activation>
+        <os>
+          <arch>amd64</arch>
+        </os>
+        <property>
+          <name>flume.sink.kudu.enabled</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <modules>
+        <!-- kudu-binary.jar is available only for x86_64 systems
+        https://issues.apache.org/jira/browse/KUDU-3264
+        -->
+        <module>flume-ng-kudu-sink</module>
+      </modules>
+    </profile>
+  </profiles>
 
 </project>

@@ -112,7 +112,6 @@ public class ResettableFileInputStream extends ResettableInputStream
   private long syncPosition;
   private int maxCharWidth;
 
-
   /**
    * Whether this instance holds a low surrogate character.
    */

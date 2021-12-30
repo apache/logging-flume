@@ -328,5 +328,6 @@ public final class Uninterruptibles {
 
   // TODO(user): Add support for waitUninterruptibly.
 
-  private Uninterruptibles() {}
+  private Uninterruptibles() {
+  }
 }

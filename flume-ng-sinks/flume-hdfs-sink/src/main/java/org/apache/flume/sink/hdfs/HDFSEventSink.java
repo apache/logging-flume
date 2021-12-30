@@ -85,7 +85,6 @@ public class HDFSEventSink extends AbstractSink implements Configurable, BatchSi
 
   public static final String IN_USE_SUFFIX_PARAM_NAME = "hdfs.inUseSuffix";
 
-
   /**
    * Default length of time we wait for blocking BucketWriter calls
    * before timing out the operation. Intended to prevent server hangs.
@@ -140,7 +139,6 @@ public class HDFSEventSink extends AbstractSink implements Configurable, BatchSi
   private long retryInterval;
   private int tryCount;
   private PrivilegedExecutor privExecutor;
-
 
   /*
    * Extended Java LinkedHashMap for open file handle LRU queue.

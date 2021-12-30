@@ -22,7 +22,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public final class TransactionIDOracle {
 
-  private TransactionIDOracle() {}
+  private TransactionIDOracle() {
+  }
 
   private static final AtomicLong TRANSACTION_ID =
       new AtomicLong(System.currentTimeMillis());

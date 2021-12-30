@@ -75,12 +75,6 @@ limitations under the License.
 
     <dependency>
       <groupId>org.apache.hive</groupId>
-      <artifactId>hive-exec</artifactId>
-      <optional>true</optional>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.hive</groupId>
       <artifactId>hive-metastore</artifactId>
       <optional>true</optional>
     </dependency>

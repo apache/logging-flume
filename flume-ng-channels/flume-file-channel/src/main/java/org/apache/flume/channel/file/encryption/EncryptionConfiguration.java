@@ -19,7 +19,8 @@
 package org.apache.flume.channel.file.encryption;
 
 public class EncryptionConfiguration {
-  private EncryptionConfiguration() {}
+  private EncryptionConfiguration() {
+  }
 
   // prefix before all encryption options
   public static final String ENCRYPTION_PREFIX = "encryption";

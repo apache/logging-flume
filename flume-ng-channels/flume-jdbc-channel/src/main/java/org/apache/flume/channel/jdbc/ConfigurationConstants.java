@@ -130,7 +130,6 @@ public final class ConfigurationConstants {
   public static final String OLD_CONFIG_MAX_CAPACITY =
       PREFIX + CONFIG_MAX_CAPACITY;
 
-
   // Built in constants for JDBC Channel implementation
 
   /**

@@ -41,6 +41,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.commons.lang.mutable.MutableLong;
 import org.apache.flume.Event;
+import org.apache.flume.FlumeException;
 import org.apache.flume.client.avro.ReliableSpoolingFileEventReader.DeletePolicy;
 import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.client.avro.ReliableSpoolingFileEventReader.TrackingPolicy;
@@ -92,7 +93,13 @@ public class TestReliableSpoolingFileEventReader {
 
   @After
   public void tearDown() {
+    setDirWritable(WORK_DIR);
     deleteDir(WORK_DIR);
+  }
+
+  private void setDirWritable(File dir){
+    // make dir writable
+    dir.setWritable(true);
   }
 
   private void deleteDir(File dir) {
@@ -313,6 +320,41 @@ public class TestReliableSpoolingFileEventReader {
         SpoolDirectorySourceConfigurationConstants.DEFAULT_TRACKER_DIR));
     Assert.assertEquals("Expected 0, not: " + trackerFiles, 0,
         trackerFiles.size());
+  }
+
+  @Test(expected = FlumeException.class)
+  public void testRenameTrackingPolicyOnReadonlySpoolDirectory() throws IOException {
+    File workDir = WORK_DIR;
+    if(workDir.setReadOnly()){
+      new ReliableSpoolingFileEventReader.Builder().spoolDirectory(workDir)
+              .trackingPolicy(TrackingPolicy.RENAME.name())
+              .sourceCounter(new SourceCounter("test"))
+              .build();
+    } else {
+      // Operation on directory permission is not supported in current operating system.
+      throw new FlumeException("Operation on directory permission is not supported in current operating system.");
+    }
+  }
+
+  @Test()
+  public void testTrackerDirTrackingPolicyOnReadonlySpoolDirectory() throws IOException {
+    File workDir = WORK_DIR;
+    String trackerDirPath =
+            SpoolDirectorySourceConfigurationConstants.DEFAULT_TRACKER_DIR;
+    File trackerDir = new File(WORK_DIR, trackerDirPath);
+    if (!trackerDir.exists()) {
+      trackerDir.mkdir();
+    }
+    if(workDir.setReadOnly()){
+      new ReliableSpoolingFileEventReader.Builder().spoolDirectory(workDir)
+              .trackingPolicy(TrackingPolicy.TRACKER_DIR.name())
+              .trackerDirPath(trackerDirPath)
+              .sourceCounter(new SourceCounter("test"))
+              .build();
+    } else {
+      // Operation on directory permission is not supported in current operating system.
+      return;
+    }
   }
 
   @Test(expected = NullPointerException.class)

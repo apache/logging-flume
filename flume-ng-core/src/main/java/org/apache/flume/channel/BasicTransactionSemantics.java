@@ -63,12 +63,14 @@ public abstract class BasicTransactionSemantics implements Transaction {
   private State state;
   private long initialThreadId;
 
-  protected void doBegin() throws InterruptedException {}
+  protected void doBegin() throws InterruptedException {
+  }
   protected abstract void doPut(Event event) throws InterruptedException;
   protected abstract Event doTake() throws InterruptedException;
   protected abstract void doCommit() throws InterruptedException;
   protected abstract void doRollback() throws InterruptedException;
-  protected void doClose() {}
+  protected void doClose() {
+  }
 
   protected BasicTransactionSemantics() {
     state = State.NEW;
