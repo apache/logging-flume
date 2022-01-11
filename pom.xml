@@ -64,7 +64,7 @@ limitations under the License.
     <derby.version>10.14.1.0</derby.version>
     <dropwizard-metrics.version>4.1.18</dropwizard-metrics.version>
     <elasticsearch.version>0.90.1</elasticsearch.version>
-    <fasterxml.jackson.version>2.9.10</fasterxml.jackson.version>
+    <fasterxml.jackson.version>2.13.1</fasterxml.jackson.version>
     <fest-reflect.version>1.4</fest-reflect.version>
     <geronimo-jms.version>1.1.1</geronimo-jms.version>
     <gson.version>2.2.2</gson.version>
