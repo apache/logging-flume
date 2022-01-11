@@ -62,11 +62,17 @@ public class KafkaPartitionTestUtil {
                                  int staticPtn, int numMsgs) {
     int numPtns = partitionMap.size();
 
-    if (scenario == PartitionTestScenario.NO_PARTITION_HEADERS && numMsgs % numPtns != 0) {
-      throw new IllegalArgumentException("This method is not designed to work with scenarios" +
+    if (scenario == PartitionTestScenario.NO_PARTITION_HEADERS) {
+      if (numMsgs % numPtns != 0) {
+        throw new IllegalArgumentException("This method is not designed to work with scenarios" +
                 " where there is expected to be a non-even distribution of messages");
+      } else {
+        // Since Kafka 2.4 results with no partition are not distrubuted evenly.
+        int sum = resultsMap.values().stream().mapToInt(List::size).sum();
+        Assert.assertEquals("Incorrect number of messages", numMsgs, sum);
+        return;
+      }
     }
-
     for (int ptn = 0; ptn < numPtns; ptn++) {
       List<Event> expectedResults = partitionMap.get(ptn);
       List<byte[]> actualResults = resultsMap.get(ptn);
@@ -86,9 +92,6 @@ public class KafkaPartitionTestUtil {
         } else {
           Assert.assertEquals(0, actualResults.size());
         }
-      } else if (scenario == PartitionTestScenario.NO_PARTITION_HEADERS) {
-        // Checking for an even distribution
-        Assert.assertEquals(numMsgs / numPtns, actualResults.size());
       }
     }
   }

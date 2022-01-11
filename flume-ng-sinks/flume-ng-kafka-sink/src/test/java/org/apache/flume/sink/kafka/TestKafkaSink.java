@@ -183,7 +183,7 @@ public class TestKafkaSink {
     ConsumerRecords recs = pollConsumerRecords(topic);
     assertNotNull(recs);
     assertTrue(recs.count() > 0);
-    ConsumerRecord consumerRecord = (ConsumerRecord) recs.iterator().next();
+    ConsumerRecord consumerRecord = (ConsumerRecord) recs.records(topic).iterator().next();
     assertEquals(msg, consumerRecord.value());
   }
 
@@ -412,6 +412,8 @@ public class TestKafkaSink {
     return pollConsumerRecords(topic, 20);
   }
 
+  // Note that the topic parameter is completely ignored. If the consumer is subscribed to
+  // multiple topics records for all of them will be returned.
   private ConsumerRecords<String, String> pollConsumerRecords(String topic, int maxIter) {
     ConsumerRecords<String, String> recs = null;
     for (int i = 0; i < maxIter; i++) {

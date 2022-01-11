@@ -891,8 +891,8 @@ public class TestKafkaSource {
     // Commit 10th offset to zookeeper
     if (hasZookeeperOffsets) {
       KafkaZkClient zkClient = KafkaZkClient.apply(kafkaServer.getZkConnectString(),
-              JaasUtils.isZkSecurityEnabled(), 30000, 30000, 10, Time.SYSTEM,
-              "kafka.server", "SessionExpireListener", scala.Option.empty());
+              JaasUtils.isZkSaslEnabled(), 30000, 30000, 10, Time.SYSTEM,
+              "kafka.server", "SessionExpireListener", scala.Option.empty(), scala.Option.empty());
       zkClient.getConsumerOffset(group, new TopicPartition(topic, 0));
       Long offset = tenthOffset + 1;
       zkClient.setOrCreateConsumerOffset(group, new TopicPartition(topic, 0), offset);

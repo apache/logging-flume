@@ -478,8 +478,9 @@ public class KafkaSource extends AbstractPollableSource
    */
   private String lookupBootstrap(String zookeeperConnect, SecurityProtocol securityProtocol) {
     try (KafkaZkClient zkClient = KafkaZkClient.apply(zookeeperConnect,
-            JaasUtils.isZkSecurityEnabled(), ZK_SESSION_TIMEOUT, ZK_CONNECTION_TIMEOUT, 10,
-            Time.SYSTEM, "kafka.server", "SessionExpireListener", scala.Option.empty())) {
+            JaasUtils.isZkSaslEnabled(), ZK_SESSION_TIMEOUT, ZK_CONNECTION_TIMEOUT, 10,
+            Time.SYSTEM, "kafka.server", "SessionExpireListener",
+            scala.Option.empty(), scala.Option.empty())) {
       List<Broker> brokerList =
               JavaConverters.seqAsJavaListConverter(zkClient.getAllBrokersInCluster()).asJava();
       List<BrokerEndPoint> endPoints = brokerList.stream()
@@ -562,8 +563,9 @@ public class KafkaSource extends AbstractPollableSource
 
   private void migrateOffsets(String topicStr) {
     try (KafkaZkClient zkClient = KafkaZkClient.apply(zookeeperConnect,
-            JaasUtils.isZkSecurityEnabled(), ZK_SESSION_TIMEOUT, ZK_CONNECTION_TIMEOUT, 10,
-            Time.SYSTEM, "kafka.server", "SessionExpireListener", scala.Option.empty());
+            JaasUtils.isZkSaslEnabled(), ZK_SESSION_TIMEOUT, ZK_CONNECTION_TIMEOUT, 10,
+            Time.SYSTEM, "kafka.server", "SessionExpireListener",
+            scala.Option.empty(), scala.Option.empty());
          KafkaConsumer<String, byte[]> consumer = new KafkaConsumer<>(kafkaProps)) {
       Map<TopicPartition, OffsetAndMetadata> kafkaOffsets =
           getKafkaOffsets(consumer, topicStr);
