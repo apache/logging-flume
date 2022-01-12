@@ -56,7 +56,7 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 import org.apache.avro.ipc.CallFuture;
-import org.apache.avro.ipc.NettyTransceiver;
+import org.apache.avro.ipc.netty.NettyTransceiver;
 import org.apache.avro.ipc.Transceiver;
 import org.apache.avro.ipc.specific.SpecificRequestor;
 import org.apache.commons.lang.StringUtils;
@@ -704,10 +704,11 @@ public class NettyAvroRpcClient extends SSLContextAwareAbstractRpcClient {
             KeyStore keystore = null;
 
             if (truststore != null) {
-              InputStream truststoreStream = new FileInputStream(truststore);
-              keystore = KeyStore.getInstance(truststoreType);
-              keystore.load(truststoreStream,
-                  truststorePassword != null ? truststorePassword.toCharArray() : null);
+              try (InputStream truststoreStream = new FileInputStream(truststore)) {
+                keystore = KeyStore.getInstance(truststoreType);
+                keystore.load(truststoreStream,
+                    truststorePassword != null ? truststorePassword.toCharArray() : null);
+              }
             }
 
             TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");

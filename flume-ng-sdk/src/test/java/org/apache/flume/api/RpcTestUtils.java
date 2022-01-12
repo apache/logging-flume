@@ -19,8 +19,8 @@
 package org.apache.flume.api;
 
 import junit.framework.Assert;
-import org.apache.avro.AvroRemoteException;
-import org.apache.avro.ipc.NettyServer;
+
+import org.apache.avro.ipc.netty.NettyServer;
 import org.apache.avro.ipc.Responder;
 import org.apache.avro.ipc.Server;
 import org.apache.avro.ipc.specific.SpecificResponder;
@@ -244,7 +244,7 @@ public class RpcTestUtils {
     }
 
     @Override
-    public Status append(AvroFlumeEvent event) throws AvroRemoteException {
+    public Status append(AvroFlumeEvent event) {
       if (failed) {
         logger.debug("Event rejected");
         return Status.FAILED;
@@ -256,8 +256,7 @@ public class RpcTestUtils {
     }
 
     @Override
-    public Status appendBatch(List<AvroFlumeEvent> events) throws
-        AvroRemoteException {
+    public Status appendBatch(List<AvroFlumeEvent> events) {
       if (failed) {
         logger.debug("Event batch rejected");
         return Status.FAILED;
@@ -276,15 +275,14 @@ public class RpcTestUtils {
   public static class OKAvroHandler implements AvroSourceProtocol {
 
     @Override
-    public Status append(AvroFlumeEvent event) throws AvroRemoteException {
+    public Status append(AvroFlumeEvent event) {
       logger.info("OK: Received event from append(): {}",
           new String(event.getBody().array(), Charset.forName("UTF8")));
       return Status.OK;
     }
 
     @Override
-    public Status appendBatch(List<AvroFlumeEvent> events) throws
-        AvroRemoteException {
+    public Status appendBatch(List<AvroFlumeEvent> events) {
       logger.info("OK: Received {} events from appendBatch()",
           events.size());
       return Status.OK;
@@ -298,14 +296,14 @@ public class RpcTestUtils {
   public static class FailedAvroHandler implements AvroSourceProtocol {
 
     @Override
-    public Status append(AvroFlumeEvent event) throws AvroRemoteException {
+    public Status append(AvroFlumeEvent event) {
       logger.info("Failed: Received event from append(): {}",
                   new String(event.getBody().array(), Charset.forName("UTF8")));
       return Status.FAILED;
     }
 
     @Override
-    public Status appendBatch(List<AvroFlumeEvent> events) throws AvroRemoteException {
+    public Status appendBatch(List<AvroFlumeEvent> events) {
       logger.info("Failed: Received {} events from appendBatch()", events.size());
       return Status.FAILED;
     }
@@ -318,14 +316,14 @@ public class RpcTestUtils {
   public static class UnknownAvroHandler implements AvroSourceProtocol {
 
     @Override
-    public Status append(AvroFlumeEvent event) throws AvroRemoteException {
+    public Status append(AvroFlumeEvent event) {
       logger.info("Unknown: Received event from append(): {}",
                   new String(event.getBody().array(), Charset.forName("UTF8")));
       return Status.UNKNOWN;
     }
 
     @Override
-    public Status appendBatch(List<AvroFlumeEvent> events) throws AvroRemoteException {
+    public Status appendBatch(List<AvroFlumeEvent> events) {
       logger.info("Unknown: Received {} events from appendBatch()",
                   events.size());
       return Status.UNKNOWN;
@@ -336,19 +334,37 @@ public class RpcTestUtils {
   /**
    * A service that logs receipt of the request and then throws an exception
    */
-  public static class ThrowingAvroHandler implements AvroSourceProtocol {
+  public static class ThrowingAvroHandler
+           implements AvroSourceProtocol.Callback {
 
     @Override
-    public Status append(AvroFlumeEvent event) throws AvroRemoteException {
+    public void append(AvroFlumeEvent event,
+                       org.apache.avro.ipc.Callback<Status> callback)
+            throws java.io.IOException {
       logger.info("Throwing: Received event from append(): {}",
                   new String(event.getBody().array(), Charset.forName("UTF8")));
-      throw new AvroRemoteException("Handler smash!");
+      throw new java.io.IOException("Handler smash!");
     }
 
     @Override
-    public Status appendBatch(List<AvroFlumeEvent> events) throws AvroRemoteException {
+    public Status append(AvroFlumeEvent event) {
+      logger.info("Throwing unavailable: Received event from append(): {}",
+             new String(event.getBody().array(), Charset.forName("UTF8")));
+      return null;
+    }
+
+    @Override
+    public void appendBatch(List<AvroFlumeEvent> events,
+                       org.apache.avro.ipc.Callback<Status> callback)
+            throws java.io.IOException {
       logger.info("Throwing: Received {} events from appendBatch()", events.size());
-      throw new AvroRemoteException("Handler smash!");
+      throw new java.io.IOException("Handler smash!");
+    }
+
+    @Override
+    public Status appendBatch(List<AvroFlumeEvent> events) {
+      logger.info("Throwing unavailable: Received {} events from appendBatch()", events.size());
+      return null;
     }
   }
 

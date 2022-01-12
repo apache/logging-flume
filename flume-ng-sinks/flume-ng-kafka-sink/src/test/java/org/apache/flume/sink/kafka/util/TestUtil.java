@@ -19,7 +19,7 @@
 package org.apache.flume.sink.kafka.util;
 
 import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.DescribeTopicsResult;
+import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -165,14 +165,19 @@ public class TestUtil {
       NewTopic newTopic = new NewTopic(topicName, numPartitions, (short) 1);
       newTopics.add(newTopic);
     }
-    getAdminClient().createTopics(newTopics);
-
-    //the following lines are a bit of black magic to ensure the topic is ready when we return
-    DescribeTopicsResult dtr = getAdminClient().describeTopics(topicNames);
-    try {
-      dtr.all().get(10, TimeUnit.SECONDS);
-    } catch (Exception e) {
-      throw new RuntimeException("Error getting topic info", e);
+    CreateTopicsResult result = getAdminClient().createTopics(newTopics);
+    Throwable throwable = null;
+    for (int i = 0; i < 10; ++i) {
+      try {
+        result.all().get(1, TimeUnit.SECONDS);
+        throwable = null;
+        break;
+      } catch (Exception e) {
+        throwable = e;
+      }
+    }
+    if (throwable != null) {
+      throw new RuntimeException("Error getting topic info", throwable);
     }
   }
   public void deleteTopic(String topicName) {

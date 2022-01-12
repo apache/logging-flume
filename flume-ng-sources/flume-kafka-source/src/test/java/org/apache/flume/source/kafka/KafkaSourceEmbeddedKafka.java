@@ -20,7 +20,7 @@ import kafka.server.KafkaConfig;
 import kafka.server.KafkaServerStartable;
 import org.apache.commons.io.FileUtils;
 import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.DescribeTopicsResult;
+import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -141,14 +141,19 @@ public class KafkaSourceEmbeddedKafka {
   public void createTopic(String topicName, int numPartitions) {
     AdminClient adminClient = getAdminClient();
     NewTopic newTopic = new NewTopic(topicName, numPartitions, (short) 1);
-    adminClient.createTopics(Collections.singletonList(newTopic));
-
-    //the following lines are a bit of black magic to ensure the topic is ready when we return
-    DescribeTopicsResult dtr = adminClient.describeTopics(Collections.singletonList(topicName));
-    try {
-      dtr.all().get(10, TimeUnit.SECONDS);
-    } catch (Exception e) {
-      throw new RuntimeException("Error getting topic info", e);
+    CreateTopicsResult result = adminClient.createTopics(Collections.singletonList(newTopic));
+    Throwable throwable = null;
+    for (int i = 0; i < 10; ++i) {
+      try {
+        result.all().get(1, TimeUnit.SECONDS);
+        throwable = null;
+        break;
+      } catch (Exception e) {
+        throwable = e;
+      }
+    }
+    if (throwable != null) {
+      throw new RuntimeException("Error getting topic info", throwable);
     }
   }
 

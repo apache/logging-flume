@@ -30,8 +30,8 @@ limitations under the License.
 
   <properties>
     <!-- TODO fix spotbugs/pmd violations -->
-    <spotbugs.maxAllowedViolations>67</spotbugs.maxAllowedViolations>
-    <pmd.maxAllowedViolations>131</pmd.maxAllowedViolations>
+    <spotbugs.maxAllowedViolations>69</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>170</pmd.maxAllowedViolations>
   </properties>
 
   <profiles>
@@ -227,7 +227,7 @@ limitations under the License.
 
     <dependency>
       <groupId>org.apache.avro</groupId>
-      <artifactId>avro-ipc</artifactId>
+      <artifactId>avro-ipc-netty</artifactId>
     </dependency>
 
     <dependency>
@@ -239,6 +239,11 @@ limitations under the License.
       <groupId>org.apache.thrift</groupId>
       <artifactId>libthrift</artifactId>
     </dependency>
+
+	  <dependency>
+	    <groupId>commons-lang</groupId>
+	    <artifactId>commons-lang</artifactId>
+	  </dependency>
 
   </dependencies>
 </project>

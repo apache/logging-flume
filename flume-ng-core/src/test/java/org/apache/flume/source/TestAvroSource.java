@@ -39,7 +39,8 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
-import org.apache.avro.ipc.NettyTransceiver;
+import org.apache.avro.AvroRuntimeException;
+import org.apache.avro.ipc.netty.NettyTransceiver;
 import org.apache.avro.ipc.specific.SpecificRequestor;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
@@ -218,13 +219,13 @@ public class TestAvroSource {
     doRequest(true, true, 9);
   }
 
-  @Test(expected = org.apache.avro.AvroRemoteException.class)
+  @Test(expected = org.apache.avro.AvroRuntimeException.class)
   public void testRequestWithCompressionOnServerOnly() throws InterruptedException, IOException {
     //This will fail because both client and server need compression on
     doRequest(true, false, 6);
   }
 
-  @Test(expected = org.apache.avro.AvroRemoteException.class)
+  @Test(expected = org.apache.avro.AvroRuntimeException.class)
   public void testRequestWithCompressionOnClientOnly() throws InterruptedException, IOException {
     //This will fail because both client and server need compression on
     doRequest(false, true, 6);
@@ -585,7 +586,7 @@ public class TestAvroSource {
       Status status = client.append(avroEvent);
       logger.info("Client appended");
       Assert.assertEquals(Status.OK, status);
-    } catch (IOException e) {
+    } catch (IOException | AvroRuntimeException e) {
       Assert.assertTrue("Should have been allowed: " + ruleDefinition,
           !eventShouldBeAllowed);
       return;

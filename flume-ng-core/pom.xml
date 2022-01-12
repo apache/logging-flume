@@ -32,7 +32,7 @@ limitations under the License.
   <properties>
     <!-- TODO fix spotbugs violations -->
     <spotbugs.maxAllowedViolations>115</spotbugs.maxAllowedViolations>
-    <pmd.maxAllowedViolations>112</pmd.maxAllowedViolations>
+    <pmd.maxAllowedViolations>121</pmd.maxAllowedViolations>
   </properties>
 
   <build>
@@ -324,12 +324,7 @@ limitations under the License.
 
     <dependency>
       <groupId>org.apache.avro</groupId>
-      <artifactId>avro-ipc</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>io.netty</groupId>
-      <artifactId>netty</artifactId>
+      <artifactId>avro-ipc-netty</artifactId>
     </dependency>
 
     <dependency>

@@ -28,8 +28,7 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.avro.AvroRemoteException;
-import org.apache.avro.ipc.NettyServer;
+import org.apache.avro.ipc.netty.NettyServer;
 import org.apache.avro.ipc.Responder;
 import org.apache.avro.ipc.specific.SpecificResponder;
 import org.apache.flume.Event;
@@ -204,13 +203,12 @@ public class TestEmbeddedAgent {
       return null;
     }
     @Override
-    public Status append(AvroFlumeEvent event) throws AvroRemoteException {
+    public Status append(AvroFlumeEvent event) {
       eventQueue.add(event);
       return Status.OK;
     }
     @Override
-    public Status appendBatch(List<AvroFlumeEvent> events)
-        throws AvroRemoteException {
+    public Status appendBatch(List<AvroFlumeEvent> events) {
       Preconditions.checkState(eventQueue.addAll(events));
       return Status.OK;
     }

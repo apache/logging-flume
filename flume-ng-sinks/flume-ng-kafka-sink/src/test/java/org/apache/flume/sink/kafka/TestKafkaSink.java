@@ -55,6 +55,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -183,8 +184,15 @@ public class TestKafkaSink {
     ConsumerRecords recs = pollConsumerRecords(topic);
     assertNotNull(recs);
     assertTrue(recs.count() > 0);
-    ConsumerRecord consumerRecord = (ConsumerRecord) recs.records(topic).iterator().next();
-    assertEquals(msg, consumerRecord.value());
+    Iterator<ConsumerRecord> iter = recs.records(topic).iterator();
+    boolean match = false;
+    while (iter.hasNext()) {
+      if (msg.equals(iter.next().value())) {
+        match = true;
+        break;
+      }
+    }
+    assertTrue("No message matches " + msg, match);
   }
 
   @Test

@@ -46,7 +46,7 @@
   <Loggers>
     <Logger name="org.apache.flume.lifecycle" level="info"/>
     <Logger name="org.jboss" level="WARN"/>
-    <Logger name="org.apache.avro.ipc.NettyTransceiver" level="WARN"/>
+    <Logger name="org.apache.avro.ipc.netty.NettyTransceiver" level="WARN"/>
     <Logger name="org.apache.hadoop" level="INFO"/>
     <Logger name="org.apache.hadoop.hive" level="ERROR"/>
     <Root level="INFO">
