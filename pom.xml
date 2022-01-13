@@ -117,8 +117,6 @@ limitations under the License.
     <system-rules.version>1.17.0</system-rules.version>
     <thrift.version>0.14.1</thrift.version>
     <twitter4j.version>3.0.3</twitter4j.version>
-    <xalan.version>2.7.2</xalan.version>
-    <xerces.version>2.9.1</xerces.version>
     <wiremock.version>1.53</wiremock.version>
     <zookeeper.version>3.6.2</zookeeper.version>
   </properties>
@@ -1432,22 +1430,6 @@ limitations under the License.
         <version>${curator.version}</version>
         <scope>test</scope>
       </dependency>
-
-      <!-- Dependency for Hive Sink  -->
-      <dependency>
-        <groupId>xalan</groupId>
-        <artifactId>serializer</artifactId>
-        <version>${xalan.version}</version>
-        <scope>runtime</scope>
-      </dependency>
-
-      <dependency>
-        <groupId>xalan</groupId>
-        <artifactId>xalan</artifactId>
-        <scope>runtime</scope>
-        <version>${xalan.version}</version>
-      </dependency>
-
 
       <dependency>
         <groupId>org.apache.hadoop</groupId>
