@@ -51,7 +51,6 @@ limitations under the License.
     <avro.version>1.9.2</avro.version>
     <bundle-plugin.version>2.3.7</bundle-plugin.version>
     <checkstyle.tool.version>8.45.1</checkstyle.tool.version>
-    <codehaus.jackson.version>1.9.13</codehaus.jackson.version>
     <commons-cli.version>1.4</commons-cli.version>
     <commons-codec.version>1.8</commons-codec.version>
     <commons-collections.version>3.2.2</commons-collections.version>
@@ -945,18 +944,6 @@ limitations under the License.
         <groupId>org.apache.derby</groupId>
         <artifactId>derby</artifactId>
         <version>${derby.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.codehaus.jackson</groupId>
-        <artifactId>jackson-core-asl</artifactId>
-        <version>${codehaus.jackson.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.codehaus.jackson</groupId>
-        <artifactId>jackson-mapper-asl</artifactId>
-        <version>${codehaus.jackson.version}</version>
       </dependency>
 
       <dependency>
