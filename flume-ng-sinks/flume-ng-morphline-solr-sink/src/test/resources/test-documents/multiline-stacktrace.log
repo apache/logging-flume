@@ -1,0 +1,30 @@
+juil. 25, 2012 10:49:46 AM hudson.triggers.SafeTimerTask run
+Grave: Timer task com.base2services.jenkins.SqsQueueHandler@32eea79d failed
+com.amazonaws.AmazonClientException: Unable to calculate a request signature: Unable to calculate a request signature: Empty key
+  at com.amazonaws.auth.AbstractAWSSigner.signAndBase64Encode(AbstractAWSSigner.java:71)
+  at com.amazonaws.auth.AbstractAWSSigner.signAndBase64Encode(AbstractAWSSigner.java:55)
+  at com.amazonaws.auth.QueryStringSigner.sign(QueryStringSigner.java:83)
+  at com.amazonaws.auth.QueryStringSigner.sign(QueryStringSigner.java:46)
+  at com.amazonaws.http.AmazonHttpClient.executeHelper(AmazonHttpClient.java:238)
+  at com.amazonaws.http.AmazonHttpClient.execute(AmazonHttpClient.java:170)
+  at com.amazonaws.services.sqs.AmazonSQSClient.invoke(AmazonSQSClient.java:776)
+  at com.amazonaws.services.sqs.AmazonSQSClient.listQueues(AmazonSQSClient.java:564)
+  at com.amazonaws.services.sqs.AmazonSQSClient.listQueues(AmazonSQSClient.java:732)
+  at com.base2services.jenkins.SqsProfile.createQueue(SqsProfile.java:72)
+  at com.base2services.jenkins.SqsProfile.getQueueUrl(SqsProfile.java:62)
+  at com.base2services.jenkins.SqsQueueHandler.doRun(SqsQueueHandler.java:37)
+  at hudson.triggers.SafeTimerTask.run(SafeTimerTask.java:54)
+  at java.util.TimerThread.mainLoop(Timer.java:555)
+  at java.util.TimerThread.run(Timer.java:505)
+Caused by: com.amazonaws.AmazonClientException: Unable to calculate a request signature: Empty key
+  at com.amazonaws.auth.AbstractAWSSigner.sign(AbstractAWSSigner.java:90)
+  at com.amazonaws.auth.AbstractAWSSigner.signAndBase64Encode(AbstractAWSSigner.java:68)
+  ... 14 more
+Caused by: java.lang.IllegalArgumentException: Empty key
+  at javax.crypto.spec.SecretKeySpec.<init>(SecretKeySpec.java:96)
+  at com.amazonaws.auth.AbstractAWSSigner.sign(AbstractAWSSigner.java:87)
+  ... 15 more
+
+
+juil. 25, 2012 10:49:54 AM hudson.slaves.SlaveComputer tryReconnect
+Infos: Attempting to reconnect CentosVagrant

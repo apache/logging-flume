@@ -1,0 +1,9 @@
+Started GET /foo
+  Foo Started GET as HTML
+Completed 401 Unauthorized in 0ms
+
+
+Started GET /bar
+  Bar as HTML
+Completed 200 OK in 339ms
+Started GET /baz

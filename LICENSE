@@ -247,6 +247,10 @@ For
  joda-time-<version>.jar:
  kafka_2.11-<version>.jar:
  kafka-clients-<version>.jar:
+ kite-data-core-<version>.jar:
+ kite-data-hbase-<version>.jar:
+ kite-data-hive-<version>.jar:
+ kite-hadoop-compatibility-<version>.jar:
  libthrift-<version>.jar:
  log4j-1.2-api-<version>.jar:
  log4j-api-<version>.jar:
@@ -258,6 +262,15 @@ For
  mina-core-<version>.jar:
  netty-<version>.jar:
  opencsv-<version>.jar:
+ parquet-avro-<version>.jar:
+ parquet-column-<version>.jar:
+ parquet-common-<version>.jar:
+ parquet-encoding-<version>.jar:
+ parquet-format-<version>.jar:
+ parquet-generator-<version>.jar:
+ parquet-hadoop-<version>.jar:
+ parquet-hive-bundle-<version>.jar:
+ parquet-jackson-<version>.jar:
  serializer-<version>.jar:
  snappy-java-<version>.jar:
  twitter4j-core-<version>.jar:
