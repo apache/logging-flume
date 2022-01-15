@@ -66,8 +66,18 @@ limitations under the License.
             <groupId>org.apache.hadoop</groupId>
            <artifactId>hadoop-common</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>com.twitter</groupId>
+          <artifactId>parquet-avro</artifactId>
+        </exclusion>
       </exclusions>
       <type>pom</type>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.parquet</groupId>
+      <artifactId>parquet-avro</artifactId>
+      <scope>runtime</scope>
       <optional>true</optional>
     </dependency>
 

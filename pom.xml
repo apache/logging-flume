@@ -107,6 +107,7 @@ limitations under the License.
     <mvn-surefire-plugin.version>2.22.2</mvn-surefire-plugin.version>
     <netty.version>3.10.6.Final</netty.version>
     <netty-all.version>4.1.72.Final</netty-all.version>
+    <parquet.version>1.11.2</parquet.version>
     <protobuf.version>2.5.0</protobuf.version>
     <rat.version>0.12</rat.version>
     <scala.version>2.13</scala.version>
@@ -1714,6 +1715,30 @@ limitations under the License.
         <groupId>io.dropwizard.metrics</groupId>
         <artifactId>metrics-core</artifactId>
         <version>${dropwizard-metrics.version}</version>
+      </dependency>
+
+      <!-- Required for the morphlines-solr-sink via the kite-sdk -->
+      <dependency>
+        <groupId>org.apache.parquet</groupId>
+        <artifactId>parquet-hive-bundle</artifactId>
+        <version>${parquet.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-core</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.parquet</groupId>
+        <artifactId>parquet-avro</artifactId>
+        <version>${parquet.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-core</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>
