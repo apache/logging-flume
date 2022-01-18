@@ -33,11 +33,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -48,7 +46,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-
+import java.util.function.Consumer;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManager;
@@ -56,8 +54,8 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 import org.apache.avro.ipc.CallFuture;
-import org.apache.avro.ipc.netty.NettyTransceiver;
 import org.apache.avro.ipc.Transceiver;
+import org.apache.avro.ipc.netty.NettyTransceiver;
 import org.apache.avro.ipc.specific.SpecificRequestor;
 import org.apache.commons.lang.StringUtils;
 import org.apache.flume.Event;
@@ -66,14 +64,18 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.socket.SocketChannel;
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-import org.jboss.netty.handler.codec.compression.ZlibDecoder;
-import org.jboss.netty.handler.codec.compression.ZlibEncoder;
-import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.handler.codec.LengthFieldPrepender;
+import io.netty.handler.codec.bytes.ByteArrayDecoder;
+import io.netty.handler.codec.bytes.ByteArrayEncoder;
+import io.netty.handler.codec.compression.ZlibCodecFactory;
+import io.netty.handler.codec.compression.ZlibEncoder;
+import io.netty.handler.ssl.SslHandler;
 
 /**
  * Avro/Netty implementation of {@link RpcClient}.
@@ -94,8 +96,7 @@ public class NettyAvroRpcClient extends SSLContextAwareAbstractRpcClient {
 
   private Transceiver transceiver;
   private AvroSourceProtocol.Callback avroClient;
-  private static final Logger logger = LoggerFactory
-      .getLogger(NettyAvroRpcClient.class);
+  private static final Logger logger = LoggerFactory.getLogger(NettyAvroRpcClient.class);
   private boolean enableDeflateCompression;
   private int compressionLevel;
   private int maxIoWorkers;
@@ -124,54 +125,15 @@ public class NettyAvroRpcClient extends SSLContextAwareAbstractRpcClient {
   private void connect(long timeout, TimeUnit tu) throws FlumeException {
     callTimeoutPool = Executors.newCachedThreadPool(
         new TransceiverThreadFactory("Flume Avro RPC Client Call Invoker"));
-    NioClientSocketChannelFactory socketChannelFactory = null;
 
     try {
 
-      ExecutorService bossExecutor =
-          Executors.newCachedThreadPool(new TransceiverThreadFactory(
-              "Avro " + NettyTransceiver.class.getSimpleName() + " Boss"));
-      ExecutorService workerExecutor =
-          Executors.newCachedThreadPool(new TransceiverThreadFactory(
-              "Avro " + NettyTransceiver.class.getSimpleName() + " I/O Worker"));
-
-      if (enableDeflateCompression || enableSsl) {
-        if (maxIoWorkers >= 1) {
-          socketChannelFactory = new SSLCompressionChannelFactory(
-            bossExecutor, workerExecutor,
-            enableDeflateCompression, enableSsl, trustAllCerts,
-            compressionLevel, truststore, truststorePassword, truststoreType,
-            excludeProtocols, includeProtocols, excludeCipherSuites, includeCipherSuites,
-            maxIoWorkers);
-        } else {
-          socketChannelFactory = new SSLCompressionChannelFactory(
-            bossExecutor, workerExecutor,
-            enableDeflateCompression, enableSsl, trustAllCerts,
-            compressionLevel, truststore, truststorePassword, truststoreType,
-            excludeProtocols, includeProtocols, excludeCipherSuites, includeCipherSuites);
-        }
-      } else {
-        if (maxIoWorkers >= 1) {
-          socketChannelFactory = new NioClientSocketChannelFactory(
-              bossExecutor, workerExecutor, maxIoWorkers);
-        } else {
-          socketChannelFactory = new NioClientSocketChannelFactory(
-              bossExecutor, workerExecutor);
-        }
-      }
-
-      transceiver = new NettyTransceiver(this.address,
-          socketChannelFactory,
-          tu.toMillis(timeout));
-      avroClient =
-          SpecificRequestor.getClient(AvroSourceProtocol.Callback.class,
-          transceiver);
+      transceiver = new NettyTransceiver(this.address, Math.toIntExact(tu.toMillis(timeout)),
+              new SslChannelInitializer());
+      avroClient = SpecificRequestor.getClient(AvroSourceProtocol.Callback.class, transceiver);
     } catch (Throwable t) {
       if (callTimeoutPool != null) {
         callTimeoutPool.shutdownNow();
-      }
-      if (socketChannelFactory != null) {
-        socketChannelFactory.releaseExternalResources();
       }
       if (t instanceof IOException) {
         throw new FlumeException(this + ": RPC connection error", t);
@@ -192,13 +154,10 @@ public class NettyAvroRpcClient extends SSLContextAwareAbstractRpcClient {
     if (callTimeoutPool != null) {
       callTimeoutPool.shutdown();
       try {
-        if (!callTimeoutPool.awaitTermination(requestTimeout,
-            TimeUnit.MILLISECONDS)) {
+        if (!callTimeoutPool.awaitTermination(requestTimeout, TimeUnit.MILLISECONDS)) {
           callTimeoutPool.shutdownNow();
-          if (!callTimeoutPool.awaitTermination(requestTimeout,
-              TimeUnit.MILLISECONDS)) {
-            logger.warn(this + ": Unable to cleanly shut down call timeout " +
-                "pool");
+          if (!callTimeoutPool.awaitTermination(requestTimeout, TimeUnit.MILLISECONDS)) {
+            logger.warn(this + ": Unable to cleanly shut down call timeout pool");
           }
         }
       } catch (InterruptedException ex) {
@@ -212,7 +171,9 @@ public class NettyAvroRpcClient extends SSLContextAwareAbstractRpcClient {
       callTimeoutPool = null;
     }
     try {
-      transceiver.close();
+      if (transceiver != null) {
+        transceiver.close();
+      }
     } catch (IOException ex) {
       throw new FlumeException(this + ": Error closing transceiver.", ex);
     } finally {
@@ -223,8 +184,7 @@ public class NettyAvroRpcClient extends SSLContextAwareAbstractRpcClient {
 
   @Override
   public String toString() {
-    return "NettyAvroRpcClient { host: " + address.getHostName() + ", port: " +
-        address.getPort() + " }";
+    return "NettyAvroRpcClient { host: " + address.getHostName() + ", port: " + address.getPort() + " }";
   }
 
   @Override
@@ -275,8 +235,7 @@ public class NettyAvroRpcClient extends SSLContextAwareAbstractRpcClient {
     try {
       handshake.get(connectTimeout, TimeUnit.MILLISECONDS);
     } catch (TimeoutException ex) {
-      throw new EventDeliveryException(this + ": Handshake timed out after " +
-          connectTimeout + " ms", ex);
+      throw new EventDeliveryException(this + ": Handshake timed out after " + connectTimeout + " ms", ex);
     } catch (InterruptedException ex) {
       throw new EventDeliveryException(this + ": Interrupted in handshake", ex);
     } catch (ExecutionException ex) {
@@ -383,14 +342,12 @@ public class NettyAvroRpcClient extends SSLContextAwareAbstractRpcClient {
     try {
       Status status = callFuture.get(timeout, tu);
       if (status != Status.OK) {
-        throw new EventDeliveryException(this + ": Avro RPC call returned " +
-            "Status: " + status);
+        throw new EventDeliveryException(this + ": Avro RPC call returned Status: " + status);
       }
     } catch (CancellationException ex) {
       throw new EventDeliveryException(this + ": RPC future was cancelled", ex);
     } catch (ExecutionException ex) {
-      throw new EventDeliveryException(this + ": Exception thrown from " +
-          "remote handler", ex);
+      throw new EventDeliveryException(this + ": Exception thrown from remote handler", ex);
     } catch (TimeoutException ex) {
       throw new EventDeliveryException(this + ": RPC request timed out", ex);
     } catch (InterruptedException ex) {
@@ -427,8 +384,7 @@ public class NettyAvroRpcClient extends SSLContextAwareAbstractRpcClient {
     try {
       ConnState curState = connState;
       if (curState != ConnState.READY) {
-        throw new EventDeliveryException("RPC failed, client in an invalid " +
-            "state: " + curState);
+        throw new EventDeliveryException("RPC failed, client in an invalid state: " + curState);
       }
     } finally {
       stateLock.unlock();
@@ -438,10 +394,8 @@ public class NettyAvroRpcClient extends SSLContextAwareAbstractRpcClient {
   /**
    * Helper function to convert a map of String to a map of CharSequence.
    */
-  private static Map<CharSequence, CharSequence> toCharSeqMap(
-      Map<String, String> stringMap) {
-    Map<CharSequence, CharSequence> charSeqMap =
-        new HashMap<CharSequence, CharSequence>();
+  private static Map<CharSequence, CharSequence> toCharSeqMap(Map<String, String> stringMap) {
+    Map<CharSequence, CharSequence> charSeqMap = new HashMap<>();
     for (Map.Entry<String, String> entry : stringMap.entrySet()) {
       charSeqMap.put(entry.getKey(), entry.getValue());
     }
@@ -462,7 +416,6 @@ public class NettyAvroRpcClient extends SSLContextAwareAbstractRpcClient {
     INIT, READY, DEAD
   }
 
-
   /**
    * <p>
    * Configure the actual client using the properties.
@@ -476,13 +429,11 @@ public class NettyAvroRpcClient extends SSLContextAwareAbstractRpcClient {
    * @return
    */
   @Override
-  public synchronized void configure(Properties properties)
-      throws FlumeException {
+  public synchronized void configure(Properties properties) throws FlumeException {
     stateLock.lock();
     try {
       if (connState == ConnState.READY || connState == ConnState.DEAD) {
-        throw new FlumeException("This client was already configured, " +
-            "cannot reconfigure.");
+        throw new FlumeException("This client was already configured, cannot reconfigure.");
       }
     } finally {
       stateLock.unlock();
@@ -491,8 +442,7 @@ public class NettyAvroRpcClient extends SSLContextAwareAbstractRpcClient {
     batchSize = parseBatchSize(properties);
 
     // host and port
-    String hostNames = properties.getProperty(
-        RpcClientConfigurationConstants.CONFIG_HOSTS);
+    String hostNames = properties.getProperty(RpcClientConfigurationConstants.CONFIG_HOSTS);
     String[] hosts = null;
     if (hostNames != null && !hostNames.isEmpty()) {
       hosts = hostNames.split("\\s+");
@@ -524,18 +474,15 @@ public class NettyAvroRpcClient extends SSLContextAwareAbstractRpcClient {
     this.address = new InetSocketAddress(hostAndPort[0], port);
 
     // connect timeout
-    connectTimeout =
-        RpcClientConfigurationConstants.DEFAULT_CONNECT_TIMEOUT_MILLIS;
+    connectTimeout = RpcClientConfigurationConstants.DEFAULT_CONNECT_TIMEOUT_MILLIS;
     String strConnTimeout = properties.getProperty(
         RpcClientConfigurationConstants.CONFIG_CONNECT_TIMEOUT);
     if (strConnTimeout != null && strConnTimeout.trim().length() > 0) {
       try {
         connectTimeout = Long.parseLong(strConnTimeout);
         if (connectTimeout < 1000) {
-          logger.warn("Connection timeout specified less than 1s. " +
-              "Using default value instead.");
-          connectTimeout =
-              RpcClientConfigurationConstants.DEFAULT_CONNECT_TIMEOUT_MILLIS;
+          logger.warn("Connection timeout specified less than 1s. Using default value instead.");
+          connectTimeout = RpcClientConfigurationConstants.DEFAULT_CONNECT_TIMEOUT_MILLIS;
         }
       } catch (NumberFormatException ex) {
         logger.error("Invalid connect timeout specified: " + strConnTimeout);
@@ -543,18 +490,14 @@ public class NettyAvroRpcClient extends SSLContextAwareAbstractRpcClient {
     }
 
     // request timeout
-    requestTimeout =
-        RpcClientConfigurationConstants.DEFAULT_REQUEST_TIMEOUT_MILLIS;
-    String strReqTimeout = properties.getProperty(
-        RpcClientConfigurationConstants.CONFIG_REQUEST_TIMEOUT);
+    requestTimeout = RpcClientConfigurationConstants.DEFAULT_REQUEST_TIMEOUT_MILLIS;
+    String strReqTimeout = properties.getProperty(RpcClientConfigurationConstants.CONFIG_REQUEST_TIMEOUT);
     if  (strReqTimeout != null && strReqTimeout.trim().length() > 0) {
       try {
         requestTimeout = Long.parseLong(strReqTimeout);
         if (requestTimeout < 1000) {
-          logger.warn("Request timeout specified less than 1s. " +
-              "Using default value instead.");
-          requestTimeout =
-              RpcClientConfigurationConstants.DEFAULT_REQUEST_TIMEOUT_MILLIS;
+          logger.warn("Request timeout specified less than 1s. Using default value instead.");
+          requestTimeout = RpcClientConfigurationConstants.DEFAULT_REQUEST_TIMEOUT_MILLIS;
         }
       } catch (NumberFormatException ex) {
         logger.error("Invalid request timeout specified: " + strReqTimeout);
@@ -630,132 +573,86 @@ public class NettyAvroRpcClient extends SSLContextAwareAbstractRpcClient {
     }
   }
 
-  /**
-   * Factory of SSL-enabled client channels
-   * Copied from Avro's org.apache.avro.ipc.TestNettyServerWithSSL test
-   */
-  private static class SSLCompressionChannelFactory extends NioClientSocketChannelFactory {
-
-    private final boolean enableCompression;
-    private final int compressionLevel;
-    private final boolean enableSsl;
-    private final boolean trustAllCerts;
-    private final String truststore;
-    private final String truststorePassword;
-    private final String truststoreType;
-    private final Set<String> excludeProtocols;
-    private final Set<String> includeProtocols;
-    private final Set<String> excludeCipherSuites;
-    private final Set<String> includeCipherSuites;
-
-    public SSLCompressionChannelFactory(Executor bossExecutor, Executor workerExecutor,
-        boolean enableCompression, boolean enableSsl, boolean trustAllCerts,
-        int compressionLevel, String truststore, String truststorePassword,
-        String truststoreType, Set<String> excludeProtocols, Set<String> includeProtocols,
-        Set<String> excludeCipherSuites, Set<String> includeCipherSuites) {
-      super(bossExecutor, workerExecutor);
-      this.enableCompression = enableCompression;
-      this.enableSsl = enableSsl;
-      this.compressionLevel = compressionLevel;
-      this.trustAllCerts = trustAllCerts;
-      this.truststore = truststore;
-      this.truststorePassword = truststorePassword;
-      this.truststoreType = truststoreType;
-      this.excludeProtocols = excludeProtocols;
-      this.includeProtocols = includeProtocols;
-      this.excludeCipherSuites = excludeCipherSuites;
-      this.includeCipherSuites = includeCipherSuites;
-    }
-
-    public SSLCompressionChannelFactory(Executor bossExecutor, Executor workerExecutor,
-        boolean enableCompression, boolean enableSsl, boolean trustAllCerts,
-        int compressionLevel, String truststore, String truststorePassword,
-        String truststoreType, Set<String> excludeProtocols, Set<String> includeProtocols,
-        Set<String> excludeCipherSuites, Set<String> includeCipherSuites, int maxIOWorkers) {
-      super(bossExecutor, workerExecutor, maxIOWorkers);
-      this.enableCompression = enableCompression;
-      this.enableSsl = enableSsl;
-      this.compressionLevel = compressionLevel;
-      this.trustAllCerts = trustAllCerts;
-      this.truststore = truststore;
-      this.truststorePassword = truststorePassword;
-      this.truststoreType = truststoreType;
-      this.excludeProtocols = excludeProtocols;
-      this.includeProtocols = includeProtocols;
-      this.excludeCipherSuites = excludeCipherSuites;
-      this.includeCipherSuites = includeCipherSuites;
-    }
-
-    @Override
-    public SocketChannel newChannel(ChannelPipeline pipeline) {
-      TrustManager[] managers;
-      try {
-        if (enableCompression) {
-          ZlibEncoder encoder = new ZlibEncoder(compressionLevel);
+  private class SslChannelInitializer implements Consumer<SocketChannel> {
+      @Override
+      public void accept(SocketChannel ch) {
+        ChannelPipeline pipeline = ch.pipeline();
+        if (enableDeflateCompression) {
+          ZlibEncoder encoder = ZlibCodecFactory.newZlibEncoder(compressionLevel);
           pipeline.addFirst("deflater", encoder);
-          pipeline.addFirst("inflater", new ZlibDecoder());
+          pipeline.addFirst("inflater", ZlibCodecFactory.newZlibDecoder());
         }
-        if (enableSsl) {
-          if (trustAllCerts) {
-            logger.warn("No truststore configured, setting TrustManager to accept"
-                + " all server certificates");
-            managers = new TrustManager[] { new PermissiveTrustManager() };
-          } else {
-            KeyStore keystore = null;
-
-            if (truststore != null) {
-              try (InputStream truststoreStream = new FileInputStream(truststore)) {
-                keystore = KeyStore.getInstance(truststoreType);
-                keystore.load(truststoreStream,
-                    truststorePassword != null ? truststorePassword.toCharArray() : null);
-              }
-            }
-
-            TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
-            // null keystore is OK, with SunX509 it defaults to system CA Certs
-            // see http://docs.oracle.com/javase/6/docs/technotes/guides/security/jsse/JSSERefGuide.html#X509TrustManager
-            tmf.init(keystore);
-            managers = tmf.getTrustManagers();
-          }
-
-          SSLContext sslContext = SSLContext.getInstance("TLS");
-          sslContext.init(null, managers, null);
-          SSLEngine sslEngine = sslContext.createSSLEngine();
-          sslEngine.setUseClientMode(true);
-
-          List<String> enabledProtocols = new ArrayList<String>();
-          for (String protocol : sslEngine.getEnabledProtocols()) {
-            if ((includeProtocols.isEmpty() || includeProtocols.contains(protocol))
-                && !excludeProtocols.contains(protocol)) {
-              enabledProtocols.add(protocol);
-            }
-          }
-          sslEngine.setEnabledProtocols(enabledProtocols.toArray(new String[0]));
-
-          List<String> enabledCipherSuites = new ArrayList<String>();
-          for (String suite : sslEngine.getEnabledCipherSuites()) {
-            if ((includeCipherSuites.isEmpty() || includeCipherSuites.contains(suite))
-                && !excludeCipherSuites.contains(suite)) {
-              enabledCipherSuites.add(suite);
-            }
-          }
-          sslEngine.setEnabledCipherSuites(enabledCipherSuites.toArray(new String[0]));
-
-          logger.info("SSLEngine protocols enabled: " +
-              Arrays.asList(sslEngine.getEnabledProtocols()));
-          logger.info("SSLEngine cipher suites enabled: " +
-              Arrays.asList(sslEngine.getEnabledProtocols()));
-          // addFirst() will make SSL handling the first stage of decoding
-          // and the last stage of encoding this must be added after
-          // adding compression handling above
-          pipeline.addFirst("ssl", new SslHandler(sslEngine));
+        SSLEngine engine = createSSLEngine();
+        if (engine != null) {
+          engine.setUseClientMode(true);
+          pipeline.addLast("ssl", new SslHandler(engine));
         }
-
-        return super.newChannel(pipeline);
-      } catch (Exception ex) {
-        logger.error("Cannot create SSL channel", ex);
-        throw new RuntimeException("Cannot create SSL channel", ex);
+        pipeline.addLast("length-decoder", new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE,
+            0, 4, 0, 4));
+        pipeline.addLast("bytearray-decoder", new ByteArrayDecoder());
+        pipeline.addLast("length-encoder", new LengthFieldPrepender(4));
+        pipeline.addLast("bytearray-encoder", new ByteArrayEncoder());
       }
+  }
+
+  private SSLEngine createSSLEngine() {
+    TrustManager[] managers;
+    try {
+      if (enableSsl) {
+        if (trustAllCerts) {
+          logger.warn(
+              "No truststore configured, setting TrustManager to accept all server certificates");
+          managers = new TrustManager[]{new PermissiveTrustManager()};
+        } else {
+          KeyStore keystore = null;
+
+          if (truststore != null) {
+            try (InputStream truststoreStream = new FileInputStream(truststore)) {
+              keystore = KeyStore.getInstance(truststoreType);
+              keystore.load(truststoreStream, truststorePassword != null ? truststorePassword.toCharArray() : null);
+            }
+          }
+
+          TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+          // null keystore is OK, with SunX509 it defaults to system CA Certs
+          // see http://docs.oracle.com/javase/6/docs/technotes/guides/security/jsse/JSSERefGuide.html#X509TrustManager
+          tmf.init(keystore);
+          managers = tmf.getTrustManagers();
+        }
+
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(null, managers, null);
+        SSLEngine sslEngine = sslContext.createSSLEngine();
+        sslEngine.setUseClientMode(true);
+
+        List<String> enabledProtocols = new ArrayList<String>();
+        for (String protocol : sslEngine.getEnabledProtocols()) {
+          if ((includeProtocols.isEmpty() || includeProtocols.contains(protocol))
+                  && !excludeProtocols.contains(protocol)) {
+            enabledProtocols.add(protocol);
+          }
+        }
+        sslEngine.setEnabledProtocols(enabledProtocols.toArray(new String[0]));
+
+        List<String> enabledCipherSuites = new ArrayList<String>();
+        for (String suite : sslEngine.getEnabledCipherSuites()) {
+          if ((includeCipherSuites.isEmpty() || includeCipherSuites.contains(suite))
+                  && !excludeCipherSuites.contains(suite)) {
+            enabledCipherSuites.add(suite);
+          }
+        }
+        sslEngine.setEnabledCipherSuites(enabledCipherSuites.toArray(new String[0]));
+
+        logger.info("SSLEngine protocols enabled: " + Arrays.asList(sslEngine.getEnabledProtocols()));
+        logger.info("SSLEngine cipher suites enabled: " + Arrays.asList(sslEngine.getEnabledProtocols()));
+        return sslEngine;
+      } else {
+        return null;
+      }
+
+    } catch (Exception ex) {
+      logger.error("Cannot create SSL channel", ex);
+      throw new RuntimeException("Cannot create SSL channel", ex);
     }
   }
 

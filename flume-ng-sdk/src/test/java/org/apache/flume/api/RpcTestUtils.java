@@ -18,11 +18,16 @@
  */
 package org.apache.flume.api;
 
-import junit.framework.Assert;
+import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+import java.util.function.Consumer;
 
-import org.apache.avro.ipc.netty.NettyServer;
 import org.apache.avro.ipc.Responder;
 import org.apache.avro.ipc.Server;
+import org.apache.avro.ipc.netty.NettyServer;
 import org.apache.avro.ipc.specific.SpecificResponder;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
@@ -31,21 +36,14 @@ import org.apache.flume.event.EventBuilder;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.ChannelPipelineFactory;
-import org.jboss.netty.channel.Channels;
-import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
-import org.jboss.netty.handler.codec.compression.ZlibDecoder;
-import org.jboss.netty.handler.codec.compression.ZlibEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-import java.util.concurrent.Executors;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.codec.compression.ZlibCodecFactory;
+import io.netty.handler.codec.compression.ZlibEncoder;
+import junit.framework.Assert;
 
 /**
  * Helpers for Netty Avro RPC testing
@@ -170,20 +168,17 @@ public class RpcTestUtils {
   public static Server startServer(AvroSourceProtocol handler, int port,
                                    boolean enableCompression) {
     Responder responder = new SpecificResponder(AvroSourceProtocol.class, handler);
-    Server server;
-    if (enableCompression) {
-      server = new NettyServer(responder, new InetSocketAddress(localhost, port),
-                               new NioServerSocketChannelFactory(Executors.newCachedThreadPool(),
-                                                                 Executors.newCachedThreadPool()),
-                               new CompressionChannelPipelineFactory(), null);
-    } else {
-      server = new NettyServer(responder, new InetSocketAddress(localhost, port));
-    }
-    server.start();
-    logger.info("Server started on hostname: {}, port: {}",
-                new Object[] { localhost, Integer.toString(server.getPort()) });
-
+    Server server = null;
     try {
+      if (enableCompression) {
+        server = new NettyServer(responder, new InetSocketAddress(localhost, port),
+                new ChannelCompressionInitializer());
+      } else {
+        server = new NettyServer(responder, new InetSocketAddress(localhost, port));
+      }
+      server.start();
+      logger.info("Server started on hostname: {}, port: {}",
+              new Object[]{localhost, Integer.toString(server.getPort())});
       Thread.sleep(300L);
     } catch (InterruptedException ex) {
       logger.error("Thread interrupted. Exception follows.", ex);
@@ -208,8 +203,10 @@ public class RpcTestUtils {
    */
   public static void stopServer(Server server) {
     try {
+      int port = server.getPort();
       server.close();
       server.join();
+      logger.info("Server stopped on port: {}", port);
     } catch (InterruptedException ex) {
       logger.error("Thread interrupted. Exception follows.", ex);
       Thread.currentThread().interrupt();
@@ -368,15 +365,13 @@ public class RpcTestUtils {
     }
   }
 
-  private static class CompressionChannelPipelineFactory implements ChannelPipelineFactory {
-
+  private static class ChannelCompressionInitializer implements Consumer<SocketChannel> {
     @Override
-    public ChannelPipeline getPipeline() throws Exception {
-      ChannelPipeline pipeline = Channels.pipeline();
-      ZlibEncoder encoder = new ZlibEncoder(6);
+    public void accept(SocketChannel ch) {
+      ChannelPipeline pipeline = ch.pipeline();
+      ZlibEncoder encoder = ZlibCodecFactory.newZlibEncoder(6);
       pipeline.addFirst("deflater", encoder);
-      pipeline.addFirst("inflater", new ZlibDecoder());
-      return pipeline;
+      pipeline.addFirst("inflater", ZlibCodecFactory.newZlibDecoder());
     }
   }
 

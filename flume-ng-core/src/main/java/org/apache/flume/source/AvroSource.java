@@ -199,6 +199,7 @@ public class AvroSource extends SslContextAwareAbstractSource implements EventDr
 
       ChannelPipelineFactory pipelineFactory = initChannelPipelineFactory();
 
+      server = new NettyServer()
       server = new NettyServer(responder, new InetSocketAddress(bindAddress, port),
               socketChannelFactory, pipelineFactory, null);
     } catch (org.jboss.netty.channel.ChannelException nce) {
