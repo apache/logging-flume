@@ -24,7 +24,7 @@
   <properties>
     <!-- TODO fix spotbugs/pmd violations -->
     <spotbugs.maxAllowedViolations>24</spotbugs.maxAllowedViolations>
-    <pmd.maxAllowedViolations>14</pmd.maxAllowedViolations>
+    <pmd.maxAllowedViolations>16</pmd.maxAllowedViolations>
   </properties>
 
   <dependencies>

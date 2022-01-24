@@ -23,7 +23,6 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import java.util.function.Consumer;
 
 import org.apache.avro.ipc.Responder;
 import org.apache.avro.ipc.Server;
@@ -40,8 +39,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.netty.channel.ChannelPipeline;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.handler.codec.compression.ZlibCodecFactory;
+import io.netty.handler.codec.compression.JZlibDecoder;
+import io.netty.handler.codec.compression.JZlibEncoder;
 import io.netty.handler.codec.compression.ZlibEncoder;
 import junit.framework.Assert;
 
@@ -50,11 +49,9 @@ import junit.framework.Assert;
  */
 public class RpcTestUtils {
 
-  private static final Logger logger = LoggerFactory
-      .getLogger(RpcTestUtils.class);
+  private static final Logger logger = LoggerFactory.getLogger(RpcTestUtils.class);
 
   private static final String localhost = "localhost";
-
 
   /**
    * Helper method for testing simple (single) appends on handlers
@@ -165,14 +162,18 @@ public class RpcTestUtils {
   /**
    * Start a NettyServer, wait a moment for it to spin up, and return it.
    */
-  public static Server startServer(AvroSourceProtocol handler, int port,
-                                   boolean enableCompression) {
+  public static Server startServer(AvroSourceProtocol handler, int port, boolean enableCompression) {
     Responder responder = new SpecificResponder(AvroSourceProtocol.class, handler);
     Server server = null;
     try {
       if (enableCompression) {
         server = new NettyServer(responder, new InetSocketAddress(localhost, port),
-                new ChannelCompressionInitializer());
+                (ch) -> {
+                  ChannelPipeline pipeline = ch.pipeline();
+                  ZlibEncoder encoder = new JZlibEncoder(6);
+                  pipeline.addFirst("deflater", encoder);
+                  pipeline.addFirst("inflater", new JZlibDecoder());
+                });
       } else {
         server = new NettyServer(responder, new InetSocketAddress(localhost, port));
       }
@@ -280,8 +281,7 @@ public class RpcTestUtils {
 
     @Override
     public Status appendBatch(List<AvroFlumeEvent> events) {
-      logger.info("OK: Received {} events from appendBatch()",
-          events.size());
+      logger.info("OK: Received {} events from appendBatch()", events.size());
       return Status.OK;
     }
 
@@ -321,22 +321,18 @@ public class RpcTestUtils {
 
     @Override
     public Status appendBatch(List<AvroFlumeEvent> events) {
-      logger.info("Unknown: Received {} events from appendBatch()",
-                  events.size());
+      logger.info("Unknown: Received {} events from appendBatch()", events.size());
       return Status.UNKNOWN;
     }
-
   }
 
   /**
    * A service that logs receipt of the request and then throws an exception
    */
-  public static class ThrowingAvroHandler
-           implements AvroSourceProtocol.Callback {
+  public static class ThrowingAvroHandler implements AvroSourceProtocol.Callback {
 
     @Override
-    public void append(AvroFlumeEvent event,
-                       org.apache.avro.ipc.Callback<Status> callback)
+    public void append(AvroFlumeEvent event, org.apache.avro.ipc.Callback<Status> callback)
             throws java.io.IOException {
       logger.info("Throwing: Received event from append(): {}",
                   new String(event.getBody().array(), Charset.forName("UTF8")));
@@ -351,8 +347,7 @@ public class RpcTestUtils {
     }
 
     @Override
-    public void appendBatch(List<AvroFlumeEvent> events,
-                       org.apache.avro.ipc.Callback<Status> callback)
+    public void appendBatch(List<AvroFlumeEvent> events, org.apache.avro.ipc.Callback<Status> callback)
             throws java.io.IOException {
       logger.info("Throwing: Received {} events from appendBatch()", events.size());
       throw new java.io.IOException("Handler smash!");
@@ -364,15 +359,4 @@ public class RpcTestUtils {
       return null;
     }
   }
-
-  private static class ChannelCompressionInitializer implements Consumer<SocketChannel> {
-    @Override
-    public void accept(SocketChannel ch) {
-      ChannelPipeline pipeline = ch.pipeline();
-      ZlibEncoder encoder = ZlibCodecFactory.newZlibEncoder(6);
-      pipeline.addFirst("deflater", encoder);
-      pipeline.addFirst("inflater", ZlibCodecFactory.newZlibDecoder());
-    }
-  }
-
 }

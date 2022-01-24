@@ -257,25 +257,22 @@ public class KafkaSource extends AbstractPollableSource
         }
 
         // Add headers to event (timestamp, topic, partition, key) only if they don't exist
-        if (!headers.containsKey(KafkaSourceConstants.TIMESTAMP_HEADER)) {
-          headers.put(KafkaSourceConstants.TIMESTAMP_HEADER,
-              String.valueOf(System.currentTimeMillis()));
+        if (!headers.containsKey(TIMESTAMP_HEADER)) {
+          headers.put(TIMESTAMP_HEADER, String.valueOf(System.currentTimeMillis()));
         }
         // Only set the topic header if setTopicHeader and it isn't already populated
         if (setTopicHeader && !headers.containsKey(topicHeader)) {
           headers.put(topicHeader, message.topic());
         }
-        if (!headers.containsKey(KafkaSourceConstants.PARTITION_HEADER)) {
-          headers.put(KafkaSourceConstants.PARTITION_HEADER,
-              String.valueOf(message.partition()));
+        if (!headers.containsKey(PARTITION_HEADER)) {
+          headers.put(PARTITION_HEADER, String.valueOf(message.partition()));
         }
         if (!headers.containsKey(OFFSET_HEADER)) {
-          headers.put(OFFSET_HEADER,
-              String.valueOf(message.offset()));
+          headers.put(OFFSET_HEADER, String.valueOf(message.offset()));
         }
 
         if (kafkaKey != null) {
-          headers.put(KafkaSourceConstants.KEY_HEADER, kafkaKey);
+          headers.put(KEY_HEADER, kafkaKey);
         }
 
         if (log.isTraceEnabled()) {
@@ -356,11 +353,11 @@ public class KafkaSource extends AbstractPollableSource
     // See https://issues.apache.org/jira/browse/FLUME-2896
     translateOldProperties(context);
 
-    String topicProperty = context.getString(KafkaSourceConstants.TOPICS_REGEX);
+    String topicProperty = context.getString(TOPICS_REGEX);
     if (topicProperty != null && !topicProperty.isEmpty()) {
       // create subscriber that uses pattern-based subscription
       subscriber = new PatternSubscriber(topicProperty);
-    } else if ((topicProperty = context.getString(KafkaSourceConstants.TOPICS)) != null &&
+    } else if ((topicProperty = context.getString(TOPICS)) != null &&
                !topicProperty.isEmpty()) {
       // create subscriber that uses topic list subscription
       subscriber = new TopicListSubscriber(topicProperty);
@@ -368,35 +365,30 @@ public class KafkaSource extends AbstractPollableSource
       throw new ConfigurationException("At least one Kafka topic must be specified.");
     }
 
-    batchUpperLimit = context.getInteger(KafkaSourceConstants.BATCH_SIZE,
-                                         KafkaSourceConstants.DEFAULT_BATCH_SIZE);
-    maxBatchDurationMillis = context.getInteger(KafkaSourceConstants.BATCH_DURATION_MS,
-                                                KafkaSourceConstants.DEFAULT_BATCH_DURATION);
+    batchUpperLimit = context.getInteger(BATCH_SIZE, DEFAULT_BATCH_SIZE);
+    maxBatchDurationMillis = context.getInteger(BATCH_DURATION_MS, DEFAULT_BATCH_DURATION);
 
-    useAvroEventFormat = context.getBoolean(KafkaSourceConstants.AVRO_EVENT,
-                                            KafkaSourceConstants.DEFAULT_AVRO_EVENT);
+    useAvroEventFormat = context.getBoolean(AVRO_EVENT, DEFAULT_AVRO_EVENT);
 
     if (log.isDebugEnabled()) {
-      log.debug(KafkaSourceConstants.AVRO_EVENT + " set to: {}", useAvroEventFormat);
+      log.debug(AVRO_EVENT + " set to: {}", useAvroEventFormat);
     }
 
     zookeeperConnect = context.getString(ZOOKEEPER_CONNECT_FLUME_KEY);
     migrateZookeeperOffsets = context.getBoolean(MIGRATE_ZOOKEEPER_OFFSETS,
         DEFAULT_MIGRATE_ZOOKEEPER_OFFSETS);
 
-    bootstrapServers = context.getString(KafkaSourceConstants.BOOTSTRAP_SERVERS);
+    bootstrapServers = context.getString(BOOTSTRAP_SERVERS);
     if (bootstrapServers == null || bootstrapServers.isEmpty()) {
       if (zookeeperConnect == null || zookeeperConnect.isEmpty()) {
         throw new ConfigurationException("Bootstrap Servers must be specified");
       } else {
         // For backwards compatibility look up the bootstrap from zookeeper
-        log.warn("{} is deprecated. Please use the parameter {}",
-            KafkaSourceConstants.ZOOKEEPER_CONNECT_FLUME_KEY,
-            KafkaSourceConstants.BOOTSTRAP_SERVERS);
+        log.warn("{} is deprecated. Please use the parameter {}", ZOOKEEPER_CONNECT_FLUME_KEY, BOOTSTRAP_SERVERS);
 
         // Lookup configured security protocol, just in case its not default
         String securityProtocolStr =
-            context.getSubProperties(KafkaSourceConstants.KAFKA_CONSUMER_PREFIX)
+            context.getSubProperties(KAFKA_CONSUMER_PREFIX)
                 .get(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG);
         if (securityProtocolStr == null || securityProtocolStr.isEmpty()) {
           securityProtocolStr = CommonClientConfigs.DEFAULT_SECURITY_PROTOCOL;
@@ -417,11 +409,9 @@ public class KafkaSource extends AbstractPollableSource
       log.info("Group ID was not specified. Using {} as the group id.", groupId);
     }
 
-    setTopicHeader = context.getBoolean(KafkaSourceConstants.SET_TOPIC_HEADER,
-                                        KafkaSourceConstants.DEFAULT_SET_TOPIC_HEADER);
+    setTopicHeader = context.getBoolean(SET_TOPIC_HEADER, DEFAULT_SET_TOPIC_HEADER);
 
-    topicHeader = context.getString(KafkaSourceConstants.TOPIC_HEADER,
-                                    KafkaSourceConstants.DEFAULT_TOPIC_HEADER);
+    topicHeader = context.getString(TOPIC_HEADER, DEFAULT_TOPIC_HEADER);
 
     setConsumerProps(context);
 
@@ -437,37 +427,32 @@ public class KafkaSource extends AbstractPollableSource
   // We can remove this once the properties are officially deprecated
   private void translateOldProperties(Context ctx) {
     // topic
-    String topic = context.getString(KafkaSourceConstants.TOPIC);
+    String topic = context.getString(TOPIC);
     if (topic != null && !topic.isEmpty()) {
       subscriber = new TopicListSubscriber(topic);
-      log.warn("{} is deprecated. Please use the parameter {}",
-              KafkaSourceConstants.TOPIC, KafkaSourceConstants.TOPICS);
+      log.warn("{} is deprecated. Please use the parameter {}", TOPIC, TOPICS);
     }
 
     // old groupId
-    groupId = ctx.getString(KafkaSourceConstants.OLD_GROUP_ID);
+    groupId = ctx.getString(OLD_GROUP_ID);
     if (groupId != null && !groupId.isEmpty()) {
-      log.warn("{} is deprecated. Please use the parameter {}",
-              KafkaSourceConstants.OLD_GROUP_ID,
-              KafkaSourceConstants.KAFKA_CONSUMER_PREFIX + ConsumerConfig.GROUP_ID_CONFIG);
+      log.warn("{} is deprecated. Please use the parameter {}", OLD_GROUP_ID,
+              KAFKA_CONSUMER_PREFIX + ConsumerConfig.GROUP_ID_CONFIG);
     }
   }
 
   private void setConsumerProps(Context ctx) {
     kafkaProps.clear();
-    kafkaProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
-                   KafkaSourceConstants.DEFAULT_KEY_DESERIALIZER);
-    kafkaProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
-                   KafkaSourceConstants.DEFAULT_VALUE_DESERIALIZER);
+    kafkaProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, DEFAULT_KEY_DESERIALIZER);
+    kafkaProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, DEFAULT_VALUE_DESERIALIZER);
     //Defaults overridden based on config
-    kafkaProps.putAll(ctx.getSubProperties(KafkaSourceConstants.KAFKA_CONSUMER_PREFIX));
+    kafkaProps.putAll(ctx.getSubProperties(KAFKA_CONSUMER_PREFIX));
     //These always take precedence over config
     kafkaProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     if (groupId != null) {
       kafkaProps.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
     }
-    kafkaProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG,
-                   KafkaSourceConstants.DEFAULT_AUTO_COMMIT);
+    kafkaProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, DEFAULT_AUTO_COMMIT);
 
     KafkaSSLUtil.addGlobalSSLParameters(kafkaProps);
   }

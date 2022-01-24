@@ -46,7 +46,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Consumer;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManager;
@@ -68,12 +67,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.netty.channel.ChannelPipeline;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
-import io.netty.handler.codec.LengthFieldPrepender;
-import io.netty.handler.codec.bytes.ByteArrayDecoder;
-import io.netty.handler.codec.bytes.ByteArrayEncoder;
-import io.netty.handler.codec.compression.ZlibCodecFactory;
+import io.netty.handler.codec.compression.JZlibDecoder;
+import io.netty.handler.codec.compression.JZlibEncoder;
 import io.netty.handler.codec.compression.ZlibEncoder;
 import io.netty.handler.ssl.SslHandler;
 
@@ -99,7 +94,6 @@ public class NettyAvroRpcClient extends SSLContextAwareAbstractRpcClient {
   private static final Logger logger = LoggerFactory.getLogger(NettyAvroRpcClient.class);
   private boolean enableDeflateCompression;
   private int compressionLevel;
-  private int maxIoWorkers;
 
   /**
    * This constructor is intended to be called from {@link RpcClientFactory}.
@@ -127,9 +121,20 @@ public class NettyAvroRpcClient extends SSLContextAwareAbstractRpcClient {
         new TransceiverThreadFactory("Flume Avro RPC Client Call Invoker"));
 
     try {
-
       transceiver = new NettyTransceiver(this.address, Math.toIntExact(tu.toMillis(timeout)),
-              new SslChannelInitializer());
+              (ch) -> {
+                ChannelPipeline pipeline = ch.pipeline();
+                if (enableDeflateCompression) {
+                  ZlibEncoder encoder = new JZlibEncoder(compressionLevel);
+                  pipeline.addFirst("deflater", encoder);
+                  pipeline.addFirst("inflater", new JZlibDecoder());
+                }
+                SSLEngine engine = createSSLEngine();
+                if (engine != null) {
+                  engine.setUseClientMode(true);
+                  pipeline.addLast("ssl", new SslHandler(engine));
+                }
+              });
       avroClient = SpecificRequestor.getClient(AvroSourceProtocol.Callback.class, transceiver);
     } catch (Throwable t) {
       if (callTimeoutPool != null) {
@@ -524,18 +529,7 @@ public class NettyAvroRpcClient extends SSLContextAwareAbstractRpcClient {
 
     String maxIoWorkersStr = properties.getProperty(RpcClientConfigurationConstants.MAX_IO_WORKERS);
     if (!StringUtils.isEmpty(maxIoWorkersStr)) {
-      try {
-        maxIoWorkers = Integer.parseInt(maxIoWorkersStr);
-      } catch (NumberFormatException ex) {
-        logger.warn("Invalid maxIOWorkers:" + maxIoWorkersStr + " Using " +
-            "default maxIOWorkers.");
-        maxIoWorkers = -1;
-      }
-    }
-
-    if (maxIoWorkers < 1) {
-      logger.info("Using default maxIOWorkers");
-      maxIoWorkers = -1;
+      logger.warn("Specifying the number of workers is no longer supported");
     }
 
     this.connect();
@@ -571,28 +565,6 @@ public class NettyAvroRpcClient extends SSLContextAwareAbstractRpcClient {
       thread.setName(prefix + " " + threadId.incrementAndGet());
       return thread;
     }
-  }
-
-  private class SslChannelInitializer implements Consumer<SocketChannel> {
-      @Override
-      public void accept(SocketChannel ch) {
-        ChannelPipeline pipeline = ch.pipeline();
-        if (enableDeflateCompression) {
-          ZlibEncoder encoder = ZlibCodecFactory.newZlibEncoder(compressionLevel);
-          pipeline.addFirst("deflater", encoder);
-          pipeline.addFirst("inflater", ZlibCodecFactory.newZlibDecoder());
-        }
-        SSLEngine engine = createSSLEngine();
-        if (engine != null) {
-          engine.setUseClientMode(true);
-          pipeline.addLast("ssl", new SslHandler(engine));
-        }
-        pipeline.addLast("length-decoder", new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE,
-            0, 4, 0, 4));
-        pipeline.addLast("bytearray-decoder", new ByteArrayDecoder());
-        pipeline.addLast("length-encoder", new LengthFieldPrepender(4));
-        pipeline.addLast("bytearray-encoder", new ByteArrayEncoder());
-      }
   }
 
   private SSLEngine createSSLEngine() {

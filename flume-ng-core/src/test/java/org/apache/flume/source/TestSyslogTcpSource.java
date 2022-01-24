@@ -69,12 +69,9 @@ public class TestSyslogTcpSource {
   private final String stamp1 = time.toString();
   private final String host1 = "localhost.localdomain";
   private final String data1 = "test syslog data";
-  private final String bodyWithHostname = host1 + " " +
-      data1;
-  private final String bodyWithTimestamp = stamp1 + " " +
-      data1;
-  private final String bodyWithTandH = "<10>" + stamp1 + " " + host1 + " " +
-      data1 + "\n";
+  private final String bodyWithHostname = host1 + " " + data1;
+  private final String bodyWithTimestamp = stamp1 + " " + data1;
+  private final String bodyWithTandH = "<10>" + stamp1 + " " + host1 + " " + data1 + "\n";
 
   private void init(String keepFields) {
     init(keepFields, new Context());
@@ -149,8 +146,7 @@ public class TestSyslogTcpSource {
       String str = new String(e.getBody(), Charsets.UTF_8);
       logger.info(str);
       if (keepFields.equals("true") || keepFields.equals("all")) {
-        Assert.assertArrayEquals(bodyWithTandH.trim().getBytes(),
-            e.getBody());
+        Assert.assertArrayEquals(bodyWithTandH.trim().getBytes(), e.getBody());
       } else if (keepFields.equals("false") || keepFields.equals("none")) {
         Assert.assertArrayEquals(data1.getBytes(), e.getBody());
       } else if (keepFields.equals("hostname")) {

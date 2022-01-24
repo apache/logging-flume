@@ -148,7 +148,7 @@ public abstract class SslContextAwareAbstractSource extends AbstractSource {
     }
   }
 
-  private Optional<SSLEngine> getSslEngine(boolean useClientMode) {
+  protected Optional<SSLEngine> getSslEngine(boolean useClientMode) {
     return getSslContext().map(sslContext -> {
       SSLEngine sslEngine = sslContext.createSSLEngine();
       sslEngine.setUseClientMode(useClientMode);

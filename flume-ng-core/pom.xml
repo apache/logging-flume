@@ -290,6 +290,11 @@ limitations under the License.
     </dependency>
 
     <dependency>
+      <groupId>com.jcraft</groupId>
+      <artifactId>jzlib</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
@@ -304,6 +309,18 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-1.2-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
       <scope>test</scope>
     </dependency>
 
@@ -325,6 +342,11 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.avro</groupId>
       <artifactId>avro-ipc-netty</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-all</artifactId>
     </dependency>
 
     <dependency>

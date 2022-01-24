@@ -216,6 +216,12 @@ limitations under the License.
 
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-jul</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-1.2-api</artifactId>
       <scope>test</scope>
     </dependency>
@@ -238,6 +244,11 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.thrift</groupId>
       <artifactId>libthrift</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.jcraft</groupId>
+      <artifactId>jzlib</artifactId>
     </dependency>
 
 	  <dependency>
