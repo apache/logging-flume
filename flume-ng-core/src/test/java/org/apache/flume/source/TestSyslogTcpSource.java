@@ -316,7 +316,7 @@ public class TestSyslogTcpSource {
     String headerValue = headers.get(headerName);
     if (TEST_CLIENT_HOSTNAME_HEADER.equals(headerName)) {
       if (!"localhost".equals(headerValue) && !"127.0.0.1".equals(headerValue)) {
-        fail("Expected either 'localhost' or '127.0.0.1'");
+        fail("Expected either 'localhost' or '127.0.0.1', got: " + headerValue);
       }
     } else {
       assertEquals("Event header value does not match: " + headerName,
