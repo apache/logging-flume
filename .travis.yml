@@ -19,7 +19,6 @@ language: generic
 
 env:
   global:
-    - MAVEN_PROJECTS="flume-ng-core,flume-ng-configuration,flume-ng-sdk,flume-ng-auth,flume-shared,flume-ng-configfilters,build-support,flume-ng-embedded-agent,flume-ng-sinks/flume-ng-kafka-sink,flume-ng-sinks/flume-ng-hbase2-sink,flume-ng-sources/flume-kafka-source"
 
 
 jobs:
@@ -47,4 +46,4 @@ before_install:
 install: true
 
 script:
-  - MAVEN_OPTS="-Xms1024m -Xmx1024m" travis_wait 50 ./mvnw test --quiet --fail-fast --threads 2.0C --projects "${MAVEN_PROJECTS}"
+  - MAVEN_OPTS="-Xms1024m -Xmx1024m" travis_wait 50 ./mvnw test --quiet --fail-fast --threads 2.0C "
