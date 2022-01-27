@@ -20,7 +20,10 @@ language: generic
 env:
   global:
 
-
+addons:
+  hosts:
+    - localhost
+    
 jobs:
   include:
     - name: "Linux amd64"

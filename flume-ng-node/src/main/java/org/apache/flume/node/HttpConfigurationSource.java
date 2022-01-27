@@ -107,7 +107,7 @@ public class HttpConfigurationSource implements ConfigurationSource {
         case OK: {
           try (InputStream is = connection.getInputStream()) {
             lastModified = connection.getLastModified();
-            LOGGER.debug("Content was modified for {}", uri.toString());
+            LOGGER.debug("Content was modified for {}. lastModified: {}", uri.toString(), lastModified);
             data = IOUtils.toByteArray(is);
             return true;
           } catch (final IOException e) {
