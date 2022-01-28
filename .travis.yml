@@ -20,10 +20,6 @@ language: generic
 env:
   global:
 
-addons:
-  hosts:
-    - localhost
-    
 jobs:
   include:
     - name: "Linux amd64"
@@ -49,4 +45,4 @@ before_install:
 install: true
 
 script:
-  - MAVEN_OPTS="-Xms1024m -Xmx1024m" travis_wait 50 ./mvnw test --quiet --fail-fast --threads 2.0C
+  - MAVEN_OPTS="-Xms1024m -Xmx1024m -DredirectTestOutput=false" travis_wait 50 ./mvnw test --quiet --fail-fast

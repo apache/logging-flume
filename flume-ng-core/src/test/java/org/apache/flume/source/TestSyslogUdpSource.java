@@ -315,7 +315,7 @@ public class TestSyslogUdpSource {
 
     String headerValue = headers.get(headerName);
     if (TEST_CLIENT_HOSTNAME_HEADER.equals(headerName)) {
-      if (!"localhost".equals(headerValue) && !"127.0.0.1".equals(headerValue)) {
+      if (!TestSyslogUtils.isLocalHost(headerValue)) {
         fail("Expected either 'localhost' or '127.0.0.1' but got " + headerValue);
       }
     } else {

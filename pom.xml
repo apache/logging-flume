@@ -121,6 +121,7 @@ limitations under the License.
     <wiremock.version>1.53</wiremock.version>
     <zlib.version>1.1.3</zlib.version>
     <zookeeper.version>3.6.2</zookeeper.version>
+    <redirectTestOutput>true</redirectTestOutput>
   </properties>
 
   <modules>
@@ -507,7 +508,7 @@ limitations under the License.
             <forkCount>1</forkCount>
             <!--<rerunFailingTestsCount>10</rerunFailingTestsCount>-->
             <forkedProcessTimeoutInSeconds>900</forkedProcessTimeoutInSeconds>
-            <redirectTestOutputToFile>true</redirectTestOutputToFile>
+            <redirectTestOutputToFile>${redirectTestOutput}</redirectTestOutputToFile>
             <argLine>-Djava.net.preferIPv4Stack=true</argLine>
             <includes>
               <include>${test.include.pattern}</include>

@@ -31,6 +31,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.node.net.AuthorizationProvider;
 import org.apache.flume.node.net.BasicAuthorizationProvider;
+import org.apache.log4j.LogManager;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.DefaultServlet;
@@ -40,12 +41,14 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Tests that files can be loaded via http.
  */
 public class TestHttpConfigurationSource {
-
+  private static final Logger LOGGER = LoggerFactory.getLogger(TestHttpConfigurationSource.class);
   private static final String BASIC = "Basic ";
   private static final String expectedCreds = "flume:flume";
   private static Server server;
@@ -127,6 +130,7 @@ public class TestHttpConfigurationSource {
         File file = new File("target/test-classes/flume-conf.properties");
         long modifiedSince = request.getDateHeader(HttpHeader.IF_MODIFIED_SINCE.toString());
         long lastModified = file.lastModified();
+        LOGGER.debug("LastModified: {}, modifiedSince: {}", lastModified, modifiedSince);
         if (modifiedSince > 0 && lastModified <= modifiedSince) {
           response.setStatus(304);
           return;

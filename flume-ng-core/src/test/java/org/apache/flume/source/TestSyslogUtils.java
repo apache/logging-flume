@@ -636,7 +636,7 @@ public class TestSyslogUtils {
 
     String hostname = SyslogUtils.getHostname(socketAddress);
 
-    if (!"localhost".equals(hostname) && !"127.0.0.1".equals(hostname)) {
+    if (!isLocalHost(hostname)) {
       fail("Expected either 'localhost' or '127.0.0.1' but got '" + hostname + "'");
     }
   }
@@ -659,4 +659,7 @@ public class TestSyslogUtils {
     assertEquals("", hostname);
   }
 
+  public static boolean isLocalHost(String value) {
+    return value != null && (value.endsWith("localhost") || value.equals("127.0.0.1"));
+  }
 }
