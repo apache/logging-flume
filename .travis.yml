@@ -45,4 +45,4 @@ before_install:
 install: true
 
 script:
-  - MAVEN_OPTS="-Xms1024m -Xmx1024m -DredirectTestOutput=false" travis_wait 50 ./mvnw test --quiet --fail-fast
+  - MAVEN_OPTS="-Xms1024m -Xmx1024m -DredirectTestOutput=false" travis_wait 50 ./mvnw test --fail-fast
