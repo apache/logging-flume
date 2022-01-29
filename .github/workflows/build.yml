@@ -57,7 +57,7 @@ jobs:
         timeout-minutes: 90
         shell: bash
         run: |
-          ./mvnw \
+          ./mvnw clean verify \
           --show-version --batch-mode --errors --no-transfer-progress \
           -DtrimStackTrace=false \
           -Dsurefire.rerunFailingTestsCount=2
