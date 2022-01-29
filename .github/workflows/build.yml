@@ -60,4 +60,4 @@ jobs:
           ./mvnw \
           --show-version --batch-mode --errors --no-transfer-progress \
           -DtrimStackTrace=false \
-          -Dsurefire.rerunFailingTestsCount=2"
+          -Dsurefire.rerunFailingTestsCount=2
