@@ -34,6 +34,7 @@ import org.apache.flume.node.net.BasicAuthorizationProvider;
 import org.apache.log4j.LogManager;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -53,11 +54,12 @@ public class TestHttpConfigurationSource {
   private static final String expectedCreds = "flume:flume";
   private static Server server;
   private static Base64.Decoder decoder = Base64.getDecoder();
+  private static int port;
 
   @BeforeClass
   public static void startServer() throws Exception {
     try {
-      server = new Server(1080);
+      server = new Server(0);
       ServletContextHandler context = new ServletContextHandler();
       ServletHolder defaultServ = new ServletHolder("default", TestServlet.class);
       defaultServ.setInitParameter("resourceBase", System.getProperty("user.dir"));
@@ -67,6 +69,7 @@ public class TestHttpConfigurationSource {
 
       // Start Server
       server.start();
+      port = ((ServerConnector) server.getConnectors()[0]).getLocalPort();
     } catch (Throwable ex) {
       ex.printStackTrace();
       throw ex;
@@ -81,14 +84,14 @@ public class TestHttpConfigurationSource {
 
   @Test(expected = ConfigurationException.class)
   public void testBadCrdentials() throws Exception {
-    URI confFile = new URI("http://localhost:1080/flume-conf.properties");
+    URI confFile = new URI("http://localhost:" + port + "/flume-conf.properties");
     AuthorizationProvider authProvider = new BasicAuthorizationProvider("foo", "bar");
     ConfigurationSource source = new HttpConfigurationSource(confFile, authProvider, true);
   }
 
   @Test
   public void testGet() throws Exception {
-    URI confFile = new URI("http://localhost:1080/flume-conf.properties");
+    URI confFile = new URI("http://localhost:" + port + "/flume-conf.properties");
     AuthorizationProvider authProvider = new BasicAuthorizationProvider("flume", "flume");
     ConfigurationSource source = new HttpConfigurationSource(confFile, authProvider, true);
     Assert.assertNotNull("No configuration returned", source);
