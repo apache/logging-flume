@@ -31,7 +31,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.node.net.AuthorizationProvider;
 import org.apache.flume.node.net.BasicAuthorizationProvider;
-import org.apache.log4j.LogManager;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;

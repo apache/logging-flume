@@ -20,6 +20,10 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import javax.net.ssl.HttpsURLConnection;
 
 /**
@@ -60,7 +64,9 @@ public class UrlConnectionFactory {
     }
     urlConnection.setRequestProperty("Content-Type", getContentType(url));
     if (lastModifiedMillis > 0) {
-      urlConnection.setIfModifiedSince(lastModifiedMillis);
+      ZonedDateTime zdt = Instant.ofEpochMilli(lastModifiedMillis).atZone(ZoneOffset.UTC);
+      String lastModified = DateTimeFormatter.RFC_1123_DATE_TIME.format(zdt);
+      urlConnection.setRequestProperty("If-Modified-Since", lastModified);
     }
     return urlConnection;
   }
