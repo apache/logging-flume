@@ -75,7 +75,7 @@ public class TestReliableSpoolingFileEventReader {
     if (!WORK_DIR.isDirectory()) {
       Files.createParentDirs(new File(WORK_DIR, "dummy"));
     }
-
+    long lastModified = 0;
     // write out a few files
     for (int i = 0; i < 4; i++) {
       File fileName = new File(WORK_DIR, "file" + i);
@@ -86,6 +86,12 @@ public class TestReliableSpoolingFileEventReader {
         sb.append("file" + i + "line" + j + "\n");
       }
       Files.write(sb.toString(), fileName, Charsets.UTF_8);
+      // Make sure all the files have the same timestamp.
+      if (lastModified == 0) {
+        lastModified = fileName.lastModified();
+      } else {
+        fileName.setLastModified(lastModified);
+      }
     }
     Thread.sleep(1500L); // make sure timestamp is later
     Files.write("\n", new File(WORK_DIR, "emptylineFile"), Charsets.UTF_8);
@@ -699,6 +705,10 @@ public class TestReliableSpoolingFileEventReader {
     for (int i = 0; i < listFiles(dir).size(); i++) {
       events = reader.readEvents(10);
       for (Event e : events) {
+        if (reader instanceof ReliableSpoolingFileEventReader) {
+          logger.debug("Adding event for file {} with body \"{}\"",
+              ((ReliableSpoolingFileEventReader) reader).getLastFileReadInfo(), new String(e.getBody()));
+        }
         actual.add(new String(e.getBody()));
       }
       reader.commit();
