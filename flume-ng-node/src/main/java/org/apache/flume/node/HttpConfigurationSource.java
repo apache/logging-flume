@@ -97,39 +97,42 @@ public class HttpConfigurationSource implements ConfigurationSource {
       HttpURLConnection connection = UrlConnectionFactory.createConnection(uri.toURL(),
           authorizationProvider, lastModified, verifyHost);
       connection.connect();
-
-      int code = connection.getResponseCode();
-      switch (code) {
-        case NOT_MODIFIED: {
-          LOGGER.debug("Configuration Not Modified");
-          return false;
-        }
-        case OK: {
-          try (InputStream is = connection.getInputStream()) {
-            lastModified = connection.getLastModified();
-            LOGGER.debug("Content was modified for {}. lastModified: {}", uri.toString(), lastModified);
-            data = IOUtils.toByteArray(is);
-            return true;
-          } catch (final IOException e) {
-            try (InputStream es = connection.getErrorStream()) {
-              LOGGER.info("Error accessing configuration at {}: {}", uri, readStream(es));
-            } catch (final IOException ioe) {
-              LOGGER.error("Error accessing configuration at {}: {}", uri, e.getMessage());
+      try {
+        int code = connection.getResponseCode();
+        switch (code) {
+          case NOT_MODIFIED: {
+            LOGGER.debug("Configuration Not Modified");
+            return false;
+          }
+          case OK: {
+            try (InputStream is = connection.getInputStream()) {
+              lastModified = connection.getLastModified();
+              LOGGER.debug("Content was modified for {}. lastModified: {}", uri.toString(), lastModified);
+              data = IOUtils.toByteArray(is);
+              return true;
+            } catch (final IOException e) {
+              try (InputStream es = connection.getErrorStream()) {
+                LOGGER.info("Error accessing configuration at {}: {}", uri, readStream(es));
+              } catch (final IOException ioe) {
+                LOGGER.error("Error accessing configuration at {}: {}", uri, e.getMessage());
+              }
+              throw new ConfigurationException("Unable to access " + uri.toString(), e);
             }
-            throw new ConfigurationException("Unable to access " + uri.toString(), e);
+          }
+          case NOT_AUTHORIZED: {
+            throw new ConfigurationException("Authorization failed");
+          }
+          default: {
+            if (code < 0) {
+              LOGGER.info("Invalid response code returned");
+            } else {
+              LOGGER.info("Unexpected response code returned {}", code);
+            }
+            return false;
           }
         }
-        case  NOT_AUTHORIZED: {
-          throw new ConfigurationException("Authorization failed");
-        }
-        default: {
-          if (code < 0) {
-            LOGGER.info("Invalid response code returned");
-          } else {
-            LOGGER.info("Unexpected response code returned {}", code);
-          }
-          return false;
-        }
+      } finally {
+        connection.disconnect();
       }
     } catch (IOException e) {
       LOGGER.warn("Error accessing {}: {}", uri.toString(), e.getMessage());
