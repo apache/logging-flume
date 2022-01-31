@@ -131,7 +131,7 @@ public class TestHttpConfigurationSource {
       if (request.getServletPath().equals("/flume-conf.properties")) {
         File file = new File("target/test-classes/flume-conf.properties");
         long modifiedSince = request.getDateHeader(HttpHeader.IF_MODIFIED_SINCE.toString());
-        long lastModified = file.lastModified();
+        long lastModified = (file.lastModified() / 1000) * 1000;
         LOGGER.debug("LastModified: {}, modifiedSince: {}", lastModified, modifiedSince);
         if (modifiedSince > 0 && lastModified <= modifiedSince) {
           response.setStatus(304);
