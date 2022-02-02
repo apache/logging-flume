@@ -18,12 +18,18 @@
 
 ARG IMAGE_NAME=adoptopenjdk/openjdk8
 ARG IMAGE_TAG=centos-jre
-FROM ${IMAGE_NAME}:${IMAGE_TAG}
-ARG MAINTAINER="Apache Flume <dev@flume.apache.org>"
-LABEL maintainer="${MAINTAINER}"
-LABEL site="http://flume.apache.org"
 
-COPY flume-ng-dist/target/apache-flume-1.10.0-SNAPSHOT-bin/apache-flume-1.10.0-SNAPSHOT-bin/ /etc/flume/
+FROM ${IMAGE_NAME}:${IMAGE_TAG}
+
+ARG ASSEMBLY_VERSION
+ARG MAINTAINER="Apache Flume <dev@flume.apache.org>"
+
+LABEL maintainer="${MAINTAINER}"
+LABEL site="https://flume.apache.org"
+
+COPY target/apache-flume-${ASSEMBLY_VERSION}-bin/apache-flume-${ASSEMBLY_VERSION}-bin/ /etc/flume/
+
+RUN echo $ASSEMBLY_VERSION
 
 RUN groupadd --system flume && useradd --system --shell /bin/false -g flume flume
 
