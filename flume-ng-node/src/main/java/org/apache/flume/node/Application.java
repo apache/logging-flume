@@ -274,7 +274,7 @@ public class Application {
       option.setRequired(false);
       options.addOption(option);
 
-      option = new Option("u", "conf-uri", true,
+      option = new Option("cl", "conf-uri", true,
               "specify a config uri (required if -c, -f and -z are missing)");
       option.setRequired(false);
       options.addOption(option);
@@ -284,16 +284,16 @@ public class Application {
       option.setRequired(false);
       options.addOption(option);
 
-      option = new Option("c", "conf-provider", true,
+      option = new Option("cd", "conf-provider", true,
               "specify a configuration provider class (required if -f, -u, and -z are missing)");
       option.setRequired(false);
       options.addOption(option);
 
-      option = new Option("n", "conf-user", true, "user name to access configuration uri");
+      option = new Option("cu", "conf-user", true, "user name to access configuration uri");
       option.setRequired(false);
       options.addOption(option);
 
-      option = new Option("p", "conf-password", true, "password to access configuration uri");
+      option = new Option("cp", "conf-password", true, "password to access configuration uri");
       option.setRequired(false);
       options.addOption(option);
 
