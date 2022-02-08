@@ -177,6 +177,11 @@ public class DockerInstall extends StagedInstall {
 
     containerId = containerIdSb.toString();
 
+    if (process.exitValue() != 0) {
+      throw new RuntimeException("Docker container did not start: " + process.exitValue() + " " + containerId);
+    }
+
+
     ImmutableList.Builder<String> logBuilder = new ImmutableList.Builder<String>();
     logBuilder.add("/bin/sh");
     logBuilder.add("-c");
