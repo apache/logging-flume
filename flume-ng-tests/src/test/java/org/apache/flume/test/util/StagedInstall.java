@@ -58,11 +58,11 @@ public class StagedInstall {
   public static final String ENV_FLUME_ROOT_LOGGER_VALUE = "DEBUG,LOGFILE";
   public static final String ENV_FLUME_LOG_FILE = "flume.log.file";
 
-  private final File stageDir;
-  private final File baseDir;
-  private final String launchScriptPath;
-  private final String confDirPath;
-  private final String logDirPath;
+  final File stageDir;
+  final File baseDir;
+  final String launchScriptPath;
+  final String confDirPath;
+  final String logDirPath;
 
   // State per invocation - config file, process, shutdown hook
   private String agentName;
@@ -196,7 +196,7 @@ public class StagedInstall {
     return stageDir;
   }
 
-  private File createConfigurationFile(String agentName, Properties properties)
+  File createConfigurationFile(String agentName, Properties properties)
       throws Exception {
     Preconditions.checkNotNull(properties, "properties object must not be null");
 
@@ -222,70 +222,74 @@ public class StagedInstall {
     return file;
   }
 
-  private StagedInstall() throws Exception {
+  StagedInstall()  {
+    try {
+      String tarballPath = System.getProperty(PROP_PATH_TO_DIST_TARBALL);
+      if (tarballPath == null || tarballPath.trim().length() == 0) {
+        LOGGER.info("No value specified for system property: "
+                + PROP_PATH_TO_DIST_TARBALL
+                + ". Will attempt to use relative path to locate dist tarball.");
 
-    String tarballPath = System.getProperty(PROP_PATH_TO_DIST_TARBALL);
-    if (tarballPath == null || tarballPath.trim().length() == 0) {
-      LOGGER.info("No value specified for system property: "
-              + PROP_PATH_TO_DIST_TARBALL
-              + ". Will attempt to use relative path to locate dist tarball.");
+        tarballPath = getRelativeTarballPath();
+      }
 
-      tarballPath = getRelativeTarballPath();
+      if (tarballPath == null || tarballPath.trim().length() == 0) {
+        throw new RuntimeException("Failed to locate tar-ball distribution. "
+            + "Please specify explicitly via system property: "
+            + PROP_PATH_TO_DIST_TARBALL);
+      }
+
+      // Validate
+      File tarballFile = new File(tarballPath);
+      if (!tarballFile.isFile() || !tarballFile.canRead()) {
+        throw new RuntimeException("The tarball distribution file is invalid: "
+            + tarballPath + ". You can override this by explicitly setting the "
+            + "system property: " + PROP_PATH_TO_DIST_TARBALL);
+      }
+
+      LOGGER.info("Dist tarball to use: " + tarballPath);
+
+
+      // Now set up a staging directory for this distribution
+      stageDir = getStagingDirectory();
+
+      // Deflate the gzip compressed archive
+      File tarFile = gunzipDistTarball(tarballFile, stageDir);
+
+      // Untar the deflated file
+      untarTarFile(tarFile, stageDir);
+
+      // Delete the tarfile
+      tarFile.delete();
+
+      LOGGER.info("Dist tarball staged to: " + stageDir);
+
+      File rootDir = stageDir;
+      File[] listBaseDirs = stageDir.listFiles();
+      if (listBaseDirs != null && listBaseDirs.length == 1
+              && listBaseDirs[0].isDirectory()) {
+        rootDir = listBaseDirs[0];
+      }
+      baseDir = rootDir;
+
+      // Give execute permissions to the bin/flume-ng script
+      File launchScript = new File(baseDir, "bin/flume-ng");
+      giveExecutePermissions(launchScript);
+
+      launchScriptPath = launchScript.getCanonicalPath();
+
+      File confDir = new File(baseDir, "conf");
+      confDirPath = confDir.getCanonicalPath();
+
+      File logDir = new File(baseDir, "logs");
+      logDir.mkdirs();
+
+      logDirPath = logDir.getCanonicalPath();
+
+      LOGGER.info("Staged install root directory: " + rootDir.getCanonicalPath());
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
-
-    if (tarballPath == null || tarballPath.trim().length() == 0) {
-      throw new Exception("Failed to locate tar-ball distribution. "
-          + "Please specify explicitly via system property: "
-          + PROP_PATH_TO_DIST_TARBALL);
-    }
-
-    // Validate
-    File tarballFile = new File(tarballPath);
-    if (!tarballFile.isFile() || !tarballFile.canRead()) {
-      throw new Exception("The tarball distribution file is invalid: "
-          + tarballPath + ". You can override this by explicitly setting the "
-          + "system property: " + PROP_PATH_TO_DIST_TARBALL);
-    }
-
-    LOGGER.info("Dist tarball to use: " + tarballPath);
-
-    // Now set up a staging directory for this distribution
-    stageDir = getStagingDirectory();
-
-    // Deflate the gzip compressed archive
-    File tarFile = gunzipDistTarball(tarballFile, stageDir);
-
-    // Untar the deflated file
-    untarTarFile(tarFile, stageDir);
-
-    // Delete the tarfile
-    tarFile.delete();
-
-    LOGGER.info("Dist tarball staged to: " + stageDir);
-
-    File rootDir = stageDir;
-    File[] listBaseDirs = stageDir.listFiles();
-    if (listBaseDirs != null && listBaseDirs.length == 1
-        && listBaseDirs[0].isDirectory()) {
-      rootDir = listBaseDirs[0];
-    }
-    baseDir = rootDir;
-
-    // Give execute permissions to the bin/flume-ng script
-    File launchScript = new File(baseDir, "bin/flume-ng");
-    giveExecutePermissions(launchScript);
-
-    launchScriptPath = launchScript.getCanonicalPath();
-
-    File confDir = new File(baseDir, "conf");
-    confDirPath = confDir.getCanonicalPath();
-
-    File logDir = new File(baseDir, "logs");
-    logDir.mkdirs();
-
-    logDirPath = logDir.getCanonicalPath();
-
-    LOGGER.info("Staged install root directory: " + rootDir.getCanonicalPath());
   }
 
   private void giveExecutePermissions(File file) throws Exception {
@@ -501,7 +505,7 @@ public class StagedInstall {
     }
   }
 
-  private class ProcessShutdownHook extends Thread {
+  class ProcessShutdownHook extends Thread {
     public void run() {
       synchronized (StagedInstall.this) {
         if (StagedInstall.this.process != null) {
@@ -511,10 +515,10 @@ public class StagedInstall {
     }
   }
 
-  private static class ProcessInputStreamConsumer extends Thread {
+  static class ProcessInputStreamConsumer extends Thread {
     private final InputStream is;
 
-    private ProcessInputStreamConsumer(InputStream is) {
+    ProcessInputStreamConsumer(InputStream is) {
       this.is = is;
       this.setDaemon(true);
     }
