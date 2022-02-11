@@ -49,16 +49,22 @@ public class TestFileChannelDocker {
     /* Create 3 temp dirs, each used as value within agentProps */
 
     final File sinkOutputDir = Files.createTempDir();
+    sinkOutputDir.setWritable(true, false);
+    sinkOutputDir.setReadable(true, false);
     tempResources.add(sinkOutputDir.getCanonicalFile());
     final String sinkOutputDirPath = sinkOutputDir.getCanonicalPath();
     LOGGER.info("Created rolling file sink's output dir: " + sinkOutputDirPath);
 
     final File channelCheckpointDir = Files.createTempDir();
+    channelCheckpointDir.setWritable(true, false);
+    channelCheckpointDir.setReadable(true, false);
     tempResources.add(channelCheckpointDir.getCanonicalFile());
     final String channelCheckpointDirPath = channelCheckpointDir.getCanonicalPath();
     LOGGER.info("Created file channel's checkpoint dir: " + channelCheckpointDirPath);
 
     final File channelDataDir = Files.createTempDir();
+    channelDataDir.setWritable(true, false);
+    channelDataDir.setReadable(true, false);
     tempResources.add(channelDataDir.getCanonicalFile());
     final String channelDataDirPath = channelDataDir.getCanonicalPath();
     LOGGER.info("Created file channel's data dir: " + channelDataDirPath);
