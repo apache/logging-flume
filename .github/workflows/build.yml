@@ -29,6 +29,11 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-latest, macos-latest ]
+        include:
+          # macOS
+          - os: macos-latest
+            docker_channel: stable
+            docker_version: "20.10"
 
     steps:
 
@@ -44,6 +49,13 @@ jobs:
           java-package: jdk
           architecture: x64
           cache: maven
+
+      - name: Setup Docker
+        uses: docker-practice/actions-setup-docker@master
+        run: |
+        set -x
+
+        docker version
 
       - name: Inspect environment (Linux)
         if: runner.os == 'Linux'
