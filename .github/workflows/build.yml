@@ -52,7 +52,6 @@ jobs:
 
       - name: Setup Docker
         uses: docker-practice/actions-setup-docker@master
-        run: docker version
 
       - name: Inspect environment (Linux)
         if: runner.os == 'Linux'
