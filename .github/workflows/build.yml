@@ -53,8 +53,7 @@ jobs:
         if: runner.os == 'macOS'
         run: env | grep '^JAVA'
 
-      - name: Build with Maven
-
+      - name: Build with Maven (Linux)
         if: runner.os == 'Linux'
         timeout-minutes: 90
         shell: bash
@@ -64,7 +63,7 @@ jobs:
           -DtrimStackTrace=false \
           -Dsurefire.rerunFailingTestsCount=2
 
-      - name: Build with Maven
+      - name: Build with Maven (MacOS)
         if: runner.os == 'macOS'
         timeout-minutes: 120
         shell: bash
@@ -72,5 +71,5 @@ jobs:
           ./mvnw clean verify -DredirectTestOutput=true \
           --show-version --batch-mode --errors --no-transfer-progress \
           -DtrimStackTrace=false \
-          -Dsurefire.rerunFailingTestsCount=2
+          -Dsurefire.rerunFailingTestsCount=2 \
           -P skipDocker
