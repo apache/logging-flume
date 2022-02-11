@@ -28,7 +28,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ ubuntu-latest ]
+        os: [ ubuntu-latest, macos-latest ]
 
     steps:
 
@@ -54,6 +54,7 @@ jobs:
         run: env | grep '^JAVA'
 
       - name: Build with Maven
+        if: runner.os == 'Linux'
         timeout-minutes: 90
         shell: bash
         run: |
@@ -61,3 +62,14 @@ jobs:
           --show-version --batch-mode --errors --no-transfer-progress \
           -DtrimStackTrace=false \
           -Dsurefire.rerunFailingTestsCount=2
+
+      - name: Build with Maven
+        if: runner.os == 'macOS'
+        timeout-minutes: 90
+        shell: bash
+        run: |
+          ./mvnw clean verify -DredirectTestOutput=true \
+          --show-version --batch-mode --errors --no-transfer-progress \
+          -DtrimStackTrace=false \
+          -Dsurefire.rerunFailingTestsCount=2
+          -P skipDocker

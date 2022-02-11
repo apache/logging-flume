@@ -62,6 +62,7 @@ limitations under the License.
     <curator.version>5.1.0</curator.version>
     <derby.version>10.14.1.0</derby.version>
     <dockerfile.version>1.4.13</dockerfile.version>
+    <docker.skip>false</docker.skip>
     <dropwizard-metrics.version>4.1.18</dropwizard-metrics.version>
     <elasticsearch.version>0.90.1</elasticsearch.version>
     <fasterxml.jackson.version>2.13.1</fasterxml.jackson.version>
@@ -243,6 +244,14 @@ limitations under the License.
         <rat.skip>true</rat.skip>
       </properties>
 
+    </profile>
+
+    <profile>
+      <id>skipDocker</id>
+      <properties>
+        <docker.skip>true</docker.skip>
+        <test.exclude.pattern>**/*Docker.java</test.exclude.pattern>
+      </properties>
     </profile>
   </profiles>
 
