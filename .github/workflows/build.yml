@@ -54,6 +54,7 @@ jobs:
         run: env | grep '^JAVA'
 
       - name: Build with Maven
+
         if: runner.os == 'Linux'
         timeout-minutes: 90
         shell: bash
@@ -65,7 +66,7 @@ jobs:
 
       - name: Build with Maven
         if: runner.os == 'macOS'
-        timeout-minutes: 90
+        timeout-minutes: 120
         shell: bash
         run: |
           ./mvnw clean verify -DredirectTestOutput=true \
