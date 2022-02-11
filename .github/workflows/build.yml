@@ -54,7 +54,7 @@ jobs:
         run: env | grep '^JAVA'
 
       - name: Build with Maven
-        timeout-minutes: 90
+        timeout-minutes: 120
         shell: bash
         run: |
           ./mvnw clean verify -DredirectTestOutput=true \
