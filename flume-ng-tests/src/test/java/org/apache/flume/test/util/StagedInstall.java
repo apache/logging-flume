@@ -249,7 +249,6 @@ public class StagedInstall {
 
       LOGGER.info("Dist tarball to use: " + tarballPath);
 
-
       // Now set up a staging directory for this distribution
       stageDir = getStagingDirectory();
 

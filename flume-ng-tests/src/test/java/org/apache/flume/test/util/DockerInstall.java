@@ -25,10 +25,15 @@ import com.google.common.io.Files;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
-
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * Attempts to setup a staged install using explicitly specified tar-ball
@@ -173,14 +178,13 @@ public class DockerInstall extends StagedInstall {
     String line;
     while ( (line = reader.readLine()) != null) {
       containerIdSb.append(line);
-     }
+    }
 
     containerId = containerIdSb.toString();
 
     if (process.exitValue() != 0) {
       throw new RuntimeException("Docker container did not start: " + process.exitValue() + " " + containerId);
     }
-
 
     ImmutableList.Builder<String> logBuilder = new ImmutableList.Builder<String>();
     logBuilder.add("/bin/sh");
@@ -194,7 +198,6 @@ public class DockerInstall extends StagedInstall {
     tempLogShellFile.deleteOnExit();
     Files.write(Joiner.on(" ").join(logCmdArgs).getBytes(StandardCharsets.UTF_8), tempLogShellFile);
 
-
     ProcessBuilder logReaderPb = new ProcessBuilder(tempLogShellFile.getAbsolutePath());
     Process logReaderProc = logReaderPb.start();
 
@@ -207,14 +210,10 @@ public class DockerInstall extends StagedInstall {
     Thread.sleep(3000); // sleep for 3s to let system initialize
   }
 
-
-
   private DockerInstall() throws Exception {
-
     super();
     dockerImageId = getDockerImageId();
   }
-
 
   private static String getDockerImageId() throws Exception {
     File dockerImageIdFile = new File("../flume-ng-dist/target/docker/image-id");
