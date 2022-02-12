@@ -182,7 +182,7 @@ public class DockerInstall extends StagedInstall {
 
     containerId = containerIdSb.toString();
 
-    if (process.exitValue() != 0) {
+    if (!process.isAlive()) {
       throw new RuntimeException("Docker container did not start: " + process.exitValue() + " " + containerId);
     }
 
