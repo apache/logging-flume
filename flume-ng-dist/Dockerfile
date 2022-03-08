@@ -24,7 +24,7 @@ FROM ${IMAGE_NAME}:${IMAGE_TAG}
 ARG ASSEMBLY_VERSION
 ARG MAINTAINER="Apache Flume <dev@flume.apache.org>"
 
-LABEL maintainer="${MAINTAINER}"
+LABEL org.opencontainers.image.authors="${MAINTAINER}"
 LABEL site="https://flume.apache.org"
 
 COPY target/apache-flume-${ASSEMBLY_VERSION}-bin/apache-flume-${ASSEMBLY_VERSION}-bin/ /etc/flume/
