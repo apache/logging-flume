@@ -68,6 +68,7 @@ limitations under the License.
     <fasterxml.jackson.version>2.13.1</fasterxml.jackson.version>
     <fest-reflect.version>1.4</fest-reflect.version>
     <geronimo-jms.version>1.1.1</geronimo-jms.version>
+    <glassfish.version>3.0.1-b12</glassfish.version>
     <gson.version>2.2.2</gson.version>
     <guava.version>18.0</guava.version>
     <guava-old.version>11.0.2</guava-old.version>
