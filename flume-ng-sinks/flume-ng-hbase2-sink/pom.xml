@@ -93,27 +93,6 @@
         <version>${hbase2.version}</version>
       </dependency>
 
-      <!-- Jetty version needed by HBase2 tests -->
-      <dependency>
-        <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-servlet</artifactId>
-        <version>${hbase2.jetty.version}</version>
-        <scope>test</scope>
-      </dependency>
-
-      <dependency>
-        <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-util</artifactId>
-        <version>${hbase2.jetty.version}</version>
-        <scope>test</scope>
-      </dependency>
-
-      <dependency>
-        <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-server</artifactId>
-        <version>${hbase2.jetty.version}</version>
-        <scope>test</scope>
-      </dependency>
     </dependencies>
   </dependencyManagement>
   <dependencies>
