@@ -74,7 +74,7 @@ limitations under the License.
     <hbase2.jetty.version>9.3.29.v20201019</hbase2.jetty.version>
     <hbase2.version>2.4.1</hbase2.version>
     <hive.version>1.0.0</hive.version>
-    <httpcore.version>4.4.6</httpcore.version>
+    <httpcore.version>4.4.15</httpcore.version>
     <httpclient.version>4.5.13</httpclient.version>
     <irclib.version>1.10</irclib.version>
     <jersey.version>1.8</jersey.version>
