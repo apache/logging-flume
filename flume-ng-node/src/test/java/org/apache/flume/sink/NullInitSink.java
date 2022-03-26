@@ -17,16 +17,20 @@
  */
 package org.apache.flume.sink;
 
-import com.google.common.base.Preconditions;
+import java.util.Map;
+
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Sink;
+import org.apache.flume.Source;
+import org.apache.flume.SourceRunner;
 import org.apache.flume.Transaction;
-import org.apache.flume.conf.BatchSizeSupported;
-import org.apache.flume.conf.Configurable;
+import org.apache.flume.node.Initializable;
+import org.apache.flume.node.MaterializedConfiguration;
+import org.apache.flume.source.EventProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,32 +52,38 @@ import org.slf4j.LoggerFactory;
  * TODO
  * </p>
  */
-public class NullSink extends AbstractSink implements Configurable, BatchSizeSupported {
+public class NullInitSink extends NullSink implements Initializable {
 
-  private static final Logger logger = LoggerFactory.getLogger(NullSink.class);
+  private static final Logger logger = LoggerFactory.getLogger(NullInitSink.class);
+  private String sourceName = null;
+  private EventProcessor eventProcessor = null;
+  private long total = 0;
 
-  private static final int DFLT_BATCH_SIZE = 100;
-  private static final int DFLT_LOG_EVERY_N_EVENTS = 10000;
-
-  private CounterGroup counterGroup;
-  private int batchSize = DFLT_BATCH_SIZE;
-  private int logEveryNEvents = DFLT_LOG_EVERY_N_EVENTS;
-
-  public NullSink() {
-    counterGroup = new CounterGroup();
+  public NullInitSink() {
+    super();
   }
 
   @Override
   public void configure(Context context) {
-    batchSize = context.getInteger("batchSize", DFLT_BATCH_SIZE);
-    logger.debug(this.getName() + " " +
-        "batch size set to " + String.valueOf(batchSize));
-    Preconditions.checkArgument(batchSize > 0, "Batch size must be > 0");
+    sourceName = context.getString("targetSource");
+    super.configure(context);
 
-    logEveryNEvents = context.getInteger("logEveryNEvents", DFLT_LOG_EVERY_N_EVENTS);
-    logger.debug(this.getName() + " " +
-        "log event N events set to " + logEveryNEvents);
-    Preconditions.checkArgument(logEveryNEvents > 0, "logEveryNEvents must be > 0");
+  }
+
+  @Override
+  public void initialize(MaterializedConfiguration configuration) {
+    logger.debug("Locating source for event publishing");
+    for (Map.Entry<String, SourceRunner>  entry : configuration.getSourceRunners().entrySet()) {
+      if (entry.getKey().equals(sourceName)) {
+        Source source = entry.getValue().getSource();
+        if (source instanceof EventProcessor) {
+          eventProcessor = (EventProcessor) source;
+          logger.debug("Found event processor {}", source.getName());
+          return;
+        }
+      }
+    }
+    logger.warn("No Source named {} found for republishing events.", sourceName);
   }
 
   @Override
@@ -83,6 +93,8 @@ public class NullSink extends AbstractSink implements Configurable, BatchSizeSup
     Channel channel = getChannel();
     Transaction transaction = channel.getTransaction();
     Event event = null;
+    CounterGroup counterGroup = getCounterGroup();
+    long batchSize = getBatchSize();
     long eventCounter = counterGroup.get("events.success");
 
     try {
@@ -90,10 +102,13 @@ public class NullSink extends AbstractSink implements Configurable, BatchSizeSup
       int i = 0;
       for (i = 0; i < batchSize; i++) {
         event = channel.take();
-        if (++eventCounter % logEveryNEvents == 0) {
-          logger.info("Null sink {} successful processed {} events.", getName(), eventCounter);
-        }
-        if (event == null) {
+        if (event != null) {
+          long id = Long.parseLong(new String(event.getBody()));
+          total += id;
+          event.getHeaders().put("Total", Long.toString(total));
+          eventProcessor.processEvent(event);
+          logger.info("Null sink {} successful processed event {}", getName(), id);
+        } else {
           status = Status.BACKOFF;
           break;
         }
@@ -112,43 +127,4 @@ public class NullSink extends AbstractSink implements Configurable, BatchSizeSup
 
     return status;
   }
-
-  @Override
-  public void start() {
-    logger.info("Starting {}...", this);
-
-    counterGroup.setName(this.getName());
-    super.start();
-
-    logger.info("Null sink {} started.", getName());
-  }
-
-  @Override
-  public void stop() {
-    logger.info("Null sink {} stopping...", getName());
-
-    super.stop();
-
-    logger.info("Null sink {} stopped. Event metrics: {}",
-        getName(), counterGroup);
-  }
-
-  @Override
-  public String toString() {
-    return "NullSink " + getName() + " { batchSize: " + batchSize + " }";
-  }
-
-  public CounterGroup getCounterGroup() {
-    return counterGroup;
-  }
-
-  public int getLogEveryNEvents() {
-    return logEveryNEvents;
-  }
-
-  @Override
-  public long getBatchSize() {
-    return batchSize;
-  }
-
 }

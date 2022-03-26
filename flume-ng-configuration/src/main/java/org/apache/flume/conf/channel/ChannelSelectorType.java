@@ -34,6 +34,11 @@ public enum ChannelSelectorType implements ComponentWithClassName {
   REPLICATING("org.apache.flume.channel.ReplicatingChannelSelector"),
 
   /**
+   * Load balancing channel selector.
+   */
+  LOAD_BALANCING("org.apache.flume.channel.LoadBalancingChannelSelector"),
+
+  /**
    * Multiplexing channel selector.
    */
   MULTIPLEXING("org.apache.flume.channel.MultiplexingChannelSelector");

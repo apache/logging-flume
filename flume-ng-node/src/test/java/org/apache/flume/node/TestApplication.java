@@ -22,17 +22,25 @@ package org.apache.flume.node;
 import static org.mockito.Mockito.*;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.flume.Channel;
+import org.apache.flume.Event;
 import org.apache.flume.SinkRunner;
 import org.apache.flume.SourceRunner;
+import org.apache.flume.Transaction;
+import org.apache.flume.event.SimpleEvent;
 import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleState;
+import org.apache.flume.source.EventProcessor;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
@@ -194,5 +202,64 @@ public class TestApplication {
     application.start();
     Thread.sleep(1500L);
     application.stop();
+  }
+
+  @Test
+  public void testFlumeInit() throws Exception {
+    File configFile = new File(baseDir, "flume-conf-init.properties");
+    Files.copy(new File(getClass().getClassLoader()
+            .getResource("flume-conf-init.properties").getFile()), configFile);
+    ConfigurationSource source = new FileConfigurationSource(configFile.toURI());
+    List<ConfigurationSource> sourceList = new ArrayList<>();
+    sourceList.add(source);
+    UriConfigurationProvider configurationProvider =
+        new UriConfigurationProvider("host1", sourceList, null, null, 1);
+    List<LifecycleAware> components = Lists.newArrayList();
+    Application application = new Application(components);
+    MaterializedConfiguration configuration = configurationProvider.getConfiguration();
+    Assert.assertNotNull("Unable to create configuration", configuration);
+    application.handleConfigurationEvent(configuration);
+    application.start();
+    Map<String, Channel> channels = configuration.getChannels();
+    Channel channel = channels.get("processedChannel");
+    Assert.assertNotNull("Channel not found", channel);
+    Map<String, SourceRunner> sourceRunners = configuration.getSourceRunners();
+    Assert.assertNotNull("No source runners", sourceRunners);
+    SourceRunner runner = sourceRunners.get("source1");
+    Assert.assertNotNull("No source runner", runner);
+    EventProcessor processor = (EventProcessor) runner.getSource();
+    long[] expected = new long[]{1, 3, 6, 10, 15};
+    for (int i = 0; i < 5; ++i) {
+      Event event = new SimpleEvent();
+      event.setBody(Long.toString(i + 1).getBytes(StandardCharsets.UTF_8));
+      processor.processEvent(event);
+    }
+    Thread.sleep(500);
+    for (int i = 0; i < 5; ++i) {
+      Event event = getEvent(channel);
+      Assert.assertNotNull("No event returned on iteration " + i, event);
+      String val = event.getHeaders().get("Total");
+      Assert.assertNotNull("No Total in event " + i, val);
+      long total = Long.parseLong(val);
+      Assert.assertEquals(expected[i], total);
+    }
+    application.stop();
+  }
+
+  private Event getEvent(Channel channel) {
+    Transaction transaction = channel.getTransaction();
+    Event event = null;
+
+    try {
+      transaction.begin();
+      event = channel.take();
+      transaction.commit();
+    } catch (Exception ex) {
+      transaction.rollback();
+      Assert.fail("Failed to retrieve Flume Event: " + ex.getMessage());
+    } finally {
+      transaction.close();
+    }
+    return event;
   }
 }

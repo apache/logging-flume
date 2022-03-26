@@ -64,7 +64,7 @@ public abstract class AbstractSinkProcessor implements SinkProcessor {
     sinkList = Collections.unmodifiableList(list);
   }
 
-  protected List<Sink> getSinks() {
+  public List<Sink> getSinks() {
     return sinkList;
   }
 }
