@@ -4121,6 +4121,29 @@ In the above configuration, c3 is an optional channel. Failure to write to c3 is
 simply ignored. Since c1 and c2 are not marked optional, failure to write to
 those channels will cause the transaction to fail.
 
+Load Balancing Channel Selector
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Load balancing channel selector provides the ability to load-balance flow over multiple channels. This
+effectively allows the incoming data to be processed on multiple threads. It maintains an indexed list of active channels on which the load must be distributed. Implementation supports distributing load using either via round_robin or random selection mechanisms. The choice of selection mechanism defaults to round_robin type, but can be overridden via configuration.
+
+Required properties are in **bold**.
+
+==================  =====================  =================================================
+Property Name       Default                Description
+==================  =====================  =================================================
+selector.type       replicating            The component type name, needs to be ``load_balancing``
+selector.policy     ``round_robin``        Selection mechanism. Must be either ``round_robin`` or ``random``.
+==================  =====================  =================================================
+
+Example for agent named a1 and it's source called r1:
+
+.. code-block:: properties
+
+  a1.sources = r1
+  a1.channels = c1 c2 c3 c4
+  a1.sources.r1.channels = c1 c2 c3 c4
+  a1.sources.r1.selector.type = load_balancing
+  a1.sources.r1.selector.policy = round_robin
 
 Multiplexing Channel Selector
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
