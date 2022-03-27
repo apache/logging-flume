@@ -43,7 +43,10 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
+import org.apache.flume.Sink;
+import org.apache.flume.SinkProcessor;
 import org.apache.flume.SinkRunner;
+import org.apache.flume.Source;
 import org.apache.flume.SourceRunner;
 import org.apache.flume.instrumentation.MonitorService;
 import org.apache.flume.instrumentation.MonitoringType;
@@ -53,6 +56,8 @@ import org.apache.flume.lifecycle.LifecycleSupervisor;
 import org.apache.flume.lifecycle.LifecycleSupervisor.SupervisorPolicy;
 import org.apache.flume.node.net.AuthorizationProvider;
 import org.apache.flume.node.net.BasicAuthorizationProvider;
+import org.apache.flume.sink.AbstractSingleSinkProcessor;
+import org.apache.flume.sink.AbstractSinkProcessor;
 import org.apache.flume.util.SSLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,6 +109,7 @@ public class Application {
     try {
       lifecycleLock.lockInterruptibly();
       stopAllComponents();
+      initializeAllComponents(conf);
       startAllComponents(conf);
     } catch (InterruptedException e) {
       logger.info("Interrupted while trying to handle configuration event");
@@ -164,6 +170,36 @@ public class Application {
     }
     if (monitorServer != null) {
       monitorServer.stop();
+    }
+  }
+
+  private void initializeAllComponents(MaterializedConfiguration materializedConfiguration) {
+    logger.info("Initializing components");
+    for (Channel ch : materializedConfiguration.getChannels().values()) {
+      while (ch.getLifecycleState() != LifecycleState.START && ch instanceof Initializable) {
+        ((Initializable) ch).initialize(materializedConfiguration);
+      }
+    }
+    for (SinkRunner sinkRunner : materializedConfiguration.getSinkRunners().values()) {
+      SinkProcessor processor = sinkRunner.getPolicy();
+      if (processor instanceof AbstractSingleSinkProcessor) {
+        Sink sink = ((AbstractSingleSinkProcessor) processor).getSink();
+        if (sink instanceof Initializable) {
+          ((Initializable) sink).initialize(materializedConfiguration);
+        }
+      } else if (processor instanceof AbstractSinkProcessor) {
+        for (Sink sink : ((AbstractSinkProcessor) processor).getSinks()) {
+          if (sink instanceof Initializable) {
+            ((Initializable) sink).initialize(materializedConfiguration);
+          }
+        }
+      }
+    }
+    for (SourceRunner sourceRunner : materializedConfiguration.getSourceRunners().values()) {
+      Source source = sourceRunner.getSource();
+      if (source instanceof Initializable) {
+        ((Initializable) source).initialize(materializedConfiguration);
+      }
     }
   }
 

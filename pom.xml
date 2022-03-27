@@ -47,7 +47,7 @@ limitations under the License.
     <stagingDirectory>${project.basedir}/target/docs</stagingDirectory>
 
     <activemq.version>5.7.0</activemq.version>
-    <asynchbase.version>1.7.0</asynchbase.version>
+    <asynchbase.version>1.8.2</asynchbase.version>
     <avro.version>1.11.0</avro.version>
     <bundle-plugin.version>2.3.7</bundle-plugin.version>
     <checkstyle.tool.version>8.45.1</checkstyle.tool.version>
@@ -69,13 +69,12 @@ limitations under the License.
     <gson.version>2.2.2</gson.version>
     <guava.version>18.0</guava.version>
     <guava-old.version>11.0.2</guava-old.version>
-    <hadoop.version>2.9.0</hadoop.version>
-    <hbase.version>1.6.0</hbase.version>
-    <hbase2.jetty.version>9.3.29.v20201019</hbase2.jetty.version>
-    <hbase2.version>2.4.1</hbase2.version>
+    <hadoop.version>2.10.1</hadoop.version>
+    <hbase.version>1.7.1</hbase.version>
+    <hbase2.version>2.4.11</hbase2.version>
     <hive.version>1.0.0</hive.version>
-    <httpcore.version>4.4.6</httpcore.version>
-    <httpclient.version>4.5.3</httpclient.version>
+    <httpcore.version>4.4.15</httpcore.version>
+    <httpclient.version>4.5.13</httpclient.version>
     <irclib.version>1.10</irclib.version>
     <jersey.version>1.8</jersey.version>
     <jetty.version>9.4.38.v20210224</jetty.version>
@@ -532,6 +531,9 @@ limitations under the License.
               <exclude>.git/</exclude>
               <exclude>patchprocess/</exclude>
               <exclude>.gitignore</exclude>
+              <exclude>**/*.yml</exclude>
+              <exclude>**/*.yaml</exclude>
+              <exclude>**/*.json</exclude>
               <!-- ASF jenkins box puts the Maven repo in our root directory. -->
               <exclude>.repository/</exclude>
               <exclude>**/*.diff</exclude>
