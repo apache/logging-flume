@@ -125,6 +125,13 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
     source.configure(context);
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void testConfigureWithConnectionFactory() throws Exception {
+    context.put(JMSSourceConfiguration.CONNECTION_FACTORY,
+        "ldap://localhost:319/connectionFactory");
+    source.configure(context);
+  }
+
   @Test(expected = FlumeException.class)
   public void testConfigureWithBadDestinationType() throws Exception {
     context.put(JMSSourceConfiguration.DESTINATION_TYPE, "DUMMY");

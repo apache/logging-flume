@@ -19,6 +19,8 @@ package org.apache.flume.source.jms;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
@@ -53,6 +55,7 @@ import com.google.common.io.Files;
 @InterfaceStability.Unstable
 public class JMSSource extends AbstractPollableSource implements BatchSizeSupported {
   private static final Logger logger = LoggerFactory.getLogger(JMSSource.class);
+  private static final String JAVA_SCHEME = "java";
 
   // setup by constructor
   private final InitialContextFactory initialContextFactory;
@@ -179,6 +182,14 @@ public class JMSSource extends AbstractPollableSource implements BatchSizeSuppor
     String connectionFactoryName = context.getString(
         JMSSourceConfiguration.CONNECTION_FACTORY,
         JMSSourceConfiguration.CONNECTION_FACTORY_DEFAULT).trim();
+    try {
+      URI uri = new URI(connectionFactoryName);
+      String scheme = uri.getScheme();
+      assertTrue(scheme == null || scheme.equals(JAVA_SCHEME),
+          "Unsupported JNDI URI: " + connectionFactoryName);
+    } catch (URISyntaxException ex) {
+      logger.warn("Invalid JNDI URI - {}", connectionFactoryName);
+    }
 
     assertNotEmpty(initialContextFactoryName, String.format(
         "Initial Context Factory is empty. This is specified by %s",
@@ -270,6 +281,10 @@ public class JMSSource extends AbstractPollableSource implements BatchSizeSuppor
 
   private void assertNotEmpty(String arg, String msg) {
     Preconditions.checkArgument(!arg.isEmpty(), msg);
+  }
+
+  private void assertTrue(boolean arg, String msg) {
+    Preconditions.checkArgument(arg, msg);
   }
 
   @Override
