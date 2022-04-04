@@ -62,7 +62,6 @@ limitations under the License.
     <curator.version>5.1.0</curator.version>
     <derby.version>10.14.1.0</derby.version>
     <dropwizard-metrics.version>4.1.18</dropwizard-metrics.version>
-    <elasticsearch.version>0.90.1</elasticsearch.version>
     <fasterxml.jackson.version>2.13.2</fasterxml.jackson.version>
     <fasterxml.jackson.databind.version>2.13.2.1</fasterxml.jackson.databind.version>
     <fest-reflect.version>1.4</fest-reflect.version>
@@ -1002,24 +1001,6 @@ limitations under the License.
         <groupId>joda-time</groupId>
         <artifactId>joda-time</artifactId>
         <version>${joda-time.version}</version>
-      </dependency>
-      <!-- Adding zookeeper as dependency, beacuse it was
-           pulling different version of zookeeper as transient
-           dependency from asynchbase. -->
-
-      <dependency>
-        <groupId>org.elasticsearch</groupId>
-        <artifactId>elasticsearch</artifactId>
-        <version>${elasticsearch.version}</version>
-        <optional>true</optional>
-      </dependency>
-
-      <dependency>
-        <groupId>org.elasticsearch</groupId>
-        <artifactId>elasticsearch</artifactId>
-        <version>${elasticsearch.version}</version>
-        <classifier>tests</classifier>
-        <scope>test</scope>
       </dependency>
 
       <dependency>
