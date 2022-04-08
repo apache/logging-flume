@@ -54,7 +54,7 @@ public class HTTPMetricsServer implements MonitorService {
   private Server jettyServer;
   private int port;
   private static Logger LOG = LoggerFactory.getLogger(HTTPMetricsServer.class);
-  public static int DEFAULT_PORT = 41414;
+  private static int DEFAULT_PORT = 41414;
   public static String CONFIG_PORT = "port";
 
   @Override
@@ -89,6 +89,10 @@ public class HTTPMetricsServer implements MonitorService {
       LOG.error("Error stopping Jetty. JSON Metrics may not be available.", ex);
     }
 
+  }
+
+  public int getPort() {
+    return port;
   }
 
   @Override

@@ -5315,6 +5315,61 @@ We can start Flume with JSON Reporting support as follows::
 Metrics will then be available at **http://<hostname>:<port>/metrics** webpage.
 Custom components can report metrics as mentioned in the Ganglia section above.
 
+Prometheus Reporting
+--------------
+Flume can also make metrics available to Prometheus. To enable reporting in Prometheus format, Flume
+ hosts
+a Web server on a configurable port.
+
+Here is an example:
+
+.. code-block:: java
+
+  # HELP Flume_ChannelSize Flume_ChannelSize
+  # TYPE Flume_ChannelSize gauge
+  Flume_ChannelSize{component="pmemChannel",} 1.0
+  Flume_ChannelSize{component="memChannel",} 1.0
+  # HELP Flume_ChannelCapacity Flume_ChannelCapacity
+  # TYPE Flume_ChannelCapacity gauge
+  Flume_ChannelCapacity{component="pmemChannel",} 0.0
+  Flume_ChannelCapacity{component="memChannel",} 100.0
+  # HELP Flume_EventPutAttemptCount_total Flume_EventPutAttemptCount
+  # TYPE Flume_EventPutAttemptCount_total counter
+  Flume_EventPutAttemptCount_total{component="pmemChannel",} 2.0
+  Flume_EventPutAttemptCount_total{component="memChannel",} 2.0
+  # HELP Flume_EventTakeAttemptCount_total Flume_EventTakeAttemptCount
+  # TYPE Flume_EventTakeAttemptCount_total counter
+  Flume_EventTakeAttemptCount_total{component="pmemChannel",} 1.0
+  Flume_EventTakeAttemptCount_total{component="memChannel",} 1.0
+  # HELP Flume_EventPutSuccessCount_total Flume_EventPutSuccessCount
+  # TYPE Flume_EventPutSuccessCount_total counter
+  Flume_EventPutSuccessCount_total{component="pmemChannel",} 2.0
+  Flume_EventPutSuccessCount_total{component="memChannel",} 2.0
+  # HELP Flume_EventTakeSuccessCount_total Flume_EventTakeSuccessCount
+  # TYPE Flume_EventTakeSuccessCount_total counter
+  Flume_EventTakeSuccessCount_total{component="pmemChannel",} 1.0
+  Flume_EventTakeSuccessCount_total{component="memChannel",} 1.0
+
+The Flume Kafka Source, Sink and Channel also expose Producer and Consumer metrics to the Prometeus
+interface to allow for detailed performance diagnostics.
+
+=======================  =======  =====================================================================================
+Property Name            Default  Description
+=======================  =======  =====================================================================================
+**type**                 --       The component type name, has to be ``prometheus``
+port                     41414    The port to start the server on.
+=======================  =======  =====================================================================================
+
+We can start Flume with Promtheus Reporting support as follows::
+
+  $ bin/flume-ng agent --conf-file example.conf --name a1 -Dflume.monitoring.type=prometheus -Dflume
+  .monitoring.port=34545
+
+Metrics will then be available at **http://<hostname>:<port>/metrics** webpage.
+Custom components can report metrics as mentioned in the Ganglia section above.
+
+
+
 Custom Reporting
 ----------------
 It is possible to report metrics to other systems by writing servers that do

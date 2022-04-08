@@ -109,6 +109,7 @@ limitations under the License.
     <netty-all.version>4.1.72.Final</netty-all.version>
     <parquet.version>1.11.2</parquet.version>
     <protobuf.version>2.5.0</protobuf.version>
+    <prometheus.version>0.15.0</prometheus.version>
     <rat.version>0.12</rat.version>
     <scala.version>2.13</scala.version>
     <scala-library.version>2.13.7</scala-library.version>
@@ -1324,6 +1325,18 @@ limitations under the License.
         <groupId>io.netty</groupId>
         <artifactId>netty-all</artifactId>
         <version>${netty-all.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.prometheus</groupId>
+        <artifactId>simpleclient</artifactId>
+        <version>${prometheus.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.prometheus</groupId>
+        <artifactId>simpleclient_servlet</artifactId>
+        <version>${prometheus.version}</version>
       </dependency>
 
       <dependency>
