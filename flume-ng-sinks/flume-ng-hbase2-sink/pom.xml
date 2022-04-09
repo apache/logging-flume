@@ -85,12 +85,6 @@
         <artifactId>hbase-server</artifactId>
         <version>${hbase2.version}</version>
         <type>test-jar</type>
-        <exclusions>
-          <exclusion>
-            <groupId>org.glassfish</groupId>
-            <artifactId>javax.el</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
 
       <dependency>
@@ -120,14 +114,6 @@
         <version>${hbase2.jetty.version}</version>
         <scope>test</scope>
       </dependency>
-
-      <dependency>
-        <groupId>org.glassfish</groupId>
-        <artifactId>javax.el</artifactId>
-        <version>${glassfish.version}</version>
-        <scope>test</scope>
-      </dependency>
-
     </dependencies>
   </dependencyManagement>
   <dependencies>
