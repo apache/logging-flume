@@ -107,7 +107,7 @@ limitations under the License.
     <!--<netty.version>3.10.6.Final</netty.version>-->
     <netty-all.version>4.1.72.Final</netty-all.version>
     <parquet.version>1.11.2</parquet.version>
-    <protobuf.version>2.5.0</protobuf.version>
+    <protobuf.version>3.16.1</protobuf.version>
     <rat.version>0.12</rat.version>
     <scala.version>2.13</scala.version>
     <scala-library.version>2.13.7</scala-library.version>
