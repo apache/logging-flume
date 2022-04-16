@@ -24,14 +24,6 @@ limitations under the License.
     <version>1.10.0-SNAPSHOT</version>
   </parent>
 
-  <repositories>
-    <!-- Needed for the ua_parser:ua-parser dependency in Kite. -->
-    <repository>
-      <id>wso2</id>
-      <url>http://dist.wso2.org/maven2/</url>
-    </repository>
-  </repositories>
-
   <groupId>org.apache.flume.flume-ng-sinks</groupId>
   <artifactId>flume-ng-morphline-solr-sink</artifactId>
   <name>Flume NG Morphline Solr Sink</name>
@@ -160,16 +152,6 @@ limitations under the License.
         </configuration>
       </plugin>
 
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-remote-resources-plugin</artifactId>
-        <configuration>
-          <!-- disable maven-remote-resources-plugin because it leads to
-          [ERROR] Failed to execute goal org.apache.maven.plugins:maven-remote-resources-plugin:1.7.0:process (process-resource-bundles) on project flume-ng-morphline-solr-sink: Execution process-resource-bundles of goal org.apache.maven.plugins:maven-remote-resources-plugin:1.7.0:process failed: For artifact {rome:null:null:jar}: The artifactId cannot be empty. -> [Help 1]
-          -->
-          <skip>true</skip>
-        </configuration>
-      </plugin>
 
     </plugins>
   </build>
