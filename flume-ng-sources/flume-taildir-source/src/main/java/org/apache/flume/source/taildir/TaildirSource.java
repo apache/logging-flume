@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -81,7 +82,7 @@ public class TaildirSource extends AbstractSource implements
   private int writePosInterval;
   private boolean cachePatternMatching;
 
-  private List<Long> existingInodes = new CopyOnWriteArrayList<Long>();
+  private List<Long> existingInodes = new ArrayList<>();
   private List<Long> idleInodes = new CopyOnWriteArrayList<Long>();
   private Long backoffSleepIncrement;
   private Long maxBackOffSleepInterval;
@@ -231,9 +232,12 @@ public class TaildirSource extends AbstractSource implements
   public Status process() {
     Status status = Status.BACKOFF;
     try {
-      existingInodes.clear();
-      existingInodes.addAll(reader.updateTailFiles());
-      for (long inode : existingInodes) {
+      final List<Long> updatedInodes = reader.updateTailFiles();
+      synchronized (existingInodes) {
+        existingInodes.clear();
+        existingInodes.addAll(updatedInodes);
+      }
+      for (long inode : updatedInodes) {
         TailFile tf = reader.getTailFiles().get(inode);
         if (tf.needTail()) {
           boolean hasMoreLines = tailFileProcess(tf, true);
@@ -304,10 +308,10 @@ public class TaildirSource extends AbstractSource implements
       if (tf.getRaf() != null) { // when file has not closed yet
         tailFileProcess(tf, false);
         tf.close();
+        idleInodes.remove(inode);
         logger.info("Closed file: " + tf.getPath() + ", inode: " + inode + ", pos: " + tf.getPos());
       }
     }
-    idleInodes.clear();
   }
 
   /**
@@ -346,10 +350,8 @@ public class TaildirSource extends AbstractSource implements
     FileWriter writer = null;
     try {
       writer = new FileWriter(file);
-      if (!existingInodes.isEmpty()) {
-        String json = toPosInfoJson();
-        writer.write(json);
-      }
+      String json = toPosInfoJson();
+      writer.write(json);
     } catch (Throwable t) {
       logger.error("Failed writing positionFile", t);
       sourceCounter.incrementGenericProcessingFail();
@@ -366,9 +368,11 @@ public class TaildirSource extends AbstractSource implements
   private String toPosInfoJson() {
     @SuppressWarnings("rawtypes")
     List<Map> posInfos = Lists.newArrayList();
-    for (Long inode : existingInodes) {
-      TailFile tf = reader.getTailFiles().get(inode);
-      posInfos.add(ImmutableMap.of("inode", inode, "pos", tf.getPos(), "file", tf.getPath()));
+    synchronized (existingInodes) {
+      for (long inode : existingInodes) {
+        TailFile tf = reader.getTailFiles().get(inode);
+        posInfos.add(ImmutableMap.of("inode", inode, "pos", tf.getPos(), "file", tf.getPath()));
+      }
     }
     return new Gson().toJson(posInfos);
   }
