@@ -39,6 +39,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.attribute.FileTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -243,24 +244,29 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
       Map<String, String> headers = headerTable.row(taildir.getFileGroup());
 
       for (File f : taildir.getMatchingFiles()) {
-        long inode;
+        Map<String, Object> attrs;
         try {
-          inode = getInode(f);
+          attrs = getFileAttrs(f);
         } catch (NoSuchFileException e) {
           logger.info("File has been deleted in the meantime: " + e.getMessage());
           continue;
         }
+        long inode = (long) attrs.get("ino");
+        long fileSize = (long) attrs.get("size");
+        long mtime = ((FileTime) attrs.get("lastModifiedTime")).toMillis();
+
         TailFile tf = tailFiles.get(inode);
         if (tf == null || !tf.getPath().equals(f.getAbsolutePath())) {
-          long startPos = skipToEnd ? f.length() : 0;
+          long startPos = skipToEnd ? fileSize : 0;
           tf = openFile(f, headers, inode, startPos);
         } else {
-          boolean updated = tf.getLastUpdated() < f.lastModified() || tf.getPos() != f.length();
+          boolean updated = tf.getLastUpdated() < mtime || tf.getPos() != fileSize;
           if (updated) {
             if (tf.getRaf() == null) {
               tf = openFile(f, headers, inode, tf.getPos());
             }
-            if (f.length() < tf.getPos()) {
+            // The file was replaced or rewritten for some reason.
+            if (fileSize < tf.getPos()) {
               logger.info("Pos " + tf.getPos() + " is larger than file size! "
                   + "Restarting from pos 0, file: " + tf.getPath() + ", inode: " + inode);
               tf.updatePos(tf.getPath(), inode, 0);
@@ -280,9 +286,8 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
   }
 
 
-  private long getInode(File file) throws IOException {
-    long inode = (long) Files.getAttribute(file.toPath(), "unix:ino");
-    return inode;
+  private Map<String, Object> getFileAttrs(File file) throws IOException {
+    return Files.readAttributes(file.toPath(), "unix:ino,size,lastModifiedTime");
   }
 
   private TailFile openFile(File file, Map<String, String> headers, long inode, long pos) {
