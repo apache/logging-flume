@@ -18,10 +18,10 @@
 -->
 <Configuration status="ERROR">
   <Properties>
-    <Property name="LOG_DIR">./logs</Property>
+    <Property name="LOG_DIR">.</Property>
   </Properties>
   <Appenders>
-    <Console name="Console" target="SYSTEM_OUT">
+    <Console name="Console" target="SYSTEM_ERR">
       <PatternLayout pattern="%d (%t) [%p - %l] %m%n" />
     </Console>
     <RollingFile name="LogFile" fileName="${LOG_DIR}/flume.log" filePattern="${LOG_DIR}/archive/flume.log.%d{yyyyMMdd}-%i">
