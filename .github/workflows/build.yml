@@ -63,6 +63,14 @@ jobs:
           -DtrimStackTrace=false \
           -Dsurefire.rerunFailingTestsCount=2
 
+      - name: Deploy Docker (Linux)
+        if: runner.os == 'Linux' && github.ref == 'refs/heads/trunk'
+        timeout-minutes: 90
+        shell: bash
+        run: |
+          ./mvnw deploy -Ddockerfile.username=$${{ secrets.DOCKERHUB_USER }} \
+           -Ddockerfile.password=... $${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Build with Maven (MacOS)
         if: runner.os == 'macOS'
         timeout-minutes: 120
