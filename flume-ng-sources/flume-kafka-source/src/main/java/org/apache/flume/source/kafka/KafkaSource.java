@@ -61,6 +61,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.config.SslConfigs;
 import org.apache.kafka.common.network.ListenerName;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.security.JaasUtils;
@@ -70,6 +71,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Optional;
 
+import static org.apache.flume.shared.kafka.KafkaSSLUtil.isSSLEnabled;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.*;
 
 import scala.Option;
@@ -386,7 +388,7 @@ public class KafkaSource extends AbstractPollableSource
         // For backwards compatibility look up the bootstrap from zookeeper
         log.warn("{} is deprecated. Please use the parameter {}", ZOOKEEPER_CONNECT_FLUME_KEY, BOOTSTRAP_SERVERS);
 
-        // Lookup configured security protocol, just in case its not default
+        // Lookup configured security protocol, just in case it's not default
         String securityProtocolStr =
             context.getSubProperties(KAFKA_CONSUMER_PREFIX)
                 .get(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG);
@@ -453,7 +455,11 @@ public class KafkaSource extends AbstractPollableSource
       kafkaProps.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
     }
     kafkaProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, DEFAULT_AUTO_COMMIT);
-
+    //  The default value of `ssl.endpoint.identification.algorithm` is changed to `https`, since kafka client 2.0+
+    //  So we need to set empty string as default value, to disable https hostname verification.
+    if (isSSLEnabled(kafkaProps) && !kafkaProps.containsKey(SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG)) {
+      kafkaProps.put(SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG, "");
+    }
     KafkaSSLUtil.addGlobalSSLParameters(kafkaProps);
   }
 

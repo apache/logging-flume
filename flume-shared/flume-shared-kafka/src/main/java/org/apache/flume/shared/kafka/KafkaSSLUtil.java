@@ -61,7 +61,7 @@ public class KafkaSSLUtil {
     }
   }
 
-  private static boolean isSSLEnabled(Properties kafkaProps) {
+  public static boolean isSSLEnabled(Properties kafkaProps) {
     String securityProtocol =
         kafkaProps.getProperty(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG);
 

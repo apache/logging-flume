@@ -39,6 +39,8 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import static org.apache.kafka.common.config.SslConfigs.*;
+
 public class KafkaSourceEmbeddedKafka {
 
   public static String HOST = InetAddress.getLoopbackAddress().getCanonicalHostName();
@@ -57,6 +59,7 @@ public class KafkaSourceEmbeddedKafka {
 
   private int zkPort = findFreePort(); // none-standard
   private int serverPort = findFreePort();
+  private int serverSslPort = findFreePort();
 
   KafkaProducer<String, byte[]> producer;
   File dir;
@@ -73,10 +76,25 @@ public class KafkaSourceEmbeddedKafka {
     props.put("zookeeper.connect",zookeeper.getConnectString());
     props.put("broker.id","1");
     props.put("host.name", "localhost");
-    props.put("port", String.valueOf(serverPort));
+    //  to enable ssl feature,
+    //  we need to use listeners instead of using port property
+    //  props.put("port", String.valueOf(serverPort));
+    props.put("listeners",
+            String.format("PLAINTEXT://%s:%d,SSL://%s:%d",
+                    HOST,
+                    serverPort,
+                    HOST,
+                    serverSslPort
+            )
+    );
     props.put("log.dir", dir.getAbsolutePath());
     props.put("offsets.topic.replication.factor", "1");
     props.put("auto.create.topics.enable", "false");
+    //  ssl configuration
+    props.put(SSL_TRUSTSTORE_LOCATION_CONFIG, "src/test/resources/truststorefile.jks");
+    props.put(SSL_TRUSTSTORE_PASSWORD_CONFIG, "password");
+    props.put(SSL_KEYSTORE_LOCATION_CONFIG, "src/test/resources/keystorefile.jks");
+    props.put(SSL_KEYSTORE_PASSWORD_CONFIG, "password");
     if (properties != null) {
       props.putAll(properties);
     }
@@ -98,6 +116,14 @@ public class KafkaSourceEmbeddedKafka {
 
   public String getBootstrapServers() {
     return HOST + ":" + serverPort;
+  }
+
+  public String getBootstrapSslServers() {
+    return String.format("%s:%s", HOST, serverSslPort);
+  }
+
+  public String getBootstrapSslIpPortServers() {
+    return String.format("%s:%s", "127.0.0.1", serverSslPort);
   }
 
   private void initProducer() {

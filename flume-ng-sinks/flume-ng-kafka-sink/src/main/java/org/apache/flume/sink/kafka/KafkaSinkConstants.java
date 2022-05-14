@@ -20,6 +20,10 @@ package org.apache.flume.sink.kafka;
 
 import org.apache.kafka.clients.CommonClientConfigs;
 
+import static org.apache.kafka.clients.CommonClientConfigs.SECURITY_PROTOCOL_CONFIG;
+import static org.apache.kafka.common.config.SaslConfigs.SASL_MECHANISM;
+import static org.apache.kafka.common.config.SslConfigs.*;
+
 public class KafkaSinkConstants {
 
   public static final String KAFKA_PREFIX = "kafka.";
@@ -62,5 +66,13 @@ public class KafkaSinkConstants {
   public static final String KEY_SERIALIZER_KEY = "key.serializer.class";
   public static final String BROKER_LIST_FLUME_KEY = "brokerList";
   public static final String REQUIRED_ACKS_FLUME_KEY = "requiredAcks";
+
+  // security configuration
+  public static final String SECURITY_PROTOCOL = KAFKA_PRODUCER_PREFIX + SECURITY_PROTOCOL_CONFIG;
+  public static final String SASL_MECHANISM_PROPERTY = KAFKA_PRODUCER_PREFIX + SASL_MECHANISM;
+  public static final String SSL_TRUSTSTORE_LOCATION = KAFKA_PRODUCER_PREFIX + SSL_TRUSTSTORE_LOCATION_CONFIG;
+  public static final String SSL_ENDPOINT_IDENTIFICATION_ALGORITHM = KAFKA_PRODUCER_PREFIX + SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG;
+  public static final String SSL_TRUSTSTORE_PASSWORD = KAFKA_PRODUCER_PREFIX + SSL_TRUSTSTORE_PASSWORD_CONFIG;
+
 }
 

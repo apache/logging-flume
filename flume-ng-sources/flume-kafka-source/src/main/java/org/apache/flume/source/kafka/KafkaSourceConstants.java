@@ -18,6 +18,10 @@ package org.apache.flume.source.kafka;
 
 import org.apache.kafka.clients.CommonClientConfigs;
 
+import static org.apache.kafka.clients.CommonClientConfigs.SECURITY_PROTOCOL_CONFIG;
+import static org.apache.kafka.common.config.SaslConfigs.SASL_MECHANISM;
+import static org.apache.kafka.common.config.SslConfigs.*;
+
 public class KafkaSourceConstants {
 
   public static final String KAFKA_PREFIX = "kafka.";
@@ -58,5 +62,13 @@ public class KafkaSourceConstants {
   public static final String SET_TOPIC_HEADER = "setTopicHeader";
   public static final boolean DEFAULT_SET_TOPIC_HEADER = true;
   public static final String TOPIC_HEADER = "topicHeader";
+
+  // security configuration
+  public static final String SECURITY_PROTOCOL = KAFKA_CONSUMER_PREFIX + SECURITY_PROTOCOL_CONFIG;
+  public static final String SASL_MECHANISM_PROPERTY = KAFKA_CONSUMER_PREFIX + SASL_MECHANISM;
+  public static final String SSL_TRUSTSTORE_LOCATION = KAFKA_CONSUMER_PREFIX + SSL_TRUSTSTORE_LOCATION_CONFIG;
+  public static final String SSL_ENDPOINT_IDENTIFICATION_ALGORITHM = KAFKA_CONSUMER_PREFIX + SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG;
+  public static final String SSL_TRUSTSTORE_PASSWORD = KAFKA_CONSUMER_PREFIX + SSL_TRUSTSTORE_PASSWORD_CONFIG;
+
 
 }
