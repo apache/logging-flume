@@ -39,6 +39,11 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
+import static org.apache.kafka.common.config.SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG;
+import static org.apache.kafka.common.config.SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG;
+import static org.apache.kafka.common.config.SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG;
+import static org.apache.kafka.common.config.SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG;
+
 /**
  * A utility class for starting/stopping Kafka Server.
  */
@@ -50,8 +55,10 @@ public class TestUtil {
   private KafkaLocal kafkaServer;
   private boolean externalServers = true;
   private String kafkaServerUrl;
+  private String kafkaServerSslUrl;
   private String zkServerUrl;
   private int kafkaLocalPort;
+  private int kafkaLocalSslPort;
   private Properties clientProps;
   private int zkLocalPort;
   private KafkaConsumer<String, String> consumer;
@@ -80,7 +87,9 @@ public class TestUtil {
         String hostname = InetAddress.getLocalHost().getHostName();
         zkLocalPort = getNextPort();
         kafkaLocalPort = getNextPort();
+        kafkaLocalSslPort = getNextPort();
         kafkaServerUrl = hostname + ":" + kafkaLocalPort;
+        kafkaServerSslUrl = hostname + ":" + kafkaLocalSslPort;
         zkServerUrl = hostname + ":" + zkLocalPort;
       }
       clientProps = createClientProperties();
@@ -112,12 +121,23 @@ public class TestUtil {
           "/kafka-server.properties"));
       // override the Zookeeper url.
       kafkaProperties.setProperty("zookeeper.connect", getZkUrl());
-      // override the Kafka server port
-      kafkaProperties.setProperty("port", Integer.toString(kafkaLocalPort));
+      //  to enable ssl feature,
+      //  we need to use listeners instead of using port property
+      //  kafkaProperties.setProperty("port", Integer.toString(kafkaLocalPort));
+      kafkaProperties.put("listeners",
+              String.format("PLAINTEXT://%s,SSL://%s",
+                      getKafkaServerUrl(),
+                      getKafkaServerSslUrl()
+              )
+      );
+      //  ssl configuration
+      kafkaProperties.put(SSL_TRUSTSTORE_LOCATION_CONFIG, "src/test/resources/truststorefile.jks");
+      kafkaProperties.put(SSL_TRUSTSTORE_PASSWORD_CONFIG, "password");
+      kafkaProperties.put(SSL_KEYSTORE_LOCATION_CONFIG, "src/test/resources/keystorefile.jks");
+      kafkaProperties.put(SSL_KEYSTORE_PASSWORD_CONFIG, "password");
       kafkaServer = new KafkaLocal(kafkaProperties);
       kafkaServer.start();
       logger.info("Kafka Server is successfully started on port " + kafkaLocalPort);
-
       return true;
 
     } catch (Exception e) {
@@ -240,5 +260,9 @@ public class TestUtil {
 
   public String getKafkaServerUrl() {
     return kafkaServerUrl;
+  }
+
+  public String getKafkaServerSslUrl() {
+    return kafkaServerSslUrl;
   }
 }

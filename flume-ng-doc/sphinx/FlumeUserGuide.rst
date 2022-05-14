@@ -1665,14 +1665,15 @@ Specifying the truststore is optional here, the global truststore can be used in
 For more details about the global SSL setup, see the `SSL/TLS support`_ section.
 
 Note: By default the property ``ssl.endpoint.identification.algorithm``
-is not defined, so hostname verification is not performed.
-In order to enable hostname verification, set the following properties
+is not defined, so hostname verification is performed.
+Since flume does not accept an empty string as property value, in order to disable hostname verification,
+we need to set the following properties instead of setting ``ssl.endpoint.identification.algorithm`` to an empty string.
 
 .. code-block:: properties
 
-    a1.sources.source1.kafka.consumer.ssl.endpoint.identification.algorithm=HTTPS
+    a1.sources.source1.kafka.consumer.ssl.disableTLSHostnameVerification = true
 
-Once enabled, clients will verify the server's fully qualified domain name (FQDN)
+If not set to true, clients will verify the server's fully qualified domain name (FQDN)
 against one of the following two fields:
 
 #) Common Name (CN) https://tools.ietf.org/html/rfc6125#section-2.3
@@ -3279,18 +3280,19 @@ Example configuration with server side authentication and data encryption.
     a1.sinks.sink1.kafka.producer.ssl.truststore.location = /path/to/truststore.jks
     a1.sinks.sink1.kafka.producer.ssl.truststore.password = <password to access the truststore>
 
-Specyfing the truststore is optional here, the global truststore can be used instead.
+Specifying the truststore is optional here, the global truststore can be used instead.
 For more details about the global SSL setup, see the `SSL/TLS support`_ section.
 
 Note: By default the property ``ssl.endpoint.identification.algorithm``
-is not defined, so hostname verification is not performed.
-In order to enable hostname verification, set the following properties
+is not defined, so hostname verification is performed.
+Since flume does not allow an empty string as configuration value, in order to disable hostname verification,
+we need to set the following properties instead of setting ``ssl.endpoint.identification.algorithm`` to an empty string.
 
 .. code-block:: properties
 
-    a1.sinks.sink1.kafka.producer.ssl.endpoint.identification.algorithm = HTTPS
+    a1.sinks.sink1.kafka.producer.ssl.disableTLSHostnameVerification = true
 
-Once enabled, clients will verify the server's fully qualified domain name (FQDN)
+If not set to true, clients will verify the server's fully qualified domain name (FQDN)
 against one of the following two fields:
 
 #) Common Name (CN) https://tools.ietf.org/html/rfc6125#section-2.3
@@ -3685,19 +3687,20 @@ Example configuration with server side authentication and data encryption.
     a1.channels.channel1.kafka.consumer.ssl.truststore.location = /path/to/truststore.jks
     a1.channels.channel1.kafka.consumer.ssl.truststore.password = <password to access the truststore>
 
-Specyfing the truststore is optional here, the global truststore can be used instead.
+Specifying the truststore is optional here, the global truststore can be used instead.
 For more details about the global SSL setup, see the `SSL/TLS support`_ section.
 
 Note: By default the property ``ssl.endpoint.identification.algorithm``
-is not defined, so hostname verification is not performed.
-In order to enable hostname verification, set the following properties
+is not defined, so hostname verification is performed.
+Since flume does not accept an empty string as property value, in order to disable hostname verification,
+we need to set the following properties instead of setting ``ssl.endpoint.identification.algorithm`` to an empty string.
 
 .. code-block:: properties
 
-    a1.channels.channel1.kafka.producer.ssl.endpoint.identification.algorithm = HTTPS
-    a1.channels.channel1.kafka.consumer.ssl.endpoint.identification.algorithm = HTTPS
+    a1.channels.channel1.kafka.producer.ssl.disableTLSHostnameVerification = true
+    a1.channels.channel1.kafka.consumer.ssl.disableTLSHostnameVerification = true
 
-Once enabled, clients will verify the server's fully qualified domain name (FQDN)
+If not set to true, clients will verify the server's fully qualified domain name (FQDN)
 against one of the following two fields:
 
 #) Common Name (CN) https://tools.ietf.org/html/rfc6125#section-2.3
