@@ -14,9 +14,9 @@
    limitations under the License.
 
 
-===============================
-Flume 1.9.0 User Guide
-===============================
+================================
+Flume 1.10.0 User Guide
+================================
 
 Introduction
 ============
@@ -109,18 +109,20 @@ There's also a memory channel which simply stores the events in an in-memory
 queue, which is faster but any events still left in the memory channel when an
 agent process dies can't be recovered.
 
+Flume's `KafkaChannel` uses Apache Kafka to stage events. Using a replicated
+Kafka topic as a channel helps avoiding event loss in case of a disk failure.
+
 Setup
 =====
 
 Setting up an agent
 -------------------
 
-Flume agent configuration is stored in a local configuration file.  This is a
-text file that follows the Java properties file format.
-Configurations for one or more agents can be specified in the same
-configuration file. The configuration file includes properties of each source,
-sink and channel in an agent and how they are wired together to form data
-flows.
+Flume agent configuration is stored in one or more configuration files that
+follow the Java properties file format. Configurations for one or more agents
+can be specified in these configuration files. The configuration includes
+properties of each source, sink and channel in an agent and how they are wired
+together to form data flows.
 
 Configuring individual components
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -222,9 +224,77 @@ The original Flume terminal will output the event in a log message.
 
 Congratulations - you've successfully configured and deployed a Flume agent! Subsequent sections cover agent configuration in much more detail.
 
-Using environment variables in configuration files
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Configuration from URIs
+~~~~~~~~~~~~~~~~~~~~~~~
+As of version 1.10.0 Flume supports being configured using URIs instead of just from local files. Direct support
+for HTTP(S), file, and classpath URIs is included. The HTTP support includes support for authentication using
+basic authorization but other authorization mechanisms may be supported by specifying the fully qualified name
+of the class that implements the AuthorizationProvider interface using the --auth-provider option. HTTP also
+supports reloading of configuration files using polling if the target server properly responds to the If-Modified-Since
+header.
+
+To specify credentials for HTTP authentication add::
+
+  --conf-user userid --conf-password password
+
+to the startup command.
+
+Multiple Configuration Files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+As of version 1.10.0 Flume supports being configured from multiple configuration files instead of just one.
+This more easily allows values to be overridden or added based on specific environments. Each file should
+be configured using its own --conf-file or --conf-uri option. However, all files should either be provided
+with --conf-file or with --conf-uri. If --conf-file and --conf-uri appear together as options all --conf-uri
+configurations will be processed before any of the --conf-file configurations are merged.
+
+For example, a configuration of::
+
+  $ bin/flume-ng agent --conf conf --conf-file example.conf --conf-uri http://localhost:80/flume.conf --conf-uri http://localhost:80/override.conf --name a1 -Dflume.root.logger=INFO,console
+
+will cause flume.conf to be read first, override.conf to be merged with it and finally example.conf would be
+merged last. If it is desirec to have example.conf be the base configuration it should be specified using the
+--conf-uri option either as::
+
+  --conf-uri classpath://example.conf
+  or
+  --conf-uri file:///example.conf
+
+depending on how it should be accessed.
+
+Using environment variables, system properies, or other properties configuration files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Flume has the ability to substitute environment variables in the configuration. For example::
+
+  a1.sources = r1
+  a1.sources.r1.type = netcat
+  a1.sources.r1.bind = 0.0.0.0
+  a1.sources.r1.port = ${env:NC_PORT}
+  a1.sources.r1.channels = c1
+
+NB: it currently works for values only, not for keys. (Ie. only on the "right side" of the `=` mark of the config lines.)
+
+As of version 1.10.0 Flume resolves configuration values using Apache Commons Text's StringSubstitutor
+class using the default set of Lookups along with a lookup that uses the configuration files as a
+source for replacement values.
+
+For example::
+  $ NC_PORT=44444 bin/flume-ng agent --conf conf --conf-file example.conf --name a1 -Dflume.root.logger=INFO,console
+
+Note the above is just an example, environment variables can be configured in other ways, including being set in `conf/flume-env.sh`.
+
+As noted, system properties are also supported, so the configuration::
+
+  a1.sources = r1
+  a1.sources.r1.type = netcat
+  a1.sources.r1.bind = 0.0.0.0
+  a1.sources.r1.port = ${sys:NC_PORT}
+  a1.sources.r1.channels = c1
+
+could be used and the startup command could be::
+
+  $ bin/flume-ng agent --conf conf --conf-file example.conf --name a1 -Dflume.root.logger=INFO,console -DNC_PORT=44444
+
+Furthermore, because multiple configuration files are allowed the first file could contain::
 
   a1.sources = r1
   a1.sources.r1.type = netcat
@@ -232,20 +302,32 @@ Flume has the ability to substitute environment variables in the configuration. 
   a1.sources.r1.port = ${NC_PORT}
   a1.sources.r1.channels = c1
 
-NB: it currently works for values only, not for keys. (Ie. only on the "right side" of the `=` mark of the config lines.)
+and the override file could contain::
 
-This can be enabled via Java system properties on agent invocation by setting `propertiesImplementation = org.apache.flume.node.EnvVarResolverProperties`.
+  NC_PORT = 44444
 
-For example::
-  $ NC_PORT=44444 bin/flume-ng agent --conf conf --conf-file example.conf --name a1 -Dflume.root.logger=INFO,console -DpropertiesImplementation=org.apache.flume.node.EnvVarResolverProperties
+In this case the startup command could be::
 
-Note the above is just an example, environment variables can be configured in other ways, including being set in `conf/flume-env.sh`.
+  $ bin/flume-ng agent --conf conf --conf-file example.conf --conf-file override.conf --name a1 -Dflume.root.logger=INFO,console
+
+Note that the method for specifying environment variables as was done in prior versions will stil work
+but has been deprecated in favor of using ${env:varName}.
+
+Using a command options file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Instead of specifying all the command options on the command line as of version 1.10.0 command
+options may be placed in either /etc/flume/flume.opts or flume.opts on the classpath. An example
+might be::
+
+  conf-file = example.conf
+  conf-file = override.conf
+  name = a1
 
 Logging raw data
 ~~~~~~~~~~~~~~~~
 
 
-Logging the raw stream of data flowing through the ingest pipeline is not desired behaviour in
+Logging the raw stream of data flowing through the ingest pipeline is not desired behavior in
 many production environments because this may result in leaking sensitive data or security related
 configurations, such as secret keys, to Flume log files.
 By default, Flume will not log such information. On the other hand, if the data pipeline is broken,
@@ -487,10 +569,10 @@ component:
   <Agent>.sources.<Source>.<someProperty> = <someValue>
 
   # properties for channels
-  <Agent>.channel.<Channel>.<someProperty> = <someValue>
+  <Agent>.channels.<Channel>.<someProperty> = <someValue>
 
   # properties for sinks
-  <Agent>.sources.<Sink>.<someProperty> = <someValue>
+  <Agent>.sinks.<Sink>.<someProperty> = <someValue>
 
 The property "type" needs to be set for each component for Flume to understand
 what kind of object it needs to be. Each source, sink and channel type has its
@@ -539,7 +621,7 @@ linked to form multiple flows:
   <Agent>.channels = <Channel1> <Channel2>
 
 Then you can link the sources and sinks to their corresponding channels (for
-sources) of channel (for sinks) to setup two different flows. For example, if
+sources) or channel (for sinks) to setup two different flows. For example, if
 you need to setup two flows in an agent, one going from an external avro client
 to external HDFS and another from output of a tail to avro sink, then here's a
 config to do that:
@@ -1248,7 +1330,7 @@ recursiveDirectorySearch  false           Whether to monitor sub directories for
 maxBackoff                4000            The maximum time (in millis) to wait between consecutive attempts to
                                           write to the channel(s) if the channel is full. The source will start at
                                           a low backoff and increase it exponentially each time the channel throws a
-                                          ChannelException, upto the value specified by this parameter.
+                                          ChannelException, up to the value specified by this parameter.
 batchSize                 100             Granularity at which to batch transfer to the channel
 inputCharset              UTF-8           Character set used by deserializers that treat the input file as text.
 decodeErrorPolicy         ``FAIL``        What to do when we see a non-decodable character in the input file.
@@ -1260,7 +1342,7 @@ deserializer              ``LINE``        Specify the deserializer used to parse
                                           Defaults to parsing each line as an event. The class specified must implement
                                           ``EventDeserializer.Builder``.
 deserializer.*                            Varies per event deserializer.
-bufferMaxLines            --              (Obselete) This option is now ignored.
+bufferMaxLines            --              (Obsolete) This option is now ignored.
 bufferMaxLineLength       5000            (Deprecated) Maximum length of a line in the commit buffer. Use deserializer.maxLineLength instead.
 selector.type             replicating     replicating or multiplexing
 selector.*                                Depends on the selector.type value
@@ -1412,7 +1494,7 @@ Twitter 1% firehose Source (experimental)
   Use at your own risk.
 
 Experimental source that connects via Streaming API to the 1% sample twitter
-firehose, continously downloads tweets, converts them to Avro format and
+firehose, continuously downloads tweets, converts them to Avro format and
 sends Avro events to a downstream Flume sink. Requires the consumer and
 access tokens and secrets of a Twitter developer account.
 Required properties are in **bold**.
@@ -1460,7 +1542,7 @@ Property Name                       Default      Description
 **kafka.bootstrap.servers**         --           List of brokers in the Kafka cluster used by the source
 kafka.consumer.group.id             flume        Unique identified of consumer group. Setting the same id in multiple sources or agents
                                                  indicates that they are part of the same consumer group
-**kafka.topics**                    --           Comma-separated list of topics the kafka consumer will read messages from.
+**kafka.topics**                    --           Comma-separated list of topics the Kafka consumer will read messages from.
 **kafka.topics.regex**              --           Regex that defines set of topics the source is subscribed on. This property has higher priority
                                                  than ``kafka.topics`` and overrides ``kafka.topics`` if exists.
 batchSize                           1000         Maximum number of messages written to Channel in one batch
@@ -1505,8 +1587,8 @@ Property Name                    Default              Description
 ===============================  ===================  ================================================================================================
 topic                            --                   Use kafka.topics
 groupId                          flume                Use kafka.consumer.group.id
-zookeeperConnect                 --                   Is no longer supported by kafka consumer client since 0.9.x. Use kafka.bootstrap.servers
-                                                      to establish connection with kafka cluster
+zookeeperConnect                 --                   Is no longer supported by Kafka consumer client since 0.9.x. Use kafka.bootstrap.servers
+                                                      to establish connection with Kafka cluster
 migrateZookeeperOffsets          true                 When no Kafka stored offset is found, look up the offsets in Zookeeper and commit them to Kafka.
                                                       This should be true to support seamless Kafka client migration from older versions of Flume.
                                                       Once migrated this can be set to false, though that should generally not be required.
@@ -1579,7 +1661,7 @@ Example configuration with server side authentication and data encryption.
     a1.sources.source1.kafka.consumer.ssl.truststore.location=/path/to/truststore.jks
     a1.sources.source1.kafka.consumer.ssl.truststore.password=<password to access the truststore>
 
-Specyfing the truststore is optional here, the global truststore can be used instead.
+Specifying the truststore is optional here, the global truststore can be used instead.
 For more details about the global SSL setup, see the `SSL/TLS support`_ section.
 
 Note: By default the property ``ssl.endpoint.identification.algorithm``
@@ -2416,10 +2498,12 @@ serializer.*
 
 Deprecated Properties
 
+======================  ============  ======================================================================================
 Name                    Default       Description
-======================  ============  ======================================================================
-hdfs.callTimeout        30000         Number of milliseconds allowed for HDFS operations, such as open, write, flush, close. This number should be increased if many HDFS timeout operations are occurring.
-======================  ============  ======================================================================
+======================  ============  ======================================================================================
+hdfs.callTimeout        30000         Number of milliseconds allowed for HDFS operations, such as open, write, flush, close.
+                                      This number should be increased if many HDFS timeout operations are occurring.
+======================  ============  ======================================================================================
 
 Example for agent named a1:
 
@@ -2429,7 +2513,7 @@ Example for agent named a1:
   a1.sinks = k1
   a1.sinks.k1.type = hdfs
   a1.sinks.k1.channel = c1
-  a1.sinks.k1.hdfs.path = /flume/events/%y-%m-%d/%H%M/%S
+  a1.sinks.k1.hdfs.path = /flume/events/%Y-%m-%d/%H%M/%S
   a1.sinks.k1.hdfs.filePrefix = events-
   a1.sinks.k1.hdfs.round = true
   a1.sinks.k1.hdfs.roundValue = 10
@@ -2564,7 +2648,7 @@ Example for agent named a1:
  a1.sinks.k1.hive.metastore = thrift://127.0.0.1:9083
  a1.sinks.k1.hive.database = logsdb
  a1.sinks.k1.hive.table = weblogs
- a1.sinks.k1.hive.partition = asia,%{country},%y-%m-%d-%H-%M
+ a1.sinks.k1.hive.partition = asia,%{country},%Y-%m-%d-%H-%M
  a1.sinks.k1.useLocalTimeStamp = false
  a1.sinks.k1.round = true
  a1.sinks.k1.roundValue = 10
@@ -2996,74 +3080,6 @@ Example for agent named a1:
   # a1.sinks.k1.morphlineId = morphline1
   # a1.sinks.k1.batchSize = 1000
   # a1.sinks.k1.batchDurationMillis = 1000
-
-ElasticSearchSink
-~~~~~~~~~~~~~~~~~
-
-This sink writes data to an elasticsearch cluster. By default, events will be written so that the `Kibana <http://kibana.org>`_ graphical interface
-can display them - just as if `logstash <https://logstash.net>`_ wrote them.
-
-The elasticsearch and lucene-core jars required for your environment must be placed in the lib directory of the Apache Flume installation.
-Elasticsearch requires that the major version of the client JAR match that of the server and that both are running the same minor version
-of the JVM. SerializationExceptions will appear if this is incorrect. To
-select the required version first determine the version of elasticsearch and the JVM version the target cluster is running. Then select an elasticsearch client
-library which matches the major version. A 0.19.x client can talk to a 0.19.x cluster; 0.20.x can talk to 0.20.x and 0.90.x can talk to 0.90.x. Once the
-elasticsearch version has been determined then read the pom.xml file to determine the correct lucene-core JAR version to use. The Flume agent
-which is running the ElasticSearchSink should also match the JVM the target cluster is running down to the minor version.
-
-Events will be written to a new index every day. The name will be <indexName>-yyyy-MM-dd where <indexName> is the indexName parameter. The sink
-will start writing to a new index at midnight UTC.
-
-Events are serialized for elasticsearch by the ElasticSearchLogStashEventSerializer by default. This behaviour can be
-overridden with the serializer parameter. This parameter accepts implementations of org.apache.flume.sink.elasticsearch.ElasticSearchEventSerializer
-or org.apache.flume.sink.elasticsearch.ElasticSearchIndexRequestBuilderFactory. Implementing ElasticSearchEventSerializer is deprecated in favour of
-the more powerful ElasticSearchIndexRequestBuilderFactory.
-
-The type is the FQCN: org.apache.flume.sink.elasticsearch.ElasticSearchSink
-
-Required properties are in **bold**.
-
-================  ======================================================================== =======================================================================================================
-Property Name     Default                                                                  Description
-================  ======================================================================== =======================================================================================================
-**channel**       --
-**type**          --                                                                       The component type name, needs to be ``org.apache.flume.sink.elasticsearch.ElasticSearchSink``
-**hostNames**     --                                                                       Comma separated list of hostname:port, if the port is not present the default port '9300' will be used
-indexName         flume                                                                    The name of the index which the date will be appended to. Example 'flume' -> 'flume-yyyy-MM-dd'
-                                                                                           Arbitrary header substitution is supported, eg. %{header} replaces with value of named event header
-indexType         logs                                                                     The type to index the document to, defaults to 'log'
-                                                                                           Arbitrary header substitution is supported, eg. %{header} replaces with value of named event header
-clusterName       elasticsearch                                                            Name of the ElasticSearch cluster to connect to
-batchSize         100                                                                      Number of events to be written per txn.
-ttl               --                                                                       TTL in days, when set will cause the expired documents to be deleted automatically,
-                                                                                           if not set documents will never be automatically deleted. TTL is accepted both in the earlier form of
-                                                                                           integer only e.g. a1.sinks.k1.ttl = 5 and also with a qualifier ms (millisecond), s (second), m (minute),
-                                                                                           h (hour), d (day) and w (week). Example a1.sinks.k1.ttl = 5d will set TTL to 5 days. Follow
-                                                                                           http://www.elasticsearch.org/guide/reference/mapping/ttl-field/ for more information.
-serializer        org.apache.flume.sink.elasticsearch.ElasticSearchLogStashEventSerializer The ElasticSearchIndexRequestBuilderFactory or ElasticSearchEventSerializer to use. Implementations of
-                                                                                           either class are accepted but ElasticSearchIndexRequestBuilderFactory is preferred.
-serializer.*      --                                                                       Properties to be passed to the serializer.
-================  ======================================================================== =======================================================================================================
-
-.. note:: Header substitution is a handy to use the value of an event header to dynamically decide the indexName and indexType to use when storing the event.
-          Caution should be used in using this feature as the event submitter now has control of the indexName and indexType.
-          Furthermore, if the elasticsearch REST client is used then the event submitter has control of the URL path used.
-
-Example for agent named a1:
-
-.. code-block:: properties
-
-  a1.channels = c1
-  a1.sinks = k1
-  a1.sinks.k1.type = elasticsearch
-  a1.sinks.k1.hostNames = 127.0.0.1:9200,127.0.0.2:9300
-  a1.sinks.k1.indexName = foo_index
-  a1.sinks.k1.indexType = bar_type
-  a1.sinks.k1.clusterName = foobar_cluster
-  a1.sinks.k1.batchSize = 500
-  a1.sinks.k1.ttl = 5d
-  a1.sinks.k1.serializer = org.apache.flume.sink.elasticsearch.ElasticSearchDynamicSerializer
-  a1.sinks.k1.channel = c1
 
 Kite Dataset Sink
 ~~~~~~~~~~~~~~~~~
@@ -4037,6 +4053,29 @@ In the above configuration, c3 is an optional channel. Failure to write to c3 is
 simply ignored. Since c1 and c2 are not marked optional, failure to write to
 those channels will cause the transaction to fail.
 
+Load Balancing Channel Selector
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Load balancing channel selector provides the ability to load-balance flow over multiple channels. This
+effectively allows the incoming data to be processed on multiple threads. It maintains an indexed list of active channels on which the load must be distributed. Implementation supports distributing load using either via round_robin or random selection mechanisms. The choice of selection mechanism defaults to round_robin type, but can be overridden via configuration.
+
+Required properties are in **bold**.
+
+==================  =====================  =================================================
+Property Name       Default                Description
+==================  =====================  =================================================
+selector.type       replicating            The component type name, needs to be ``load_balancing``
+selector.policy     ``round_robin``        Selection mechanism. Must be either ``round_robin`` or ``random``.
+==================  =====================  =================================================
+
+Example for agent named a1 and it's source called r1:
+
+.. code-block:: properties
+
+  a1.sources = r1
+  a1.channels = c1 c2 c3 c4
+  a1.sources.r1.channels = c1 c2 c3 c4
+  a1.sources.r1.selector.type = load_balancing
+  a1.sources.r1.selector.policy = round_robin
 
 Multiplexing Channel Selector
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -4279,7 +4318,7 @@ Example for agent named a1:
 
   a1.sinks.k1.type = hdfs
   a1.sinks.k1.channel = c1
-  a1.sinks.k1.hdfs.path = /flume/events/%y-%m-%d/%H%M/%S
+  a1.sinks.k1.hdfs.path = /flume/events/%Y-%m-%d/%H%M/%S
   a1.sinks.k1.serializer = avro_event
   a1.sinks.k1.serializer.compressionCodec = snappy
 
@@ -4805,7 +4844,7 @@ Log4J Appender
 
 Appends Log4j events to a flume agent's avro source. A client using this
 appender must have the flume-ng-sdk in the classpath (eg,
-flume-ng-sdk-1.9.0.jar).
+flume-ng-sdk-1.10.0.jar).
 Required properties are in **bold**.
 
 =====================  =======  ==================================================================================
@@ -4869,7 +4908,7 @@ Load Balancing Log4J Appender
 
 Appends Log4j events to a list of flume agent's avro source. A client using this
 appender must have the flume-ng-sdk in the classpath (eg,
-flume-ng-sdk-1.9.0.jar). This appender supports a round-robin and random
+flume-ng-sdk-1.10.0.jar). This appender supports a round-robin and random
 scheme for performing the load balancing. It also supports a configurable backoff
 timeout so that down agents are removed temporarily from the set of hosts
 Required properties are in **bold**.
@@ -5028,33 +5067,33 @@ Sources 2
 Sinks 1
 ~~~~~~~
 
-+------------------------+-------------+------------+---------------+-------+--------+
-|                        | Avro/Thrift | AsyncHBase | ElasticSearch | HBase | HBase2 |
-+------------------------+-------------+------------+---------------+-------+--------+
-| BatchCompleteCount     | x           | x          | x             | x     | x      |
-+------------------------+-------------+------------+---------------+-------+--------+
-| BatchEmptyCount        | x           | x          | x             | x     | x      |
-+------------------------+-------------+------------+---------------+-------+--------+
-| BatchUnderflowCount    | x           | x          | x             | x     | x      |
-+------------------------+-------------+------------+---------------+-------+--------+
-| ChannelReadFail        | x           |            |               |       | x      |
-+------------------------+-------------+------------+---------------+-------+--------+
-| ConnectionClosedCount  | x           | x          | x             | x     | x      |
-+------------------------+-------------+------------+---------------+-------+--------+
-| ConnectionCreatedCount | x           | x          | x             | x     | x      |
-+------------------------+-------------+------------+---------------+-------+--------+
-| ConnectionFailedCount  | x           | x          | x             | x     | x      |
-+------------------------+-------------+------------+---------------+-------+--------+
-| EventDrainAttemptCount | x           | x          | x             | x     | x      |
-+------------------------+-------------+------------+---------------+-------+--------+
-| EventDrainSuccessCount | x           | x          | x             | x     | x      |
-+------------------------+-------------+------------+---------------+-------+--------+
-| EventWriteFail         | x           |            |               |       | x      |
-+------------------------+-------------+------------+---------------+-------+--------+
-| KafkaEventSendTimer    |             |            |               |       |        |
-+------------------------+-------------+------------+---------------+-------+--------+
-| RollbackCount          |             |            |               |       |        |
-+------------------------+-------------+------------+---------------+-------+--------+
++------------------------+-------------+------------+-------+--------+
+|                        | Avro/Thrift | AsyncHBase | HBase | HBase2 |
++------------------------+-------------+------------+-------+--------+-
+| BatchCompleteCount     | x           | x          | x     | x      |
++------------------------+-------------+------------+-------+--------+
+| BatchEmptyCount        | x           | x          | x     | x      |
++------------------------+-------------+------------+-------+--------+
+| BatchUnderflowCount    | x           | x          | x     | x      |
++------------------------+-------------+------------+-------+--------+
+| ChannelReadFail        | x           |            |       | x      |
++------------------------+-------------+------------+-------+--------+
+| ConnectionClosedCount  | x           | x          | x     | x      |
++------------------------+-------------+------------+-------+--------+
+| ConnectionCreatedCount | x           | x          | x     | x      |
++------------------------+-------------+------------+-------+--------+
+| ConnectionFailedCount  | x           | x          | x     | x      |
++------------------------+-------------+------------+-------+--------+
+| EventDrainAttemptCount | x           | x          | x     | x      |
++------------------------+-------------+------------+-------+--------+
+| EventDrainSuccessCount | x           | x          | x     | x      |
++------------------------+-------------+------------+-------+--------+
+| EventWriteFail         | x           |            |       | x      |
++------------------------+-------------+------------+-------+--------+
+| KafkaEventSendTimer    |             |            |       |        |
++------------------------+-------------+------------+-------+--------+
+| RollbackCount          |             |            |       |        |
++------------------------+-------------+------------+-------+--------+
 
 Sinks 2
 ~~~~~~~
@@ -5540,7 +5579,6 @@ org.apache.flume.Sink                                         hdfs              
 org.apache.flume.Sink                                         hbase                   org.apache.flume.sink.hbase.HBaseSink
 org.apache.flume.Sink                                         hbase2                  org.apache.flume.sink.hbase2.HBase2Sink
 org.apache.flume.Sink                                         asynchbase              org.apache.flume.sink.hbase.AsyncHBaseSink
-org.apache.flume.Sink                                         elasticsearch           org.apache.flume.sink.elasticsearch.ElasticSearchSink
 org.apache.flume.Sink                                         file_roll               org.apache.flume.sink.RollingFileSink
 org.apache.flume.Sink                                         irc                     org.apache.flume.sink.irc.IRCSink
 org.apache.flume.Sink                                         thrift                  org.apache.flume.sink.ThriftSink

@@ -33,6 +33,34 @@ application.
 
 .. raw:: html
 
+   <h3>June 5, 2022 - Apache Flume 1.10.0 Released</h3>
+
+The Apache Flume team is pleased to announce the release of Flume 1.10.0.
+
+Flume is a distributed, reliable, and available service for efficiently
+collecting, aggregating, and moving large amounts of streaming event data.
+
+Flume 1.10.0 is stable, production-ready software, and is backwards-compatible with
+previous versions of the Flume 1.x codeline.
+
+This version of Flume upgrades many dependencies, resolving the CVEs associated with them.
+Enhancements included in this release include the addition of a LoadBalancingChannelSelector,
+the ability to retrieve the Flume configuration from a remote source such as a Spring
+Cloud Config Server, and support for composite configurations.
+
+Flume has been updated to use Log4j 2.x instead of Log4j 1.x.
+
+The full change log and documentation are available on the
+`Flume 1.10.0 release page <releases/1.10.0.html>`__.
+
+This release can be downloaded from the Flume `Download <download.html>`__ page.
+
+Your contributions, feedback, help and support make Flume better!
+For more information on how to report problems or contribute,
+please visit our `Get Involved <getinvolved.html>`__ page.
+
+.. raw:: html
+
    <h3>January 8, 2019 - Apache Flume 1.9.0 Released</h3>
 
 The Apache Flume team is pleased to announce the release of Flume 1.9.0.
