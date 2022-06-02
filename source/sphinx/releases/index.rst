@@ -3,13 +3,13 @@ Releases
 
 .. rubric:: Current Release
 
-The current stable release is `Apache Flume Version 1.9.0 <1.9.0.html>`__.
+The current stable release is `Apache Flume Version 1.10.0 <1.10.0.html>`__.
 
 .. toctree::
    :maxdepth: 1
    :hidden:
 
-   1.9.0
+   1.10.0
 
 .. rubric:: Previous Releases
 
@@ -17,6 +17,7 @@ The current stable release is `Apache Flume Version 1.9.0 <1.9.0.html>`__.
    :maxdepth: 1
    :glob:
 
+   1.9.0
    1.8.0
    1.7.0
    1.6.0
