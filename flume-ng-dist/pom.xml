@@ -153,10 +153,6 @@
     </dependency>
     <dependency>
       <groupId>org.apache.flume.flume-ng-sinks</groupId>
-      <artifactId>flume-dataset-sink</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flume.flume-ng-sinks</groupId>
       <artifactId>flume-hive-sink</artifactId>
     </dependency>
     <dependency>

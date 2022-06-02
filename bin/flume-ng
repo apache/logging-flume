@@ -164,7 +164,11 @@ commands:
   version                   show Flume version info
 
 global options:
-  --conf,-c <conf>          use configs in <conf> directory
+  --conf-file,-f <conf>     use configs in <conf> directory
+  --conf-uri, -u <conf>     use configs located at <conf>
+  --conf-provider, -prov <provider-class> use the configuration provided by the provider class
+  --conf-user, -user <user>    the user for accessing the configuration uri
+  --conf-oassword, -pwd <password> the password for accessing the configuration uri
   --classpath,-C <cp>       append to the classpath
   --dryrun,-d               do not actually start Flume, just print the command
   --plugins-path <dirs>     colon-separated list of plugins.d directories. See the
@@ -175,7 +179,7 @@ global options:
 
 agent options:
   --name,-n <name>          the name of this agent (required)
-  --conf-file,-f <file>     specify a config file (required if -z missing)
+  --conf-file,-f <file>     specify a config file (required if -z, -u, and -prov are missing)
   --zkConnString,-z <str>   specify the ZooKeeper connection to use (required if -f missing)
   --zkBasePath,-p <path>    specify the base path in ZooKeeper for agent configs
   --no-reload-conf          do not reload config file if changed
