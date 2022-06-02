@@ -262,7 +262,7 @@ merged last. If it is desirec to have example.conf be the base configuration it 
 depending on how it should be accessed.
 
 Using environment variables, system properies, or other properties configuration files
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Flume has the ability to substitute environment variables in the configuration. For example::
 
   a1.sources = r1
@@ -4054,7 +4054,7 @@ simply ignored. Since c1 and c2 are not marked optional, failure to write to
 those channels will cause the transaction to fail.
 
 Load Balancing Channel Selector
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Load balancing channel selector provides the ability to load-balance flow over multiple channels. This
 effectively allows the incoming data to be processed on multiple threads. It maintains an indexed list of active channels on which the load must be distributed. Implementation supports distributing load using either via round_robin or random selection mechanisms. The choice of selection mechanism defaults to round_robin type, but can be overridden via configuration.
 
