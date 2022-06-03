@@ -28,6 +28,7 @@ limitations under the License.
     <properties>
         <maven.site.skip>true</maven.site.skip>
         <deploy.plugin.version>2.8.2</deploy.plugin.version>
+        <mvn-gpg-plugin.version>1.6</mvn-gpg-plugin.version>
     </properties>
     <build>
         <plugins>
@@ -38,6 +39,23 @@ limitations under the License.
                 <configuration>
                     <skip>true</skip>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>${mvn-gpg-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>default-cli</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
