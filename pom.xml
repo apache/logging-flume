@@ -48,7 +48,6 @@ limitations under the License.
     <!-- defaults for flaky test and focused test exclusions -->
     <test.exclude.pattern>$</test.exclude.pattern> <!-- junk pattern -->
     <test.include.pattern>**/Test*.java</test.include.pattern>
-    <siteUrlDeployment>file://people.apache.org/www/incubator.apache.org/flume</siteUrlDeployment>
     <stagingDirectory>${project.basedir}/target/docs</stagingDirectory>
 
     <activemq.version>5.7.0</activemq.version>
@@ -436,19 +435,6 @@ limitations under the License.
     <name>Apache Software Foundation</name>
     <url>http://www.apache.org</url>
   </organization>
-
-  <distributionManagement>
-    <!--<repository>
-      <id>apache.staging.https</id>
-      <name>Apache Staging Repository</name>
-      <url>https://repository.apache.org/service/local/staging/deploy/maven2/</url>
-    </repository>-->
-    <site>
-      <id>apache.website</id>
-      <url>${siteUrlDeployment}</url>
-      <name>Flume Site</name>
-    </site>
-  </distributionManagement>
 
   <build>
 
