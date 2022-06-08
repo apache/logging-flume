@@ -36,6 +36,23 @@ limitations under the License.
   <artifactId>flume-hive-sink</artifactId>
   <name>Flume NG Hive Sink</name>
 
+  <repositories>
+    <!-- Our current hive version needs a calcite version that has dependencies not available in Maven Central.
+         The pom from calcite gives the HTTP version of this repo address, which gets ignored by current maven.
+      -->
+    <repository>
+      <releases>
+        <enabled>true</enabled>
+        <updatePolicy>always</updatePolicy>
+        <checksumPolicy>warn</checksumPolicy>
+      </releases>
+      <id>conjars</id>
+      <name>Conjars</name>
+      <url>https://conjars.org/repo</url>
+      <layout>default</layout>
+    </repository>
+  </repositories>
+
   <dependencies>
 
     <dependency>
