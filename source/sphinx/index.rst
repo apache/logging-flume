@@ -33,7 +33,7 @@ application.
 
 .. raw:: html
 
-   <h3>June 5, 2022 - Apache Flume 1.10.0 Released</h3>
+   <h3>June 13, 2022 - Apache Flume 1.10.0 Released</h3>
 
 The Apache Flume team is pleased to announce the release of Flume 1.10.0.
 
@@ -42,6 +42,9 @@ collecting, aggregating, and moving large amounts of streaming event data.
 
 Flume 1.10.0 is stable, production-ready software, and is backwards-compatible with
 previous versions of the Flume 1.x codeline.
+
+Flume 1.10.0 contains a fix for `CVE-2022-25167 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-25167>`__.
+See the `Flume Security <./security.html>`__ page for more details.
 
 This version of Flume upgrades many dependencies, resolving the CVEs associated with them.
 Enhancements included in this release include the addition of a LoadBalancingChannelSelector,
@@ -575,6 +578,7 @@ Feel free to post to the User's mailing list with any questions.
 
    getinvolved
    download
+   security
    documentation
    releases/index
    mailinglists

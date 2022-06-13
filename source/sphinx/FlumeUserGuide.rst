@@ -197,11 +197,10 @@ several named agents; when a given Flume process is launched a flag is passed te
 
 Given this configuration file, we can start Flume as follows::
 
-  $ bin/flume-ng agent --conf conf --conf-file example.conf --name a1 -Dflume.root.logger=INFO,console
+  $ bin/flume-ng agent --conf conf --conf-file example.conf --name a1
 
 Note that in a full deployment we would typically include one more option: ``--conf=<conf-dir>``.
-The ``<conf-dir>`` directory would include a shell script *flume-env.sh* and potentially a log4j properties file.
-In this example, we pass a Java option to force Flume to log to the console and we go without a custom environment script.
+The ``<conf-dir>`` directory would include a shell script *flume-env.sh* and potentially a log4j configuration file.
 
 From a separate terminal, we can then telnet port 44444 and send Flume an event:
 
@@ -249,7 +248,7 @@ configurations will be processed before any of the --conf-file configurations ar
 
 For example, a configuration of::
 
-  $ bin/flume-ng agent --conf conf --conf-file example.conf --conf-uri http://localhost:80/flume.conf --conf-uri http://localhost:80/override.conf --name a1 -Dflume.root.logger=INFO,console
+  $ bin/flume-ng agent --conf conf --conf-file example.conf --conf-uri http://localhost:80/flume.conf --conf-uri http://localhost:80/override.conf --name a1
 
 will cause flume.conf to be read first, override.conf to be merged with it and finally example.conf would be
 merged last. If it is desirec to have example.conf be the base configuration it should be specified using the
@@ -278,7 +277,7 @@ class using the default set of Lookups along with a lookup that uses the configu
 source for replacement values.
 
 For example::
-  $ NC_PORT=44444 bin/flume-ng agent --conf conf --conf-file example.conf --name a1 -Dflume.root.logger=INFO,console
+  $ NC_PORT=44444 bin/flume-ng agent --conf conf --conf-file example.conf --name a1
 
 Note the above is just an example, environment variables can be configured in other ways, including being set in `conf/flume-env.sh`.
 
@@ -292,7 +291,7 @@ As noted, system properties are also supported, so the configuration::
 
 could be used and the startup command could be::
 
-  $ bin/flume-ng agent --conf conf --conf-file example.conf --name a1 -Dflume.root.logger=INFO,console -DNC_PORT=44444
+  $ bin/flume-ng agent --conf conf --conf-file example.conf --name a1 -DNC_PORT=44444
 
 Furthermore, because multiple configuration files are allowed the first file could contain::
 
@@ -308,7 +307,7 @@ and the override file could contain::
 
 In this case the startup command could be::
 
-  $ bin/flume-ng agent --conf conf --conf-file example.conf --conf-file override.conf --name a1 -Dflume.root.logger=INFO,console
+  $ bin/flume-ng agent --conf conf --conf-file example.conf --conf-file override.conf --name a1
 
 Note that the method for specifying environment variables as was done in prior versions will stil work
 but has been deprecated in favor of using ${env:varName}.
@@ -348,10 +347,9 @@ To enable data logging, set the Java system property ``-Dorg.apache.flume.log.ra
 in the same way described above. For most components, the log4j logging level must also be set to
 DEBUG or TRACE to make event-specific logging appear in the Flume logs.
 
-Here is an example of enabling both configuration logging and raw data logging while also
-setting the Log4j loglevel to DEBUG for console output::
+Here is an example of enabling both configuration logging and raw data logging::
 
-  $ bin/flume-ng agent --conf conf --conf-file example.conf --name a1 -Dflume.root.logger=DEBUG,console -Dorg.apache.flume.log.printconfig=true -Dorg.apache.flume.log.rawdata=true
+  $ bin/flume-ng agent --conf conf --conf-file example.conf --name a1 -Dorg.apache.flume.log.printconfig=true -Dorg.apache.flume.log.rawdata=true
 
 
 Zookeeper based Configuration
@@ -369,7 +367,7 @@ Following is how the Zookeeper Node tree would look like for agents a1 and a2
 
 Once the configuration file is uploaded, start the agent with following options
 
-  $ bin/flume-ng agent --conf conf -z zkhost:2181,zkhost1:2181 -p /flume --name a1 -Dflume.root.logger=INFO,console
+  $ bin/flume-ng agent --conf conf -z zkhost:2181,zkhost1:2181 -p /flume --name a1
 
 ==================   ================  =========================================================================
 Argument Name        Default           Description
