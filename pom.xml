@@ -27,7 +27,7 @@ limitations under the License.
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.apache.flume</groupId>
   <artifactId>flume-parent</artifactId>
-  <version>2.0.0-SNAPSHOT</version>
+  <version>1.10.1-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Apache Flume</name>
@@ -89,10 +89,11 @@ limitations under the License.
     <kite.version>1.1.0</kite.version>
     <kudu.version>1.10.0</kudu.version>
     <lifecycle-mapping.version>1.0.0</lifecycle-mapping.version>
-    <log4j.version>2.17.1</log4j.version>
+    <log4j.version>2.18.0</log4j.version>
     <mapdb.version>0.9.9</mapdb.version>
     <mina.version>2.1.5</mina.version>
     <mockito.version>1.9.0</mockito.version>
+    <module.name />
     <mvn-antrun-plugin.version>1.8</mvn-antrun-plugin.version>
     <mvn-assembly-plugin.version>3.1.0</mvn-assembly-plugin.version>
     <mvn-build-helper-plugin>3.0.0</mvn-build-helper-plugin>
@@ -102,6 +103,7 @@ limitations under the License.
     <mvn-compiler-plugin.version>3.8.1</mvn-compiler-plugin.version>
     <mvn-deploy-plugin.version>2.8.2</mvn-deploy-plugin.version>
     <mvn-gpg-plugin.version>1.6</mvn-gpg-plugin.version>
+    <mvn-jar-plugin.version>3.1.0</mvn-jar-plugin.version>
     <mvn-javadoc-plugin.version>2.9</mvn-javadoc-plugin.version>
     <mvn-paranamer-plugin.version>2.8</mvn-paranamer-plugin.version>
     <mvn-pmd-plugin.version>3.15.0</mvn-pmd-plugin.version>
@@ -493,6 +495,36 @@ limitations under the License.
             <source>${sourceJavaVersion}</source>
             <target>${targetJavaVersion}</target>
           </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>${mvn-jar-plugin.version}</version>
+          <executions>
+            <execution>
+              <id>default-jar</id>
+              <goals>
+                <goal>jar</goal>
+              </goals>
+              <configuration>
+                <archive>
+                  <manifestEntries>
+                    <Specification-Title>${project.name}</Specification-Title>
+                    <Specification-Version>${project.version}</Specification-Version>
+                    <Specification-Vendor>${project.organization.name}</Specification-Vendor>
+                    <Implementation-Title>${project.name}</Implementation-Title>
+                    <Implementation-Version>${project.version}</Implementation-Version>
+                    <Implementation-Vendor>${project.organization.name}</Implementation-Vendor>
+                    <Implementation-Vendor-Id>org.apache</Implementation-Vendor-Id>
+                    <X-Compile-Source-JDK>${maven.compiler.source}</X-Compile-Source-JDK>
+                    <X-Compile-Target-JDK>${maven.compiler.target}</X-Compile-Target-JDK>
+                    <Automatic-Module-Name>${module.name}</Automatic-Module-Name>
+                  </manifestEntries>
+                </archive>
+              </configuration>
+            </execution>
+          </executions>
         </plugin>
 
         <plugin>

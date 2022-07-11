@@ -20,7 +20,7 @@ limitations under the License.
   <parent>
     <artifactId>flume-parent</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>2.0.0-SNAPSHOT</version>
+    <version>1.10.1-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
   <artifactId>flume-ng-configuration</artifactId>
@@ -30,6 +30,7 @@ limitations under the License.
     <!-- TODO fix spotbugs violations -->
     <spotbugs.maxAllowedViolations>8</spotbugs.maxAllowedViolations>
     <pmd.maxAllowedViolations>17</pmd.maxAllowedViolations>
+    <module.name>org.apache.flume.conf</module.name>
   </properties>
 
   <dependencies>

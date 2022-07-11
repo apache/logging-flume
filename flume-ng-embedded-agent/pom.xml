@@ -21,7 +21,7 @@ limitations under the License.
   <parent>
     <artifactId>flume-parent</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>2.0.0-SNAPSHOT</version>
+    <version>1.10.1-SNAPSHOT</version>
   </parent>
 
   <artifactId>flume-ng-embedded-agent</artifactId>
@@ -31,6 +31,7 @@ limitations under the License.
   <properties>
     <!-- TODO fix pmd violations -->
     <pmd.maxAllowedViolations>2</pmd.maxAllowedViolations>
+    <module.name>org.apache.flume.agent.embedded</module.name>
   </properties>
 
   <dependencies>
