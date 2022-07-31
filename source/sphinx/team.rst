@@ -13,25 +13,26 @@ Team
  The following individuals are recognized as currently active PMC Members or Project Committers.
 
 .. csv-table::
-   :header: "Name", "Email", "Id", "Organization", "Role"
-   :widths: 30, 25, 15, 15, 15
+   :header: "Name", "Email", "Id", "Role"
+   :widths: 30, 25, 20, 25
 
-   "Arvind Prabhakar", "arvind at apache.org", "arvind", "StreamSets", "PMC Member"
-   "Balázs Donát Bessenyei", "bessbd at apache.org", "bessbd", "Ericsson", "PMC Chair"
-   "Denes Arvay", "denes at apache.org", "denes", "Cloudera", "PMC Member"
-   "Jaroslav Cecho", "jarcec at apache.org", "jarcec", "StreamSets", "PMC Member"
-   "Jonathan Hsieh", "jmhsieh at apache.org", "jmhsieh", "Cloudera", "PMC Member"
-   "Juhani Connolly", "juhanic at apache.org", "juhanic", "CyberAgent", "PMC Member"
-   "Mike Percy", "mpercy at apache.org", "mpercy", "Cloudera", "PMC Member"
-   "Ahmed Radwan", "ahmed at apache.org", "ahmed", "Apple", "PMC Member"
-   "Ralph Goers", "rgoers at apache.org", "rgoers", "Nextiva", "PMC Member"
-   "Tristan Stevens", "tristan at apache.org", "tristan", "Cloudera", "PMC Member"
+   "Arvind Prabhakar", "arvind at apache.org", "arvind", "PMC Member"
+   "Balázs Donát Bessenyei", "bessbd at apache.org", "bessbd", "PMC Chair"
+   "Denes Arvay", "denes at apache.org", "denes", "PMC Member"
+   "Jaroslav Cecho", "jarcec at apache.org", "jarcec","PMC Member"
+   "Jonathan Hsieh", "jmhsieh at apache.org", "jmhsieh", "PMC Member"
+   "Juhani Connolly", "juhanic at apache.org", "juhanic", "PMC Member"
+   "Mike Percy", "mpercy at apache.org", "mpercy", "PMC Member"
+   "Ahmed Radwan", "ahmed at apache.org", "ahmed", "PMC Member"
+   "Ralph Goers", "rgoers at apache.org", "rgoers", "PMC Member"
+   "Sean Busbey", "busbey at apache.org", "busbey", "Committer"
+   "Tristan Stevens", "tristan at apache.org", "tristan", "PMC Member"
 
 The following individuals are recognized as former PMC Members or Project Committers
 
 .. csv-table::
    :header: "Name", "Email", "Id", "Role", "Status"
-   :widths: 25, 25, 10, 10, 15, 15
+   :widths: 25, 25, 15, 15, 15
 
    "Aaron Kimball", "kimballa at apache.org", "kimballa", "PMC Member", "Last active 2011"
    "Ashish Paliwal", "apaliwal at apache.org", "apaliwal", "Committer", "Last active 2017"
@@ -43,7 +44,7 @@ The following individuals are recognized as former PMC Members or Project Commit
    "Hari Shreedharan", "hshreedharan at apache.org", "hshreedharan", "PMC Member", "Emeritus 2022"
    "Henry Robinson", "henry at apache.org", "henry", "PMC Member", "Last active - project creation"
    "Johny Rufus", "johnyrufus at apache.org", "johnyrufus", "Committer", "Last active 2017"
-   "Mingjie Lai", "mlai at apache.org", "mlai", "Apple", "PMC Member", "Last active 2012"
+   "Mingjie Lai", "mlai at apache.org", "mlai", "PMC Member", "Last active 2012"
    "Mubarak Seyed", "mubarak at apache.org","mubarak", "Committer", "Last active 2017"
    "Nick Verbeck", "nerdynick at apache.org", "nerdynick", "PMC Member", "Last active 2011"
    "Patrick Hunt", "phunt at apache.org", "phunt", "PMC Member", "Last active 2012"
