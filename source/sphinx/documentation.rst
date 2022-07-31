@@ -4,8 +4,8 @@ Documentation
 
 The latest released version:
 
-* `Flume User Guide <releases/content/1.10.0/FlumeUserGuide.html>`__
-* `Flume Developer Guide <releases/content/1.10.0/FlumeDeveloperGuide.html>`__
+* `Flume User Guide <releases/content/1.10.1/FlumeUserGuide.html>`__
+* `Flume Developer Guide <releases/content/1.10.1/FlumeDeveloperGuide.html>`__
 
 The documents below are the very most recent versions of the documentation and may contain features that have not
 been released.
