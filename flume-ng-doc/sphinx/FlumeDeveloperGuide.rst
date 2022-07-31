@@ -15,7 +15,7 @@
 
 
 ======================================
-Flume 2.0.0-SNAPSHOT Developer Guide
+Flume 1.10.1 Developer Guide
 ======================================
 
 Introduction
