@@ -33,7 +33,7 @@ application.
 
 .. raw:: html
 
-   <h3>Aug 4, 2022 - Apache Flume 1.10.1 Released</h3>
+   <h3>Aug 16, 2022 - Apache Flume 1.10.1 Released</h3>
 
 The Apache Flume team is pleased to announce the release of Flume 1.10.1.
 
