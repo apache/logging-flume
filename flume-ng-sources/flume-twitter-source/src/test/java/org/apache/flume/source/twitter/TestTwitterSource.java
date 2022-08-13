@@ -18,6 +18,7 @@
  */
 package org.apache.flume.source.twitter;
 
+import static org.fest.reflect.core.Reflection.field;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
@@ -34,6 +35,8 @@ import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
+import org.apache.flume.instrumentation.ChannelCounter;
+import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.sink.DefaultSinkProcessor;
 import org.apache.flume.sink.LoggerSink;
 import org.junit.Assert;
@@ -72,6 +75,7 @@ public class TestTwitterSource extends Assert {
     context.put("accessToken", accessToken);
     context.put("accessTokenSecret", accessTokenSecret);
     context.put("maxBatchDurationMillis", "1000");
+    context.put("maxBatchSize", "1");
 
     TwitterSource source = new TwitterSource();
     source.configure(context);
@@ -100,6 +104,23 @@ public class TestTwitterSource extends Assert {
     source.stop();
     sinkRunner.stop();
     sink.stop();
+
+    long successfulEvents = getTwitterCounterGroup(source).getEventReceivedCount();
+    long receivedEvents = getTwitterCounterGroup(source).getEventReceivedCount();
+    long channelEvents = getMemoryChannelCounterGroup((MemoryChannel)channel).getEventPutAttemptCount();
+
+    assertEquals("Received vs. Success:", receivedEvents, successfulEvents);
+    assertEquals("Success vs. Channel", channelEvents, successfulEvents);
+
+  }
+
+  private SourceCounter getTwitterCounterGroup(TwitterSource source) {
+    return field("sourceCounter").ofType(SourceCounter.class).in(source).get();
+  }
+
+
+  private ChannelCounter getMemoryChannelCounterGroup(MemoryChannel source) {
+    return field("channelCounter").ofType(ChannelCounter.class).in(source).get();
   }
 
   @Test

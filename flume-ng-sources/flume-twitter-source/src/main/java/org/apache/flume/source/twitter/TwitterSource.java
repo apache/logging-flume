@@ -41,6 +41,7 @@ import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.event.EventBuilder;
+import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.source.AbstractSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,6 +88,8 @@ public class TwitterSource
   private int maxBatchSize = 1000;
   private int maxBatchDurationMillis = 1000;
 
+  private SourceCounter sourceCounter;
+
   // Fri May 14 02:52:55 +0000 2010
   private SimpleDateFormat formatterTo =
       new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
@@ -119,6 +122,10 @@ public class TwitterSource
     maxBatchSize = context.getInteger("maxBatchSize", maxBatchSize);
     maxBatchDurationMillis = context.getInteger("maxBatchDurationMillis",
                                                 maxBatchDurationMillis);
+
+    if (sourceCounter == null) {
+      sourceCounter = new SourceCounter(getName());
+    }
   }
 
   @Override
@@ -156,17 +163,20 @@ public class TwitterSource
     docs.add(doc);
     if (docs.size() >= maxBatchSize ||
         System.currentTimeMillis() >= batchEndTime) {
+      sourceCounter.addToEventReceivedCount(docs.size());
       batchEndTime = System.currentTimeMillis() + maxBatchDurationMillis;
       byte[] bytes;
       try {
         bytes = serializeToAvro(avroSchema, docs);
       } catch (IOException e) {
+        sourceCounter.incrementGenericProcessingFail();
         LOGGER.error("Exception while serializing tweet", e);
         return; //skip
       }
       Event event = EventBuilder.withBody(bytes);
       getChannelProcessor().processEvent(event); // send event to the flume sink
       docs.clear();
+      sourceCounter.addToEventAcceptedCount(docs.size());
     }
     docCount++;
     if ((docCount % REPORT_INTERVAL) == 0) {
@@ -240,7 +250,7 @@ public class TwitterSource
 
     doc.put("id", idPrefix + status.getId());
     doc.put("created_at", formatterTo.format(status.getCreatedAt()));
-    doc.put("retweet_count", status.getRetweetCount());
+    doc.put("retweet_count", Long.valueOf(status.getRetweetCount()));
     doc.put("retweeted", status.isRetweet());
     doc.put("in_reply_to_user_id", status.getInReplyToUserId());
     doc.put("in_reply_to_status_id", status.getInReplyToStatusId());
@@ -268,10 +278,13 @@ public class TwitterSource
       throws IOException {
     serializationBuffer.reset();
     dataFileWriter.create(avroSchema, serializationBuffer);
-    for (Record doc2 : docList) {
-      dataFileWriter.append(doc2);
+    try {
+      for (Record doc2 : docList) {
+        dataFileWriter.append(doc2);
+      }
+    } finally {
+      dataFileWriter.close();
     }
-    dataFileWriter.close();
     return serializationBuffer.toByteArray();
   }
 
