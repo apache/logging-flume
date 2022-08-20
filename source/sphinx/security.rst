@@ -10,6 +10,39 @@ If you need help on building or configuring Flume or other help on following the
 
 If you have encountered an unlisted security vulnerability or other unexpected behaviour that has security impact, or if the descriptions here are incomplete, please report them privately to the `Flume SecurityTeam <mailto:private@flume.apche.org>`__. Thank you!
 
+.. rubric:: Fixed in Flume 1.10.1
+
+`CVE-2022-34916 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-34916>`__: Apache Flume vulnerable to a JNDI RCE in JMSMessageConsumer.
+
++------------------------------------------------------------------------------------+--------------------------------------------------------------------------+
+| `CVE-2022-25167 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-34916>`__ | Deserialization of Untrusted Data                                        |
++====================================================================================+==========================================================================+
+| Severity                                                                           | Moderate                                                                 |
++------------------------------------------------------------------------------------+--------------------------------------------------------------------------+
+| Base CVSS SCore                                                                    | 6.6 (AV:N/AC:H/PR:H/UI:N/S:U/C:H/I:H/A:H)                                |
++------------------------------------------------------------------------------------+--------------------------------------------------------------------------+
+| Versions Affected                                                                  | Flume 1.4.0 through 1.10.0                                               |
++------------------------------------------------------------------------------------+--------------------------------------------------------------------------+
+
+.. rubric:: Description
+
+Flume's JMSMessageConsumer class can be configured with a destination name. A JNDI lookup is performed on this name without performing an validation. This could result in untrusted data being deserialized.
+
+.. rubric:: Mitigation
+
+Upgrade to Flume 1.10.1.
+
+In releases 1.4.0 through 1.10.0 the JMSSource should not be used as it uses JMSMessageConsumer.
+
+.. rubric:: Release Details
+
+In release 1.10.1, if a protocol is specified in the destination name parameter only the java protocol will be allowed. If no protocol is specified it will also be allowed.
+
+.. rubric:: Credit
+
+This issue was found by Frentzen Amaral.
+
+
 .. rubric:: Fixed in Flume 1.10.0
 
 `CVE-2022-25167 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-25167>`__: Apache Flume vulnerable to a JNDI RCE in JMSSource.

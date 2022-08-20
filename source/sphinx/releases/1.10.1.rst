@@ -18,7 +18,7 @@ Apache Flume 1.10.1 is the next release of Flume as an Apache top-level project
 Release Notes - Flume - Version v1.10.1
 
 ** Bug
-    * [`FLUME-3428 <https://issues.apache.org/jira/browse/FLUME-3428>`__] - Need better parameter validation
+    * [`FLUME-3428 <https://issues.apache.org/jira/browse/FLUME-3428>`__] - Fix for CVE-2022-34916, improper use of JNDI in JMSMessageConsumer
     * [`FLUME-3434 <https://issues.apache.org/jira/browse/FLUME-3434>`__] - TwitterSource exceptions on serialization
 
 ** Improvement
