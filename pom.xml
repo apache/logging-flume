@@ -95,7 +95,7 @@ limitations under the License.
     <mockito.version>1.9.0</mockito.version>
     <module.name />
     <mvn-antrun-plugin.version>1.8</mvn-antrun-plugin.version>
-    <mvn-assembly-plugin.version>3.1.0</mvn-assembly-plugin.version>
+    <mvn-assembly-plugin.version>3.4.2</mvn-assembly-plugin.version>
     <mvn-build-helper-plugin>3.0.0</mvn-build-helper-plugin>
     <mvn-checkstyle-plugin.version>3.1.2</mvn-checkstyle-plugin.version>
     <mvn-checksum-plugin.version>1.7</mvn-checksum-plugin.version>
@@ -103,7 +103,7 @@ limitations under the License.
     <mvn-compiler-plugin.version>3.8.1</mvn-compiler-plugin.version>
     <mvn-deploy-plugin.version>2.8.2</mvn-deploy-plugin.version>
     <mvn-gpg-plugin.version>1.6</mvn-gpg-plugin.version>
-    <mvn-jar-plugin.version>3.1.0</mvn-jar-plugin.version>
+    <mvn-jar-plugin.version>3.2.2</mvn-jar-plugin.version>
     <mvn-javadoc-plugin.version>2.9</mvn-javadoc-plugin.version>
     <mvn-paranamer-plugin.version>2.8</mvn-paranamer-plugin.version>
     <mvn-pmd-plugin.version>3.15.0</mvn-pmd-plugin.version>
