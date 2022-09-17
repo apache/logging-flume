@@ -61,6 +61,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import static org.apache.flume.shared.kafka.KafkaSSLUtil.SSL_DISABLE_FQDN_CHECK;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.AVRO_EVENT;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.BATCH_SIZE;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.BOOTSTRAP_SERVERS_CONFIG;
@@ -72,6 +73,9 @@ import static org.apache.flume.sink.kafka.KafkaSinkConstants.KAFKA_PRODUCER_PREF
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.OLD_BATCH_SIZE;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.REQUIRED_ACKS_FLUME_KEY;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.TOPIC_CONFIG;
+import static org.apache.kafka.clients.CommonClientConfigs.SECURITY_PROTOCOL_CONFIG;
+import static org.apache.kafka.common.config.SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG;
+import static org.apache.kafka.common.config.SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -713,6 +717,43 @@ public class TestKafkaSink {
       }
     }
     return newTopic;
+  }
+
+  @Test
+  public void testSslTopic() {
+    Sink kafkaSink = new KafkaSink();
+    Context context = prepareDefaultContext();
+    context.put(BOOTSTRAP_SERVERS_CONFIG, testUtil.getKafkaServerSslUrl());
+    context.put(KAFKA_PRODUCER_PREFIX + SECURITY_PROTOCOL_CONFIG, "SSL");
+    context.put(KAFKA_PRODUCER_PREFIX + SSL_TRUSTSTORE_LOCATION_CONFIG, "src/test/resources/truststorefile.jks");
+    context.put(KAFKA_PRODUCER_PREFIX + SSL_TRUSTSTORE_PASSWORD_CONFIG, "password");
+    context.put(KAFKA_PRODUCER_PREFIX + SSL_DISABLE_FQDN_CHECK, "true");
+    Configurables.configure(kafkaSink, context);
+
+    Channel memoryChannel = new MemoryChannel();
+    context = prepareDefaultContext();
+    Configurables.configure(memoryChannel, context);
+    kafkaSink.setChannel(memoryChannel);
+    kafkaSink.start();
+
+    String msg = "default-topic-test";
+    Transaction tx = memoryChannel.getTransaction();
+    tx.begin();
+    Event event = EventBuilder.withBody(msg.getBytes());
+    memoryChannel.put(event);
+    tx.commit();
+    tx.close();
+
+    try {
+      Sink.Status status = kafkaSink.process();
+      if (status == Sink.Status.BACKOFF) {
+        fail("Error Occurred");
+      }
+    } catch (EventDeliveryException ex) {
+      // ignore
+    }
+
+    checkMessageArrived(msg, DEFAULT_TOPIC);
   }
 
 }

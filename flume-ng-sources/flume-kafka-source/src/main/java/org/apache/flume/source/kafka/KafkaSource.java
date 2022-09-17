@@ -16,22 +16,8 @@
  */
 package org.apache.flume.source.kafka;
 
-import java.io.ByteArrayInputStream;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Optional;
 import kafka.cluster.Broker;
 import kafka.cluster.BrokerEndPoint;
 import kafka.zk.KafkaZkClient;
@@ -61,19 +47,60 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.config.SslConfigs;
 import org.apache.kafka.common.network.ListenerName;
-import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.security.JaasUtils;
+import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.utils.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Optional;
-
-import static org.apache.flume.source.kafka.KafkaSourceConstants.*;
-
 import scala.Option;
 import scala.collection.JavaConverters;
+
+import java.io.ByteArrayInputStream;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import static org.apache.flume.shared.kafka.KafkaSSLUtil.SSL_DISABLE_FQDN_CHECK;
+import static org.apache.flume.shared.kafka.KafkaSSLUtil.isSSLEnabled;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.AVRO_EVENT;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.BATCH_DURATION_MS;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.BATCH_SIZE;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.BOOTSTRAP_SERVERS;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_AUTO_COMMIT;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_AVRO_EVENT;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_BATCH_DURATION;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_BATCH_SIZE;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_GROUP_ID;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_KEY_DESERIALIZER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_MIGRATE_ZOOKEEPER_OFFSETS;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_SET_TOPIC_HEADER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_TOPIC_HEADER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_VALUE_DESERIALIZER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.KAFKA_CONSUMER_PREFIX;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.KEY_HEADER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.MIGRATE_ZOOKEEPER_OFFSETS;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.OFFSET_HEADER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.OLD_GROUP_ID;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.PARTITION_HEADER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.SET_TOPIC_HEADER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.TIMESTAMP_HEADER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPIC;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPICS;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPICS_REGEX;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPIC_HEADER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.ZOOKEEPER_CONNECT_FLUME_KEY;
 
 /**
  * A Source for Kafka which reads messages from kafka topics.
@@ -386,7 +413,7 @@ public class KafkaSource extends AbstractPollableSource
         // For backwards compatibility look up the bootstrap from zookeeper
         log.warn("{} is deprecated. Please use the parameter {}", ZOOKEEPER_CONNECT_FLUME_KEY, BOOTSTRAP_SERVERS);
 
-        // Lookup configured security protocol, just in case its not default
+        // Lookup configured security protocol, just in case it's not default
         String securityProtocolStr =
             context.getSubProperties(KAFKA_CONSUMER_PREFIX)
                 .get(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG);
@@ -453,7 +480,14 @@ public class KafkaSource extends AbstractPollableSource
       kafkaProps.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
     }
     kafkaProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, DEFAULT_AUTO_COMMIT);
-
+    //  The default value of `ssl.endpoint.identification.algorithm`
+    //  is changed to `https`, since kafka client 2.0+
+    //  And because flume does not accept an empty string as property value,
+    //  so we need to use an alternative custom property
+    //  `ssl.disableTLSHostnameVerification` to check if enable fqdn check.
+    if (isSSLEnabled(kafkaProps) && "true".equalsIgnoreCase(kafkaProps.getProperty(SSL_DISABLE_FQDN_CHECK))) {
+      kafkaProps.put(SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG, "");
+    }
     KafkaSSLUtil.addGlobalSSLParameters(kafkaProps);
   }
 
