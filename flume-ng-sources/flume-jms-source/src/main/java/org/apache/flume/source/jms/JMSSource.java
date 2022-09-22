@@ -100,6 +100,14 @@ public class JMSSource extends AbstractPollableSource implements BatchSizeSuppor
         JMSSourceConfiguration.INITIAL_CONTEXT_FACTORY, "").trim();
 
     providerUrl = context.getString(JMSSourceConfiguration.PROVIDER_URL, "").trim();
+    try {
+      URI uri = new URI(providerUrl);
+      String scheme = uri.getScheme();
+      assertTrue(scheme == null || scheme.equals(JAVA_SCHEME),
+          "Unsupported JNDI URI: " + providerUrl);
+    } catch (URISyntaxException ex) {
+      logger.warn("Invalid JNDI URI - {}", providerUrl);
+    }
 
     destinationName = context.getString(JMSSourceConfiguration.DESTINATION_NAME, "").trim();
 
