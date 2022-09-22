@@ -144,6 +144,13 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
     source.configure(context);
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void testConfigureWithLdapProvider() throws Exception {
+    context.put(JMSSourceConfiguration.PROVIDER_URL, "ldap://localhost:389/test");
+    source.configure(context);
+  }
+
+
   @Test
   public void testStartConsumerCreateThrowsException() throws Exception {
     doThrow(new RuntimeException("Expected")).when(source).createConsumer();
