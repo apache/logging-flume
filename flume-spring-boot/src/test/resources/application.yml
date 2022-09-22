@@ -1,0 +1,8 @@
+
+flume:
+  sources:
+    source1:
+      totalEvents: 10000
+  channels:
+    channel1:
+      capacity: 10000
