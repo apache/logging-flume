@@ -35,14 +35,11 @@ import javax.jms.Session;
 import javax.jms.Topic;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
 class JMSMessageConsumer {
   private static final Logger logger = LoggerFactory.getLogger(JMSMessageConsumer.class);
-  private static final String JAVA_SCHEME = "java";
 
   private final int batchSize;
   private final long pollTimeout;
@@ -102,14 +99,7 @@ class JMSMessageConsumer {
               throw new IllegalStateException(String.valueOf(destinationType));
           }
         } else {
-          try {
-            URI uri = new URI(destinationName);
-            String scheme = uri.getScheme();
-            assertTrue(scheme == null || scheme.equals(JAVA_SCHEME),
-                "Unsupported JNDI URI: " + destinationName);
-          } catch (URISyntaxException ex) {
-            logger.warn("Invalid JNDI URI - {}", destinationName);
-          }
+          JMSSource.verifyContext(destinationName);
           destination = (Destination) initialContext.lookup(destinationName);
         }
       } catch (JMSException e) {
@@ -219,9 +209,5 @@ class JMSMessageConsumer {
     } catch (JMSException e) {
       logger.error("Could not destroy connection", e);
     }
-  }
-
-  private void assertTrue(boolean arg, String msg) {
-    Preconditions.checkArgument(arg, msg);
   }
 }
