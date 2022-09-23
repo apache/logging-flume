@@ -64,6 +64,7 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
   @SuppressWarnings("unchecked")
   @Override
   void afterSetup() throws Exception {
+    System.setProperty(JMSSource.JNDI_ALLOWED_PROTOCOLS, "dummy");
     baseDir = Files.createTempDir();
     passwordFile = new File(baseDir, "password");
     Assert.assertTrue(passwordFile.createNewFile());

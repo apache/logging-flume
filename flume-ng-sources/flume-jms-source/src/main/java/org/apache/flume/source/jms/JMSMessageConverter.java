@@ -39,13 +39,13 @@ import org.apache.flume.annotations.InterfaceStability;
 @InterfaceStability.Stable
 public interface JMSMessageConverter {
 
-  public List<Event> convert(Message message) throws JMSException;
+  List<Event> convert(Message message) throws JMSException;
 
   /**
    * Implementors of JMSMessageConverter must either provide
    * a suitable builder or implement the Configurable interface.
    */
-  public interface Builder {
-    public JMSMessageConverter build(Context context);
+  interface Builder {
+    JMSMessageConverter build(Context context);
   }
 }

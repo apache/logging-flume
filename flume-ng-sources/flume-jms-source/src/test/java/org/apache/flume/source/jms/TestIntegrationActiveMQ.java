@@ -90,6 +90,7 @@ public class TestIntegrationActiveMQ {
   private final String jmsPassword;
 
   public TestIntegrationActiveMQ(TestMode testMode) {
+    System.setProperty(JMSSource.JNDI_ALLOWED_PROTOCOLS, "tcp");
     LOGGER.info("Testing with test mode {}", testMode);
 
     switch (testMode) {
