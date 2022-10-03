@@ -112,8 +112,12 @@ agent process dies can't be recovered.
 Flume's `KafkaChannel` uses Apache Kafka to stage events. Using a replicated
 Kafka topic as a channel helps avoiding event loss in case of a disk failure.
 
-Setup
-=====
+Standard Setup
+==============
+
+This section documents how to configure and wire Flume components using Flume's
+long-standing configuration techniques using properties files. See the following
+section for creating a Flume application using Spring Boot.
 
 Setting up an agent
 -------------------
@@ -504,11 +508,147 @@ attribute called "txnType" is set to "customer", then it should go to channel1
 and channel3, if it's "vendor" then it should go to channel2, otherwise
 channel3. The mapping can be set in the agent's configuration file.
 
+Spring Boot Setup
+==============
+
+Flume "normally" follows a paradigm where each component implements the Configurable
+interface and must implement the configure method to configure itself by retrieving
+the configuration attributes from its Context's properties. In contrast,
+Spring and Spring Boot normally rely on dependency injection. where the configuration
+values are set into the object being configured either as constructor parameters or
+via setter methods.
+
+Flume's integration with Spring Boot provides support to configure Flume components
+in the application's properties via the normal application.yml. Unlike Flume's
+default method of configuring however, only component attributes are specified in
+the application.yml. Wiring components together, and thus defining the flows, is
+handled via Spring's Java configuration.
+
+Creating the application
+------------------------
+Flume's Spring Boot support provides the main class to be configured with spring as
+`org.apache.flume.spring.boot.FlumeApplication`. Flume applications that use Spring
+Boot should configure the Spring Boot Maven plugin with that as the main class as in::
+
+  <execution>
+    <id>repackage</id>
+    <goals>
+      <goal>repackage</goal>
+    </goals>
+    <configuration>
+      <executable>true</executable>
+      <mainClass>org.apache.flume.spring.boot.FlumeApplication</mainClass>
+    </configuration>
+  </execution>
+
+Component Scanning
+------------------
+Spring Boot will automatically locate all the Spring components provided by Flume.
+However, in order for the Flume application to be configured Spring needs the
+base Java package name for the application to locate those Spring components.
+This is accomplished by the application implementing a class that implements
+`org.apache.flume.spring.boot.config.PackageProvider` that is register as a Java
+service. For example::
+
+    public class WylieCouotePackageProvider implements PackageProvider {
+      private static final String[] PACKAGES = {"org.acme.coyote.wylie"};
+
+      @Override
+      public List<String> getPackages() {
+        return Arrays.asList(PACKAGES);
+      }
+    }
+
+would then be registered in a file with a fully qualified name of
+`src/main/resources/META-INF/services/org.apache.flume.spring.boot.config.PackageProvider`
+which would contain::
+
+  org.acme.coyote.wylie.config.WylieCoyotePackageProvider
+
+This would result in all classes in the `org.acme.coyote.wylie" package and
+it`s sub-packages being scannedfor Spring components to be included. Note
+that classes found there may also use Spring's `@Import` annotation to include
+classes in other packages.
+
+Component Wiring
+----------------
+
+Flume's Spring Boot support will automatically gather all the defined Channels,
+SourceRunners, and SinkRunners and start them. To do that they all must first
+be created as Spring Singletons using the Spring `@Bean` annotation in a class
+containing the `@Configuration` annotation on the class declaration and then
+initialize them just as the "normal" FlumeApplication class does. To define
+these components an application should provide a Configuration class that
+creates these Flume components. An example configuration that generates
+sequence numbers, writes them to a MemoryChannel and then consumes these events
+without publishing them anywhere would look like::
+
+    @Configuration
+    public class AppConfig extends AbstractFlumeConfiguration {
+
+      @Bean
+      @ConfigurationProperties(prefix = "flume.sources.source1")
+      public Map<String, String> source1Properties() {
+        return new HashMap<>();
+      }
+
+      @Bean
+      @ConfigurationProperties(prefix = "flume.channels.channel1")
+      public Map<String, String> channel1Properties() {
+        return new HashMap<>();
+      }
+
+      @Bean
+      public Channel memoryChannel(Map<String, String> channel1Properties) {
+        return configureChannel("channel1", MemoryChannel.class, channel1Properties);
+      }
+
+      @Bean
+      public SourceRunner seqSource(Channel memoryChannel, Map<String, String> source1Properties) {
+        ChannelSelector selector = new ReplicatingChannelSelector();
+        selector.setChannels(listOf(memoryChannel));
+        return configureSource("source1", SequenceGeneratorSource.class, selector,
+            source1Properties);
+      }
+
+      @Bean
+      public SinkRunner nullSink(Channel memoryChannel) {
+        Sink sink = configureSink("null", NullSink.class, memoryChannel,null);
+        return createSinkRunner(configureSinkProcessor(null, DefaultSinkProcessor.class,
+            listOf(sink)));
+      }
+    }
+
+The configuration for this configuration might look like::
+
+    spring:
+      application:
+        name: flume-test
+
+    server:
+      port: 41414
+
+    flume:
+      metrics: http
+      sources:
+        source1:
+          totalEvents: 10000
+      channels:
+        channel1:
+          capacity: 10000
+
+This would result in an application named "flume-test" that listens on port 41414 for the /metrics endpoint.
+10,000 events would be written to the channel. These events would be consumed by the NullSink. The Configuration
+class should extend AbstractFlumeConfiguration, as shown here, to be able to use the helper classes that
+construct the appropriate Flume components.
+
+Note that all Spring Boot facilities are available to Flume applications configured this way.
+
 Configuration
 =============
 
-As mentioned in the earlier section, Flume agent configuration is read from a
-file that resembles a Java property file format with hierarchical property
+As mentioned in the earlier section, standard Flume agent configuration is
+read from afile that resembles a Java property file format with hierarchical property
 settings.
 
 Defining the flow
