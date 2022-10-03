@@ -2,9 +2,11 @@ Release Notes - Flume - Version 1.10.1
 
 ** Bug
     * [FLUME-3428] - Need better parameter validation
+    * [FLUME-3434] - TwitterSource exceptions on serialization
 
 ** Improvement
     * [FLUME-3427] - Add support for JPMS
+    * [FLUME-3433] - Limit the default Lookups to a specific few.
 
 Release Notes - Flume - Version 1.10.0
 
