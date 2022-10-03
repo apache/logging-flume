@@ -21,6 +21,8 @@ import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.FlumeException;
 import org.apache.flume.Sink;
+import org.apache.flume.SinkProcessor;
+import org.apache.flume.SinkRunner;
 import org.apache.flume.Source;
 import org.apache.flume.SourceRunner;
 import org.apache.flume.channel.ChannelProcessor;
@@ -62,12 +64,38 @@ public abstract class AbstractFlumeConfiguration {
     return SourceRunner.forSource(source);
   }
 
-  protected <T extends Sink> Sink configureSink(final String name, final Class<T> clazz,
+  protected <T extends Source> SourceRunner configureSource(final T source,
+      final ChannelSelector selector, final Map<String, String> params) {
+    source.setChannelProcessor(new ChannelProcessor(selector));
+    return SourceRunner.forSource(source);
+  }
+
+  protected <T extends SinkProcessor> T configureSinkProcessor(final Map<String, String> params,
+      final Class<T> clazz, final List<Sink> sinks) {
+    T processor;
+    try {
+      processor = clazz.newInstance();
+    } catch (Exception ex) {
+      throw new FlumeException("Unable to create SinkProcessor of type: " + clazz.getName(), ex);
+    }
+    processor.setSinks(sinks);
+    Configurables.configure(processor, createContext(params));
+    return processor;
+  }
+
+
+  protected SinkRunner createSinkRunner(SinkProcessor sinkProcessor) {
+    SinkRunner runner = new SinkRunner(sinkProcessor);
+    runner.setSink(sinkProcessor);
+    return runner;
+  }
+
+  protected <T extends Sink> Sink configureSink(final String name, final Class<T> sinkClazz,
                                                 final Channel channel,
                                                 final Map<String, String> params) {
     T sink;
     try {
-      sink = clazz.newInstance();
+      sink = sinkClazz.newInstance();
     } catch (Exception ex) {
       throw new FlumeException("Unable to create sink " + name, ex);
     }

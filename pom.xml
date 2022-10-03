@@ -557,6 +557,7 @@ limitations under the License.
             <excludes>
               <exclude>**/.idea/</exclude>
               <exclude>**/*.iml</exclude>
+              <exclude>src/main/resources/META-INF/services/**/*</exclude>
               <exclude>**/nb-configuration.xml</exclude>
               <exclude>.git/</exclude>
               <exclude>patchprocess/</exclude>

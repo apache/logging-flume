@@ -14,30 +14,13 @@
  * See the license for the specific language governing permissions and
  * limitations under the license.
  */
-package org.apache.flume.spring.boot;
+package org.apache.flume.spring.boot.config;
 
-import org.apache.flume.node.MaterializedConfiguration;
-import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import java.util.List;
 
 /**
- *
+ * Retrieves a List of packages to include.
  */
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-public class AppTest {
-
-  @Autowired
-  MaterializedConfiguration configuration;
-
-  @Test
-  public void contextLoads() {
-    Assertions.assertThat(configuration).isNotNull();
-    Assertions.assertThat(configuration.getSinkRunners()).isNotNull();
-    Assertions.assertThat(configuration.getSinkRunners().size()).isEqualTo(1);
-  }
+public interface PackageProvider {
+  List<String> getPackages();
 }
