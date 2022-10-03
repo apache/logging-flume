@@ -14,12 +14,11 @@
  * See the license for the specific language governing permissions and
  * limitations under the license.
  */
-package org.apache.flume.spring.boot.config;
+package org.apache.flume.spring.app.config;
 
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Sink;
-import org.apache.flume.SinkProcessor;
 import org.apache.flume.SinkRunner;
 import org.apache.flume.SourceRunner;
 import org.apache.flume.channel.MemoryChannel;
@@ -27,6 +26,7 @@ import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.sink.DefaultSinkProcessor;
 import org.apache.flume.sink.NullSink;
 import org.apache.flume.source.SequenceGeneratorSource;
+import org.apache.flume.spring.boot.config.AbstractFlumeConfiguration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -67,9 +67,8 @@ public class AppConfig extends AbstractFlumeConfiguration {
 
   @Bean
   public SinkRunner nullSink(Channel memoryChannel) {
-    SinkProcessor sinkProcessor = new DefaultSinkProcessor();
     Sink sink = configureSink("null", NullSink.class, memoryChannel,null);
-    sinkProcessor.setSinks(listOf(sink));
-    return new SinkRunner(sinkProcessor);
+    return createSinkRunner(configureSinkProcessor(null, DefaultSinkProcessor.class,
+        listOf(sink)));
   }
 }

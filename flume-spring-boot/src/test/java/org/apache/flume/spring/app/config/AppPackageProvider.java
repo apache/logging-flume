@@ -14,20 +14,21 @@
  * See the license for the specific language governing permissions and
  * limitations under the license.
  */
+package org.apache.flume.spring.app.config;
 
-package org.apache.flume.spring.boot;
+import java.util.Collections;
+import java.util.List;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.apache.flume.spring.boot.config.PackageProvider;
 
 /**
- *
+ * Defines the Flume Spring package.
  */
-@SpringBootApplication(scanBasePackages = {"org.apache.flume.spring.boot"})
-@EnableConfigurationProperties
-public class Application {
-  public static void main(String[] args) {
-    SpringApplication.run(Application.class, args);
+public class AppPackageProvider implements PackageProvider {
+  private static final String PACKAGE = "org.apache.flume.spring.app";
+
+  @Override
+  public List<String> getPackages() {
+    return Collections.singletonList(PACKAGE);
   }
 }

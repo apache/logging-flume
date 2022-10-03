@@ -24,7 +24,7 @@
     </Appenders>
     <Loggers>
         <Logger name="org.apache.flume" level="INFO" />
-        <Root level="WARN">
+        <Root level="INFO">
             <AppenderRef ref="Console" />
         </Root>
     </Loggers>
