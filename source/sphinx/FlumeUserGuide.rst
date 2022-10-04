@@ -15,7 +15,7 @@
 
 
 ================================
-Flume 1.10.1 User Guide
+Flume 1.11.0 User Guide
 ================================
 
 Introduction
@@ -509,7 +509,8 @@ and channel3, if it's "vendor" then it should go to channel2, otherwise
 channel3. The mapping can be set in the agent's configuration file.
 
 Spring Boot Setup
-==============
+=================
+As of version 1.11.0 Flume supports being packaged as a Spring Boot application.
 
 Flume "normally" follows a paradigm where each component implements the Configurable
 interface and must implement the configure method to configure itself by retrieving
@@ -545,10 +546,10 @@ Component Scanning
 ------------------
 Spring Boot will automatically locate all the Spring components provided by Flume.
 However, in order for the Flume application to be configured Spring needs the
-base Java package name for the application to locate those Spring components.
-This is accomplished by the application implementing a class that implements
-`org.apache.flume.spring.boot.config.PackageProvider` that is register as a Java
-service. For example::
+base Java package name used by the application in order for Spring to locate
+these components.This is accomplished in the application by creating a class
+that implements `org.apache.flume.spring.boot.config.PackageProvider` that is
+registered as a Java service. For example::
 
     public class WylieCouotePackageProvider implements PackageProvider {
       private static final String[] PACKAGES = {"org.acme.coyote.wylie"};
@@ -565,10 +566,11 @@ which would contain::
 
   org.acme.coyote.wylie.config.WylieCoyotePackageProvider
 
-This would result in all classes in the `org.acme.coyote.wylie" package and
-it`s sub-packages being scannedfor Spring components to be included. Note
+This would result in all classes in the `org.acme.coyote.wylie` package and
+it`s sub-packages being scanned by Spring for components to be included. Note
 that classes found there may also use Spring's `@Import` annotation to include
-classes in other packages.
+classes in other packages. In addition, since the getPackages method returns
+a List more than one package can be specified.
 
 Component Wiring
 ----------------
@@ -644,11 +646,120 @@ construct the appropriate Flume components.
 
 Note that all Spring Boot facilities are available to Flume applications configured this way.
 
+SinkGroups and Sinks may also be configured in a similar fashion as in::
+
+  flume:
+    sinkGroups:
+      rrobin:
+         backoff: true
+         selector: round_robin
+         "selector.maxTimeOut": 30000
+
+    sinks:
+      avroSinks:
+        avroSink1:
+          hostname: 192.168.10.10
+          port: 4141
+          batch-size: 100
+          compression-type: deflate
+        avroSink2:
+          hostname: 192.168.10.11
+          port: 4141
+          batch-size: 100
+          compression-type: deflate
+
+These would be configured in the Java config with::
+
+    @Bean
+    @ConfigurationProperties(prefix = "flume.sink-groups.rrobin")
+    public Map<String, String> rrobinProperties() {
+        return new HashMap<>();
+    }
+
+    @Bean
+    @ConfigurationProperties(prefix = "flume.sinks.avro-sinks")
+    public Map<String, AvroSinkConfiguration> avroSinksProperties() {
+        return new HashMap<>();
+    }
+
+    @Bean
+    public List<Sink> avroSinks(final Channel avroFileChannel,
+        final Map<String, AvroSinkConfiguration> avroSinksProperties) {
+        List<Sink> sinks = new ArrayList<>();
+        for (Map.Entry<String, AvroSinkConfiguration> entry : avroSinksProperties.entrySet()) {
+            sinks.add(configureSink(entry.getKey(), AvroSink.class, avroFileChannel,
+                entry.getValue().getProperties()));
+        }
+        return sinks;
+    }
+
+    @Bean
+    public SinkRunner avroSinkRunner(final Map<String, String> rrobinProperties, final List<Sink> avroSinks) {
+        return createSinkRunner(
+            configureSinkProcessor(rrobinProperties, LoadBalancingSinkProcessor.class, avroSinks));
+    }
+
+Note that the attribute names specified for the sources, channels, and sink groups must match the attribute names
+specified for the components in other portions of this documentation.
+
+It is important to note that a concrete class was used to capture the data for the Avro Sinks. When a simple Map
+is used Spring seems to get confused with the nested Maps.  The `AvroSinkConfiguration` class would look like::
+
+   public class AvroSinkConfiguration {
+
+      private String hostName;
+      private int port;
+      private int batchSize;
+      private String compressionType;
+
+      public String getHostName() {
+         return hostName;
+      }
+
+      public void setHostName(String hostName) {
+         this.hostName = hostName;
+      }
+
+      public int getPort() {
+         return port;
+      }
+
+      public void setPort(int port) {
+         this.port = port;
+      }
+
+      public int getBatchSize() {
+         return batchSize;
+      }
+
+      public void setBatchSize(int batchSize) {
+         this.batchSize = batchSize;
+      }
+
+      public String getCompressionType() {
+         return compressionType;
+      }
+
+      public void setCompressionType(String compressionType) {
+         this.compressionType = compressionType;
+      }
+
+      public Map<String, String> getProperties() {
+         Map<String, String> map = new HashMap<>();
+         map.put("hostname", hostName);
+         map.put("port", Integer.toString(port));
+         map.put("batchSize", Integer.toString(batchSize));
+         map.put(compressionType, compressionType);
+         return map;
+      }
+   }
+
+
 Configuration
 =============
 
 As mentioned in the earlier section, standard Flume agent configuration is
-read from afile that resembles a Java property file format with hierarchical property
+read from a file that resembles a Java property file format with hierarchical property
 settings.
 
 Defining the flow

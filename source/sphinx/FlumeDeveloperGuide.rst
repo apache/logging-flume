@@ -15,7 +15,7 @@
 
 
 ======================================
-Flume 1.10.1 Developer Guide
+Flume 1.11.0 Developer Guide
 ======================================
 
 Introduction
@@ -90,12 +90,18 @@ Getting the source
 ~~~~~~~~~~~~~~~~~~
 
 Check-out the code using Git. Click here for
-`the git repository root <https://git-wip-us.apache.org/repos/asf/flume.git>`_.
+`the git repository root <https://git-wip-us.apache.org/repos/asf/flume.git>`_
+or at `GitHub <https://github.com/apache/flume.git>`_.
+
 
 The Flume 1.x development happens under the branch "trunk" so this command line
 can be used:
 
   git clone https://git-wip-us.apache.org/repos/asf/flume.git
+
+or
+
+  git clone https://github.com/apache/flume.git
 
 
 Compile/test Flume
@@ -872,7 +878,8 @@ Initializable
 
 As of Flume 1.10.0 Sources, Sinks, and Channels may implement the Intitializable interface. Doing so
 allows the component to have access the materialized configuration before any of the components have been
-started.
+started. While this ability is quite useful when using the standard configuration, it is less useful when
+configuring using Spring Boot as Spring's autowiring generally can be used to accomplish the same thing.
 
 This example shows a Sink being configured with the name of a Source. While initializing it will
 retrieve the Source from the configuration and save it. During event processing a new event will be
