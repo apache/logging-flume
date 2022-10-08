@@ -93,7 +93,6 @@ limitations under the License.
     <mapdb.version>0.9.9</mapdb.version>
     <mina.version>2.1.5</mina.version>
     <mockito.version>1.9.0</mockito.version>
-    <module.name />
     <mvn-antrun-plugin.version>1.8</mvn-antrun-plugin.version>
     <mvn-assembly-plugin.version>3.4.2</mvn-assembly-plugin.version>
     <mvn-build-helper-plugin>3.0.0</mvn-build-helper-plugin>
