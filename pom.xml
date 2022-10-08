@@ -1829,6 +1829,15 @@ limitations under the License.
         </reportSets>
       </plugin>
       <plugin>
+        <groupId>org.tomdz.maven</groupId>
+        <artifactId>sphinx-maven-plugin</artifactId>
+        <version>${mvn-sphinx-plugin}</version>
+        <inherited>false</inherited>
+        <configuration>
+          <sourceDirectory>${project.basedir}/flume-ng-doc/sphinx</sourceDirectory>
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
       </plugin>
