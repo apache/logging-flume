@@ -2461,7 +2461,9 @@ hdfs.inUseSuffix        ``.tmp``      Suffix that is used for temporal files tha
 hdfs.emptyInUseSuffix   false         If ``false`` an ``hdfs.inUseSuffix`` is used while writing the output. After closing the output ``hdfs.inUseSuffix`` is removed from the output file name. If ``true`` the ``hdfs.inUseSuffix`` parameter is ignored an empty string is used instead.
 hdfs.rollInterval       30            Number of seconds to wait before rolling current file
                                       (0 = never roll based on time interval)
-hdfs.rollSize           1024          File size to trigger roll, in bytes (0: never roll based on file size)
+hdfs.rollSize           1024          Cummulated event size to trigger file roll, in bytes (0: never roll based on size).
+                                      The size is calculated by summing the size of the incoming events' bodies (excluding headers) which might not match the size of the resulting files,
+                                      especially if compression or any other postprocessing is used.
 hdfs.rollCount          10            Number of events written to file before it rolled
                                       (0 = never roll based on number of events)
 hdfs.idleTimeout        0             Timeout after which inactive files get closed
