@@ -1814,6 +1814,10 @@ topicHeader                         topic        Defines the name of the header 
                                                  from, if the ``setTopicHeader`` property is set to ``true``. Care should be taken if combining
                                                  with the Kafka Sink ``topicHeader`` property so as to avoid sending the message back to the same
                                                  topic in a loop.
+timestampHeader                     --           If present the Kafka message timestamp value will be copied into the specified Flume header name.
+header.NAME                         --           Used to identify which headers from the Kafka message should be added as a FLume header. The value
+                                                 of NAME should match the Flume header name and the value should be the name of the header to be used
+                                                 as the Kafka header name.
 kafka.consumer.security.protocol    PLAINTEXT    Set to SASL_PLAINTEXT, SASL_SSL or SSL if writing to Kafka using some level of security. See below for additional info on secure setup.
 *more consumer security props*                   If using SASL_PLAINTEXT, SASL_SSL or SSL refer to `Kafka security <http://kafka.apache.org/documentation.html#security>`_ for additional
                                                  properties that need to be set on consumer.
@@ -3441,6 +3445,10 @@ partitionIdHeader                   --                   When set, the sink will
 allowTopicOverride                  true                 When set, the sink will allow a message to be produced into a topic specified by the ``topicHeader`` property (if provided).
 topicHeader                         topic                When set in conjunction with ``allowTopicOverride`` will produce a message into the value of the header named using the value of this property.
                                                          Care should be taken when using in conjunction with the Kafka Source ``topicHeader`` property to avoid creating a loopback.
+timestampHeader                     --                   The header containing the caller provided timestamp value to use. If not provided the current time will
+                                                         be used.
+header.NAME                         --                   Used to identify which headers from the Flume Event should be passed to Kafka. The value of NAME should match
+                                                         the Flume header name and the value should be the name of the header to be used as the Kafka header name.
 kafka.producer.security.protocol    PLAINTEXT            Set to SASL_PLAINTEXT, SASL_SSL or SSL if writing to Kafka using some level of security. See below for additional info on secure setup.
 *more producer security props*                           If using SASL_PLAINTEXT, SASL_SSL or SSL refer to `Kafka security <http://kafka.apache.org/documentation.html#security>`_ for additional
                                                          properties that need to be set on producer.

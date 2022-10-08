@@ -15,7 +15,7 @@ If you have encountered an unlisted security vulnerability or other unexpected b
 `CVE-2022-34916 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-34916>`__: Apache Flume vulnerable to a JNDI RCE in JMSMessageConsumer.
 
 +------------------------------------------------------------------------------------+--------------------------------------------------------------------------+
-| `CVE-2022-25167 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-34916>`__ | Deserialization of Untrusted Data                                        |
+| `CVE-2022-34916 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-34916>`__ | Deserialization of Untrusted Data                                        |
 +====================================================================================+==========================================================================+
 | Severity                                                                           | Moderate                                                                 |
 +------------------------------------------------------------------------------------+--------------------------------------------------------------------------+
