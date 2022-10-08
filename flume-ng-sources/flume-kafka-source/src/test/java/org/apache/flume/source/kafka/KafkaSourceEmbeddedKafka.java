@@ -25,6 +25,7 @@ import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
@@ -142,7 +143,7 @@ public class KafkaSourceEmbeddedKafka {
   }
 
   public void produce(String topic, String k, byte[] v) {
-    ProducerRecord<String, byte[]> rec = new ProducerRecord<String, byte[]>(topic, k, v);
+    ProducerRecord<String, byte[]> rec = new ProducerRecord<>(topic, k, v);
     try {
       producer.send(rec).get();
     } catch (InterruptedException e) {
@@ -157,7 +158,13 @@ public class KafkaSourceEmbeddedKafka {
   }
 
   public void produce(String topic, int partition, String k, byte[] v) {
-    ProducerRecord<String, byte[]> rec = new ProducerRecord<String, byte[]>(topic, partition, k, v);
+    this.produce(topic, partition, null, k, v, null);
+  }
+
+  public void produce(String topic, int partition, Long timestamp, String k, byte[] v,
+      Headers headers) {
+    ProducerRecord<String, byte[]> rec = new ProducerRecord<>(topic, partition, timestamp, k, v,
+        headers);
     try {
       producer.send(rec).get();
     } catch (InterruptedException e) {

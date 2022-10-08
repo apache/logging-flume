@@ -36,6 +36,7 @@ public class KafkaSourceConstants {
   public static final int DEFAULT_BATCH_SIZE = 1000;
   public static final int DEFAULT_BATCH_DURATION = 1000;
   public static final String DEFAULT_GROUP_ID = "flume";
+  public static final String KAFKA_HEADER = "header.";
 
   public static final String MIGRATE_ZOOKEEPER_OFFSETS = "migrateZookeeperOffsets";
   public static final boolean DEFAULT_MIGRATE_ZOOKEEPER_OFFSETS = true;

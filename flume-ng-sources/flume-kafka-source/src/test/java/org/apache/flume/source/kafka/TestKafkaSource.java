@@ -44,6 +44,9 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.TopicExistsException;
+import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.header.internals.RecordHeader;
+import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.apache.kafka.common.security.JaasUtils;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.utils.Time;
@@ -63,7 +66,10 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -833,6 +839,49 @@ public class TestKafkaSource {
     kafkaSource.stop();
     events.clear();
   }
+
+
+  /**
+   * Tests the availability of the custom topic header in the output events,
+   * based on the configuration parameters added in FLUME-3046
+   * @throws InterruptedException
+   * @throws EventDeliveryException
+   */
+  @Test
+  public void testTopicKafkaHeaderSet() throws InterruptedException, EventDeliveryException {
+    final String correlatorHeader = "FLUME_CORRELATOR";
+    context.put(TOPICS, topic0);
+    context.put(KafkaSourceConstants.TOPIC_HEADER, "customTopicHeader");
+    context.put(KafkaSourceConstants.KAFKA_HEADER + "correlator", correlatorHeader);
+    context.put(TIMESTAMP_HEADER, "true");
+    kafkaSource.configure(context);
+
+    startKafkaSource();
+
+    Thread.sleep(500L);
+
+    long date = ZonedDateTime.of(2022, 10, 7, 8, 0, 0, 0,
+            ZoneId.systemDefault()).toInstant().toEpochMilli();
+    Headers headers = new RecordHeaders();
+    headers.add(new RecordHeader(correlatorHeader, "12345".getBytes(StandardCharsets.UTF_8)));
+    kafkaServer.produce(topic0, 0, date, "", "hello, world2".getBytes(StandardCharsets.UTF_8),
+        headers);
+
+    Thread.sleep(500L);
+
+    Status status = kafkaSource.process();
+    assertEquals(Status.READY, status);
+    Assert.assertEquals("hello, world2", new String(events.get(0).getBody(),
+        Charsets.UTF_8));
+    Map<String, String> flumeHeaders = events.get(0).getHeaders();
+    Assert.assertEquals(Long.toString(date), flumeHeaders.get("timestamp"));
+    Assert.assertEquals(topic0, flumeHeaders.get("customTopicHeader"));
+    Assert.assertEquals("12345", flumeHeaders.get("correlator"));
+
+    kafkaSource.stop();
+    events.clear();
+  }
+
 
   /**
    * Tests the unavailability of the topic header in the output events,
