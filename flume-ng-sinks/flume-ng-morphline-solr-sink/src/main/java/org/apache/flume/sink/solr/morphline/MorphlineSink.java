@@ -111,7 +111,7 @@ public class MorphlineSink extends AbstractSink implements Configurable, BatchSi
         handler.stop();
       }
       sinkCounter.stop();
-      LOGGER.info("Morphline Sink {} stopped. Metrics: {}, {}", getName(), sinkCounter);
+      LOGGER.info("Morphline Sink {} stopped. Metrics: {}", getName(), sinkCounter);
     } finally {
       super.stop();
     }
