@@ -48,6 +48,8 @@ import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.config.SslConfigs;
+import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.network.ListenerName;
 import org.apache.kafka.common.security.JaasUtils;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
@@ -89,6 +91,7 @@ import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_SET_TOP
 import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_TOPIC_HEADER;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_VALUE_DESERIALIZER;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.KAFKA_CONSUMER_PREFIX;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.KAFKA_HEADER;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.KEY_HEADER;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.MIGRATE_ZOOKEEPER_OFFSETS;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.OFFSET_HEADER;
@@ -164,6 +167,7 @@ public class KafkaSource extends AbstractPollableSource
   private boolean migrateZookeeperOffsets = DEFAULT_MIGRATE_ZOOKEEPER_OFFSETS;
   private String topicHeader = null;
   private boolean setTopicHeader;
+  private Map<String, String> headerMap;
 
   @Override
   public long getBatchSize() {
@@ -285,7 +289,15 @@ public class KafkaSource extends AbstractPollableSource
 
         // Add headers to event (timestamp, topic, partition, key) only if they don't exist
         if (!headers.containsKey(TIMESTAMP_HEADER)) {
-          headers.put(TIMESTAMP_HEADER, String.valueOf(System.currentTimeMillis()));
+          headers.put(TIMESTAMP_HEADER, String.valueOf(message.timestamp()));
+        }
+        if (!headerMap.isEmpty()) {
+          Headers kafkaHeaders = message.headers();
+          for (Map.Entry<String, String> entry : headerMap.entrySet()) {
+            for (Header kafkaHeader : kafkaHeaders.headers(entry.getValue())) {
+              headers.put(entry.getKey(), new String(kafkaHeader.value()));
+            }
+          }
         }
         // Only set the topic header if setTopicHeader and it isn't already populated
         if (setTopicHeader && !headers.containsKey(topicHeader)) {
@@ -439,6 +451,8 @@ public class KafkaSource extends AbstractPollableSource
     setTopicHeader = context.getBoolean(SET_TOPIC_HEADER, DEFAULT_SET_TOPIC_HEADER);
 
     topicHeader = context.getString(TOPIC_HEADER, DEFAULT_TOPIC_HEADER);
+
+    headerMap = context.getSubProperties(KAFKA_HEADER);
 
     setConsumerProps(context);
 
