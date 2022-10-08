@@ -64,7 +64,7 @@ limitations under the License.
     <commons-lang.version>2.6</commons-lang.version>
     <commons-text.version>1.9</commons-text.version>
     <curator.version>5.1.0</curator.version>
-    <derby.version>10.14.1.0</derby.version>
+    <derby.version>10.14.2.0</derby.version>
     <dropwizard-metrics.version>4.1.18</dropwizard-metrics.version>
     <fasterxml.jackson.version>2.13.2</fasterxml.jackson.version>
     <fasterxml.jackson.databind.version>2.13.2.1</fasterxml.jackson.databind.version>
