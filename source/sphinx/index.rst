@@ -33,6 +33,31 @@ application.
 
 .. raw:: html
 
+   <h3>Oct 13, 2022 - Apache Flume 1.11.0 Released</h3>
+
+The Apache Flume team is pleased to announce the release of Flume 1.11.0.
+
+Flume is a distributed, reliable, and available service for efficiently
+collecting, aggregating, and moving large amounts of streaming event data.
+
+Flume 1.11.0 is stable, production-ready software, and is backwards-compatible with
+previous versions of the Flume 1.x codeline.
+
+
+This version of Flume adds the automatic module name to the manifest of the various Flume
+jars allowing them to be usable in applications using the Java Platform Module System.
+
+The full change log and documentation are available on the
+`Flume 1.11.0 release page <releases/1.11.0.html>`__.
+
+This release can be downloaded from the Flume `Download <download.html>`__ page.
+
+Your contributions, feedback, help and support make Flume better!
+For more information on how to report problems or contribute,
+please visit our `Get Involved <getinvolved.html>`__ page.
+
+.. raw:: html
+
    <h3>Aug 16, 2022 - Apache Flume 1.10.1 Released</h3>
 
 The Apache Flume team is pleased to announce the release of Flume 1.10.1.
