@@ -43,9 +43,9 @@ collecting, aggregating, and moving large amounts of streaming event data.
 Flume 1.11.0 is stable, production-ready software, and is backwards-compatible with
 previous versions of the Flume 1.x codeline.
 
-
-This version of Flume adds the automatic module name to the manifest of the various Flume
-jars allowing them to be usable in applications using the Java Platform Module System.
+This version of Flume adds support for deploying Flume as a Spring Boot application, adds support to the
+Kafka source and sink for passing the Kafka timestamp and headers, and allows SSL hostname verification
+to be disabled in the Kafka source and sink.
 
 The full change log and documentation are available on the
 `Flume 1.11.0 release page <releases/1.11.0.html>`__.
