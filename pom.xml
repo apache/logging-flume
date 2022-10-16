@@ -94,7 +94,8 @@ limitations under the License.
     <mina.version>2.1.5</mina.version>
     <mockito.version>1.9.0</mockito.version>
     <mvn-antrun-plugin.version>1.8</mvn-antrun-plugin.version>
-    <mvn-assembly-plugin.version>3.4.2</mvn-assembly-plugin.version>
+    <!-- Do not upgrade the assumbly plugin version until MASSEMBLY-941 is fixed -->
+    <mvn-assembly-plugin.version>3.1.0</mvn-assembly-plugin.version>
     <mvn-build-helper-plugin>3.0.0</mvn-build-helper-plugin>
     <mvn-checkstyle-plugin.version>3.1.2</mvn-checkstyle-plugin.version>
     <mvn-checksum-plugin.version>1.7</mvn-checksum-plugin.version>
