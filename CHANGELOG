@@ -12,10 +12,9 @@ Release Notes - Flume - Version 1.11.0
 
 ** Dependency upgrade
     * [FLUME-3441] - Dependency Upgrades for Flume 1.11.0
-    Update Maven Assembly Plugin to 3.4.2
-    Update Maven Jar Plugin to 3.2.2
-    Update Scala library to 2.13.9
-    Update Gson to 2.9.1
+        * Update Maven Jar Plugin to 3.2.2
+        * Update Scala library to 2.13.9
+        * Update Gson to 2.9.1
 
 Release Notes - Flume - Version 1.10.1
 
