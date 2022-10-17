@@ -19,7 +19,9 @@
 package org.apache.flume.sink.kafka.util;
 
 import kafka.server.KafkaConfig;
-import kafka.server.KafkaServerStartable;
+import kafka.server.KafkaServer;
+import kafka.utils.TestUtils;
+import org.apache.kafka.common.utils.Time;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -30,14 +32,14 @@ import java.util.Properties;
  */
 public class KafkaLocal {
 
-  public KafkaServerStartable kafka;
+  public KafkaServer kafka;
   public ZooKeeperLocal zookeeper;
 
   public KafkaLocal(Properties kafkaProperties) throws IOException, InterruptedException {
     KafkaConfig kafkaConfig = KafkaConfig.fromProps(kafkaProperties);
 
     // start local kafka broker
-    kafka = new KafkaServerStartable(kafkaConfig);
+    kafka = TestUtils.createServer(kafkaConfig, Time.SYSTEM);
   }
 
   public void start() throws Exception {

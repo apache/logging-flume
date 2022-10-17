@@ -20,7 +20,6 @@ package org.apache.flume.channel.kafka;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
-import kafka.zk.KafkaZkClient;
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.DecoderFactory;
@@ -50,15 +49,11 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
-import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.config.SslConfigs;
 import org.apache.kafka.common.errors.WakeupException;
-import org.apache.kafka.common.security.JaasUtils;
-import org.apache.kafka.common.utils.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.Option;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -80,30 +75,24 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.BOOTSTRAP_SERVERS_CONFIG;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.BROKER_LIST_FLUME_KEY;
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_ACKS;
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_AUTO_OFFSET_RESET;
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_GROUP_ID;
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_KEY_DESERIALIZER;
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_KEY_SERIALIZER;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_MIGRATE_ZOOKEEPER_OFFSETS;
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_PARSE_AS_FLUME_EVENT;
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_POLL_TIMEOUT;
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_TOPIC;
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_VALUE_DESERIAIZER;
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_VALUE_SERIAIZER;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.GROUP_ID_FLUME;
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.KAFKA_CONSUMER_PREFIX;
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.KAFKA_PRODUCER_PREFIX;
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.KEY_HEADER;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.MIGRATE_ZOOKEEPER_OFFSETS;
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.PARSE_AS_FLUME_EVENT;
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.PARTITION_HEADER_NAME;
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.POLL_TIMEOUT;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.READ_SMALLEST_OFFSET;
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.STATIC_PARTITION_CONF;
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.TOPIC_CONFIG;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.ZOOKEEPER_CONNECT_FLUME_KEY;
 import static org.apache.flume.shared.kafka.KafkaSSLUtil.SSL_DISABLE_FQDN_CHECK;
 import static org.apache.flume.shared.kafka.KafkaSSLUtil.isSSLEnabled;
 
@@ -111,10 +100,6 @@ public class KafkaChannel extends BasicChannelSemantics {
 
   private static final Logger logger =
           LoggerFactory.getLogger(KafkaChannel.class);
-
-  // Constants used only for offset migration zookeeper connections
-  private static final int ZK_SESSION_TIMEOUT = 30000;
-  private static final int ZK_CONNECTION_TIMEOUT = 30000;
 
   private final Properties consumerProps = new Properties();
   private final Properties producerProps = new Properties();
@@ -124,13 +109,10 @@ public class KafkaChannel extends BasicChannelSemantics {
 
   private AtomicReference<String> topic = new AtomicReference<String>();
   private boolean parseAsFlumeEvent = DEFAULT_PARSE_AS_FLUME_EVENT;
-  private String zookeeperConnect = null;
   private String topicStr = DEFAULT_TOPIC;
   private String groupId = DEFAULT_GROUP_ID;
   private String partitionHeader = null;
   private Integer staticPartitionId;
-  @Deprecated
-  private boolean migrateZookeeperOffsets = DEFAULT_MIGRATE_ZOOKEEPER_OFFSETS;
 
   // used to indicate if a rebalance has occurred during the current transaction
   AtomicBoolean rebalanceFlag = new AtomicBoolean();
@@ -159,11 +141,6 @@ public class KafkaChannel extends BasicChannelSemantics {
   @Override
   public void start() {
     logger.info("Starting Kafka Channel: {}", getName());
-    // As a migration step check if there are any offsets from the group stored in kafka
-    // If not read them from Zookeeper and commit them to Kafka
-    if (migrateZookeeperOffsets && zookeeperConnect != null && !zookeeperConnect.isEmpty()) {
-      migrateOffsets();
-    }
     producer = new KafkaProducer<String, byte[]>(producerProps);
     // We always have just one topic being read by one thread
     logger.info("Topic = {}", topic.get());
@@ -193,10 +170,6 @@ public class KafkaChannel extends BasicChannelSemantics {
 
   @Override
   public void configure(Context ctx) {
-
-    // Can remove in the next release
-    translateOldProps(ctx);
-
     topicStr = ctx.getString(TOPIC_CONFIG);
     if (topicStr == null || topicStr.isEmpty()) {
       topicStr = DEFAULT_TOPIC;
@@ -224,10 +197,6 @@ public class KafkaChannel extends BasicChannelSemantics {
     staticPartitionId = ctx.getInteger(STATIC_PARTITION_CONF);
     partitionHeader = ctx.getString(PARTITION_HEADER_NAME);
 
-    migrateZookeeperOffsets = ctx.getBoolean(MIGRATE_ZOOKEEPER_OFFSETS,
-      DEFAULT_MIGRATE_ZOOKEEPER_OFFSETS);
-    zookeeperConnect = ctx.getString(ZOOKEEPER_CONNECT_FLUME_KEY);
-
     if (logger.isDebugEnabled() && LogPrivacyUtil.allowLogPrintConfig()) {
       logger.debug("Kafka properties: {}", ctx);
     }
@@ -236,57 +205,6 @@ public class KafkaChannel extends BasicChannelSemantics {
       counter = new KafkaChannelCounter(getName());
     }
   }
-
-  // We can remove this once the properties are officially deprecated
-  private void translateOldProps(Context ctx) {
-
-    if (!(ctx.containsKey(TOPIC_CONFIG))) {
-      ctx.put(TOPIC_CONFIG, ctx.getString("topic"));
-      logger.warn("{} is deprecated. Please use the parameter {}", "topic", TOPIC_CONFIG);
-    }
-
-    // Broker List
-    // If there is no value we need to check and set the old param and log a warning message
-    if (!(ctx.containsKey(BOOTSTRAP_SERVERS_CONFIG))) {
-      String brokerList = ctx.getString(BROKER_LIST_FLUME_KEY);
-      if (brokerList == null || brokerList.isEmpty()) {
-        throw new ConfigurationException("Bootstrap Servers must be specified");
-      } else {
-        ctx.put(BOOTSTRAP_SERVERS_CONFIG, brokerList);
-        logger.warn("{} is deprecated. Please use the parameter {}",
-                    BROKER_LIST_FLUME_KEY, BOOTSTRAP_SERVERS_CONFIG);
-      }
-    }
-
-    // GroupId
-    // If there is an old Group Id set, then use that if no groupId is set.
-    if (!(ctx.containsKey(KAFKA_CONSUMER_PREFIX + ConsumerConfig.GROUP_ID_CONFIG))) {
-      String oldGroupId = ctx.getString(GROUP_ID_FLUME);
-      if (oldGroupId != null  && !oldGroupId.isEmpty()) {
-        ctx.put(KAFKA_CONSUMER_PREFIX + ConsumerConfig.GROUP_ID_CONFIG, oldGroupId);
-        logger.warn("{} is deprecated. Please use the parameter {}",
-                    GROUP_ID_FLUME, KAFKA_CONSUMER_PREFIX + ConsumerConfig.GROUP_ID_CONFIG);
-      }
-    }
-
-    if (!(ctx.containsKey((KAFKA_CONSUMER_PREFIX + ConsumerConfig.AUTO_OFFSET_RESET_CONFIG)))) {
-      Boolean oldReadSmallest = ctx.getBoolean(READ_SMALLEST_OFFSET);
-      String auto;
-      if (oldReadSmallest != null) {
-        if (oldReadSmallest) {
-          auto = "earliest";
-        } else {
-          auto = "latest";
-        }
-        ctx.put(KAFKA_CONSUMER_PREFIX + ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,auto);
-        logger.warn("{} is deprecated. Please use the parameter {}",
-                    READ_SMALLEST_OFFSET,
-                    KAFKA_CONSUMER_PREFIX + ConsumerConfig.AUTO_OFFSET_RESET_CONFIG);
-      }
-
-    }
-  }
-
 
   private void setProducerProps(Context ctx, String bootStrapServers) {
     producerProps.clear();
@@ -350,78 +268,6 @@ public class KafkaChannel extends BasicChannelSemantics {
     } catch (Exception e) {
       throw new FlumeException("Unable to connect to Kafka", e);
     }
-  }
-
-  private void migrateOffsets() {
-    try (KafkaZkClient zkClient = KafkaZkClient.apply(zookeeperConnect,
-            JaasUtils.isZkSaslEnabled(), ZK_SESSION_TIMEOUT, ZK_CONNECTION_TIMEOUT, 10,
-            Time.SYSTEM, "kafka.server", "SessionExpireListener", scala.Option.empty(),
-            scala.Option.empty());
-         KafkaConsumer<String, byte[]> consumer = new KafkaConsumer<>(consumerProps)) {
-      Map<TopicPartition, OffsetAndMetadata> kafkaOffsets = getKafkaOffsets(consumer);
-      if (kafkaOffsets == null) {
-        logger.warn("Topic " + topicStr + " not found in Kafka. Offset migration will be skipped.");
-        return;
-      }
-      if (!kafkaOffsets.isEmpty()) {
-        logger.info("Found Kafka offsets for topic {}. Will not migrate from zookeeper", topicStr);
-        logger.debug("Offsets found: {}", kafkaOffsets);
-        return;
-      }
-
-      logger.info("No Kafka offsets found. Migrating zookeeper offsets");
-      Map<TopicPartition, OffsetAndMetadata> zookeeperOffsets =
-              getZookeeperOffsets(zkClient, consumer);
-      if (zookeeperOffsets.isEmpty()) {
-        logger.warn("No offsets to migrate found in Zookeeper");
-        return;
-      }
-
-      logger.info("Committing Zookeeper offsets to Kafka");
-      logger.debug("Offsets to commit: {}", zookeeperOffsets);
-      consumer.commitSync(zookeeperOffsets);
-      // Read the offsets to verify they were committed
-      Map<TopicPartition, OffsetAndMetadata> newKafkaOffsets = getKafkaOffsets(consumer);
-      logger.debug("Offsets committed: {}", newKafkaOffsets);
-      if (newKafkaOffsets == null
-          || !newKafkaOffsets.keySet().containsAll(zookeeperOffsets.keySet())) {
-        throw new FlumeException("Offsets could not be committed");
-      }
-    }
-  }
-
-
-  private Map<TopicPartition, OffsetAndMetadata> getKafkaOffsets(
-      KafkaConsumer<String, byte[]> client) {
-    Map<TopicPartition, OffsetAndMetadata> offsets = null;
-    List<PartitionInfo> partitions = client.partitionsFor(topicStr);
-    if (partitions != null) {
-      offsets = new HashMap<>();
-      for (PartitionInfo partition : partitions) {
-        TopicPartition key = new TopicPartition(topicStr, partition.partition());
-        OffsetAndMetadata offsetAndMetadata = client.committed(key);
-        if (offsetAndMetadata != null) {
-          offsets.put(key, offsetAndMetadata);
-        }
-      }
-    }
-    return offsets;
-  }
-
-  private Map<TopicPartition, OffsetAndMetadata> getZookeeperOffsets(
-          KafkaZkClient zkClient, KafkaConsumer<String, byte[]> consumer) {
-    Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
-    List<PartitionInfo> partitions = consumer.partitionsFor(topicStr);
-    for (PartitionInfo partition : partitions) {
-      TopicPartition topicPartition = new TopicPartition(topicStr, partition.partition());
-      Option<Object> optionOffset = zkClient.getConsumerOffset(groupId, topicPartition);
-      if (optionOffset.nonEmpty()) {
-        Long offset = (Long) optionOffset.get();
-        OffsetAndMetadata offsetAndMetadata = new OffsetAndMetadata(offset);
-        offsets.put(topicPartition, offsetAndMetadata);
-      }
-    }
-    return offsets;
   }
 
   private void decommissionConsumerAndRecords(ConsumerAndRecords c) {

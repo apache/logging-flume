@@ -17,7 +17,8 @@
 package org.apache.flume.source.kafka;
 
 import kafka.server.KafkaConfig;
-import kafka.server.KafkaServerStartable;
+import kafka.server.KafkaServer;
+import kafka.utils.TestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
@@ -28,6 +29,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.apache.kafka.common.utils.Time;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,16 +42,13 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import static org.apache.kafka.common.config.SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG;
-import static org.apache.kafka.common.config.SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG;
-import static org.apache.kafka.common.config.SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG;
-import static org.apache.kafka.common.config.SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG;
+import static org.apache.kafka.common.config.SslConfigs.*;
 
 public class KafkaSourceEmbeddedKafka {
 
   public static String HOST = InetAddress.getLoopbackAddress().getCanonicalHostName();
 
-  KafkaServerStartable kafkaServer;
+  KafkaServer kafkaServer;
   KafkaSourceEmbeddedZookeeper zookeeper;
   private AdminClient adminClient;
 
@@ -103,7 +102,7 @@ public class KafkaSourceEmbeddedKafka {
       props.putAll(properties);
     }
     KafkaConfig config = new KafkaConfig(props);
-    kafkaServer = new KafkaServerStartable(config);
+    kafkaServer = TestUtils.createServer(config, Time.SYSTEM);
     kafkaServer.startup();
     initProducer();
   }

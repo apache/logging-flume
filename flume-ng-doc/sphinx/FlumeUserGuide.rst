@@ -1532,7 +1532,7 @@ Kafka Source
 
 Kafka Source is an Apache Kafka consumer that reads messages from Kafka topics.
 If you have multiple Kafka sources running, you can configure them with the same Consumer Group
-so each will read a unique set of partitions for the topics. This currently supports Kafka server releases 0.10.1.0 or higher. Testing was done up to 2.0.1 that was the highest avilable version at the time of the release.
+so each will read a unique set of partitions for the topics. This currently supports Kafka server releases 0.10.1.0 or higher. Testing was done up to 3.3.1 that was the highest available version at the time of the release.
 
 ==================================  ===========  ===================================================
 Property Name                       Default      Description
@@ -1579,24 +1579,6 @@ Other Kafka Consumer Properties     --           These properties are used to co
           strategy of messages retrieval. The duplicates can be present when the source starts.
           The Kafka Source also provides defaults for the key.deserializer(org.apache.kafka.common.serialization.StringSerializer)
           and value.deserializer(org.apache.kafka.common.serialization.ByteArraySerializer). Modification of these parameters is not recommended.
-
-Deprecated Properties
-
-===============================  ===================  ================================================================================================
-Property Name                    Default              Description
-===============================  ===================  ================================================================================================
-topic                            --                   Use kafka.topics
-groupId                          flume                Use kafka.consumer.group.id
-zookeeperConnect                 --                   Is no longer supported by Kafka consumer client since 0.9.x. Use kafka.bootstrap.servers
-                                                      to establish connection with Kafka cluster
-migrateZookeeperOffsets          true                 When no Kafka stored offset is found, look up the offsets in Zookeeper and commit them to Kafka.
-                                                      This should be true to support seamless Kafka client migration from older versions of Flume.
-                                                      Once migrated this can be set to false, though that should generally not be required.
-                                                      If no Zookeeper offset is found, the Kafka configuration kafka.consumer.auto.offset.reset
-                                                      defines how offsets are handled.
-                                                      Check `Kafka documentation <http://kafka.apache.org/documentation.html#newconsumerconfigs>`_
-                                                      for details
-===============================  ===================  ================================================================================================
 
 Example for topic subscription by comma-separated topic list.
 
@@ -1697,6 +1679,22 @@ provide the required additional secret for both consumer keystores:
 .. code-block:: properties
 
     a1.sources.source1.kafka.consumer.ssl.key.password=<password to access the key>
+
+
+Example secure configuration using SASL_SSL with SASL/SCRAM:
+
+.. code-block:: properties
+
+    a1.sources.source1.type = org.apache.flume.source.kafka.KafkaSource
+    a1.sources.source1.kafka.bootstrap.servers = kafka-1:9093,kafka-2:9093,kafka-3:9093
+    a1.sources.source1.kafka.topics = mytopic
+    a1.sources.source1.kafka.consumer.group.id = flume-consumer
+    a1.sources.source1.kafka.consumer.security.protocol = SASL_SSL
+    a1.sources.source1.kafka.consumer.sasl.mechanism = SCRAM-SHA-256 (or SCRAM-SHA-512)
+    a1.sources.source1.kafka.consumer.sasl.jaas.config = org.apache.kafka.common.security.scram.ScramLoginModule required username='alice' password='alice-secret'
+    # optional, the global truststore can be used alternatively
+    a1.sources.source1.kafka.consumer.ssl.truststore.location=/path/to/truststore.jks
+    a1.sources.source1.kafka.consumer.ssl.truststore.password=<password to access the truststore>
 
 
 **Kerberos and Kafka Source:**
@@ -3156,7 +3154,7 @@ This is a Flume Sink implementation that can publish data to a
 with Kafka so that pull based processing systems can process the data coming
 through various Flume sources.
 
-This currently supports Kafka server releases 0.10.1.0 or higher. Testing was done up to 2.0.1 that was the highest avilable version at the time of the release.
+This currently supports Kafka server releases 0.10.1.0 or higher. Testing was done up to 3.3.1 that was the highest avilable version at the time of the release.
 
 Required properties are marked in bold font.
 
@@ -3209,18 +3207,6 @@ Other Kafka Producer Properties     --                   These properties are us
 
 The Kafka sink also provides defaults for the key.serializer(org.apache.kafka.common.serialization.StringSerializer)
 and value.serializer(org.apache.kafka.common.serialization.ByteArraySerializer). Modification of these parameters is not recommended.
-
-Deprecated Properties
-
-===============================  ===================  =============================================================================================
-Property Name                    Default              Description
-===============================  ===================  =============================================================================================
-brokerList                       --                   Use kafka.bootstrap.servers
-topic                            default-flume-topic  Use kafka.topic
-batchSize                        100                  Use kafka.flumeBatchSize
-requiredAcks                     1                    Use kafka.producer.acks
-
-===============================  ===================  =============================================================================================
 
 An example configuration of a Kafka sink is given below. Properties starting
 with the prefix ``kafka.producer`` the Kafka producer. The properties that are passed when creating the Kafka
@@ -3316,6 +3302,17 @@ provide the required additional secret for producer keystore:
 .. code-block:: properties
 
     a1.sinks.sink1.kafka.producer.ssl.key.password = <password to access the key>
+
+Example secure configuration using SASL_SSL with SASL/SCRAM:
+
+.. code-block:: properties
+
+    a1.sinks.sink1.type = org.apache.flume.sink.kafka.KafkaSink
+    a1.sinks.sink1.kafka.bootstrap.servers = kafka-1:9093,kafka-2:9093,kafka-3:9093
+    a1.sinks.sink1.kafka.topic = mytopic
+    a1.sinks.sink1.kafka.producer.security.protocol = SASL_SSL
+    a1.sinks.sink1.kafka.producer.sasl.mechanism = SCRAM-SHA-256 (or SCRAM-SHA-512)
+    a1.sinks.sink1.kafka.producer.sasl.jaas.config = org.apache.kafka.common.security.scram.ScramLoginModule required username='alice' password='alice-secret'
 
 
 **Kerberos and Kafka Sink:**
@@ -3562,7 +3559,7 @@ The Kafka channel can be used for multiple scenarios:
 #. With Flume source and interceptor but no sink - it allows writing Flume events into a Kafka topic, for use by other apps
 #. With Flume sink, but no source - it is a low-latency, fault tolerant way to send events from Kafka to Flume sinks such as HDFS, HBase or Solr
 
-This currently supports Kafka server releases 0.10.1.0 or higher. Testing was done up to 2.0.1 that was the highest avilable version at the time of the release.
+This currently supports Kafka server releases 0.10.1.0 or higher. Testing was done up to 3.3.1 that was the highest avilable version at the time of the release.
 
 The configuration parameters are organized as such:
 
@@ -3613,23 +3610,6 @@ kafka.consumer.security.protocol         PLAINTEXT                   Same as kaf
 *more producer/consumer security props*                              If using SASL_PLAINTEXT, SASL_SSL or SSL refer to `Kafka security <http://kafka.apache.org/documentation.html#security>`_ for additional
                                                                      properties that need to be set on producer/consumer.
 =======================================  ==========================  ===============================================================================================================
-
-Deprecated Properties
-
-================================  ==========================  ============================================================================================================================
-Property Name                     Default                     Description
-================================  ==========================  ============================================================================================================================
-brokerList                        --                          List of brokers in the Kafka cluster used by the channel
-                                                              This can be a partial list of brokers, but we recommend at least two for HA.
-                                                              The format is comma separated list of hostname:port
-topic                             flume-channel               Use kafka.topic
-groupId                           flume                       Use kafka.consumer.group.id
-readSmallestOffset                false                       Use kafka.consumer.auto.offset.reset
-migrateZookeeperOffsets           true                        When no Kafka stored offset is found, look up the offsets in Zookeeper and commit them to Kafka.
-                                                              This should be true to support seamless Kafka client migration from older versions of Flume. Once migrated this can be set
-                                                              to false, though that should generally not be required. If no Zookeeper offset is found the kafka.consumer.auto.offset.reset
-                                                              configuration defines how offsets are handled.
-================================  ==========================  ============================================================================================================================
 
 .. note:: Due to the way the channel is load balanced, there may be duplicate events when the agent first starts up
 
@@ -3728,6 +3708,21 @@ provide the required additional secret for both consumer and producer keystores:
 
     a1.channels.channel1.kafka.producer.ssl.key.password = <password to access the key>
     a1.channels.channel1.kafka.consumer.ssl.key.password = <password to access the key>
+
+Example secure configuration using SASL_SSL with SASL/SCRAM:
+
+.. code-block:: properties
+
+    a1.channels.channel1.type = org.apache.flume.channel.kafka.KafkaChannel
+    a1.channels.channel1.kafka.bootstrap.servers = kafka-1:9093,kafka-2:9093,kafka-3:9093
+    a1.channels.channel1.kafka.topic = channel1
+    a1.channels.channel1.kafka.consumer.group.id = flume-consumer
+    a1.channels.channel1.kafka.producer.security.protocol = SASL_SSL
+    a1.channels.channel1.kafka.producer.sasl.mechanism = SCRAM-SHA-256 (or SCRAM-SHA-512)
+    a1.channels.channel1.kafka.producer.sasl.jaas.config = org.apache.kafka.common.security.scram.ScramLoginModule required username='alice' password='alice-secret'
+    a1.channels.channel1.kafka.consumer.security.protocol = SASL_SSL
+    a1.channels.channel1.kafka.consumer.sasl.mechanism = SCRAM-SHA-256 (or SCRAM-SHA-512)
+    a1.channels.channel1.kafka.consumer.sasl.jaas.config = org.apache.kafka.common.security.scram.ScramLoginModule required username='alice' password='alice-secret'
 
 
 **Kerberos and Kafka Channel:**

@@ -19,7 +19,6 @@ package org.apache.flume.source.kafka;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
-import kafka.zk.KafkaZkClient;
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.specific.SpecificDatumWriter;
@@ -37,19 +36,12 @@ import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.consumer.OffsetAndMetadata;
-import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RecordMetadata;
-import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.apache.kafka.common.header.internals.RecordHeaders;
-import org.apache.kafka.common.security.JaasUtils;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.apache.kafka.common.utils.Time;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -71,7 +63,6 @@ import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -87,13 +78,10 @@ import static org.apache.flume.source.kafka.KafkaSourceConstants.BOOTSTRAP_SERVE
 import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_AUTO_COMMIT;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_TOPIC_HEADER;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.KAFKA_CONSUMER_PREFIX;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.OLD_GROUP_ID;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.PARTITION_HEADER;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.TIMESTAMP_HEADER;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPIC;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPICS;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPICS_REGEX;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.ZOOKEEPER_CONNECT_FLUME_KEY;
 import static org.apache.kafka.clients.CommonClientConfigs.SECURITY_PROTOCOL_CONFIG;
 import static org.apache.kafka.common.config.SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG;
 import static org.apache.kafka.common.config.SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG;
@@ -587,46 +575,10 @@ public class TestKafkaSource {
   }
 
   @Test
-  public void testOldProperties() {
-    Context context = new Context();
-
-    context.put(TOPIC, "old.topic");
-    context.put(OLD_GROUP_ID, "old.groupId");
-    context.put(BOOTSTRAP_SERVERS, "real-bootstrap-servers-list");
-    KafkaSource source = new KafkaSource();
-    source.doConfigure(context);
-    Properties kafkaProps = source.getConsumerProps();
-
-    KafkaSource.Subscriber<List<String>> subscriber = source.getSubscriber();
-    //check topic was set
-    assertEquals("old.topic", subscriber.get().get(0));
-    //check that kafka old properties override the default and get correct name
-    assertEquals("old.groupId", kafkaProps.getProperty(ConsumerConfig.GROUP_ID_CONFIG));
-
-    source = new KafkaSource();
-    context.put(KAFKA_CONSUMER_PREFIX + ConsumerConfig.GROUP_ID_CONFIG, "override.old.group.id");
-    source.doConfigure(context);
-    kafkaProps = source.getConsumerProps();
-    //check that kafka new properties override old
-    assertEquals("override.old.group.id", kafkaProps.getProperty(ConsumerConfig.GROUP_ID_CONFIG));
-
-    context.clear();
-    context.put(BOOTSTRAP_SERVERS, "real-bootstrap-servers-list");
-    context.put(TOPIC, "old.topic");
-    source = new KafkaSource();
-    source.doConfigure(context);
-    kafkaProps = source.getConsumerProps();
-    //check defaults set
-    assertEquals(KafkaSourceConstants.DEFAULT_GROUP_ID,
-                 kafkaProps.getProperty(ConsumerConfig.GROUP_ID_CONFIG));
-  }
-
-  @Test
   public void testPatternBasedSubscription() {
     Context context = new Context();
 
     context.put(TOPICS_REGEX, "^topic[0-9]$");
-    context.put(OLD_GROUP_ID, "old.groupId");
     context.put(BOOTSTRAP_SERVERS, "real-bootstrap-servers-list");
     KafkaSource source = new KafkaSource();
     source.doConfigure(context);
@@ -709,49 +661,6 @@ public class TestKafkaSource {
 
   }
 
-  @Test
-  public void testBootstrapLookup() {
-    Context context = new Context();
-
-    context.put(ZOOKEEPER_CONNECT_FLUME_KEY, kafkaServer.getZkConnectString());
-    context.put(TOPIC, "old.topic");
-    context.put(OLD_GROUP_ID, "old.groupId");
-    KafkaSource source = new KafkaSource();
-    source.doConfigure(context);
-    String sourceServers = source.getBootstrapServers();
-    sourceServers = sourceServers.substring(0, sourceServers.indexOf(':'));
-
-    String kafkaServers = kafkaServer.getBootstrapServers();
-    kafkaServers = kafkaServers.substring(0, kafkaServers.indexOf(':'));
-
-    List<String> possibleValues = Arrays.asList("localhost", "127.0.0.1");
-
-    if (!(possibleValues.contains(sourceServers) && possibleValues.contains(kafkaServers))) {
-      fail("Expected either 'localhost' or '127.0.0.1'. Source: "
-              + sourceServers + ", Kafka: " + kafkaServers);
-    }
-  }
-
-  @Test
-  public void testMigrateOffsetsNone() throws Exception {
-    doTestMigrateZookeeperOffsets(false, false, "testMigrateOffsets-none");
-  }
-
-  @Test
-  public void testMigrateOffsetsZookeeper() throws Exception {
-    doTestMigrateZookeeperOffsets(true, false, "testMigrateOffsets-zookeeper");
-  }
-
-  @Test
-  public void testMigrateOffsetsKafka() throws Exception {
-    doTestMigrateZookeeperOffsets(false, true, "testMigrateOffsets-kafka");
-  }
-
-  @Test
-  public void testMigrateOffsetsBoth() throws Exception {
-    doTestMigrateZookeeperOffsets(true, true, "testMigrateOffsets-both");
-  }
-
   /**
    * Tests that sub-properties (kafka.consumer.*) apply correctly across multiple invocations
    * of configure() (fix for FLUME-2857).
@@ -766,7 +675,7 @@ public class TestKafkaSource {
     Context context = prepareDefaultContext(group);
     context.put(KafkaSourceConstants.KAFKA_CONSUMER_PREFIX + sampleConsumerProp,
         sampleConsumerVal);
-    context.put(TOPIC, "random-topic");
+    context.put(TOPICS, "random-topic");
 
     kafkaSource.configure(context);
 
@@ -774,7 +683,7 @@ public class TestKafkaSource {
         kafkaSource.getConsumerProps().getProperty(sampleConsumerProp));
 
     context = prepareDefaultContext(group);
-    context.put(TOPIC, "random-topic");
+    context.put(TOPICS, "random-topic");
 
     kafkaSource.configure(context);
     Assert.assertNull(kafkaSource.getConsumerProps().getProperty(sampleConsumerProp));
@@ -911,110 +820,6 @@ public class TestKafkaSource {
     Assert.assertNull(events.get(0).getHeaders().get("customTopicHeader"));
 
     kafkaSource.stop();
-  }
-
-  private void doTestMigrateZookeeperOffsets(boolean hasZookeeperOffsets, boolean hasKafkaOffsets,
-                                            String group) throws Exception {
-    // create a topic with 1 partition for simplicity
-    String topic = findUnusedTopic();
-    kafkaServer.createTopic(topic, 1);
-
-    Context context = prepareDefaultContext(group);
-    context.put(ZOOKEEPER_CONNECT_FLUME_KEY, kafkaServer.getZkConnectString());
-    context.put(TOPIC, topic);
-    KafkaSource source = new KafkaSource();
-    source.doConfigure(context);
-
-    // Produce some data and save an offset
-    Long fifthOffset = 0L;
-    Long tenthOffset = 0L;
-    Properties props = createProducerProps(kafkaServer.getBootstrapServers());
-    KafkaProducer<String, byte[]> producer = new KafkaProducer<>(props);
-    for (int i = 1; i <= 50; i++) {
-      ProducerRecord<String, byte[]> data =
-          new ProducerRecord<>(topic, null, String.valueOf(i).getBytes());
-      RecordMetadata recordMetadata = producer.send(data).get();
-      if (i == 5) {
-        fifthOffset = recordMetadata.offset();
-      }
-      if (i == 10) {
-        tenthOffset = recordMetadata.offset();
-      }
-    }
-
-    // Commit 10th offset to zookeeper
-    if (hasZookeeperOffsets) {
-      KafkaZkClient zkClient = KafkaZkClient.apply(kafkaServer.getZkConnectString(),
-              JaasUtils.isZkSaslEnabled(), 30000, 30000, 10, Time.SYSTEM,
-              "kafka.server", "SessionExpireListener", scala.Option.empty(), scala.Option.empty());
-      zkClient.getConsumerOffset(group, new TopicPartition(topic, 0));
-      Long offset = tenthOffset + 1;
-      zkClient.setOrCreateConsumerOffset(group, new TopicPartition(topic, 0), offset);
-      zkClient.close();
-    }
-
-    // Commit 5th offset to kafka
-    if (hasKafkaOffsets) {
-      Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
-      offsets.put(new TopicPartition(topic, 0), new OffsetAndMetadata(fifthOffset + 1));
-      KafkaConsumer<String, byte[]> consumer = new KafkaConsumer<>(source.getConsumerProps());
-      consumer.commitSync(offsets);
-      consumer.close();
-    }
-
-    // Start the source and read some data
-    source.setChannelProcessor(createGoodChannel());
-    source.start();
-    for (int i = 0; i < 3; i++) {
-      source.process();
-      Thread.sleep(1000);
-    }
-
-    Thread.sleep(500L);
-    source.process();
-    List<Integer> finals = new ArrayList<Integer>(40);
-    for (Event event: events) {
-      finals.add(Integer.parseInt(new String(event.getBody())));
-    }
-    source.stop();
-
-    if (!hasKafkaOffsets && !hasZookeeperOffsets) {
-      // The default behavior is to start at the latest message in the log
-      org.junit.Assert.assertTrue("Source should read no messages", finals.isEmpty());
-    } else if (hasKafkaOffsets && hasZookeeperOffsets) {
-      // Respect Kafka offsets if they exist
-      org.junit.Assert.assertFalse("Source should not read the 5th message", finals.contains(5));
-      org.junit.Assert.assertTrue("Source should read the 6th message", finals.contains(6));
-    } else if (hasKafkaOffsets) {
-      // Respect Kafka offsets if they exist (don't fail if zookeeper offsets are missing)
-      org.junit.Assert.assertFalse("Source should not read the 5th message", finals.contains(5));
-      org.junit.Assert.assertTrue("Source should read the 6th message", finals.contains(6));
-    } else {
-      // Otherwise migrate the ZooKeeper offsets if they exist
-      org.junit.Assert.assertFalse("Source should not read the 10th message", finals.contains(10));
-      org.junit.Assert.assertTrue("Source should read the 11th message", finals.contains(11));
-    }
-  }
-
-  @Test
-  public void testMigrateZookeeperOffsetsWhenTopicNotExists() throws Exception {
-    String topic = findUnusedTopic();
-
-    Context context = prepareDefaultContext("testMigrateOffsets-nonExistingTopic");
-    context.put(ZOOKEEPER_CONNECT_FLUME_KEY, kafkaServer.getZkConnectString());
-    context.put(TOPIC, topic);
-    KafkaSource source = new KafkaSource();
-    source.doConfigure(context);
-
-    source.setChannelProcessor(createGoodChannel());
-    source.start();
-
-    assertEquals(LifecycleState.START, source.getLifecycleState());
-
-    Status status = source.process();
-    assertEquals(Status.BACKOFF, status);
-
-    source.stop();
   }
 
   ChannelProcessor createGoodChannel() {
