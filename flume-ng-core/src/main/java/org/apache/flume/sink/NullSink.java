@@ -138,6 +138,14 @@ public class NullSink extends AbstractSink implements Configurable, BatchSizeSup
     return "NullSink " + getName() + " { batchSize: " + batchSize + " }";
   }
 
+  public CounterGroup getCounterGroup() {
+    return counterGroup;
+  }
+
+  public int getLogEveryNEvents() {
+    return logEveryNEvents;
+  }
+
   @Override
   public long getBatchSize() {
     return batchSize;

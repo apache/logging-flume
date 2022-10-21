@@ -110,7 +110,6 @@ public class DurablePositionTracker implements PositionTracker {
     return newTracker;
   }
 
-
   /**
    * If the file exists, read it and open it for append.
    * @param trackerFile

@@ -18,10 +18,10 @@
 -->
 <Configuration status="ERROR">
   <Properties>
-    <Property name="LOG_DIR">./logs</Property>
+    <Property name="LOG_DIR">.</Property>
   </Properties>
   <Appenders>
-    <Console name="Console" target="SYSTEM_OUT">
+    <Console name="Console" target="SYSTEM_ERR">
       <PatternLayout pattern="%d (%t) [%p - %l] %m%n" />
     </Console>
     <RollingFile name="LogFile" fileName="${LOG_DIR}/flume.log" filePattern="${LOG_DIR}/archive/flume.log.%d{yyyyMMdd}-%i">
@@ -46,7 +46,7 @@
   <Loggers>
     <Logger name="org.apache.flume.lifecycle" level="info"/>
     <Logger name="org.jboss" level="WARN"/>
-    <Logger name="org.apache.avro.ipc.NettyTransceiver" level="WARN"/>
+    <Logger name="org.apache.avro.ipc.netty.NettyTransceiver" level="WARN"/>
     <Logger name="org.apache.hadoop" level="INFO"/>
     <Logger name="org.apache.hadoop.hive" level="ERROR"/>
     <Root level="INFO">

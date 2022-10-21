@@ -32,16 +32,16 @@ import java.util.Map;
  */
 public interface MaterializedConfiguration {
 
-  public void addSourceRunner(String name, SourceRunner sourceRunner);
+  void addSourceRunner(String name, SourceRunner sourceRunner);
 
-  public void addSinkRunner(String name, SinkRunner sinkRunner);
+  void addSinkRunner(String name, SinkRunner sinkRunner);
 
-  public void addChannel(String name, Channel channel);
+  void addChannel(String name, Channel channel);
 
-  public Map<String, SourceRunner> getSourceRunners();
+  Map<String, SourceRunner> getSourceRunners();
 
-  public Map<String, SinkRunner> getSinkRunners();
+  Map<String, SinkRunner> getSinkRunners();
 
-  public Map<String, Channel> getChannels();
+  Map<String, Channel> getChannels();
 
 }

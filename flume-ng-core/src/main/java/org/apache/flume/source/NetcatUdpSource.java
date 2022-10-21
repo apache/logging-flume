@@ -23,8 +23,6 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.flume.ChannelException;
@@ -35,47 +33,42 @@ import org.apache.flume.EventDrivenSource;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
-import org.jboss.netty.bootstrap.ConnectionlessBootstrap;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.channel.AdaptiveReceiveBufferSizePredictorFactory;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.ChannelPipelineFactory;
-import org.jboss.netty.channel.Channels;
-import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.SimpleChannelHandler;
-import org.jboss.netty.channel.socket.oio.OioDatagramChannelFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class NetcatUdpSource extends AbstractSource
-      implements EventDrivenSource, Configurable {
+import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.DatagramPacket;
+import io.netty.channel.socket.nio.NioDatagramChannel;
+
+public class NetcatUdpSource extends AbstractSource implements EventDrivenSource, Configurable {
 
   private int port;
-  private int maxsize = 1 << 16; // 64k
   private String host = null;
   private Channel nettyChannel;
   private String remoteHostHeader = "REMOTE_ADDRESS";
+  private EventLoopGroup group;
 
   private static final Logger logger = LoggerFactory
       .getLogger(NetcatUdpSource.class);
 
   private CounterGroup counterGroup = new CounterGroup();
 
-  // Default Min size
-  private static final int DEFAULT_MIN_SIZE = 2048;
-  private static final int DEFAULT_INITIAL_SIZE = DEFAULT_MIN_SIZE;
   private static final String REMOTE_ADDRESS_HEADER = "remoteAddress";
   private static final String CONFIG_PORT = "port";
   private static final String CONFIG_HOST = "bind";
 
-  public class NetcatHandler extends SimpleChannelHandler {
-
+  public class NetcatHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 
     // extract line for building Flume event
-    private Event extractEvent(ChannelBuffer in, SocketAddress remoteAddress) {
+    private Event extractEvent(ByteBuf in, SocketAddress remoteAddress) {
 
       Map<String, String> headers = new HashMap<String,String>();
 
@@ -86,29 +79,25 @@ public class NetcatUdpSource extends AbstractSource
       Event e = null;
       boolean doneReading = false;
 
-      try {
-        while (!doneReading && in.readable()) {
-          b = in.readByte();
-          // Entries are separated by '\n'
-          if (b == '\n') {
-            doneReading = true;
-          } else {
-            baos.write(b);
-          }
+      while (!doneReading && in.isReadable()) {
+        b = in.readByte();
+        // Entries are separated by '\n'
+        if (b == '\n') {
+          doneReading = true;
+        } else {
+          baos.write(b);
         }
-
-        e = EventBuilder.withBody(baos.toByteArray(), headers);
-      } finally {
-        // no-op
       }
+
+      e = EventBuilder.withBody(baos.toByteArray(), headers);
 
       return e;
     }
 
     @Override
-    public void messageReceived(ChannelHandlerContext ctx, MessageEvent mEvent) {
+    protected void channelRead0(ChannelHandlerContext ctx, DatagramPacket packet) throws Exception {
       try {
-        Event e = extractEvent((ChannelBuffer)mEvent.getMessage(), mEvent.getRemoteAddress());
+        Event e = extractEvent(packet.content(), packet.sender());
         if (e == null) {
           return;
         }
@@ -127,23 +116,20 @@ public class NetcatUdpSource extends AbstractSource
   @Override
   public void start() {
     // setup Netty server
-    ConnectionlessBootstrap serverBootstrap = new ConnectionlessBootstrap(
-        new OioDatagramChannelFactory(Executors.newCachedThreadPool()));
-    final NetcatHandler handler = new NetcatHandler();
-    serverBootstrap.setOption("receiveBufferSizePredictorFactory",
-        new AdaptiveReceiveBufferSizePredictorFactory(DEFAULT_MIN_SIZE,
-        DEFAULT_INITIAL_SIZE, maxsize));
-    serverBootstrap.setPipelineFactory(new ChannelPipelineFactory() {
-      @Override
-      public ChannelPipeline getPipeline() {
-        return Channels.pipeline(handler);
+    group = new NioEventLoopGroup();
+    try {
+      Bootstrap b = new Bootstrap();
+      b.group(group)
+          .channel(NioDatagramChannel.class)
+          .option(ChannelOption.SO_BROADCAST, true)
+          .handler(new NetcatHandler());
+      if (host == null) {
+        nettyChannel = b.bind(port).sync().channel();
+      } else {
+        nettyChannel = b.bind(host, port).sync().channel();
       }
-    });
-
-    if (host == null) {
-      nettyChannel = serverBootstrap.bind(new InetSocketAddress(port));
-    } else {
-      nettyChannel = serverBootstrap.bind(new InetSocketAddress(host, port));
+    } catch (InterruptedException ex) {
+      logger.warn("netty server startup was interrupted", ex);
     }
 
     super.start();
@@ -153,24 +139,14 @@ public class NetcatUdpSource extends AbstractSource
   public void stop() {
     logger.info("Netcat UDP Source stopping...");
     logger.info("Metrics:{}", counterGroup);
-    if (nettyChannel != null) {
-      nettyChannel.close();
-      try {
-        nettyChannel.getCloseFuture().await(60, TimeUnit.SECONDS);
-      } catch (InterruptedException e) {
-        logger.warn("netty server stop interrupted", e);
-      } finally {
-        nettyChannel = null;
-      }
-    }
+    group.shutdownGracefully();
 
     super.stop();
   }
 
   @Override
   public void configure(Context context) {
-    Configurables.ensureRequiredNonNull(
-        context, CONFIG_PORT);
+    Configurables.ensureRequiredNonNull(context, CONFIG_PORT);
     port = context.getInteger(CONFIG_PORT);
     host = context.getString(CONFIG_HOST);
     remoteHostHeader = context.getString(REMOTE_ADDRESS_HEADER);
@@ -178,7 +154,7 @@ public class NetcatUdpSource extends AbstractSource
 
   @VisibleForTesting
   public int getSourcePort() {
-    SocketAddress localAddress = nettyChannel.getLocalAddress();
+    SocketAddress localAddress = nettyChannel.localAddress();
     if (localAddress instanceof InetSocketAddress) {
       InetSocketAddress addr = (InetSocketAddress) localAddress;
       return addr.getPort();

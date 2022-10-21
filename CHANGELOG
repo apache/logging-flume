@@ -1,3 +1,84 @@
+Release Notes - Flume - Version 1.11.0
+
+** Bug
+    * [FLUME-3315] - [KafkaSink][KafkaSource] Impossible to disable hostname verification with SSL enryption
+    * [FLUME-3437] - Validate providerUrl
+
+** New Feature
+    * [FLUME-3440] - Add support for Spring Boot
+
+** Improvement
+    * [FLUME-3435] - Allow KafkaSink to include timestamp and KafkaHeaders
+
+** Dependency upgrade
+    * [FLUME-3441] - Dependency Upgrades for Flume 1.11.0
+        * Update Maven Jar Plugin to 3.2.2
+        * Update Scala library to 2.13.9
+        * Update Gson to 2.9.1
+
+Release Notes - Flume - Version 1.10.1
+
+** Bug
+    * [FLUME-3428] - Need better parameter validation
+    * [FLUME-3434] - TwitterSource exceptions on serialization
+
+** Improvement
+    * [FLUME-3427] - Add support for JPMS
+    * [FLUME-3433] - Limit the default Lookups to a specific few.
+
+Release Notes - Flume - Version 1.10.0
+
+** Bug
+    * [FLUME-3151] - Upgrade Hadoop to 2.10.1
+    * [FLUME-3311] - Update Wrong Use In HDFS Sink
+    * [FLUME-3316] - Syslog Rfc3164Date test fails when the test date falls on a leap day
+    * [FLUME-3328] - Fix Deprecated Properties table of HDFS Sink
+    * [FLUME-3356] - Probable security issue in Flume
+    * [FLUME-3360] - Maven assemble failed on macOS
+    * [FLUME-3395] - Fix for CVE-2021-44228
+    * [FLUME-3407] - workaround for jackson-mapper-asl-1.9.13.jar  @ flume-ng
+    * [FLUME-3409] - upgrade httpclient due to cve
+    * [FLUME-3416] - Improve input validation
+    * [FLUME-3421] - Default log4j settings do not log to console after FLUME-2050
+    * [FLUME-3426] - Unresolved Security Issues
+
+** New Feature
+    * [FLUME-3412] - Add LoadBalancingChannelSelector
+
+** Improvement
+    * [FLUME-199] - Unit tests should hunt for available ports if defaults are in use
+    * [FLUME-2050] - Upgrade to log4j2 (when GA)
+    * [FLUME-3045] - Document GitHub Pull Requests in How to Contribute Guide
+    * [FLUME-3335] - Support configuration and reconfiguration via HTTP(S)
+    * [FLUME-3338] - Doc Flume Recoverability with Kafka
+    * [FLUME-3363] - CVE-2019-20445
+    * [FLUME-3368] - Update Jackson to 2.9.10
+    * [FLUME-3389] - Build and test Apache Flume on ARM64 CPU architecture
+    * [FLUME-3397] - Upgrade Log4 to 2.17.1 and SLF4J to 1.7.32
+    * [FLUME-3398] - Upgrade Kafka to a supported version.
+    * [FLUME-3399] - Update Jackson to 2.13.1
+    * [FLUME-3403] - The parquet-avro version used by flume is 1.4.1, which is vulnerabel.
+    * [FLUME-3405] - Reopened - The parquet-avro version used by flume is 1.4.1, which is vulnerabel.
+    * [FLUME-3413] - Add "initialization" phase to components.
+
+** Wish
+    * [FLUME-3400] - Upgrade commons-io to 2.11.0
+
+** Task
+    * [FLUME-3401] - Remove Kite Dataset Sink
+    * [FLUME-3402] - remove org.codehaus.jackson dependencies
+    * [FLUME-3404] - Update Commons CLI to 1.5.0, Commons Codec to 1.15, Commons Compress to 1.21 and Commons Lang to 2.6
+    * [FLUME-3410] - upgrade hbase version
+    * [FLUME-3411] - upgrade hive sink to 1.2.2
+    * [FLUME-3417] - Remove Elasticsearch sink that requires Elasticsearch 0.90.1
+    * [FLUME-3419] - Review project LICENSE and NOTICE
+    * [FLUME-3424] - Upgrade Twitter4j to version 4.0.7+
+
+** Dependency upgrade
+    * [FLUME-3339] - Remove Xerces and Xalan dependencies
+    * [FLUME-3385] - flume-ng-sdk uses Avro-IPC version with vulnerable version of Jetty
+    * [FLUME-3386] - flume-ng-sdk uses vulnerable version of netty
+
 Release Notes - Flume - Version 1.9.0
 
 ** New Feature

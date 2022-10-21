@@ -41,13 +41,14 @@ public class TestJMSMessageConsumer extends JMSMessageConsumerTestBase {
   @Test(expected = FlumeException.class)
   public void testCreateConnectionFails() throws Exception {
     when(connectionFactory.createConnection(USERNAME, PASSWORD))
-      .thenThrow(new JMSException(""));
+        .thenThrow(new JMSException(""));
     create();
   }
+
   @Test
   public void testCreateSessionFails() throws Exception {
     when(connection.createSession(true, Session.SESSION_TRANSACTED))
-      .thenThrow(new JMSException(""));
+        .thenThrow(new JMSException(""));
     try {
       create();
       fail("Expected exception: org.apache.flume.FlumeException");
@@ -58,7 +59,7 @@ public class TestJMSMessageConsumer extends JMSMessageConsumerTestBase {
   @Test
   public void testCreateQueueFails() throws Exception {
     when(session.createQueue(destinationName))
-      .thenThrow(new JMSException(""));
+        .thenThrow(new JMSException(""));
     try {
       create();
       fail("Expected exception: org.apache.flume.FlumeException");
@@ -71,7 +72,7 @@ public class TestJMSMessageConsumer extends JMSMessageConsumerTestBase {
   public void testCreateTopicFails() throws Exception {
     destinationType = JMSDestinationType.TOPIC;
     when(session.createTopic(destinationName))
-      .thenThrow(new JMSException(""));
+        .thenThrow(new JMSException(""));
     try {
       create();
       fail("Expected exception: org.apache.flume.FlumeException");
@@ -83,7 +84,7 @@ public class TestJMSMessageConsumer extends JMSMessageConsumerTestBase {
   @Test
   public void testCreateConsumerFails() throws Exception {
     when(session.createConsumer(any(Destination.class), anyString()))
-      .thenThrow(new JMSException(""));
+        .thenThrow(new JMSException(""));
     try {
       create();
       fail("Expected exception: org.apache.flume.FlumeException");
@@ -92,6 +93,12 @@ public class TestJMSMessageConsumer extends JMSMessageConsumerTestBase {
       verify(connection).close();
     }
   }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testInvalidDestination() throws Exception {
+    create(null, JMSDestinationLocator.JNDI, "ldap://localhost:389/test");
+  }
+
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidBatchSizeZero() throws Exception {
     batchSize = 0;
@@ -197,7 +204,7 @@ public class TestJMSMessageConsumer extends JMSMessageConsumerTestBase {
     String clientID = "CLIENT_ID";
     TopicSubscriber mockTopicSubscriber = mock(TopicSubscriber.class);
     when(session.createDurableSubscriber(any(Topic.class), anyString(), anyString(), anyBoolean()))
-      .thenReturn(mockTopicSubscriber );
+        .thenReturn(mockTopicSubscriber );
     when(session.createTopic(destinationName)).thenReturn(topic);
     new JMSMessageConsumer(WONT_USE, connectionFactory, destinationName, destinationLocator,
         JMSDestinationType.TOPIC, messageSelector, batchSize, pollTimeout, converter, userName,

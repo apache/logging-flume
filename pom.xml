@@ -21,18 +21,20 @@ limitations under the License.
   <parent>
     <groupId>org.apache</groupId>
     <artifactId>apache</artifactId>
-    <version>21</version>
+    <version>23</version>
   </parent>
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.apache.flume</groupId>
   <artifactId>flume-parent</artifactId>
-  <version>1.10.0-SNAPSHOT</version>
+  <version>1.11.1-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Apache Flume</name>
 
   <properties>
+    <!-- Update for year of distribution. Should be set by the maven-release-plugin at release time. -->
+    <project.build.outputTimestamp>2022-01-02T00:00:00Z</project.build.outputTimestamp>
     <!-- Set default encoding to UTF-8 to remove maven complaints -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
@@ -40,83 +42,92 @@ limitations under the License.
     <sourceJavaVersion>1.8</sourceJavaVersion>
     <targetJavaVersion>1.8</targetJavaVersion>
 
+    <!-- Signing User for release -->
+    <GPGSigningUserName>rgoers@apache.org</GPGSigningUserName>
+
     <!-- defaults for flaky test and focused test exclusions -->
     <test.exclude.pattern>$</test.exclude.pattern> <!-- junk pattern -->
     <test.include.pattern>**/Test*.java</test.include.pattern>
-    <siteUrlDeployment>file://people.apache.org/www/incubator.apache.org/flume</siteUrlDeployment>
     <stagingDirectory>${project.basedir}/target/docs</stagingDirectory>
 
     <activemq.version>5.7.0</activemq.version>
-    <asynchbase.version>1.7.0</asynchbase.version>
-    <avro.version>1.7.4</avro.version>
+    <asynchbase.version>1.8.2</asynchbase.version>
+    <avro.version>1.11.0</avro.version>
     <bundle-plugin.version>2.3.7</bundle-plugin.version>
-    <checkstyle.tool.version>8.12</checkstyle.tool.version>
-    <codehaus.jackson.version>1.9.3</codehaus.jackson.version>
-    <commons-cli.version>1.2</commons-cli.version>
-    <commons-codec.version>1.8</commons-codec.version>
+    <checkstyle.tool.version>8.45.1</checkstyle.tool.version>
+    <commons-cli.version>1.5.0</commons-cli.version>
+    <commons-codec.version>1.15</commons-codec.version>
     <commons-collections.version>3.2.2</commons-collections.version>
-    <commons-compress.version>1.4.1</commons-compress.version>
+    <commons-compress.version>1.21</commons-compress.version>
     <commons-dbcp.version>1.4</commons-dbcp.version>
-    <commons-io.version>2.1</commons-io.version>
-    <commons-lang.version>2.5</commons-lang.version>
-    <curator.version>2.6.0</curator.version>
-    <derby.version>10.14.1.0</derby.version>
-    <elasticsearch.version>0.90.1</elasticsearch.version>
-    <fasterxml.jackson.version>2.9.10</fasterxml.jackson.version>
+    <commons-io.version>2.11.0</commons-io.version>
+    <commons-lang.version>2.6</commons-lang.version>
+    <commons-text.version>1.9</commons-text.version>
+    <curator.version>5.1.0</curator.version>
+    <derby.version>10.14.2.0</derby.version>
+    <dropwizard-metrics.version>4.1.18</dropwizard-metrics.version>
+    <fasterxml.jackson.version>2.13.2</fasterxml.jackson.version>
+    <fasterxml.jackson.databind.version>2.13.2.1</fasterxml.jackson.databind.version>
     <fest-reflect.version>1.4</fest-reflect.version>
     <geronimo-jms.version>1.1.1</geronimo-jms.version>
-    <gson.version>2.2.2</gson.version>
+    <gson.version>2.9.1</gson.version>
     <guava.version>18.0</guava.version>
     <guava-old.version>11.0.2</guava-old.version>
-    <hadoop.version>2.9.0</hadoop.version>
-    <hbase.version>1.0.0</hbase.version>
-    <hbase2.jetty.version>9.3.19.v20170502</hbase2.jetty.version>
-    <hbase2.version>2.0.0</hbase2.version>
-    <hive.version>1.0.0</hive.version>
-    <httpcore.version>4.4.6</httpcore.version>
-    <httpclient.version>4.5.3</httpclient.version>
+    <hadoop.version>2.10.1</hadoop.version>
+    <hbase.version>1.7.1</hbase.version>
+    <hbase2.version>2.4.11</hbase2.version>
+    <hive.version>1.2.2</hive.version>
+    <httpcore.version>4.4.15</httpcore.version>
+    <httpclient.version>4.5.13</httpclient.version>
     <irclib.version>1.10</irclib.version>
     <jersey.version>1.8</jersey.version>
-    <jetty.version>9.4.6.v20170531</jetty.version>
+    <jetty.version>9.4.41.v20210516</jetty.version>
+    <jdom.version>1.1.3</jdom.version>
     <joda-time.version>2.9.9</joda-time.version>
-    <junit.version>4.10</junit.version>
-    <kafka.version>2.3.1</kafka.version>
-    <kite.version>1.0.0</kite.version>
+    <junit.version>4.13.2</junit.version>
+    <kafka.version>2.7.2</kafka.version>
+    <kite.version>1.1.0</kite.version>
     <kudu.version>1.10.0</kudu.version>
     <lifecycle-mapping.version>1.0.0</lifecycle-mapping.version>
-    <log4j.version>2.11.2</log4j.version>
+    <log4j.version>2.18.0</log4j.version>
     <mapdb.version>0.9.9</mapdb.version>
-    <mina.version>2.0.4</mina.version>
+    <mina.version>2.1.5</mina.version>
     <mockito.version>1.9.0</mockito.version>
     <mvn-antrun-plugin.version>1.8</mvn-antrun-plugin.version>
+    <!-- Do not upgrade the assumbly plugin version until MASSEMBLY-941 is fixed -->
     <mvn-assembly-plugin.version>3.1.0</mvn-assembly-plugin.version>
     <mvn-build-helper-plugin>3.0.0</mvn-build-helper-plugin>
-    <mvn-checkstyle-plugin.version>3.0.0</mvn-checkstyle-plugin.version>
+    <mvn-checkstyle-plugin.version>3.1.2</mvn-checkstyle-plugin.version>
     <mvn-checksum-plugin.version>1.7</mvn-checksum-plugin.version>
     <mvn-clean-plugin.version>3.1.0</mvn-clean-plugin.version>
-    <mvn-compiler-plugin.version>3.8.0</mvn-compiler-plugin.version>
+    <mvn-compiler-plugin.version>3.8.1</mvn-compiler-plugin.version>
+    <mvn-deploy-plugin.version>2.8.2</mvn-deploy-plugin.version>
     <mvn-gpg-plugin.version>1.6</mvn-gpg-plugin.version>
+    <mvn-jar-plugin.version>3.2.2</mvn-jar-plugin.version>
     <mvn-javadoc-plugin.version>2.9</mvn-javadoc-plugin.version>
     <mvn-paranamer-plugin.version>2.8</mvn-paranamer-plugin.version>
-    <mvn-pmd-plugin.version>3.11.0</mvn-pmd-plugin.version>
+    <mvn-pmd-plugin.version>3.15.0</mvn-pmd-plugin.version>
     <mvn-site-plugin.version>3.7.1</mvn-site-plugin.version>
-    <mvn-sphinx-plugin>1.0.3</mvn-sphinx-plugin>
-    <mvn-spotbugs-plugin.version>3.1.7</mvn-spotbugs-plugin.version>
-    <mvn-surefire-plugin.version>2.22.1</mvn-surefire-plugin.version>
-    <netty.version>3.10.6.Final</netty.version>
-    <netty-all.version>4.1.17.Final</netty-all.version>
+    <mvn-spotbugs-plugin.version>4.2.0</mvn-spotbugs-plugin.version>
+    <mvn-surefire-plugin.version>2.22.2</mvn-surefire-plugin.version>
+    <!--<netty.version>3.10.6.Final</netty.version>-->
+    <netty-all.version>4.1.72.Final</netty-all.version>
+    <parquet.version>1.11.2</parquet.version>
     <protobuf.version>2.5.0</protobuf.version>
     <rat.version>0.12</rat.version>
-    <snappy-java.version>1.1.4</snappy-java.version>
+    <scala.version>2.13</scala.version>
+    <scala-library.version>2.13.9</scala-library.version>
+    <snappy-java.version>1.1.8.4</snappy-java.version>
     <solr-global.version>4.3.0</solr-global.version>
-    <slf4j.version>1.7.25</slf4j.version>
+    <slf4j.version>1.7.32</slf4j.version>
     <system-rules.version>1.17.0</system-rules.version>
-    <thrift.version>0.13.0</thrift.version>
-    <twitter4j.version>3.0.3</twitter4j.version>
-    <xalan.version>2.7.2</xalan.version>
-    <xerces.version>2.9.1</xerces.version>
+    <thrift.version>0.14.1</thrift.version>
+    <twitter4j.version>4.0.7</twitter4j.version>
+    <twitter4j-media.version>4.0.6</twitter4j-media.version>
     <wiremock.version>1.53</wiremock.version>
-    <zookeeper.version>3.4.13</zookeeper.version>
+    <zlib.version>1.1.3</zlib.version>
+    <zookeeper.version>3.6.2</zookeeper.version>
+    <redirectTestOutput>true</redirectTestOutput>
   </properties>
 
   <modules>
@@ -137,6 +148,7 @@ limitations under the License.
     <module>flume-shared</module>
     <module>flume-ng-configfilters</module>
     <module>build-support</module>
+    <module>flume-spring-boot</module>
   </modules>
 
   <profiles>
@@ -182,6 +194,9 @@ limitations under the License.
                 <goals>
                   <goal>sign</goal>
                 </goals>
+                <configuration>
+                  <keyname>${GPGSigningUserName}</keyname>
+                </configuration>
               </execution>
             </executions>
           </plugin>
@@ -423,19 +438,6 @@ limitations under the License.
     <url>http://www.apache.org</url>
   </organization>
 
-  <distributionManagement>
-    <repository>
-      <id>apache.staging.https</id>
-      <name>Apache Staging Repository</name>
-      <url>https://repository.apache.org/service/local/staging/deploy/maven2/</url>
-    </repository>
-    <site>
-      <id>apache.website</id>
-      <url>${siteUrlDeployment}</url>
-      <name>Flume Site</name>
-    </site>
-  </distributionManagement>
-
   <build>
 
     <plugins>
@@ -447,7 +449,14 @@ limitations under the License.
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
-        </plugin>
+        <dependencies>
+          <dependency>
+            <groupId>com.puppycrawl.tools</groupId>
+            <artifactId>checkstyle</artifactId>
+            <version>${checkstyle.tool.version}</version>
+          </dependency>
+        </dependencies>
+      </plugin>
       <plugin>
         <groupId>com.github.spotbugs</groupId>
         <artifactId>spotbugs-maven-plugin</artifactId>
@@ -474,6 +483,7 @@ limitations under the License.
               <excludes>
                   <exclude>**/*.sha512</exclude>
               </excludes>
+            <keyname>${GPGSigningUserName}</keyname>
           </configuration>
         </plugin>
 
@@ -489,14 +499,45 @@ limitations under the License.
 
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>${mvn-jar-plugin.version}</version>
+          <executions>
+            <execution>
+              <id>default-jar</id>
+              <goals>
+                <goal>jar</goal>
+              </goals>
+              <configuration>
+                <archive>
+                  <manifestEntries>
+                    <Specification-Title>${project.name}</Specification-Title>
+                    <Specification-Version>${project.version}</Specification-Version>
+                    <Specification-Vendor>${project.organization.name}</Specification-Vendor>
+                    <Implementation-Title>${project.name}</Implementation-Title>
+                    <Implementation-Version>${project.version}</Implementation-Version>
+                    <Implementation-Vendor>${project.organization.name}</Implementation-Vendor>
+                    <Implementation-Vendor-Id>org.apache</Implementation-Vendor-Id>
+                    <X-Compile-Source-JDK>${maven.compiler.source}</X-Compile-Source-JDK>
+                    <X-Compile-Target-JDK>${maven.compiler.target}</X-Compile-Target-JDK>
+                    <Automatic-Module-Name>${module.name}</Automatic-Module-Name>
+                  </manifestEntries>
+                </archive>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
           <version>${mvn-surefire-plugin.version}</version>
           <configuration>
             <reuseForks>false</reuseForks>
             <forkCount>1</forkCount>
-            <rerunFailingTestsCount>10</rerunFailingTestsCount>
+            <!--<rerunFailingTestsCount>10</rerunFailingTestsCount>-->
             <forkedProcessTimeoutInSeconds>900</forkedProcessTimeoutInSeconds>
-            <redirectTestOutputToFile>true</redirectTestOutputToFile>
+            <redirectTestOutputToFile>${redirectTestOutput}</redirectTestOutputToFile>
+            <argLine>-Djava.net.preferIPv4Stack=true</argLine>
             <includes>
               <include>${test.include.pattern}</include>
             </includes>
@@ -515,10 +556,14 @@ limitations under the License.
             <excludes>
               <exclude>**/.idea/</exclude>
               <exclude>**/*.iml</exclude>
+              <exclude>src/main/resources/META-INF/services/**/*</exclude>
               <exclude>**/nb-configuration.xml</exclude>
               <exclude>.git/</exclude>
               <exclude>patchprocess/</exclude>
               <exclude>.gitignore</exclude>
+              <exclude>**/*.yml</exclude>
+              <exclude>**/*.yaml</exclude>
+              <exclude>**/*.json</exclude>
               <!-- ASF jenkins box puts the Maven repo in our root directory. -->
               <exclude>.repository/</exclude>
               <exclude>**/*.diff</exclude>
@@ -600,6 +645,7 @@ limitations under the License.
               <!-- include ONLY flume multi-module dependencies -->
               <dependencySourceInclude>org.apache.flume:*</dependencySourceInclude>
             </dependencySourceIncludes>
+            <additionalparam>-Xdoclint:none</additionalparam>
           </configuration>
         </plugin>
 
@@ -668,6 +714,12 @@ limitations under the License.
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-pmd-plugin</artifactId>
           <version>${mvn-pmd-plugin.version}</version>
+          <configuration>
+            <targetJdk>${targetJavaVersion}</targetJdk>
+            <excludeRoots>
+              <excludeRoot>${project.build.directory}/generated-sources</excludeRoot>
+            </excludeRoots>
+          </configuration>
           <executions>
             <execution>
               <id>verify.pmd</id>
@@ -765,9 +817,27 @@ limitations under the License.
       </dependency>
 
       <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-text</artifactId>
+        <version>${commons-text.version}</version>
+      </dependency>
+
+      <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>${guava-old.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-api</artifactId>
+        <version>${log4j.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-core</artifactId>
+        <version>${log4j.version}</version>
       </dependency>
 
       <dependency>
@@ -785,6 +855,12 @@ limitations under the License.
       <dependency>
         <groupId>org.apache.logging.log4j</groupId>
         <artifactId>log4j-jcl</artifactId>
+        <version>${log4j.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-jul</artifactId>
         <version>${log4j.version}</version>
       </dependency>
 
@@ -808,16 +884,24 @@ limitations under the License.
 
       <dependency>
         <groupId>org.apache.avro</groupId>
-        <artifactId>avro-ipc</artifactId>
+        <artifactId>avro-ipc-netty</artifactId>
+        <version>${avro.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>io.netty</groupId>
+            <artifactId>netty</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.avro</groupId>
+        <artifactId>avro-ipc-jetty</artifactId>
         <version>${avro.version}</version>
         <exclusions>
           <exclusion>
             <groupId>org.mortbay.jetty</groupId>
             <artifactId>servlet-api</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>io.netty</groupId>
-            <artifactId>netty</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -921,18 +1005,6 @@ limitations under the License.
       </dependency>
 
       <dependency>
-        <groupId>org.codehaus.jackson</groupId>
-        <artifactId>jackson-core-asl</artifactId>
-        <version>${codehaus.jackson.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.codehaus.jackson</groupId>
-        <artifactId>jackson-mapper-asl</artifactId>
-        <version>${codehaus.jackson.version}</version>
-      </dependency>
-
-      <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-annotations</artifactId>
         <version>${fasterxml.jackson.version}</version>
@@ -947,7 +1019,7 @@ limitations under the License.
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-databind</artifactId>
-        <version>${fasterxml.jackson.version}</version>
+        <version>${fasterxml.jackson.databind.version}</version>
       </dependency>
 
       <dependency>
@@ -961,24 +1033,6 @@ limitations under the License.
         <artifactId>joda-time</artifactId>
         <version>${joda-time.version}</version>
       </dependency>
-      <!-- Adding zookeeper as dependency, beacuse it was
-           pulling different version of zookeeper as transient
-           dependency from asynchbase. -->
-
-      <dependency>
-        <groupId>org.elasticsearch</groupId>
-        <artifactId>elasticsearch</artifactId>
-        <version>${elasticsearch.version}</version>
-        <optional>true</optional>
-      </dependency>
-
-      <dependency>
-        <groupId>org.elasticsearch</groupId>
-        <artifactId>elasticsearch</artifactId>
-        <version>${elasticsearch.version}</version>
-        <classifier>tests</classifier>
-        <scope>test</scope>
-      </dependency>
 
       <dependency>
         <groupId>org.apache.geronimo.specs</groupId>
@@ -990,6 +1044,12 @@ limitations under the License.
         <groupId>org.apache.activemq</groupId>
         <artifactId>activemq-core</artifactId>
         <version>${activemq.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.jcraft</groupId>
+        <artifactId>jzlib</artifactId>
+        <version>${zlib.version}</version>
       </dependency>
 
       <!-- internal module dependencies -->
@@ -1093,12 +1153,6 @@ limitations under the License.
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-ng-hbase2-sink</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.flume.flume-ng-sinks</groupId>
-        <artifactId>flume-ng-elasticsearch-sink</artifactId>
         <version>${project.version}</version>
       </dependency>
 
@@ -1266,11 +1320,11 @@ limitations under the License.
         </exclusions>
       </dependency>
 
-      <dependency>
+      <!--<dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty</artifactId>
         <version>${netty.version}</version>
-      </dependency>
+      </dependency>-->
 
       <dependency>
         <groupId>io.netty</groupId>
@@ -1293,7 +1347,7 @@ limitations under the License.
       <dependency>
         <groupId>org.twitter4j</groupId>
         <artifactId>twitter4j-media-support</artifactId>
-        <version>${twitter4j.version}</version>
+        <version>${twitter4j-media.version}</version>
       </dependency>
       <dependency>
         <groupId>org.twitter4j</groupId>
@@ -1304,7 +1358,7 @@ limitations under the License.
       <!-- Dependencies of Kafka source -->
       <dependency>
         <groupId>org.apache.kafka</groupId>
-        <artifactId>kafka_2.11</artifactId>
+        <artifactId>kafka_${scala.version}</artifactId>
         <version>${kafka.version}</version>
         <exclusions>
           <exclusion>
@@ -1319,7 +1373,7 @@ limitations under the License.
       </dependency>
       <dependency>
         <groupId>org.apache.kafka</groupId>
-        <artifactId>kafka_2.11</artifactId>
+        <artifactId>kafka_${scala.version}</artifactId>
         <version>${kafka.version}</version>
         <classifier>test</classifier>
         <scope>test</scope>
@@ -1340,51 +1394,9 @@ limitations under the License.
         <version>${kafka.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.kitesdk</groupId>
-        <artifactId>kite-data-core</artifactId>
-        <version>${kite.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.kitesdk</groupId>
-        <artifactId>kite-data-hive</artifactId>
-        <version>${kite.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.kitesdk</groupId>
-        <artifactId>kite-data-hbase</artifactId>
-        <version>${kite.version}</version>
-      </dependency>
-
-      <!-- Dependency for kite-data-hive -->
-      <dependency>
-        <groupId>org.apache.hive</groupId>
-        <artifactId>hive-exec</artifactId>
-        <version>${hive.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.hive</groupId>
-        <artifactId>hive-metastore</artifactId>
-        <version>${hive.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-        </exclusions>
+        <groupId>org.scala-lang</groupId>
+        <artifactId>scala-library</artifactId>
+        <version>${scala-library.version}</version>
       </dependency>
 
       <dependency>
@@ -1460,22 +1472,6 @@ limitations under the License.
         <version>${curator.version}</version>
         <scope>test</scope>
       </dependency>
-
-      <!-- Dependency for Hive Sink  -->
-      <dependency>
-        <groupId>xalan</groupId>
-        <artifactId>serializer</artifactId>
-        <version>${xalan.version}</version>
-        <scope>runtime</scope>
-      </dependency>
-
-      <dependency>
-        <groupId>xalan</groupId>
-        <artifactId>xalan</artifactId>
-        <scope>runtime</scope>
-        <version>${xalan.version}</version>
-      </dependency>
-
 
       <dependency>
         <groupId>org.apache.hadoop</groupId>
@@ -1738,7 +1734,6 @@ limitations under the License.
         <groupId>org.apache.zookeeper</groupId>
         <artifactId>zookeeper</artifactId>
         <version>${zookeeper.version}</version>
-        <scope>test</scope>
         <exclusions>
           <exclusion>
             <groupId>log4j</groupId>
@@ -1751,6 +1746,66 @@ limitations under the License.
         </exclusions>
       </dependency>
 
+      <dependency>
+        <groupId>org.jdom</groupId>
+        <artifactId>jdom</artifactId>
+        <version>${jdom.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-core</artifactId>
+        <version>${dropwizard-metrics.version}</version>
+      </dependency>
+
+      <!-- Required for the morphlines-solr-sink via the kite-sdk -->
+      <dependency>
+        <groupId>org.apache.parquet</groupId>
+        <artifactId>parquet-hive-bundle</artifactId>
+        <version>${parquet.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-core</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.parquet</groupId>
+        <artifactId>parquet-avro</artifactId>
+        <version>${parquet.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-core</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>net.jcip</groupId>
+        <artifactId>jcip-annotations</artifactId>
+        <version>1.0</version>
+        <optional>true</optional>
+      </dependency>
+      <dependency>
+        <groupId>com.github.spotbugs</groupId>
+        <artifactId>spotbugs-annotations</artifactId>
+        <version>${mvn-spotbugs-plugin.version}</version>
+        <optional>true</optional>
+      </dependency>
+      <dependency>
+        <groupId>org.mock-server</groupId>
+        <artifactId>mockserver-netty</artifactId>
+        <version>3.10.8</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mock-server</groupId>
+        <artifactId>mockserver-client-java</artifactId>
+        <version>3.10.8</version>
+        <scope>test</scope>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -1772,15 +1827,6 @@ limitations under the License.
             </reports>
           </reportSet>
         </reportSets>
-      </plugin>
-      <plugin>
-        <groupId>org.tomdz.maven</groupId>
-        <artifactId>sphinx-maven-plugin</artifactId>
-        <version>${mvn-sphinx-plugin}</version>
-        <inherited>false</inherited>
-        <configuration>
-          <sourceDirectory>${project.basedir}/flume-ng-doc/sphinx</sourceDirectory>
-        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

@@ -21,7 +21,6 @@ import org.apache.flume.Context;
 import org.kitesdk.morphline.api.Command;
 import org.kitesdk.morphline.base.FaultTolerance;
 
-
 /**
  * Flume sink that extracts search documents from Flume events, processes them using a morphline
  * {@link Command} chain, and loads them into Apache Solr.
@@ -31,7 +30,7 @@ public class MorphlineSolrSink extends MorphlineSink {
   public MorphlineSolrSink() {
     super();
   }
-  
+
   /** For testing only */
   protected MorphlineSolrSink(MorphlineHandler handler) {
     super(handler);
@@ -40,8 +39,8 @@ public class MorphlineSolrSink extends MorphlineSink {
   @Override
   public void configure(Context context) {
     if (context.getString(FaultTolerance.RECOVERABLE_EXCEPTION_CLASSES) == null) {
-      context.put(FaultTolerance.RECOVERABLE_EXCEPTION_CLASSES, 
-          "org.apache.solr.client.solrj.SolrServerException");      
+      context.put(FaultTolerance.RECOVERABLE_EXCEPTION_CLASSES,
+          "org.apache.solr.client.solrj.SolrServerException");
     }
     super.configure(context);
   }

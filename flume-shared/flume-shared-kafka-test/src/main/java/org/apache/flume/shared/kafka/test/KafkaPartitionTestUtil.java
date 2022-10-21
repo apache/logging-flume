@@ -62,33 +62,40 @@ public class KafkaPartitionTestUtil {
                                  int staticPtn, int numMsgs) {
     int numPtns = partitionMap.size();
 
-    if (scenario == PartitionTestScenario.NO_PARTITION_HEADERS && numMsgs % numPtns != 0) {
-      throw new IllegalArgumentException("This method is not designed to work with scenarios" +
+    if (scenario == PartitionTestScenario.NO_PARTITION_HEADERS) {
+      if (numMsgs % numPtns != 0) {
+        throw new IllegalArgumentException("This method is not designed to work with scenarios" +
                 " where there is expected to be a non-even distribution of messages");
+      } else {
+        // Since Kafka 2.4 results with no partition are not distrubuted evenly.
+        int sum = resultsMap.values().stream().mapToInt(List::size).sum();
+        Assert.assertEquals("Scenario: " + scenario + " Incorrect number of messages", numMsgs, sum);
+        return;
+      }
     }
-
     for (int ptn = 0; ptn < numPtns; ptn++) {
       List<Event> expectedResults = partitionMap.get(ptn);
       List<byte[]> actualResults = resultsMap.get(ptn);
       if (scenario == PartitionTestScenario.PARTITION_ID_HEADER_ONLY ||
           scenario == PartitionTestScenario.STATIC_HEADER_AND_PARTITION_ID) {
         // In these two scenarios we're checking against partitionMap
-        Assert.assertEquals(expectedResults.size(), actualResults.size());
+        Assert.assertEquals("Scenario: " + scenario + " Partition " + ptn + " incorrect",
+                expectedResults.size(), actualResults.size());
         //Go and check the message payload is what we wanted it to be
         for (int idx = 0; idx < expectedResults.size(); idx++) {
-          Assert.assertArrayEquals(expectedResults.get(idx).getBody(), actualResults.get(idx));
+          Assert.assertArrayEquals("Scenario: " + scenario + " Partition " + ptn + " event " + idx
+                  + " incorrect", expectedResults.get(idx).getBody(), actualResults.get(idx));
         }
       } else if (scenario == PartitionTestScenario.STATIC_HEADER_ONLY) {
         // Check that if we are looking in the statically assigned partition
         // all messages are in it, else all other partitions are zero
         if (ptn == staticPtn) {
-          Assert.assertEquals(numMsgs, actualResults.size());
+          Assert.assertEquals("Scenario: " + scenario + " incorrect number of messages in partition " +
+                  ptn, numMsgs, actualResults.size());
         } else {
-          Assert.assertEquals(0, actualResults.size());
+          Assert.assertEquals("Scenario: " + scenario + " partition " + ptn + "should have no messages",
+                  0, actualResults.size());
         }
-      } else if (scenario == PartitionTestScenario.NO_PARTITION_HEADERS) {
-        // Checking for an even distribution
-        Assert.assertEquals(numMsgs / numPtns, actualResults.size());
       }
     }
   }

@@ -34,8 +34,8 @@ import org.apache.thrift.transport.TSSLTransportFactory;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TNonblockingServerTransport;
-import org.apache.thrift.transport.TFastFramedTransport;
 import org.apache.thrift.transport.TServerTransport;
+import org.apache.thrift.transport.layered.TFastFramedTransport;
 
 import java.lang.reflect.Method;
 import java.net.InetAddress;

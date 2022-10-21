@@ -30,7 +30,8 @@ import java.util.Map;
  * without any authenticated privileges
  */
 class SimpleAuthenticator implements FlumeAuthenticator {
-  private SimpleAuthenticator() {}
+  private SimpleAuthenticator() {
+  }
 
   private static class SimpleAuthenticatorHolder {
     public static SimpleAuthenticator authenticator = new SimpleAuthenticator();
@@ -40,8 +41,7 @@ class SimpleAuthenticator implements FlumeAuthenticator {
     return SimpleAuthenticatorHolder.authenticator;
   }
 
-  private Map<String, PrivilegedExecutor> proxyCache =
-          new HashMap<String, PrivilegedExecutor>();
+  private Map<String, PrivilegedExecutor> proxyCache = new HashMap<String, PrivilegedExecutor>();
 
 
   @Override

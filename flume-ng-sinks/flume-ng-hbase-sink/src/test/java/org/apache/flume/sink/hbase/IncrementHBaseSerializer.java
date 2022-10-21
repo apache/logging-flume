@@ -38,9 +38,12 @@ class IncrementHBaseSerializer implements HbaseEventSerializer, BatchAware {
   private byte[] family;
   private int numBatchesStarted = 0;
 
-  @Override public void configure(Context context) { }
-  @Override public void configure(ComponentConfiguration conf) { }
-  @Override public void close() { }
+  @Override public void configure(Context context) {
+  }
+  @Override public void configure(ComponentConfiguration conf) {
+  }
+  @Override public void close() {
+  }
 
   @Override
   public void initialize(Event event, byte[] columnFamily) {

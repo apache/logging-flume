@@ -16,7 +16,7 @@
   <parent>
     <artifactId>flume-ng-sinks</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.10.0-SNAPSHOT</version>
+    <version>1.11.1-SNAPSHOT</version>
   </parent>
   <groupId>org.apache.flume.flume-ng-sinks</groupId>
   <artifactId>flume-ng-kudu-sink</artifactId>
@@ -24,6 +24,7 @@
 
   <properties>
     <exclude.tests>None</exclude.tests>
+    <module.name>org.apache.flume.sink.kudu</module.name>
   </properties>
 
   <build>
@@ -159,6 +160,7 @@
       <activation>
         <os>
           <family>Unix</family>
+          <arch>amd64</arch>
         </os>
       </activation>
       <dependencies>
@@ -176,6 +178,7 @@
       <activation>
         <os>
           <family>mac</family>
+          <arch>amd64</arch>
         </os>
       </activation>
       <dependencies>

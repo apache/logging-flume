@@ -53,6 +53,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -92,6 +95,7 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       .getLogger(ReliableSpoolingFileEventReader.class);
 
   static final String metaFileName = ".flumespool-main.meta";
+  private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss.SSS");
   private final File spoolDirectory;
   private final Path spoolDirPath;
   private final String completedSuffix;
@@ -346,6 +350,23 @@ public class ReliableSpoolingFileEventReader implements ReliableEventReader {
       return null;
     }
     return lastFileRead.get().getFile().getAbsolutePath();
+  }
+
+  /**
+   * Return the filename, lastModified, and size which generated the data from the last successful
+   * {@link #readEvents(int)} call. Returns null if called before any file
+   * contents are read.
+   */
+  public String getLastFileReadInfo() {
+    if (!lastFileRead.isPresent()) {
+      return null;
+    }
+    FileInfo fileInfo = lastFileRead.get();
+    StringBuilder sb = new StringBuilder(fileInfo.getFile().getName());
+    sb.append(" lastModified: ").append(FORMATTER.format(Instant.ofEpochMilli(fileInfo.lastModified)
+        .atZone(ZoneId.systemDefault()).toLocalDateTime()));
+    sb.append(" size: ").append(fileInfo.length);
+    return sb.toString();
   }
 
   // public interface

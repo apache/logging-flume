@@ -43,6 +43,9 @@ import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.header.internals.RecordHeader;
+import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -51,15 +54,18 @@ import org.mockito.internal.util.reflection.Whitebox;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import static org.apache.flume.shared.kafka.KafkaSSLUtil.SSL_DISABLE_FQDN_CHECK;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.AVRO_EVENT;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.BATCH_SIZE;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.BOOTSTRAP_SERVERS_CONFIG;
@@ -71,6 +77,9 @@ import static org.apache.flume.sink.kafka.KafkaSinkConstants.KAFKA_PRODUCER_PREF
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.OLD_BATCH_SIZE;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.REQUIRED_ACKS_FLUME_KEY;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.TOPIC_CONFIG;
+import static org.apache.kafka.clients.CommonClientConfigs.SECURITY_PROTOCOL_CONFIG;
+import static org.apache.kafka.common.config.SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG;
+import static org.apache.kafka.common.config.SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -180,11 +189,28 @@ public class TestKafkaSink {
   }
 
   private void checkMessageArrived(String msg, String topic) {
-    ConsumerRecords recs = pollConsumerRecords(topic);
+    checkMessageArrived(msg, topic, null, null);
+  }
+
+  private void checkMessageArrived(String msg, String topic, Long timestamp, Headers headers) {
+    ConsumerRecords<String, String> recs = pollConsumerRecords(topic);
     assertNotNull(recs);
     assertTrue(recs.count() > 0);
-    ConsumerRecord consumerRecord = (ConsumerRecord) recs.iterator().next();
-    assertEquals(msg, consumerRecord.value());
+    Iterator<ConsumerRecord<String, String>> iter = recs.records(topic).iterator();
+    boolean match = false;
+    while (iter.hasNext()) {
+      ConsumerRecord<String, String> record = iter.next();
+      if (msg.equals(record.value()) && (timestamp == null || timestamp.equals(record.timestamp()))
+          && (headers == null || validateHeaders(headers, record.headers()))) {
+        match = true;
+        break;
+      }
+    }
+    assertTrue("No message matches " + msg, match);
+  }
+
+  private boolean validateHeaders(Headers expected, Headers actual) {
+    return expected.equals(actual);
   }
 
   @Test
@@ -237,6 +263,51 @@ public class TestKafkaSink {
     }
 
     checkMessageArrived(msg, TestConstants.CUSTOM_TOPIC);
+  }
+
+  @Test
+  public void testTimestampAndHeaders() {
+    Sink kafkaSink = new KafkaSink();
+    Context context = prepareDefaultContext();
+    context.put(KafkaSinkConstants.TIMESTAMP_HEADER, "timestamp");
+    context.put("header.correlator", TestConstants.KAFKA_HEADER_1);
+    context.put("header.method", TestConstants.KAFKA_HEADER_2);
+
+    Configurables.configure(kafkaSink, context);
+    Channel memoryChannel = new MemoryChannel();
+    Configurables.configure(memoryChannel, context);
+    kafkaSink.setChannel(memoryChannel);
+    kafkaSink.start();
+
+    String msg = "test-topic-and-key-from-header";
+    Map<String, String> headers = new HashMap<String, String>();
+    long now = System.currentTimeMillis();
+    headers.put("timestamp", Long.toString(now));
+    headers.put("topic", TestConstants.CUSTOM_TOPIC);
+    headers.put("key", TestConstants.CUSTOM_KEY);
+    headers.put("correlator", "12345");
+    headers.put("method", "testTimestampAndHeaders");
+    Transaction tx = memoryChannel.getTransaction();
+    tx.begin();
+    Event event = EventBuilder.withBody(msg.getBytes(), headers);
+    memoryChannel.put(event);
+    tx.commit();
+    tx.close();
+
+    try {
+      Sink.Status status = kafkaSink.process();
+      if (status == Sink.Status.BACKOFF) {
+        fail("Error Occurred");
+      }
+    } catch (EventDeliveryException ex) {
+      // ignore
+    }
+    Headers expected = new RecordHeaders();
+    expected.add(new RecordHeader(TestConstants.KAFKA_HEADER_1,
+        "12345".getBytes(StandardCharsets.UTF_8)));
+    expected.add(new RecordHeader(TestConstants.KAFKA_HEADER_2,
+        "testTimestampAndHeaders".getBytes(StandardCharsets.UTF_8)));
+    checkMessageArrived(msg, TestConstants.CUSTOM_TOPIC, now, expected);
   }
 
   /**
@@ -412,6 +483,8 @@ public class TestKafkaSink {
     return pollConsumerRecords(topic, 20);
   }
 
+  // Note that the topic parameter is completely ignored. If the consumer is subscribed to
+  // multiple topics records for all of them will be returned.
   private ConsumerRecords<String, String> pollConsumerRecords(String topic, int maxIter) {
     ConsumerRecords<String, String> recs = null;
     for (int i = 0; i < maxIter; i++) {
@@ -703,6 +776,43 @@ public class TestKafkaSink {
       }
     }
     return newTopic;
+  }
+
+  @Test
+  public void testSslTopic() {
+    Sink kafkaSink = new KafkaSink();
+    Context context = prepareDefaultContext();
+    context.put(BOOTSTRAP_SERVERS_CONFIG, testUtil.getKafkaServerSslUrl());
+    context.put(KAFKA_PRODUCER_PREFIX + SECURITY_PROTOCOL_CONFIG, "SSL");
+    context.put(KAFKA_PRODUCER_PREFIX + SSL_TRUSTSTORE_LOCATION_CONFIG, "src/test/resources/truststorefile.jks");
+    context.put(KAFKA_PRODUCER_PREFIX + SSL_TRUSTSTORE_PASSWORD_CONFIG, "password");
+    context.put(KAFKA_PRODUCER_PREFIX + SSL_DISABLE_FQDN_CHECK, "true");
+    Configurables.configure(kafkaSink, context);
+
+    Channel memoryChannel = new MemoryChannel();
+    context = prepareDefaultContext();
+    Configurables.configure(memoryChannel, context);
+    kafkaSink.setChannel(memoryChannel);
+    kafkaSink.start();
+
+    String msg = "default-topic-test";
+    Transaction tx = memoryChannel.getTransaction();
+    tx.begin();
+    Event event = EventBuilder.withBody(msg.getBytes());
+    memoryChannel.put(event);
+    tx.commit();
+    tx.close();
+
+    try {
+      Sink.Status status = kafkaSink.process();
+      if (status == Sink.Status.BACKOFF) {
+        fail("Error Occurred");
+      }
+    } catch (EventDeliveryException ex) {
+      // ignore
+    }
+
+    checkMessageArrived(msg, DEFAULT_TOPIC);
   }
 
 }

@@ -20,10 +20,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 
-import junit.framework.Assert;
-
 import org.apache.flume.conf.FlumeConfiguration.AgentConfiguration;
 import org.apache.flume.conf.FlumeConfigurationError.ErrorOrWarning;
+import org.junit.Assert;
 import org.junit.Test;
 
 import static org.apache.flume.conf.FlumeConfigurationError.ErrorOrWarning.ERROR;

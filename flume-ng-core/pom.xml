@@ -22,7 +22,7 @@ limitations under the License.
   <parent>
     <artifactId>flume-parent</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.10.0-SNAPSHOT</version>
+    <version>1.11.1-SNAPSHOT</version>
   </parent>
 
   <groupId>org.apache.flume</groupId>
@@ -32,7 +32,8 @@ limitations under the License.
   <properties>
     <!-- TODO fix spotbugs violations -->
     <spotbugs.maxAllowedViolations>115</spotbugs.maxAllowedViolations>
-    <pmd.maxAllowedViolations>112</pmd.maxAllowedViolations>
+    <pmd.maxAllowedViolations>121</pmd.maxAllowedViolations>
+    <module.name>org.apache.flume.core</module.name>
   </properties>
 
   <build>
@@ -290,6 +291,11 @@ limitations under the License.
     </dependency>
 
     <dependency>
+      <groupId>com.jcraft</groupId>
+      <artifactId>jzlib</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
@@ -304,6 +310,18 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-1.2-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
       <scope>test</scope>
     </dependency>
 
@@ -324,12 +342,12 @@ limitations under the License.
 
     <dependency>
       <groupId>org.apache.avro</groupId>
-      <artifactId>avro-ipc</artifactId>
+      <artifactId>avro-ipc-netty</artifactId>
     </dependency>
 
     <dependency>
       <groupId>io.netty</groupId>
-      <artifactId>netty</artifactId>
+      <artifactId>netty-all</artifactId>
     </dependency>
 
     <dependency>

@@ -52,7 +52,8 @@ public abstract class BasicChannelSemantics extends AbstractChannel {
    * transaction begins.
    * </p>
    */
-  protected void initialize() {}
+  protected void initialize() {
+  }
 
   /**
    * <p>

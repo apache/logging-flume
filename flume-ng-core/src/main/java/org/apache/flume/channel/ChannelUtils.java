@@ -223,5 +223,6 @@ public class ChannelUtils {
   }
 
   /** Disallows instantiation */
-  private ChannelUtils() {}
+  private ChannelUtils() {
+  }
 }

@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 import javax.net.ssl.SSLContext;
@@ -39,7 +38,8 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
-import org.apache.avro.ipc.NettyTransceiver;
+import org.apache.avro.AvroRuntimeException;
+import org.apache.avro.ipc.netty.NettyTransceiver;
 import org.apache.avro.ipc.specific.SpecificRequestor;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelException;
@@ -58,12 +58,6 @@ import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.socket.SocketChannel;
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-import org.jboss.netty.handler.codec.compression.ZlibDecoder;
-import org.jboss.netty.handler.codec.compression.ZlibEncoder;
-import org.jboss.netty.handler.ssl.SslHandler;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -71,6 +65,12 @@ import org.mockito.Mockito;
 import org.mockito.internal.util.reflection.Whitebox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.netty.channel.ChannelPipeline;
+import io.netty.handler.codec.compression.JZlibDecoder;
+import io.netty.handler.codec.compression.JZlibEncoder;
+import io.netty.handler.codec.compression.ZlibEncoder;
+import io.netty.handler.ssl.SslHandler;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyListOf;
@@ -218,13 +218,13 @@ public class TestAvroSource {
     doRequest(true, true, 9);
   }
 
-  @Test(expected = org.apache.avro.AvroRemoteException.class)
+  @Test(expected = org.apache.avro.AvroRuntimeException.class)
   public void testRequestWithCompressionOnServerOnly() throws InterruptedException, IOException {
     //This will fail because both client and server need compression on
     doRequest(true, false, 6);
   }
 
-  @Test(expected = org.apache.avro.AvroRemoteException.class)
+  @Test(expected = org.apache.avro.AvroRuntimeException.class)
   public void testRequestWithCompressionOnClientOnly() throws InterruptedException, IOException {
     //This will fail because both client and server need compression on
     doRequest(false, true, 6);
@@ -257,21 +257,22 @@ public class TestAvroSource {
     NettyTransceiver nettyTransceiver;
     if (clientEnableCompression) {
 
-      nettyTransceiver = new NettyTransceiver(new InetSocketAddress(
-          selectedPort), new CompressionChannelFactory(compressionLevel));
-
-      client = SpecificRequestor.getClient(
-          AvroSourceProtocol.class, nettyTransceiver);
+      nettyTransceiver = new NettyTransceiver(new InetSocketAddress(selectedPort),
+          (ch) -> {
+            ChannelPipeline pipeline = ch.pipeline();
+            ZlibEncoder encoder = new JZlibEncoder(compressionLevel);
+            pipeline.addFirst("deflater", encoder);
+            pipeline.addFirst("inflater", new JZlibDecoder());
+          });
+      client = SpecificRequestor.getClient(AvroSourceProtocol.class, nettyTransceiver);
     } else {
       nettyTransceiver = new NettyTransceiver(new InetSocketAddress(selectedPort));
-
-      client = SpecificRequestor.getClient(
-          AvroSourceProtocol.class, nettyTransceiver);
+      client = SpecificRequestor.getClient(AvroSourceProtocol.class, nettyTransceiver);
     }
 
     AvroFlumeEvent avroEvent = new AvroFlumeEvent();
 
-    avroEvent.setHeaders(new HashMap<CharSequence, CharSequence>());
+    avroEvent.setHeaders(new HashMap<>());
     avroEvent.setBody(ByteBuffer.wrap("Hello avro".getBytes()));
 
     Status status = client.append(avroEvent);
@@ -297,35 +298,6 @@ public class TestAvroSource {
         LifecycleController.waitForOneOf(source, LifecycleState.STOP_OR_ERROR));
     Assert.assertEquals("Server is stopped", LifecycleState.STOP,
         source.getLifecycleState());
-  }
-
-  private static int getFreePort() throws IOException {
-    try (ServerSocket socket = new ServerSocket(0)) {
-      return socket.getLocalPort();
-    }
-  }
-
-  private static class CompressionChannelFactory extends
-      NioClientSocketChannelFactory {
-    private int compressionLevel;
-
-    public CompressionChannelFactory( int compressionLevel) {
-      super();
-      this.compressionLevel = compressionLevel;
-    }
-
-    @Override
-    public SocketChannel newChannel(ChannelPipeline pipeline) {
-      try {
-
-        ZlibEncoder encoder = new ZlibEncoder(compressionLevel);
-        pipeline.addFirst("deflater", encoder);
-        pipeline.addFirst("inflater", new ZlibDecoder());
-        return super.newChannel(pipeline);
-      } catch (Exception ex) {
-        throw new RuntimeException("Cannot create Compression channel", ex);
-      }
-    }
   }
 
   @Test
@@ -376,12 +348,17 @@ public class TestAvroSource {
         source.getLifecycleState());
 
     AvroSourceProtocol client = SpecificRequestor.getClient(
-        AvroSourceProtocol.class, new NettyTransceiver(new InetSocketAddress(
-            selectedPort), new SSLChannelFactory()));
+        AvroSourceProtocol.class, new NettyTransceiver(new InetSocketAddress(selectedPort),
+            (ch) -> {
+              ChannelPipeline pipeline = ch.pipeline();
+              SSLEngine engine = createSSLEngine();
+              engine.setUseClientMode(true);
+              pipeline.addFirst("ssl", new SslHandler(engine));
+            }));
 
     AvroFlumeEvent avroEvent = new AvroFlumeEvent();
 
-    avroEvent.setHeaders(new HashMap<CharSequence, CharSequence>());
+    avroEvent.setHeaders(new HashMap<>());
     avroEvent.setBody(ByteBuffer.wrap("Hello avro ssl".getBytes()));
 
     Status status = client.append(avroEvent);
@@ -407,30 +384,15 @@ public class TestAvroSource {
         source.getLifecycleState());
   }
 
-  /**
-   * Factory of SSL-enabled client channels
-   * Copied from Avro's org.apache.avro.ipc.TestNettyServerWithSSL test
-   */
-  private static class SSLChannelFactory extends NioClientSocketChannelFactory {
-    public SSLChannelFactory() {
-      super(Executors.newCachedThreadPool(), Executors.newCachedThreadPool());
-    }
-
-    @Override
-    public SocketChannel newChannel(ChannelPipeline pipeline) {
-      try {
-        SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(null, new TrustManager[]{new PermissiveTrustManager()},
-                        null);
-        SSLEngine sslEngine = sslContext.createSSLEngine();
-        sslEngine.setUseClientMode(true);
-        // addFirst() will make SSL handling the first stage of decoding
-        // and the last stage of encoding
-        pipeline.addFirst("ssl", new SslHandler(sslEngine));
-        return super.newChannel(pipeline);
-      } catch (Exception ex) {
-        throw new RuntimeException("Cannot create SSL channel", ex);
-      }
+  private SSLEngine createSSLEngine() {
+    try {
+      SSLContext sslContext = SSLContext.getInstance("TLS");
+      sslContext.init(null, new TrustManager[]{new PermissiveTrustManager()}, null);
+      SSLEngine sslEngine = sslContext.createSSLEngine();
+      sslEngine.setUseClientMode(true);
+      return sslEngine;
+    } catch (Exception ex) {
+      throw new RuntimeException("Cannot create SSL channel", ex);
     }
   }
 
@@ -565,16 +527,19 @@ public class TestAvroSource {
     NettyTransceiver nettyTransceiver = null;
     try {
       if (testWithSSL) {
-        nettyTransceiver = new NettyTransceiver(
-            new InetSocketAddress(dest, selectedPort),
-            new SSLChannelFactory());
-        client = SpecificRequestor.getClient(
-            AvroSourceProtocol.class, nettyTransceiver);
+        nettyTransceiver = new NettyTransceiver(new InetSocketAddress(dest, selectedPort),
+            (ch) -> {
+              ChannelPipeline pipeline = ch.pipeline();
+              SSLEngine engine = createSSLEngine();
+              if (engine != null) {
+                engine.setUseClientMode(true);
+                pipeline.addFirst("ssl", new SslHandler(engine));
+              }
+            });
+        client = SpecificRequestor.getClient(AvroSourceProtocol.class, nettyTransceiver);
       } else {
-        nettyTransceiver = new NettyTransceiver(
-            new InetSocketAddress(dest, selectedPort));
-        client = SpecificRequestor.getClient(
-            AvroSourceProtocol.class, nettyTransceiver);
+        nettyTransceiver = new NettyTransceiver(new InetSocketAddress(dest, selectedPort));
+        client = SpecificRequestor.getClient(AvroSourceProtocol.class, nettyTransceiver);
       }
 
       AvroFlumeEvent avroEvent = new AvroFlumeEvent();
@@ -585,9 +550,8 @@ public class TestAvroSource {
       Status status = client.append(avroEvent);
       logger.info("Client appended");
       Assert.assertEquals(Status.OK, status);
-    } catch (IOException e) {
-      Assert.assertTrue("Should have been allowed: " + ruleDefinition,
-          !eventShouldBeAllowed);
+    } catch (IOException | AvroRuntimeException e) {
+      Assert.assertTrue("Should have been allowed: " + ruleDefinition, !eventShouldBeAllowed);
       return;
     } finally {
       if (nettyTransceiver != null) {
@@ -635,5 +599,12 @@ public class TestAvroSource {
     Assert.assertEquals(2, sc.getChannelWriteFail());
     source.stop();
   }
+
+  private static int getFreePort() throws IOException {
+    try (ServerSocket socket = new ServerSocket(0)) {
+      return socket.getLocalPort();
+    }
+  }
+
 
 }

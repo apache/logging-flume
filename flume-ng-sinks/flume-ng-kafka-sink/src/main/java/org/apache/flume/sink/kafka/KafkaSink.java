@@ -22,7 +22,6 @@ import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.EncoderFactory;
-import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
@@ -43,12 +42,17 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.config.SslConfigs;
+import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.internals.RecordHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -56,6 +60,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Future;
 
+import static org.apache.flume.shared.kafka.KafkaSSLUtil.SSL_DISABLE_FQDN_CHECK;
+import static org.apache.flume.shared.kafka.KafkaSSLUtil.isSSLEnabled;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.BOOTSTRAP_SERVERS_CONFIG;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.BATCH_SIZE;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_BATCH_SIZE;
@@ -64,14 +70,15 @@ import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_ACKS;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_KEY_SERIALIZER;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_TOPIC;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_VALUE_SERIAIZER;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.KAFKA_HEADER;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.KAFKA_PRODUCER_PREFIX;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.KEY_HEADER;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.OLD_BATCH_SIZE;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.REQUIRED_ACKS_FLUME_KEY;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.TIMESTAMP_HEADER;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.TOPIC_CONFIG;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.KEY_SERIALIZER_KEY;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.MESSAGE_SERIALIZER_KEY;
-
 
 /**
  * A Flume Sink that can publish messages to Kafka.
@@ -120,13 +127,11 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
   private Integer staticPartitionId = null;
   private boolean allowTopicOverride;
   private String topicHeader = null;
+  private String timestampHeader = null;
+  private Map<String, String> headerMap;
 
-  private Optional<SpecificDatumWriter<AvroFlumeEvent>> writer =
-          Optional.absent();
-  private Optional<SpecificDatumReader<AvroFlumeEvent>> reader =
-          Optional.absent();
-  private Optional<ByteArrayOutputStream> tempOutStream = Optional
-          .absent();
+  private Optional<SpecificDatumWriter<AvroFlumeEvent>> writer = Optional.absent();
+  private Optional<ByteArrayOutputStream> tempOutStream = Optional.absent();
 
   //Fine to use null for initial value, Avro will create new ones if this
   // is null
@@ -181,9 +186,9 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
           eventTopic = headers.get(topicHeader);
           if (eventTopic == null) {
             eventTopic = BucketPath.escapeString(topic, event.getHeaders());
-            logger.debug("{} was set to true but header {} was null. Producing to {}" + 
+            logger.debug("{} was set to true but header {} was null. Producing to {}" +
                 " topic instead.",
-                new Object[]{KafkaSinkConstants.ALLOW_TOPIC_OVERRIDE_HEADER, 
+                new Object[]{KafkaSinkConstants.ALLOW_TOPIC_OVERRIDE_HEADER,
                     topicHeader, eventTopic});
           }
         } else {
@@ -194,7 +199,7 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
         if (logger.isTraceEnabled()) {
           if (LogPrivacyUtil.allowLogRawData()) {
             logger.trace("{Event} " + eventTopic + " : " + eventKey + " : "
-                + new String(eventBody, "UTF-8"));
+                + new String(eventBody, StandardCharsets.UTF_8));
           } else {
             logger.trace("{Event} " + eventTopic + " : " + eventKey);
           }
@@ -217,12 +222,38 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
               partitionId = Integer.parseInt(headerVal);
             }
           }
+          Long timestamp = null;
+          if (timestampHeader != null) {
+            String value = headers.get(timestampHeader);
+            if (value != null) {
+              try {
+                timestamp = Long.parseLong(value);
+              } catch (Exception ex) {
+                logger.warn("Invalid timestamp in header {} - {}", timestampHeader, value);
+              }
+            }
+          }
+          List<Header> kafkaHeaders = null;
+          if (!headerMap.isEmpty()) {
+            List<Header> tempHeaders = new ArrayList<>();
+            for (Map.Entry<String, String> entry : headerMap.entrySet()) {
+              String value = headers.get(entry.getKey());
+              if (value != null) {
+                tempHeaders.add(new RecordHeader(entry.getValue(),
+                    value.getBytes(StandardCharsets.UTF_8)));
+              }
+            }
+            if (!tempHeaders.isEmpty()) {
+              kafkaHeaders = tempHeaders;
+            }
+          }
+
           if (partitionId != null) {
-            record = new ProducerRecord<String, byte[]>(eventTopic, partitionId, eventKey,
-                serializeEvent(event, useAvroEventFormat));
+            record = new ProducerRecord<>(eventTopic, partitionId, timestamp, eventKey,
+                serializeEvent(event, useAvroEventFormat), kafkaHeaders);
           } else {
-            record = new ProducerRecord<String, byte[]>(eventTopic, eventKey,
-                serializeEvent(event, useAvroEventFormat));
+            record = new ProducerRecord<>(eventTopic, null, timestamp, eventKey,
+                serializeEvent(event, useAvroEventFormat), kafkaHeaders);
           }
           kafkaFutures.add(producer.send(record, new SinkCallback(startTime)));
         } catch (NumberFormatException ex) {
@@ -245,7 +276,7 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
         }
         long endTime = System.nanoTime();
         counter.addToKafkaEventSendTimer((endTime - batchStartTime) / (1000 * 1000));
-        counter.addToEventDrainSuccessCount(Long.valueOf(kafkaFutures.size()));
+        counter.addToEventDrainSuccessCount(kafkaFutures.size());
       }
 
       transaction.commit();
@@ -254,7 +285,6 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
       String errorMsg = "Failed to publish events";
       logger.error("Failed to publish events", ex);
       counter.incrementEventWriteOrChannelFail(ex);
-      result = Status.BACKOFF;
       if (transaction != null) {
         try {
           kafkaFutures.clear();
@@ -278,7 +308,7 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
   @Override
   public synchronized void start() {
     // instantiate the producer
-    producer = new KafkaProducer<String,byte[]>(kafkaProps);
+    producer = new KafkaProducer<>(kafkaProps);
     counter.start();
     super.start();
   }
@@ -303,7 +333,7 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
    * 3. We add the sink's documented parameters which can override other
    * properties
    *
-   * @param context
+   * @param context The Context.
    */
   @Override
   public void configure(Context context) {
@@ -319,6 +349,10 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
     }
 
     topic = topicStr;
+
+    timestampHeader = context.getString(TIMESTAMP_HEADER);
+
+    headerMap = context.getSubProperties(KAFKA_HEADER);
 
     batchSize = context.getInteger(BATCH_SIZE, DEFAULT_BATCH_SIZE);
 
@@ -422,7 +456,14 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
     kafkaProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, DEFAULT_VALUE_SERIAIZER);
     kafkaProps.putAll(context.getSubProperties(KAFKA_PRODUCER_PREFIX));
     kafkaProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootStrapServers);
-
+    //  The default value of `ssl.endpoint.identification.algorithm`
+    //  is changed to `https`, since kafka client 2.0+
+    //  And because flume does not accept an empty string as property value,
+    //  so we need to use an alternative custom property
+    //  `ssl.disableTLSHostnameVerification` to check if enable fqdn check.
+    if (isSSLEnabled(kafkaProps) && "true".equalsIgnoreCase(kafkaProps.getProperty(SSL_DISABLE_FQDN_CHECK))) {
+      kafkaProps.put(SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG, "");
+    }
     KafkaSSLUtil.addGlobalSSLParameters(kafkaProps);
   }
 

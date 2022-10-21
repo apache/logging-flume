@@ -16,22 +16,8 @@
  */
 package org.apache.flume.source.kafka;
 
-import java.io.ByteArrayInputStream;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Optional;
 import kafka.cluster.Broker;
 import kafka.cluster.BrokerEndPoint;
 import kafka.zk.KafkaZkClient;
@@ -61,19 +47,63 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.config.SslConfigs;
+import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.network.ListenerName;
-import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.security.JaasUtils;
+import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.utils.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Optional;
-
-import static org.apache.flume.source.kafka.KafkaSourceConstants.*;
-
 import scala.Option;
 import scala.collection.JavaConverters;
+
+import java.io.ByteArrayInputStream;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import static org.apache.flume.shared.kafka.KafkaSSLUtil.SSL_DISABLE_FQDN_CHECK;
+import static org.apache.flume.shared.kafka.KafkaSSLUtil.isSSLEnabled;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.AVRO_EVENT;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.BATCH_DURATION_MS;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.BATCH_SIZE;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.BOOTSTRAP_SERVERS;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_AUTO_COMMIT;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_AVRO_EVENT;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_BATCH_DURATION;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_BATCH_SIZE;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_GROUP_ID;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_KEY_DESERIALIZER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_MIGRATE_ZOOKEEPER_OFFSETS;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_SET_TOPIC_HEADER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_TOPIC_HEADER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_VALUE_DESERIALIZER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.KAFKA_CONSUMER_PREFIX;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.KAFKA_HEADER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.KEY_HEADER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.MIGRATE_ZOOKEEPER_OFFSETS;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.OFFSET_HEADER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.OLD_GROUP_ID;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.PARTITION_HEADER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.SET_TOPIC_HEADER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.TIMESTAMP_HEADER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPIC;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPICS;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPICS_REGEX;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPIC_HEADER;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.ZOOKEEPER_CONNECT_FLUME_KEY;
 
 /**
  * A Source for Kafka which reads messages from kafka topics.
@@ -137,6 +167,7 @@ public class KafkaSource extends AbstractPollableSource
   private boolean migrateZookeeperOffsets = DEFAULT_MIGRATE_ZOOKEEPER_OFFSETS;
   private String topicHeader = null;
   private boolean setTopicHeader;
+  private Map<String, String> headerMap;
 
   @Override
   public long getBatchSize() {
@@ -257,25 +288,30 @@ public class KafkaSource extends AbstractPollableSource
         }
 
         // Add headers to event (timestamp, topic, partition, key) only if they don't exist
-        if (!headers.containsKey(KafkaSourceConstants.TIMESTAMP_HEADER)) {
-          headers.put(KafkaSourceConstants.TIMESTAMP_HEADER,
-              String.valueOf(System.currentTimeMillis()));
+        if (!headers.containsKey(TIMESTAMP_HEADER)) {
+          headers.put(TIMESTAMP_HEADER, String.valueOf(message.timestamp()));
+        }
+        if (!headerMap.isEmpty()) {
+          Headers kafkaHeaders = message.headers();
+          for (Map.Entry<String, String> entry : headerMap.entrySet()) {
+            for (Header kafkaHeader : kafkaHeaders.headers(entry.getValue())) {
+              headers.put(entry.getKey(), new String(kafkaHeader.value()));
+            }
+          }
         }
         // Only set the topic header if setTopicHeader and it isn't already populated
         if (setTopicHeader && !headers.containsKey(topicHeader)) {
           headers.put(topicHeader, message.topic());
         }
-        if (!headers.containsKey(KafkaSourceConstants.PARTITION_HEADER)) {
-          headers.put(KafkaSourceConstants.PARTITION_HEADER,
-              String.valueOf(message.partition()));
+        if (!headers.containsKey(PARTITION_HEADER)) {
+          headers.put(PARTITION_HEADER, String.valueOf(message.partition()));
         }
         if (!headers.containsKey(OFFSET_HEADER)) {
-          headers.put(OFFSET_HEADER,
-              String.valueOf(message.offset()));
+          headers.put(OFFSET_HEADER, String.valueOf(message.offset()));
         }
 
         if (kafkaKey != null) {
-          headers.put(KafkaSourceConstants.KEY_HEADER, kafkaKey);
+          headers.put(KEY_HEADER, kafkaKey);
         }
 
         if (log.isTraceEnabled()) {
@@ -356,11 +392,11 @@ public class KafkaSource extends AbstractPollableSource
     // See https://issues.apache.org/jira/browse/FLUME-2896
     translateOldProperties(context);
 
-    String topicProperty = context.getString(KafkaSourceConstants.TOPICS_REGEX);
+    String topicProperty = context.getString(TOPICS_REGEX);
     if (topicProperty != null && !topicProperty.isEmpty()) {
       // create subscriber that uses pattern-based subscription
       subscriber = new PatternSubscriber(topicProperty);
-    } else if ((topicProperty = context.getString(KafkaSourceConstants.TOPICS)) != null &&
+    } else if ((topicProperty = context.getString(TOPICS)) != null &&
                !topicProperty.isEmpty()) {
       // create subscriber that uses topic list subscription
       subscriber = new TopicListSubscriber(topicProperty);
@@ -368,35 +404,30 @@ public class KafkaSource extends AbstractPollableSource
       throw new ConfigurationException("At least one Kafka topic must be specified.");
     }
 
-    batchUpperLimit = context.getInteger(KafkaSourceConstants.BATCH_SIZE,
-                                         KafkaSourceConstants.DEFAULT_BATCH_SIZE);
-    maxBatchDurationMillis = context.getInteger(KafkaSourceConstants.BATCH_DURATION_MS,
-                                                KafkaSourceConstants.DEFAULT_BATCH_DURATION);
+    batchUpperLimit = context.getInteger(BATCH_SIZE, DEFAULT_BATCH_SIZE);
+    maxBatchDurationMillis = context.getInteger(BATCH_DURATION_MS, DEFAULT_BATCH_DURATION);
 
-    useAvroEventFormat = context.getBoolean(KafkaSourceConstants.AVRO_EVENT,
-                                            KafkaSourceConstants.DEFAULT_AVRO_EVENT);
+    useAvroEventFormat = context.getBoolean(AVRO_EVENT, DEFAULT_AVRO_EVENT);
 
     if (log.isDebugEnabled()) {
-      log.debug(KafkaSourceConstants.AVRO_EVENT + " set to: {}", useAvroEventFormat);
+      log.debug(AVRO_EVENT + " set to: {}", useAvroEventFormat);
     }
 
     zookeeperConnect = context.getString(ZOOKEEPER_CONNECT_FLUME_KEY);
     migrateZookeeperOffsets = context.getBoolean(MIGRATE_ZOOKEEPER_OFFSETS,
         DEFAULT_MIGRATE_ZOOKEEPER_OFFSETS);
 
-    bootstrapServers = context.getString(KafkaSourceConstants.BOOTSTRAP_SERVERS);
+    bootstrapServers = context.getString(BOOTSTRAP_SERVERS);
     if (bootstrapServers == null || bootstrapServers.isEmpty()) {
       if (zookeeperConnect == null || zookeeperConnect.isEmpty()) {
         throw new ConfigurationException("Bootstrap Servers must be specified");
       } else {
         // For backwards compatibility look up the bootstrap from zookeeper
-        log.warn("{} is deprecated. Please use the parameter {}",
-            KafkaSourceConstants.ZOOKEEPER_CONNECT_FLUME_KEY,
-            KafkaSourceConstants.BOOTSTRAP_SERVERS);
+        log.warn("{} is deprecated. Please use the parameter {}", ZOOKEEPER_CONNECT_FLUME_KEY, BOOTSTRAP_SERVERS);
 
-        // Lookup configured security protocol, just in case its not default
+        // Lookup configured security protocol, just in case it's not default
         String securityProtocolStr =
-            context.getSubProperties(KafkaSourceConstants.KAFKA_CONSUMER_PREFIX)
+            context.getSubProperties(KAFKA_CONSUMER_PREFIX)
                 .get(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG);
         if (securityProtocolStr == null || securityProtocolStr.isEmpty()) {
           securityProtocolStr = CommonClientConfigs.DEFAULT_SECURITY_PROTOCOL;
@@ -417,11 +448,11 @@ public class KafkaSource extends AbstractPollableSource
       log.info("Group ID was not specified. Using {} as the group id.", groupId);
     }
 
-    setTopicHeader = context.getBoolean(KafkaSourceConstants.SET_TOPIC_HEADER,
-                                        KafkaSourceConstants.DEFAULT_SET_TOPIC_HEADER);
+    setTopicHeader = context.getBoolean(SET_TOPIC_HEADER, DEFAULT_SET_TOPIC_HEADER);
 
-    topicHeader = context.getString(KafkaSourceConstants.TOPIC_HEADER,
-                                    KafkaSourceConstants.DEFAULT_TOPIC_HEADER);
+    topicHeader = context.getString(TOPIC_HEADER, DEFAULT_TOPIC_HEADER);
+
+    headerMap = context.getSubProperties(KAFKA_HEADER);
 
     setConsumerProps(context);
 
@@ -437,38 +468,40 @@ public class KafkaSource extends AbstractPollableSource
   // We can remove this once the properties are officially deprecated
   private void translateOldProperties(Context ctx) {
     // topic
-    String topic = context.getString(KafkaSourceConstants.TOPIC);
+    String topic = context.getString(TOPIC);
     if (topic != null && !topic.isEmpty()) {
       subscriber = new TopicListSubscriber(topic);
-      log.warn("{} is deprecated. Please use the parameter {}",
-              KafkaSourceConstants.TOPIC, KafkaSourceConstants.TOPICS);
+      log.warn("{} is deprecated. Please use the parameter {}", TOPIC, TOPICS);
     }
 
     // old groupId
-    groupId = ctx.getString(KafkaSourceConstants.OLD_GROUP_ID);
+    groupId = ctx.getString(OLD_GROUP_ID);
     if (groupId != null && !groupId.isEmpty()) {
-      log.warn("{} is deprecated. Please use the parameter {}",
-              KafkaSourceConstants.OLD_GROUP_ID,
-              KafkaSourceConstants.KAFKA_CONSUMER_PREFIX + ConsumerConfig.GROUP_ID_CONFIG);
+      log.warn("{} is deprecated. Please use the parameter {}", OLD_GROUP_ID,
+              KAFKA_CONSUMER_PREFIX + ConsumerConfig.GROUP_ID_CONFIG);
     }
   }
 
   private void setConsumerProps(Context ctx) {
     kafkaProps.clear();
-    kafkaProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
-                   KafkaSourceConstants.DEFAULT_KEY_DESERIALIZER);
-    kafkaProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
-                   KafkaSourceConstants.DEFAULT_VALUE_DESERIALIZER);
+    kafkaProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, DEFAULT_KEY_DESERIALIZER);
+    kafkaProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, DEFAULT_VALUE_DESERIALIZER);
     //Defaults overridden based on config
-    kafkaProps.putAll(ctx.getSubProperties(KafkaSourceConstants.KAFKA_CONSUMER_PREFIX));
+    kafkaProps.putAll(ctx.getSubProperties(KAFKA_CONSUMER_PREFIX));
     //These always take precedence over config
     kafkaProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     if (groupId != null) {
       kafkaProps.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
     }
-    kafkaProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG,
-                   KafkaSourceConstants.DEFAULT_AUTO_COMMIT);
-
+    kafkaProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, DEFAULT_AUTO_COMMIT);
+    //  The default value of `ssl.endpoint.identification.algorithm`
+    //  is changed to `https`, since kafka client 2.0+
+    //  And because flume does not accept an empty string as property value,
+    //  so we need to use an alternative custom property
+    //  `ssl.disableTLSHostnameVerification` to check if enable fqdn check.
+    if (isSSLEnabled(kafkaProps) && "true".equalsIgnoreCase(kafkaProps.getProperty(SSL_DISABLE_FQDN_CHECK))) {
+      kafkaProps.put(SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG, "");
+    }
     KafkaSSLUtil.addGlobalSSLParameters(kafkaProps);
   }
 
@@ -478,8 +511,9 @@ public class KafkaSource extends AbstractPollableSource
    */
   private String lookupBootstrap(String zookeeperConnect, SecurityProtocol securityProtocol) {
     try (KafkaZkClient zkClient = KafkaZkClient.apply(zookeeperConnect,
-            JaasUtils.isZkSecurityEnabled(), ZK_SESSION_TIMEOUT, ZK_CONNECTION_TIMEOUT, 10,
-            Time.SYSTEM, "kafka.server", "SessionExpireListener", scala.Option.empty())) {
+            JaasUtils.isZkSaslEnabled(), ZK_SESSION_TIMEOUT, ZK_CONNECTION_TIMEOUT, 10,
+            Time.SYSTEM, "kafka.server", "SessionExpireListener",
+            scala.Option.empty(), scala.Option.empty())) {
       List<Broker> brokerList =
               JavaConverters.seqAsJavaListConverter(zkClient.getAllBrokersInCluster()).asJava();
       List<BrokerEndPoint> endPoints = brokerList.stream()
@@ -562,8 +596,9 @@ public class KafkaSource extends AbstractPollableSource
 
   private void migrateOffsets(String topicStr) {
     try (KafkaZkClient zkClient = KafkaZkClient.apply(zookeeperConnect,
-            JaasUtils.isZkSecurityEnabled(), ZK_SESSION_TIMEOUT, ZK_CONNECTION_TIMEOUT, 10,
-            Time.SYSTEM, "kafka.server", "SessionExpireListener", scala.Option.empty());
+            JaasUtils.isZkSaslEnabled(), ZK_SESSION_TIMEOUT, ZK_CONNECTION_TIMEOUT, 10,
+            Time.SYSTEM, "kafka.server", "SessionExpireListener",
+            scala.Option.empty(), scala.Option.empty());
          KafkaConsumer<String, byte[]> consumer = new KafkaConsumer<>(kafkaProps)) {
       Map<TopicPartition, OffsetAndMetadata> kafkaOffsets =
           getKafkaOffsets(consumer, topicStr);

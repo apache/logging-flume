@@ -64,6 +64,7 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
   @SuppressWarnings("unchecked")
   @Override
   void afterSetup() throws Exception {
+    System.setProperty(JMSSource.JNDI_ALLOWED_PROTOCOLS, "dummy");
     baseDir = Files.createTempDir();
     passwordFile = new File(baseDir, "password");
     Assert.assertTrue(passwordFile.createNewFile());
@@ -125,6 +126,13 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
     source.configure(context);
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void testConfigureWithConnectionFactory() throws Exception {
+    context.put(JMSSourceConfiguration.CONNECTION_FACTORY,
+        "ldap://localhost:319/connectionFactory");
+    source.configure(context);
+  }
+
   @Test(expected = FlumeException.class)
   public void testConfigureWithBadDestinationType() throws Exception {
     context.put(JMSSourceConfiguration.DESTINATION_TYPE, "DUMMY");
@@ -136,6 +144,13 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
     context.put(JMSSourceConfiguration.DESTINATION_TYPE, "");
     source.configure(context);
   }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testConfigureWithLdapProvider() throws Exception {
+    context.put(JMSSourceConfiguration.PROVIDER_URL, "ldap://localhost:389/test");
+    source.configure(context);
+  }
+
 
   @Test
   public void testStartConsumerCreateThrowsException() throws Exception {
@@ -159,7 +174,7 @@ public class TestJMSSource extends JMSMessageConsumerTestBase {
   @Test(expected = FlumeException.class)
   public void testConfigureWithContextCreateThrowsException() throws Exception {
     when(contextFactory.create(any(Properties.class)))
-      .thenThrow(new NamingException());
+        .thenThrow(new NamingException());
     source.configure(context);
   }
 

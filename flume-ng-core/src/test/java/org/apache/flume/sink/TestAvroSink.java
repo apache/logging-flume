@@ -20,8 +20,7 @@
 package org.apache.flume.sink;
 
 import com.google.common.base.Charsets;
-import org.apache.avro.AvroRemoteException;
-import org.apache.avro.ipc.NettyServer;
+import org.apache.avro.ipc.netty.NettyServer;
 import org.apache.avro.ipc.Server;
 import org.apache.avro.ipc.specific.SpecificResponder;
 import org.apache.flume.Channel;
@@ -46,11 +45,6 @@ import org.apache.flume.source.AvroSource;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.ChannelPipelineFactory;
-import org.jboss.netty.channel.Channels;
-import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
-import org.jboss.netty.handler.ssl.SslHandler;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -70,8 +64,10 @@ import java.security.KeyStore;
 import java.security.Security;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
+
+import io.netty.channel.ChannelPipeline;
+import io.netty.handler.ssl.SslHandler;
 
 public class TestAvroSink {
 
@@ -128,12 +124,10 @@ public class TestAvroSink {
     return context;
   }
 
-  private Server createServer(AvroSourceProtocol protocol)
-      throws IllegalAccessException, InstantiationException {
+  private Server createServer(AvroSourceProtocol protocol) throws InterruptedException {
 
-    Server server = new NettyServer(new SpecificResponder(
-        AvroSourceProtocol.class, protocol), new InetSocketAddress(
-        hostname, port));
+    Server server = new NettyServer(new SpecificResponder(AvroSourceProtocol.class, protocol),
+        new InetSocketAddress(hostname, port));
 
     return server;
   }
@@ -810,21 +804,20 @@ public class TestAvroSink {
   private static class MockAvroServer implements AvroSourceProtocol {
 
     @Override
-    public Status append(AvroFlumeEvent event) throws AvroRemoteException {
+    public Status append(AvroFlumeEvent event) {
       logger.debug("Received event:{}", event);
       return Status.OK;
     }
 
     @Override
-    public Status appendBatch(List<AvroFlumeEvent> events)
-        throws AvroRemoteException {
+    public Status appendBatch(List<AvroFlumeEvent> events) {
       logger.debug("Received event batch:{}", events);
       return Status.OK;
     }
 
   }
 
-  private static class DelayMockAvroServer implements AvroSourceProtocol {
+  private static class DelayMockAvroServer implements AvroSourceProtocol.Callback {
 
     private final AtomicLong delay;
 
@@ -832,98 +825,89 @@ public class TestAvroSink {
       this.delay = delay;
     }
 
-    private void sleep() throws AvroRemoteException {
+    private void sleep() throws IOException {
       try {
         Thread.sleep(delay.get());
       } catch (InterruptedException e) {
-        throw new AvroRemoteException("Interrupted while sleeping", e);
+        throw new IOException("Interrupted while sleeping", e);
       }
     }
 
     @Override
-    public Status append(AvroFlumeEvent event) throws AvroRemoteException {
+    public Status append(AvroFlumeEvent event) {
       logger.debug("Received event:{}; delaying for {}ms", event, delay);
-      sleep();
+      try {
+        sleep();
+      } catch (IOException e) {
+        logger.debug("IOException detected");
+      }
       return Status.OK;
     }
 
     @Override
-    public Status appendBatch(List<AvroFlumeEvent> events)
-        throws AvroRemoteException {
-      logger.debug("Received event batch:{}; delaying for {}ms", events, delay);
+    public void append(AvroFlumeEvent event,
+                   org.apache.avro.ipc.Callback<Status> status)
+            throws IOException {
+      logger.debug("Received event:{}; delaying for {}ms", event, delay);
       sleep();
+    }
+
+    @Override
+    public Status appendBatch(List<AvroFlumeEvent> events) {
+      logger.debug("Received event batch:{}; delaying for {}ms", events, delay);
+      try {
+        sleep();
+      } catch (IOException e) {
+        logger.debug("IOException detected");
+      }
       return Status.OK;
     }
 
+    @Override
+    public void appendBatch(List<AvroFlumeEvent> events,
+                         org.apache.avro.ipc.Callback<Status> status)
+            throws IOException {
+      logger.debug("Received event batch:{}; delaying for {}ms", events, delay);
+      sleep();
+    }
   }
 
-  private Server createSslServer(AvroSourceProtocol protocol)
-      throws IllegalAccessException, InstantiationException {
-    Server server = new NettyServer(new SpecificResponder(
-        AvroSourceProtocol.class, protocol), new InetSocketAddress(hostname, port),
-            new NioServerSocketChannelFactory(
-                    Executors.newCachedThreadPool(),
-                    Executors.newCachedThreadPool()),
-            new SSLChannelPipelineFactory(),
-            null);
-
-    return server;
+  private Server createSslServer(AvroSourceProtocol protocol) throws InterruptedException {
+    return new NettyServer(new SpecificResponder(AvroSourceProtocol.class, protocol),
+        new InetSocketAddress(hostname, port),
+        (ch) -> {
+          ChannelPipeline pipeline = ch.pipeline();
+          SSLEngine engine = createSSLEngine();
+          engine.setUseClientMode(false);
+          pipeline.addLast("ssl", new SslHandler(engine));
+        });
   }
 
-  /**
-   * Factory of SSL-enabled server worker channel pipelines
-   * Copied from Avro's org.apache.avro.ipc.TestNettyServerWithSSL test
-   */
-  private class SSLChannelPipelineFactory
-      implements ChannelPipelineFactory {
-
+  private SSLEngine createSSLEngine() {
     String keystore = "src/test/resources/server.p12";
     String keystorePassword = "password";
     String keystoreType = "PKCS12";
+    try {
+      KeyStore ks = KeyStore.getInstance(keystoreType);
+      ks.load(new FileInputStream(keystore), keystorePassword.toCharArray());
 
-    public SSLChannelPipelineFactory() {
+      // Set up key manager factory to use our key store
+      KeyManagerFactory kmf = KeyManagerFactory.getInstance(getAlgorithm());
+      kmf.init(ks, keystorePassword.toCharArray());
+
+      SSLContext sslContext = SSLContext.getInstance("TLS");
+      sslContext.init(kmf.getKeyManagers(), null, null);
+      return sslContext.createSSLEngine();
+    } catch (Exception ex) {
+      throw new RuntimeException("Cannot create SSL Engine", ex);
     }
+  }
 
-    public SSLChannelPipelineFactory(String keystore, String keystorePassword,
-                                     String keystoreType) {
-      this.keystore = keystore;
-      this.keystorePassword = keystorePassword;
-      this.keystoreType = keystoreType;
+  private String getAlgorithm() {
+    String algorithm = Security.getProperty("ssl.KeyManagerFactory.algorithm");
+    if (algorithm == null) {
+      algorithm = "SunX509";
     }
-
-    private SSLContext createServerSSLContext() {
-      try {
-        KeyStore ks = KeyStore.getInstance(keystoreType);
-        ks.load(new FileInputStream(keystore), keystorePassword.toCharArray());
-
-        // Set up key manager factory to use our key store
-        KeyManagerFactory kmf = KeyManagerFactory.getInstance(getAlgorithm());
-        kmf.init(ks, keystorePassword.toCharArray());
-
-        SSLContext serverContext = SSLContext.getInstance("TLS");
-        serverContext.init(kmf.getKeyManagers(), null, null);
-        return serverContext;
-      } catch (Exception e) {
-        throw new Error("Failed to initialize the server-side SSLContext", e);
-      }
-    }
-
-    private String getAlgorithm() {
-      String algorithm = Security.getProperty(
-          "ssl.KeyManagerFactory.algorithm");
-      if (algorithm == null) {
-        algorithm = "SunX509";
-      }
-      return algorithm;
-    }
-
-    @Override
-    public ChannelPipeline getPipeline() throws Exception {
-      ChannelPipeline pipeline = Channels.pipeline();
-      SSLEngine sslEngine = createServerSSLContext().createSSLEngine();
-      sslEngine.setUseClientMode(false);
-      pipeline.addLast("ssl", new SslHandler(sslEngine));
-      return pipeline;
-    }
+    return algorithm;
   }
 }

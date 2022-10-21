@@ -30,7 +30,8 @@ import java.io.RandomAccessFile;
 class EventQueueBackingStoreFactory {
   private static final Logger LOG = LoggerFactory.getLogger(EventQueueBackingStoreFactory.class);
 
-  private EventQueueBackingStoreFactory() {}
+  private EventQueueBackingStoreFactory() {
+  }
 
   static EventQueueBackingStore get(
       File checkpointFile, int capacity, String name, FileChannelCounter counter

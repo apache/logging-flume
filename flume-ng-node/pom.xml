@@ -25,7 +25,7 @@
   <parent>
     <artifactId>flume-parent</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.10.0-SNAPSHOT</version>
+    <version>1.11.1-SNAPSHOT</version>
   </parent>
 
   <artifactId>flume-ng-node</artifactId>
@@ -35,6 +35,7 @@
     <!-- TODO fix spotbugs violations -->
     <spotbugs.maxAllowedViolations>7</spotbugs.maxAllowedViolations>
     <pmd.maxAllowedViolations>7</pmd.maxAllowedViolations>
+    <module.name>org.apache.flume.node</module.name>
   </properties>
 
   <dependencies>
@@ -86,7 +87,25 @@
 
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-1.2-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
       <scope>test</scope>
     </dependency>
 
@@ -103,6 +122,11 @@
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-text</artifactId>
     </dependency>
 
     <dependency>
@@ -134,15 +158,26 @@
       </exclusions>
     </dependency>
 
-  <dependency>
+    <dependency>
       <groupId>org.apache.curator</groupId>
       <artifactId>curator-recipes</artifactId>
-  </dependency>
+    </dependency>
 
-  <dependency>
+    <dependency>
       <groupId>org.apache.curator</groupId>
       <artifactId>curator-test</artifactId>
-  </dependency>
+    </dependency>
+
+    <dependency>
+      <groupId>net.jcip</groupId>
+      <artifactId>jcip-annotations</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>com.github.spotbugs</groupId>
+      <artifactId>spotbugs-annotations</artifactId>
+      <optional>true</optional>
+    </dependency>
 
   </dependencies>
 

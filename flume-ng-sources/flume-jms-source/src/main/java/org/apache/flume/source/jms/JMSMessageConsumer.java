@@ -39,8 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 class JMSMessageConsumer {
-  private static final Logger logger = LoggerFactory
-      .getLogger(JMSMessageConsumer.class);
+  private static final Logger logger = LoggerFactory.getLogger(JMSMessageConsumer.class);
 
   private final int batchSize;
   private final long pollTimeout;
@@ -100,6 +99,7 @@ class JMSMessageConsumer {
               throw new IllegalStateException(String.valueOf(destinationType));
           }
         } else {
+          JMSSource.verifyContext(destinationName);
           destination = (Destination) initialContext.lookup(destinationName);
         }
       } catch (JMSException e) {

@@ -42,7 +42,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.zip.GZIPInputStream;
 
-
 /**
  * Attempts to setup a staged install using explicitly specified tar-ball
  * distribution or by using relative path into the flume-ng-dist module.
@@ -457,7 +456,7 @@ public class StagedInstall {
               LOGGER.warn("Invalid file: " + file.getCanonicalPath());
             }
           } else {
-            StringBuilder sb = new StringBuilder("Multiple candate tarballs");
+            StringBuilder sb = new StringBuilder("Multiple candidate tarballs");
             sb.append(" found in directory ");
             sb.append(testFile.getCanonicalPath()).append(": ");
             boolean first = true;

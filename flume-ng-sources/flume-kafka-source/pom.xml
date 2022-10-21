@@ -22,7 +22,7 @@
   <parent>
     <artifactId>flume-ng-sources</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.10.0-SNAPSHOT</version>
+    <version>1.11.1-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -34,6 +34,7 @@
     <!-- TODO fix spotbugs/pmd violations -->
     <spotbugs.maxAllowedViolations>16</spotbugs.maxAllowedViolations>
     <pmd.maxAllowedViolations>32</pmd.maxAllowedViolations>
+    <module.name>org.apache.flume.source.kafka</module.name>
   </properties>
 
   <dependencies>
@@ -56,7 +57,15 @@
     </dependency>
     <dependency>
       <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka_2.11</artifactId>
+      <artifactId>kafka_${scala.version}</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-library</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.dropwizard.metrics</groupId>
+      <artifactId>metrics-core</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.zookeeper</groupId>
@@ -72,7 +81,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.kafka</groupId>
-      <artifactId>kafka_2.11</artifactId>
+      <artifactId>kafka_${scala.version}</artifactId>
       <classifier>test</classifier>
       <scope>test</scope>
     </dependency>

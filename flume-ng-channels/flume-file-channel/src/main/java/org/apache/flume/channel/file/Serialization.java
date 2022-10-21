@@ -41,7 +41,8 @@ import java.util.Set;
 @InterfaceAudience.Private
 @InterfaceStability.Unstable
 public class Serialization {
-  private Serialization() {}
+  private Serialization() {
+  }
 
   static final long SIZE_OF_INT = 4;
   static final int SIZE_OF_LONG = 8;

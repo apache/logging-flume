@@ -20,11 +20,12 @@ import kafka.server.KafkaConfig;
 import kafka.server.KafkaServerStartable;
 import org.apache.commons.io.FileUtils;
 import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.DescribeTopicsResult;
+import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
@@ -38,6 +39,11 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+
+import static org.apache.kafka.common.config.SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG;
+import static org.apache.kafka.common.config.SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG;
+import static org.apache.kafka.common.config.SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG;
+import static org.apache.kafka.common.config.SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG;
 
 public class KafkaSourceEmbeddedKafka {
 
@@ -57,6 +63,7 @@ public class KafkaSourceEmbeddedKafka {
 
   private int zkPort = findFreePort(); // none-standard
   private int serverPort = findFreePort();
+  private int serverSslPort = findFreePort();
 
   KafkaProducer<String, byte[]> producer;
   File dir;
@@ -73,10 +80,25 @@ public class KafkaSourceEmbeddedKafka {
     props.put("zookeeper.connect",zookeeper.getConnectString());
     props.put("broker.id","1");
     props.put("host.name", "localhost");
-    props.put("port", String.valueOf(serverPort));
+    //  to enable ssl feature,
+    //  we need to use listeners instead of using port property
+    //  props.put("port", String.valueOf(serverPort));
+    props.put("listeners",
+            String.format("PLAINTEXT://%s:%d,SSL://%s:%d",
+                    HOST,
+                    serverPort,
+                    HOST,
+                    serverSslPort
+            )
+    );
     props.put("log.dir", dir.getAbsolutePath());
     props.put("offsets.topic.replication.factor", "1");
     props.put("auto.create.topics.enable", "false");
+    //  ssl configuration
+    props.put(SSL_TRUSTSTORE_LOCATION_CONFIG, "src/test/resources/truststorefile.jks");
+    props.put(SSL_TRUSTSTORE_PASSWORD_CONFIG, "password");
+    props.put(SSL_KEYSTORE_LOCATION_CONFIG, "src/test/resources/keystorefile.jks");
+    props.put(SSL_KEYSTORE_PASSWORD_CONFIG, "password");
     if (properties != null) {
       props.putAll(properties);
     }
@@ -100,6 +122,14 @@ public class KafkaSourceEmbeddedKafka {
     return HOST + ":" + serverPort;
   }
 
+  public String getBootstrapSslServers() {
+    return String.format("%s:%s", HOST, serverSslPort);
+  }
+
+  public String getBootstrapSslIpPortServers() {
+    return String.format("%s:%s", "127.0.0.1", serverSslPort);
+  }
+
   private void initProducer() {
     Properties props = new Properties();
     props.put("bootstrap.servers", HOST + ":" + serverPort);
@@ -113,7 +143,7 @@ public class KafkaSourceEmbeddedKafka {
   }
 
   public void produce(String topic, String k, byte[] v) {
-    ProducerRecord<String, byte[]> rec = new ProducerRecord<String, byte[]>(topic, k, v);
+    ProducerRecord<String, byte[]> rec = new ProducerRecord<>(topic, k, v);
     try {
       producer.send(rec).get();
     } catch (InterruptedException e) {
@@ -128,7 +158,13 @@ public class KafkaSourceEmbeddedKafka {
   }
 
   public void produce(String topic, int partition, String k, byte[] v) {
-    ProducerRecord<String, byte[]> rec = new ProducerRecord<String, byte[]>(topic, partition, k, v);
+    this.produce(topic, partition, null, k, v, null);
+  }
+
+  public void produce(String topic, int partition, Long timestamp, String k, byte[] v,
+      Headers headers) {
+    ProducerRecord<String, byte[]> rec = new ProducerRecord<>(topic, partition, timestamp, k, v,
+        headers);
     try {
       producer.send(rec).get();
     } catch (InterruptedException e) {
@@ -141,14 +177,19 @@ public class KafkaSourceEmbeddedKafka {
   public void createTopic(String topicName, int numPartitions) {
     AdminClient adminClient = getAdminClient();
     NewTopic newTopic = new NewTopic(topicName, numPartitions, (short) 1);
-    adminClient.createTopics(Collections.singletonList(newTopic));
-
-    //the following lines are a bit of black magic to ensure the topic is ready when we return
-    DescribeTopicsResult dtr = adminClient.describeTopics(Collections.singletonList(topicName));
-    try {
-      dtr.all().get(10, TimeUnit.SECONDS);
-    } catch (Exception e) {
-      throw new RuntimeException("Error getting topic info", e);
+    CreateTopicsResult result = adminClient.createTopics(Collections.singletonList(newTopic));
+    Throwable throwable = null;
+    for (int i = 0; i < 10; ++i) {
+      try {
+        result.all().get(1, TimeUnit.SECONDS);
+        throwable = null;
+        break;
+      } catch (Exception e) {
+        throwable = e;
+      }
+    }
+    if (throwable != null) {
+      throw new RuntimeException("Error getting topic info", throwable);
     }
   }
 

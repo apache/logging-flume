@@ -23,18 +23,36 @@ limitations under the License.
   <parent>
     <groupId>org.apache.flume</groupId>
     <artifactId>flume-ng-sinks</artifactId>
-    <version>1.10.0-SNAPSHOT</version>
+    <version>1.11.1-SNAPSHOT</version>
   </parent>
 
   <properties>
     <!-- TODO fix spotbugs/pmd violations -->
     <spotbugs.maxAllowedViolations>6</spotbugs.maxAllowedViolations>
     <pmd.maxAllowedViolations>7</pmd.maxAllowedViolations>
+    <module.name>org.apache.flume.sink.hive</module.name>
   </properties>
 
   <groupId>org.apache.flume.flume-ng-sinks</groupId>
   <artifactId>flume-hive-sink</artifactId>
   <name>Flume NG Hive Sink</name>
+
+  <repositories>
+    <!-- Our current hive version needs a calcite version that has dependencies not available in Maven Central.
+         The pom from calcite gives the HTTP version of this repo address, which gets ignored by current maven.
+      -->
+    <repository>
+      <releases>
+        <enabled>true</enabled>
+        <updatePolicy>always</updatePolicy>
+        <checksumPolicy>warn</checksumPolicy>
+      </releases>
+      <id>conjars</id>
+      <name>Conjars</name>
+      <url>https://conjars.org/repo</url>
+      <layout>default</layout>
+    </repository>
+  </repositories>
 
   <dependencies>
 
@@ -107,23 +125,6 @@ limitations under the License.
       <scope>test</scope>
     </dependency>
 
-    <!--temporary - really belongs to hive-streaming : roshan -->
-    <dependency>
-      <groupId>xerces</groupId>
-      <artifactId>xercesImpl</artifactId>
-      <version>${xerces.version}</version>
-      <scope>runtime</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>xalan</groupId>
-      <artifactId>serializer</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>xalan</groupId>
-      <artifactId>xalan</artifactId>
-    </dependency>
     <!-- end temporary -->
 
     <dependency>

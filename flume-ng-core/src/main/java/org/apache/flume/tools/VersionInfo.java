@@ -116,7 +116,7 @@ public class VersionInfo {
   public static void main(String[] args) {
     System.out.println("Flume " + getVersion());
     System.out.println("Source code repository: "
-            + "https://git-wip-us.apache.org/repos/asf/flume.git");
+            + "https://git.apache.org/repos/asf/flume.git");
     System.out.println("Revision: " + getRevision());
     System.out.println("Compiled by " + getUser() + " on " + getDate());
     System.out.println("From source with checksum " + getSrcChecksum());

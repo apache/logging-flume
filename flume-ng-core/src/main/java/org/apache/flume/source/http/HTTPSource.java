@@ -179,11 +179,9 @@ public class HTTPSource extends SslContextAwareAbstractSource implements
       httpConfiguration.setSecureScheme("https");
 
       return new ServerConnector(srv,
-        new SslConnectionFactory(sslCtxFactory, HttpVersion.HTTP_1_1.asString()),
-        new HttpConnectionFactory(httpConfiguration));
-    }).orElse(
-        new ServerConnector(srv, new HttpConnectionFactory(httpConfiguration))
-    );
+          new SslConnectionFactory(sslCtxFactory, HttpVersion.HTTP_1_1.asString()),
+          new HttpConnectionFactory(httpConfiguration));
+    }).orElse(new ServerConnector(srv, new HttpConnectionFactory(httpConfiguration)));
 
     connector.setPort(port);
     connector.setHost(host);

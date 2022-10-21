@@ -66,6 +66,7 @@ import org.mockito.internal.util.reflection.Whitebox;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
 
 import javax.net.SocketFactory;
@@ -74,6 +75,8 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 public class TestMultiportSyslogTCPSource {
+  private static final String TEST_CLIENT_IP_HEADER = "testClientIPHeader";
+  private static final String TEST_CLIENT_HOSTNAME_HEADER = "testClientHostnameHeader";
 
   private static final int getFreePort() throws IOException {
     try (ServerSocket socket = new ServerSocket(0)) {
@@ -530,8 +533,6 @@ public class TestMultiportSyslogTCPSource {
 
   @Test
   public void testClientHeaders() throws IOException {
-    String testClientIPHeader = "testClientIPHeader";
-    String testClientHostnameHeader = "testClientHostnameHeader";
 
     MultiportSyslogTCPSource source = new MultiportSyslogTCPSource();
     Channel channel = new MemoryChannel();
@@ -547,16 +548,17 @@ public class TestMultiportSyslogTCPSource {
     source.setChannelProcessor(new ChannelProcessor(rcs));
     int port = getFreePort();
     Context context = new Context();
-    context.put("host", InetAddress.getLoopbackAddress().getHostAddress());
+    InetAddress loopbackAddress = InetAddress.getLoopbackAddress();
+    context.put("host", loopbackAddress.getHostAddress());
     context.put("ports", String.valueOf(port));
-    context.put("clientIPHeader", testClientIPHeader);
-    context.put("clientHostnameHeader", testClientHostnameHeader);
+    context.put("clientIPHeader", TEST_CLIENT_IP_HEADER);
+    context.put("clientHostnameHeader", TEST_CLIENT_HOSTNAME_HEADER);
 
     source.configure(context);
     source.start();
 
     //create a socket to send a test event
-    Socket syslogSocket = new Socket(InetAddress.getLoopbackAddress().getHostAddress(), port);
+    Socket syslogSocket = new Socket(loopbackAddress.getHostAddress(), port);
     syslogSocket.getOutputStream().write(getEvent(0));
 
     Event e = takeEvent(channel);
@@ -565,15 +567,23 @@ public class TestMultiportSyslogTCPSource {
 
     Map<String, String> headers = e.getHeaders();
 
-    checkHeader(headers, testClientIPHeader, InetAddress.getLoopbackAddress().getHostAddress());
-    checkHeader(headers, testClientHostnameHeader, InetAddress.getLoopbackAddress().getHostName());
+    checkHeader(headers, TEST_CLIENT_IP_HEADER, loopbackAddress.getHostAddress());
+    checkHeader(headers, TEST_CLIENT_HOSTNAME_HEADER, loopbackAddress.getHostName());
   }
 
   private static void checkHeader(Map<String, String> headers, String headerName,
       String expectedValue) {
     assertTrue("Missing event header: " + headerName, headers.containsKey(headerName));
-    assertEquals("Event header value does not match: " + headerName,
-        expectedValue, headers.get(headerName));
+
+    String headerValue = headers.get(headerName);
+    if (TEST_CLIENT_HOSTNAME_HEADER.equals(headerName)) {
+      if (!TestSyslogUtils.isLocalHost(headerValue)) {
+        fail("Expected either 'localhost' or '127.0.0.1' but got " + headerValue);
+      }
+    } else {
+      assertEquals("Event header value does not match: " + headerName,
+              expectedValue, headerValue);
+    }
   }
 
 }

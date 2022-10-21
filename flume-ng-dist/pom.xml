@@ -24,7 +24,7 @@
   <parent>
     <artifactId>flume-parent</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.10.0-SNAPSHOT</version>
+    <version>1.11.1-SNAPSHOT</version>
   </parent>
 
   <artifactId>flume-ng-dist</artifactId>
@@ -81,6 +81,14 @@
             </fileSet>
           </fileSets>
           <failIfNoFiles>false</failIfNoFiles><!-- usually, no file to do checksum: don't consider error -->
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <version>${mvn-deploy-plugin.version}</version>
+        <configuration>
+          <skip>true</skip>
         </configuration>
       </plugin>
     </plugins>
@@ -145,19 +153,11 @@
     </dependency>
     <dependency>
       <groupId>org.apache.flume.flume-ng-sinks</groupId>
-      <artifactId>flume-ng-elasticsearch-sink</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flume.flume-ng-sinks</groupId>
       <artifactId>flume-ng-morphline-solr-sink</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flume.flume-ng-sinks</groupId>
       <artifactId>flume-ng-kafka-sink</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flume.flume-ng-sinks</groupId>
-      <artifactId>flume-dataset-sink</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flume.flume-ng-sinks</groupId>

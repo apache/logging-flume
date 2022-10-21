@@ -21,9 +21,13 @@ limitations under the License.
     <parent>
         <artifactId>flume-ng-configfilters</artifactId>
         <groupId>org.apache.flume</groupId>
-        <version>1.10.0-SNAPSHOT</version>
+        <version>1.11.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
+
+    <properties>
+        <module.name>org.apache.flume.configfilter.external</module.name>
+    </properties>
 
     <artifactId>flume-ng-external-process-config-filter</artifactId>
     <name>Flume NG External Process Config Filter</name>

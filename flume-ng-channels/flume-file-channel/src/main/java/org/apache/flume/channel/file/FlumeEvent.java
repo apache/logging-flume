@@ -51,13 +51,13 @@ class FlumeEvent implements Event, Writable {
 
   private static ThreadLocal<CharsetDecoder> DECODER_FACTORY =
       new ThreadLocal<CharsetDecoder>() {
-    @Override
-    protected CharsetDecoder initialValue() {
-      return Charset.forName("UTF-8").newDecoder()
-                                     .onMalformedInput(CodingErrorAction.REPLACE)
-                                     .onUnmappableCharacter(CodingErrorAction.REPLACE);
-    }
-  };
+        @Override
+        protected CharsetDecoder initialValue() {
+          return Charset.forName("UTF-8").newDecoder()
+              .onMalformedInput(CodingErrorAction.REPLACE)
+              .onUnmappableCharacter(CodingErrorAction.REPLACE);
+        }
+      };
 
   private Map<String, String> headers;
   private byte[] body;

@@ -451,11 +451,11 @@ public class TestExecSource {
       }
       return result;
     } finally {
+      int exit = process.waitFor();
       process.destroy();
       if (reader != null) {
         reader.close();
       }
-      int exit = process.waitFor();
       if (exit != 0) {
         throw new IllegalStateException("Command [" + command + "] exited with " + exit);
       }

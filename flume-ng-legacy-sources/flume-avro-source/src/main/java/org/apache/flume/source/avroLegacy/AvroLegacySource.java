@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.avro.ipc.HttpServer;
+import org.apache.avro.ipc.jetty.HttpServer;
 import org.apache.avro.ipc.specific.SpecificResponder;
 import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
@@ -38,7 +38,6 @@ import org.apache.flume.source.AbstractSource;
 
 import com.cloudera.flume.handlers.avro.AvroFlumeOGEvent;
 import com.cloudera.flume.handlers.avro.FlumeOGEventAvroServer;
-import org.apache.avro.AvroRemoteException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.flume.ChannelException;
@@ -122,15 +121,15 @@ public class AvroLegacySource extends AbstractSource implements
   }
 
   @Override
-  public Void append( AvroFlumeOGEvent evt ) throws AvroRemoteException {
+  public void append( AvroFlumeOGEvent evt ) {
     counterGroup.incrementAndGet("rpc.received");
     Map<String, String> headers = new HashMap<String, String>();
 
     // extract Flume OG event headers
     headers.put(HOST, evt.getHost().toString());
-    headers.put(TIMESTAMP, evt.getTimestamp().toString());
+    headers.put(TIMESTAMP, Long.toString(evt.getTimestamp()));
     headers.put(PRIORITY, evt.getPriority().toString());
-    headers.put(NANOS, evt.getNanos().toString());
+    headers.put(NANOS, Long.toString(evt.getNanos()));
     for (Entry<CharSequence, ByteBuffer> entry : evt.getFields().entrySet()) {
       headers.put(entry.getKey().toString(), entry.getValue().toString());
     }
@@ -141,11 +140,10 @@ public class AvroLegacySource extends AbstractSource implements
       getChannelProcessor().processEvent(event);
       counterGroup.incrementAndGet("rpc.events");
     } catch (ChannelException ex) {
-      return null;
+      return;
     }
 
     counterGroup.incrementAndGet("rpc.successful");
-    return null;
   }
 
   @Override
