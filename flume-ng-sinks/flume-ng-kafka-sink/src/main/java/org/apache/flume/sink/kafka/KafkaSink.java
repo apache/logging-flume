@@ -513,7 +513,7 @@ class SinkCallback implements Callback {
 
   public void onCompletion(RecordMetadata metadata, Exception exception) {
     if (exception != null) {
-      logger.debug("Error sending message to Kafka {} ", exception.getMessage());
+      logger.warn("Error sending message to Kafka: {} ", exception.getMessage());
     }
 
     if (logger.isDebugEnabled()) {
