@@ -38,7 +38,7 @@ In release 1.11.0, if a protocol is specified in the providerUrl parameter only 
 
 .. rubric:: Credit
 
-This issue was found by Xian Wei.
+This issue was found by nbxiglk.
 
 .. rubric:: Fixed in Flume 1.10.1
 
