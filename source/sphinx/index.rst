@@ -33,7 +33,7 @@ application.
 
 .. raw:: html
 
-   <h3>Oct 13, 2022 - Apache Flume 1.11.0 Released</h3>
+   <h3>Oct 24, 2022 - Apache Flume 1.11.0 Released</h3>
 
 The Apache Flume team is pleased to announce the release of Flume 1.11.0.
 
@@ -46,6 +46,9 @@ previous versions of the Flume 1.x codeline.
 This version of Flume adds support for deploying Flume as a Spring Boot application, adds support to the
 Kafka source and sink for passing the Kafka timestamp and headers, and allows SSL hostname verification
 to be disabled in the Kafka source and sink.
+
+Flume 1.11.0 contains a fix for `CVE-2022-42468 <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-42468>`__.
+See the `Flume Security <./security.html>`__ page for more details.
 
 The full change log and documentation are available on the
 `Flume 1.11.0 release page <releases/1.11.0.html>`__.
