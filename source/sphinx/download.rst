@@ -13,7 +13,7 @@ originals on the main distribution server.
    "Apache Flume binary (tar.gz)",  `apache-flume-1.11.0-bin.tar.gz <http://www.apache.org/dyn/closer.lua/flume/1.11.0/apache-flume-1.11.0-bin.tar.gz>`_, `apache-flume-1.11.0-bin.tar.gz.sha512 <http://www.apache.org/dist/flume/1.11.0/apache-flume-1.11.0-bin.tar.gz.sha512>`_, `apache-flume-1.11.0-bin.tar.gz.asc <http://www.apache.org/dist/flume/1.11.0/apache-flume-1.11.0-bin.tar.gz.asc>`_
   "Apache Flume source (tar.gz)",  `apache-flume-1.11.0-src.tar.gz <http://www.apache.org/dyn/closer.lua/flume/1.11.0/apache-flume-1.11.0-src.tar.gz>`_, `apache-flume-1.11.0-src.tar.gz.sha512 <http://www.apache.org/dist/flume/1.11.0/apache-flume-1.11.0-src.tar.gz.sha512>`_, `apache-flume-1.11.0-src.tar.gz.asc <http://www.apache.org/dist/flume/1.11.0/apache-flume-1.11.0-src.tar.gz.asc>`_
 
-It is essential that you verify the integrity of the downloaded files using the PGP or MD5 signatures. Please read
+It is essential that you verify the integrity of the downloaded files using the PGP or SHA512 signatures. Please read
 `Verifying Apache HTTP Server Releases <http://httpd.apache.org/dev/verification.html>`_ for more information on
 why you should verify our releases.
 
