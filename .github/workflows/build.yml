@@ -52,6 +52,9 @@ jobs:
       - name: Inspect environment (MacOS)
         if: runner.os == 'macOS'
         run: env | grep '^JAVA'
+        
+      - name: Show disk usage before
+        run: df -hk 
 
       - name: Build with Maven
         timeout-minutes: 120
@@ -61,3 +64,6 @@ jobs:
           --show-version --batch-mode --errors --no-transfer-progress \
           -DtrimStackTrace=false \
           -Dsurefire.rerunFailingTestsCount=2
+          
+      - name: Show disk usage after
+        run: df -hk        
