@@ -1,3 +1,21 @@
+Release Notes - Flume - Version 1.11.0
+
+** Bug
+    * [FLUME-3315] - [KafkaSink][KafkaSource] Impossible to disable hostname verification with SSL enryption
+    * [FLUME-3437] - Validate providerUrl
+
+** New Feature
+    * [FLUME-3440] - Add support for Spring Boot
+
+** Improvement
+    * [FLUME-3435] - Allow KafkaSink to include timestamp and KafkaHeaders
+
+** Dependency upgrade
+    * [FLUME-3441] - Dependency Upgrades for Flume 1.11.0
+        * Update Maven Jar Plugin to 3.2.2
+        * Update Scala library to 2.13.9
+        * Update Gson to 2.9.1
+
 Release Notes - Flume - Version 1.10.1
 
 ** Bug
