@@ -43,6 +43,7 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.config.SslConfigs;
+import org.apache.kafka.common.errors.ProducerFencedException;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.slf4j.Logger;
@@ -50,6 +51,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -62,18 +65,6 @@ import java.util.concurrent.Future;
 
 import static org.apache.flume.shared.kafka.KafkaSSLUtil.SSL_DISABLE_FQDN_CHECK;
 import static org.apache.flume.shared.kafka.KafkaSSLUtil.isSSLEnabled;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.BOOTSTRAP_SERVERS_CONFIG;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.BATCH_SIZE;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_BATCH_SIZE;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_ACKS;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_KEY_SERIALIZER;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_TOPIC;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_VALUE_SERIAIZER;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.KAFKA_HEADER;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.KAFKA_PRODUCER_PREFIX;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.KEY_HEADER;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.TIMESTAMP_HEADER;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.TOPIC_CONFIG;
 
 /**
  * A Flume Sink that can publish messages to Kafka.
@@ -125,6 +116,8 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
   private String timestampHeader = null;
   private Map<String, String> headerMap;
 
+  private boolean useKafkaTransactions = false;
+
   private Optional<SpecificDatumWriter<AvroFlumeEvent>> writer = Optional.absent();
   private Optional<ByteArrayOutputStream> tempOutStream = Optional.absent();
 
@@ -156,6 +149,9 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
 
       transaction = channel.getTransaction();
       transaction.begin();
+      if (useKafkaTransactions) {
+        producer.beginTransaction();
+      }
 
       kafkaFutures.clear();
       long batchStartTime = System.nanoTime();
@@ -190,7 +186,7 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
           eventTopic = topic;
         }
 
-        eventKey = headers.get(KEY_HEADER);
+        eventKey = headers.get(KafkaSinkConstants.KEY_HEADER);
         if (logger.isTraceEnabled()) {
           if (LogPrivacyUtil.allowLogRawData()) {
             logger.trace("{Event} " + eventTopic + " : " + eventKey + " : "
@@ -261,17 +257,20 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
         }
       }
 
-      //Prevent linger.ms from holding the batch
-      producer.flush();
-
-      // publish batch and commit.
-      if (processedEvents > 0) {
+      if (useKafkaTransactions) {
+        producer.commitTransaction();
+      } else {
+        //Prevent linger.ms from holding the batch
+        producer.flush();
         for (Future<RecordMetadata> future : kafkaFutures) {
           future.get();
         }
+      }
+      // publish batch and commit.
+      if (processedEvents > 0) {
         long endTime = System.nanoTime();
         counter.addToKafkaEventSendTimer((endTime - batchStartTime) / (1000 * 1000));
-        counter.addToEventDrainSuccessCount(kafkaFutures.size());
+        counter.addToEventDrainSuccessCount(processedEvents);
       }
 
       transaction.commit();
@@ -283,8 +282,16 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
       if (transaction != null) {
         try {
           kafkaFutures.clear();
-          transaction.rollback();
-          counter.incrementRollbackCount();
+          try {
+            if (useKafkaTransactions) {
+              producer.abortTransaction();
+            }
+          } catch (ProducerFencedException e) {
+            logger.error("Could not rollback transaction as producer fenced", e);
+          } finally {
+            transaction.rollback();
+            counter.incrementRollbackCount();
+          }
         } catch (Exception e) {
           logger.error("Transaction rollback failed", e);
           throw Throwables.propagate(e);
@@ -304,6 +311,10 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
   public synchronized void start() {
     // instantiate the producer
     producer = new KafkaProducer<>(kafkaProps);
+    if (useKafkaTransactions) {
+      logger.info("Transactions enabled, initializing transactions");
+      producer.initTransactions();
+    }
     counter.start();
     super.start();
   }
@@ -333,9 +344,9 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
   @Override
   public void configure(Context context) {
 
-    String topicStr = context.getString(TOPIC_CONFIG);
+    String topicStr = context.getString(KafkaSinkConstants.TOPIC_CONFIG);
     if (topicStr == null || topicStr.isEmpty()) {
-      topicStr = DEFAULT_TOPIC;
+      topicStr = KafkaSinkConstants.DEFAULT_TOPIC;
       logger.warn("Topic was not specified. Using {} as the topic.", topicStr);
     } else {
       logger.info("Using the static topic {}. This may be overridden by event headers", topicStr);
@@ -343,11 +354,11 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
 
     topic = topicStr;
 
-    timestampHeader = context.getString(TIMESTAMP_HEADER);
+    timestampHeader = context.getString(KafkaSinkConstants.TIMESTAMP_HEADER);
 
-    headerMap = context.getSubProperties(KAFKA_HEADER);
+    headerMap = context.getSubProperties(KafkaSinkConstants.KAFKA_HEADER);
 
-    batchSize = context.getInteger(BATCH_SIZE, DEFAULT_BATCH_SIZE);
+    batchSize = context.getInteger(KafkaSinkConstants.BATCH_SIZE, KafkaSinkConstants.DEFAULT_BATCH_SIZE);
 
     if (logger.isDebugEnabled()) {
       logger.debug("Using batch size: {}", batchSize);
@@ -365,13 +376,24 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
     topicHeader = context.getString(KafkaSinkConstants.TOPIC_OVERRIDE_HEADER,
                                     KafkaSinkConstants.DEFAULT_TOPIC_OVERRIDE_HEADER);
 
+    String transactionalID = context.getString(KafkaSinkConstants.TRANSACTIONAL_ID);
+    if (transactionalID != null) {
+      try {
+        context.put(KafkaSinkConstants.TRANSACTIONAL_ID, InetAddress.getLocalHost().getCanonicalHostName() +
+                Thread.currentThread().getName() + transactionalID);
+        useKafkaTransactions = true;
+      } catch (UnknownHostException e) {
+        throw new ConfigurationException("Unable to configure transactional id, as cannot work out hostname", e);
+      }
+    }
+
     if (logger.isDebugEnabled()) {
       logger.debug(KafkaSinkConstants.AVRO_EVENT + " set to: {}", useAvroEventFormat);
     }
 
     kafkaFutures = new LinkedList<Future<RecordMetadata>>();
 
-    String bootStrapServers = context.getString(BOOTSTRAP_SERVERS_CONFIG);
+    String bootStrapServers = context.getString(KafkaSinkConstants.BOOTSTRAP_SERVERS_CONFIG);
     if (bootStrapServers == null || bootStrapServers.isEmpty()) {
       throw new ConfigurationException("Bootstrap Servers must be specified");
     }
@@ -389,11 +411,11 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
 
   private void setProducerProps(Context context, String bootStrapServers) {
     kafkaProps.clear();
-    kafkaProps.put(ProducerConfig.ACKS_CONFIG, DEFAULT_ACKS);
+    kafkaProps.put(ProducerConfig.ACKS_CONFIG, KafkaSinkConstants.DEFAULT_ACKS);
     //Defaults overridden based on config
-    kafkaProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, DEFAULT_KEY_SERIALIZER);
-    kafkaProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, DEFAULT_VALUE_SERIAIZER);
-    kafkaProps.putAll(context.getSubProperties(KAFKA_PRODUCER_PREFIX));
+    kafkaProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, KafkaSinkConstants.DEFAULT_KEY_SERIALIZER);
+    kafkaProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaSinkConstants.DEFAULT_VALUE_SERIAIZER);
+    kafkaProps.putAll(context.getSubProperties(KafkaSinkConstants.KAFKA_PRODUCER_PREFIX));
     kafkaProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootStrapServers);
     //  The default value of `ssl.endpoint.identification.algorithm`
     //  is changed to `https`, since kafka client 2.0+

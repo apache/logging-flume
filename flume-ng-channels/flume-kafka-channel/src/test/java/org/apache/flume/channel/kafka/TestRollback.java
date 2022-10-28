@@ -29,27 +29,48 @@ public class TestRollback extends TestKafkaChannelBase {
 
   @Test
   public void testSuccess() throws Exception {
-    doTestSuccessRollback(false, false);
+    doTestSuccessRollback(false, false, false);
   }
 
   @Test
   public void testSuccessInterleave() throws Exception {
-    doTestSuccessRollback(false, true);
+    doTestSuccessRollback(false, true, false);
   }
 
   @Test
   public void testRollbacks() throws Exception {
-    doTestSuccessRollback(true, false);
+    doTestSuccessRollback(true, false, false);
   }
 
   @Test
   public void testRollbacksInterleave() throws Exception {
-    doTestSuccessRollback(true, true);
+    doTestSuccessRollback(true, true, false);
+  }
+
+  @Test
+  public void testSuccessTxns() throws Exception {
+    doTestSuccessRollback(false, false, true);
+  }
+
+  @Test
+  public void testSuccessInterleaveTxns() throws Exception {
+    doTestSuccessRollback(false, true, true);
+  }
+
+  @Test
+  public void testRollbacksTxns() throws Exception {
+    doTestSuccessRollback(true, false, true);
+  }
+
+  @Test
+  public void testRollbacksInterleaveTxns() throws Exception {
+    doTestSuccessRollback(true, true, true);
   }
 
   private void doTestSuccessRollback(final boolean rollback,
-                                     final boolean interleave) throws Exception {
-    final KafkaChannel channel = startChannel(true);
+                                     final boolean interleave,
+                                     final boolean useKafkaTxns) throws Exception {
+    final KafkaChannel channel = startChannel(true, useKafkaTxns);
     writeAndVerify(rollback, channel, interleave);
     channel.stop();
   }

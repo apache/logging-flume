@@ -19,6 +19,7 @@
 package org.apache.flume.channel.kafka;
 
 import org.apache.kafka.clients.CommonClientConfigs;
+import org.apache.kafka.clients.producer.ProducerConfig;
 
 public class KafkaChannelConfiguration {
 
@@ -37,6 +38,9 @@ public class KafkaChannelConfiguration {
   public static final String TOPIC_CONFIG = KAFKA_PREFIX + "topic";
   public static final String BOOTSTRAP_SERVERS_CONFIG =
       KAFKA_PREFIX + CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG;
+
+  public static final String TRANSACTIONAL_ID =
+          KAFKA_PRODUCER_PREFIX + ProducerConfig.TRANSACTIONAL_ID_CONFIG;
   public static final String DEFAULT_TOPIC = "flume-channel";
   public static final String DEFAULT_GROUP_ID = "flume";
   public static final String POLL_TIMEOUT = KAFKA_PREFIX + "pollTimeout";

@@ -44,10 +44,8 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.BOOTSTRAP_SERVERS_CONFIG;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.KAFKA_CONSUMER_PREFIX;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.PARSE_AS_FLUME_EVENT;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.TOPIC_CONFIG;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.*;
+import static org.apache.kafka.clients.producer.ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG;
 
 public class TestKafkaChannelBase {
 
@@ -97,19 +95,32 @@ public class TestKafkaChannelBase {
   }
 
   KafkaChannel startChannel(boolean parseAsFlume) throws Exception {
-    Context context = prepareDefaultContext(parseAsFlume);
+    return startChannel(parseAsFlume, false);
+  }
+  KafkaChannel startChannel(boolean parseAsFlume, boolean useKafksTxns) throws Exception {
+    Context context = prepareDefaultContext(parseAsFlume, useKafksTxns);
     KafkaChannel channel = createChannel(context);
     channel.start();
     return channel;
   }
 
   Context prepareDefaultContext(boolean parseAsFlume) {
+    return prepareDefaultContext(parseAsFlume, false);
+  }
+
+  Context prepareDefaultContext(boolean parseAsFlume, boolean useKafkaTxns) {
     // Prepares a default context with Kafka Server Properties
     Context context = new Context();
     context.put(BOOTSTRAP_SERVERS_CONFIG, testUtil.getKafkaServerUrl());
     context.put(PARSE_AS_FLUME_EVENT, String.valueOf(parseAsFlume));
     context.put(TOPIC_CONFIG, topic);
     context.put(KAFKA_CONSUMER_PREFIX + "max.poll.interval.ms", "10000");
+    if (useKafkaTxns) {
+      context.put(TRANSACTIONAL_ID, "3");
+      context.put("kafka.producer." + ENABLE_IDEMPOTENCE_CONFIG, "true");
+      context.put("kafka.producer.acks", "all");
+      context.put("kafka.consumer.isolation.level", "read_committed");
+    }
 
     return context;
   }
