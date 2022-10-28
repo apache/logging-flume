@@ -19,6 +19,7 @@
 package org.apache.flume.sink.kafka;
 
 import org.apache.kafka.clients.CommonClientConfigs;
+import org.apache.kafka.clients.producer.ProducerConfig;
 
 public class KafkaSinkConstants {
 
@@ -31,6 +32,8 @@ public class KafkaSinkConstants {
   public static final String BATCH_SIZE = "flumeBatchSize";
   public static final String BOOTSTRAP_SERVERS_CONFIG =
       KAFKA_PREFIX + CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG;
+
+  public static final String TRANSACTIONAL_ID = KAFKA_PREFIX + "producer." +  ProducerConfig.TRANSACTIONAL_ID_CONFIG;
 
   public static final String KEY_HEADER = "key";
   public static final String DEFAULT_TOPIC_OVERRIDE_HEADER = "topic";

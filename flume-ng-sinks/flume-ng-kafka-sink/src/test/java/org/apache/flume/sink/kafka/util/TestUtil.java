@@ -20,7 +20,9 @@ package org.apache.flume.sink.kafka.util;
 
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
+import org.apache.kafka.clients.admin.ListTransactionsResult;
 import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.admin.TransactionListing;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -34,6 +36,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
@@ -205,7 +208,10 @@ public class TestUtil {
   }
 
   public ConsumerRecords<String, String> getNextMessageFromConsumer(String topic) {
-    return consumer.poll(Duration.ofMillis(1000L));
+    ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(1000L));
+    consumer.commitSync();
+    return records;
+
   }
 
   public void prepare() {
@@ -264,5 +270,25 @@ public class TestUtil {
 
   public String getKafkaServerSslUrl() {
     return kafkaServerSslUrl;
+  }
+
+  public Collection<TransactionListing> getTransactionState() {
+    ListTransactionsResult result = getAdminClient().listTransactions();
+    Throwable throwable = null;
+    for (int i = 0; i < 10; ++i) {
+      try {
+        return result.all().get(1, TimeUnit.SECONDS);
+      } catch (Exception e) {
+        throwable = e;
+      }
+    }
+    throw new RuntimeException("Error getting transactions info", throwable);
+
+  }
+
+  public void deleteTopics(List<String> topicsList) {
+    for (String topic: topicsList) {
+      deleteTopic(topic);
+    }
   }
 }

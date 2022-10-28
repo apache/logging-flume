@@ -58,6 +58,8 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Arrays;
@@ -73,26 +75,10 @@ import java.util.UUID;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.BOOTSTRAP_SERVERS_CONFIG;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_ACKS;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_AUTO_OFFSET_RESET;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_GROUP_ID;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_KEY_DESERIALIZER;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_KEY_SERIALIZER;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_PARSE_AS_FLUME_EVENT;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_POLL_TIMEOUT;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_TOPIC;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_VALUE_DESERIAIZER;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.DEFAULT_VALUE_SERIAIZER;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.KAFKA_CONSUMER_PREFIX;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.KAFKA_PRODUCER_PREFIX;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.KEY_HEADER;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.PARSE_AS_FLUME_EVENT;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.PARTITION_HEADER_NAME;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.POLL_TIMEOUT;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.STATIC_PARTITION_CONF;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.TOPIC_CONFIG;
+import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.*;
 import static org.apache.flume.shared.kafka.KafkaSSLUtil.SSL_DISABLE_FQDN_CHECK;
 import static org.apache.flume.shared.kafka.KafkaSSLUtil.isSSLEnabled;
 
@@ -105,6 +91,11 @@ public class KafkaChannel extends BasicChannelSemantics {
   private final Properties producerProps = new Properties();
 
   private KafkaProducer<String, byte[]> producer;
+
+  // Used to ensure that we don't have multiple threads attempting to use the KafkaProducer (above) for transactions
+  // at the same time as whilst the KafkaProducer is thread-safe you cannot have more than one in-flight transaction.
+  private Lock kafkaTxLock = new ReentrantLock();
+
   private final String channelUUID = UUID.randomUUID().toString();
 
   private AtomicReference<String> topic = new AtomicReference<String>();
@@ -113,6 +104,7 @@ public class KafkaChannel extends BasicChannelSemantics {
   private String groupId = DEFAULT_GROUP_ID;
   private String partitionHeader = null;
   private Integer staticPartitionId;
+  private boolean useKafkaTransactions;
 
   // used to indicate if a rebalance has occurred during the current transaction
   AtomicBoolean rebalanceFlag = new AtomicBoolean();
@@ -142,6 +134,10 @@ public class KafkaChannel extends BasicChannelSemantics {
   public void start() {
     logger.info("Starting Kafka Channel: {}", getName());
     producer = new KafkaProducer<String, byte[]>(producerProps);
+    if (useKafkaTransactions) {
+      logger.debug("Initializing Kafka Transaction");
+      producer.initTransactions();
+    }
     // We always have just one topic being read by one thread
     logger.info("Topic = {}", topic.get());
     counter.start();
@@ -186,6 +182,17 @@ public class KafkaChannel extends BasicChannelSemantics {
     String bootStrapServers = ctx.getString(BOOTSTRAP_SERVERS_CONFIG);
     if (bootStrapServers == null || bootStrapServers.isEmpty()) {
       throw new ConfigurationException("Bootstrap Servers must be specified");
+    }
+
+    String transactionalID = ctx.getString(TRANSACTIONAL_ID);
+    if (transactionalID != null) {
+      try {
+        ctx.put(TRANSACTIONAL_ID, InetAddress.getLocalHost().getCanonicalHostName() +
+                Thread.currentThread().getName() + transactionalID);
+        useKafkaTransactions = true;
+      } catch (UnknownHostException e) {
+        throw new ConfigurationException("Unable to configure transactional id, as cannot work out hostname", e);
+      }
     }
 
     setProducerProps(ctx, bootStrapServers);
@@ -438,6 +445,11 @@ public class KafkaChannel extends BasicChannelSemantics {
           kafkaFutures = Optional.of(new LinkedList<Future<RecordMetadata>>());
         }
         try {
+          if (useKafkaTransactions) {
+            kafkaTxLock.lock();
+            logger.debug("Beginning Kafka Transaction");
+            producer.beginTransaction();
+          }
           long batchSize = producerRecords.get().size();
           long startTime = System.nanoTime();
           int index = 0;
@@ -445,11 +457,19 @@ public class KafkaChannel extends BasicChannelSemantics {
             index++;
             kafkaFutures.get().add(producer.send(record, new ChannelCallback(index, startTime)));
           }
-          //prevents linger.ms from being a problem
-          producer.flush();
 
-          for (Future<RecordMetadata> future : kafkaFutures.get()) {
-            future.get();
+          if (useKafkaTransactions) {
+            logger.debug("Committing Kafka Transaction");
+            producer.commitTransaction();
+            kafkaTxLock.unlock();
+          } else {
+            // Ensure that the records are actually flushed by the producer, regardless of linger.ms.
+            // Per the Kafka docs we do not need to linger or wait for the callback if we're using transactions
+            producer.flush();
+
+            for (Future<RecordMetadata> future : kafkaFutures.get()) {
+              future.get();
+            }
           }
           long endTime = System.nanoTime();
           counter.addToKafkaEventSendTimer((endTime - startTime) / (1000 * 1000));
@@ -457,6 +477,14 @@ public class KafkaChannel extends BasicChannelSemantics {
           producerRecords.get().clear();
           kafkaFutures.get().clear();
         } catch (Exception ex) {
+          if (useKafkaTransactions) {
+            logger.debug("Aborting transaction");
+            try {
+              producer.abortTransaction();
+            } finally {
+              kafkaTxLock.unlock();
+            }
+          }
           logger.warn("Sending events to Kafka failed", ex);
           throw new ChannelException("Commit failed as send to Kafka failed",
                   ex);

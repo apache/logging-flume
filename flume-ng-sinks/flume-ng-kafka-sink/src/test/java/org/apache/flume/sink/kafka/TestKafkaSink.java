@@ -39,6 +39,8 @@ import org.apache.flume.shared.kafka.test.PartitionOption;
 import org.apache.flume.shared.kafka.test.PartitionTestScenario;
 import org.apache.flume.sink.kafka.util.TestUtil;
 import org.apache.flume.source.avro.AvroFlumeEvent;
+import org.apache.kafka.clients.admin.TransactionListing;
+import org.apache.kafka.clients.admin.TransactionState;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -55,6 +57,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -65,15 +68,9 @@ import java.util.Properties;
 import java.util.Set;
 
 import static org.apache.flume.shared.kafka.KafkaSSLUtil.SSL_DISABLE_FQDN_CHECK;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.AVRO_EVENT;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.BATCH_SIZE;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.BOOTSTRAP_SERVERS_CONFIG;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_KEY_SERIALIZER;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_TOPIC;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.KAFKA_PREFIX;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.KAFKA_PRODUCER_PREFIX;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.TOPIC_CONFIG;
+import static org.apache.flume.sink.kafka.KafkaSinkConstants.*;
 import static org.apache.kafka.clients.CommonClientConfigs.SECURITY_PROTOCOL_CONFIG;
+import static org.apache.kafka.clients.producer.ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG;
 import static org.apache.kafka.common.config.SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG;
 import static org.apache.kafka.common.config.SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG;
 import static org.junit.Assert.assertEquals;
@@ -87,21 +84,24 @@ import static org.junit.Assert.fail;
 public class TestKafkaSink {
 
   private static final TestUtil testUtil = TestUtil.getInstance();
+  private static List<String> topicsList;
   private final Set<String> usedTopics = new HashSet<String>();
 
   @BeforeClass
   public static void setup() {
     testUtil.prepare();
-    List<String> topics = new ArrayList<String>(3);
-    topics.add(DEFAULT_TOPIC);
-    topics.add(TestConstants.STATIC_TOPIC);
-    topics.add(TestConstants.CUSTOM_TOPIC);
-    topics.add(TestConstants.HEADER_1_VALUE + "-topic");
-    testUtil.initTopicList(topics);
+    topicsList = new ArrayList<String>(3);
+    topicsList.add(DEFAULT_TOPIC);
+    topicsList.add(TestConstants.STATIC_TOPIC);
+    topicsList.add(TestConstants.CUSTOM_TOPIC);
+    topicsList.add(TestConstants.TRANSACTIONS_TOPIC);
+    topicsList.add(TestConstants.HEADER_1_VALUE + "-topic");
+    testUtil.initTopicList(topicsList);
   }
 
   @AfterClass
   public static void tearDown() {
+    testUtil.deleteTopics(topicsList);
     testUtil.tearDown();
   }
 
@@ -276,7 +276,7 @@ public class TestKafkaSink {
         fail("Error Occurred");
       }
     } catch (EventDeliveryException ex) {
-      // ignore
+      fail(ex.getMessage());
     }
     Headers expected = new RecordHeaders();
     expected.add(new RecordHeader(TestConstants.KAFKA_HEADER_1,
@@ -400,7 +400,7 @@ public class TestKafkaSink {
 
   @SuppressWarnings("rawtypes")
   @Test
-  public void testAvroEvent() throws IOException {
+  public void testAvroEvent() throws IOException, InterruptedException {
     Sink kafkaSink = new KafkaSink();
     Context context = prepareDefaultContext();
     context.put(AVRO_EVENT, "true");
@@ -491,7 +491,7 @@ public class TestKafkaSink {
     }
     ConsumerRecords recs = pollConsumerRecords(DEFAULT_TOPIC, 2);
     assertNotNull(recs);
-    assertEquals(recs.count(), 0);
+    assertEquals(0, recs.count());
   }
 
   @Test
@@ -790,5 +790,50 @@ public class TestKafkaSink {
 
     checkMessageArrived(msg, DEFAULT_TOPIC);
   }
+
+  @Test
+  public void testKafkaTransactions() {
+    Sink kafkaSink = new KafkaSink();
+    Context context = prepareDefaultContext();
+
+    context.put(TOPIC_CONFIG, TestConstants.TRANSACTIONS_TOPIC);
+
+    context.put(TRANSACTIONAL_ID, "3");
+    context.put("kafka.producer." + ENABLE_IDEMPOTENCE_CONFIG, "true");
+    context.put("kafka.producer.acks", "all");
+    Configurables.configure(kafkaSink, context);
+    Channel memoryChannel = new MemoryChannel();
+    Configurables.configure(memoryChannel, context);
+    kafkaSink.setChannel(memoryChannel);
+    kafkaSink.start();
+
+    for (int i = 0; i < 5; i++) {
+      String msg = "test tx message " + i;
+      Transaction tx = memoryChannel.getTransaction();
+      tx.begin();
+      Event event = EventBuilder.withBody(msg.getBytes());
+      memoryChannel.put(event);
+      tx.commit();
+      tx.close();
+
+      try {
+        Sink.Status status = kafkaSink.process();
+        if (status == Sink.Status.BACKOFF) {
+          fail("Error Occurred");
+        }
+      } catch (EventDeliveryException ex) {
+        // ignore
+      }
+      checkMessageArrived(msg, TestConstants.TRANSACTIONS_TOPIC);
+    }
+
+    Collection<TransactionListing> transactions = testUtil.getTransactionState();
+    Assert.assertEquals(1, transactions.size(), 2);
+    for (TransactionListing transaction : transactions) {
+      Assert.assertEquals(transaction.state(), TransactionState.COMPLETE_COMMIT);
+    }
+
+  }
+
 
 }

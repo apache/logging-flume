@@ -23,6 +23,7 @@ public class TestConstants {
   public static final String HEADER_TOPIC = "%{header1}-topic";
   public static final String CUSTOM_KEY = "custom-key";
   public static final String CUSTOM_TOPIC = "custom-topic";
+  public static final String TRANSACTIONS_TOPIC = "transactions-topic";
   public static final String HEADER_1_VALUE = "test-avro-header";
   public static final String HEADER_1_KEY = "header1";
   public static final String KAFKA_HEADER_1 = "FLUME_CORRELATOR";
