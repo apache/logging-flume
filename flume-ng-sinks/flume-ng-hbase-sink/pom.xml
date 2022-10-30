@@ -15,7 +15,7 @@
   <parent>
     <artifactId>flume-ng-sinks</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.10.0-SNAPSHOT</version>
+    <version>1.11.1-SNAPSHOT</version>
   </parent>
   <groupId>org.apache.flume.flume-ng-sinks</groupId>
   <artifactId>flume-ng-hbase-sink</artifactId>
@@ -25,6 +25,7 @@
     <!-- TODO fix spotbugs/pmd violations -->
     <spotbugs.maxAllowedViolations>24</spotbugs.maxAllowedViolations>
     <pmd.maxAllowedViolations>16</pmd.maxAllowedViolations>
+    <module.name>org.apache.flume.sink.hbase</module.name>
   </properties>
 
   <dependencies>

@@ -24,7 +24,7 @@
   <parent>
     <artifactId>flume-ng-channels</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.10.0-SNAPSHOT</version>
+    <version>1.11.1-SNAPSHOT</version>
   </parent>
 
   <groupId>org.apache.flume.flume-ng-channels</groupId>
@@ -35,6 +35,7 @@
     <!-- TODO fix spotbugs/pmd violations -->
     <spotbugs.maxAllowedViolations>2</spotbugs.maxAllowedViolations>
     <pmd.maxAllowedViolations>8</pmd.maxAllowedViolations>
+    <module.name>org.apache.flume.channel.spillable.memory</module.name>
   </properties>
 
   <dependencies>

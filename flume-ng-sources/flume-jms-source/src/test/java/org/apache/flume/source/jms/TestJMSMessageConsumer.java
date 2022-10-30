@@ -93,6 +93,12 @@ public class TestJMSMessageConsumer extends JMSMessageConsumerTestBase {
       verify(connection).close();
     }
   }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testInvalidDestination() throws Exception {
+    create(null, JMSDestinationLocator.JNDI, "ldap://localhost:389/test");
+  }
+
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidBatchSizeZero() throws Exception {
     batchSize = 0;

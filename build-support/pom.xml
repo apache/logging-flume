@@ -22,10 +22,41 @@ limitations under the License.
 
     <groupId>org.apache.flume</groupId>
     <artifactId>build-support</artifactId>
-    <version>1.10.0-SNAPSHOT</version>
+    <version>1.11.1-SNAPSHOT</version>
     <name>Build Support</name>
     <description>Build tools and Configuration</description>
     <properties>
         <maven.site.skip>true</maven.site.skip>
+        <deploy.plugin.version>2.8.2</deploy.plugin.version>
+        <mvn-gpg-plugin.version>1.6</mvn-gpg-plugin.version>
     </properties>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>${deploy.plugin.version}</version>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>${mvn-gpg-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>default-cli</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

@@ -1,0 +1,3 @@
+flume:
+  app:
+    packages: "org.apache.flume.spring.boot.app"

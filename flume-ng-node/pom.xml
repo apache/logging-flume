@@ -25,7 +25,7 @@
   <parent>
     <artifactId>flume-parent</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.10.0-SNAPSHOT</version>
+    <version>1.11.1-SNAPSHOT</version>
   </parent>
 
   <artifactId>flume-ng-node</artifactId>
@@ -35,6 +35,7 @@
     <!-- TODO fix spotbugs violations -->
     <spotbugs.maxAllowedViolations>7</spotbugs.maxAllowedViolations>
     <pmd.maxAllowedViolations>7</pmd.maxAllowedViolations>
+    <module.name>org.apache.flume.node</module.name>
   </properties>
 
   <dependencies>
@@ -82,6 +83,18 @@
       <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <scope>test</scope>
     </dependency>
 
     <dependency>

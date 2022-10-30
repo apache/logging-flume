@@ -22,7 +22,7 @@
   <parent>
     <artifactId>flume-ng-sources</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.10.0-SNAPSHOT</version>
+    <version>1.11.1-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -34,6 +34,7 @@
     <!-- TODO fix spotbugs/pmd violations -->
     <spotbugs.maxAllowedViolations>16</spotbugs.maxAllowedViolations>
     <pmd.maxAllowedViolations>32</pmd.maxAllowedViolations>
+    <module.name>org.apache.flume.source.kafka</module.name>
   </properties>
 
   <dependencies>

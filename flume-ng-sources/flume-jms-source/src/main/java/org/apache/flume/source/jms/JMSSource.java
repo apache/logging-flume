@@ -19,6 +19,10 @@ package org.apache.flume.source.jms;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
@@ -53,6 +57,8 @@ import com.google.common.io.Files;
 @InterfaceStability.Unstable
 public class JMSSource extends AbstractPollableSource implements BatchSizeSupported {
   private static final Logger logger = LoggerFactory.getLogger(JMSSource.class);
+  private static final String JAVA_SCHEME = "java";
+  public static final String JNDI_ALLOWED_PROTOCOLS = "JndiAllowedProtocols";
 
   // setup by constructor
   private final InitialContextFactory initialContextFactory;
@@ -79,6 +85,7 @@ public class JMSSource extends AbstractPollableSource implements BatchSizeSuppor
 
   private int jmsExceptionCounter;
   private InitialContext initialContext;
+  private static List<String> allowedSchemes = getAllowedProtocols();
 
   public JMSSource() {
     this(new InitialContextFactory());
@@ -89,6 +96,34 @@ public class JMSSource extends AbstractPollableSource implements BatchSizeSuppor
     this.initialContextFactory = initialContextFactory;
   }
 
+  private static List<String> getAllowedProtocols() {
+    String allowed = System.getProperty(JNDI_ALLOWED_PROTOCOLS, null);
+    if (allowed == null) {
+      return Collections.singletonList(JAVA_SCHEME);
+    } else {
+      String[] items = allowed.split(",");
+      List<String> schemes = new ArrayList<>();
+      schemes.add(JAVA_SCHEME);
+      for (String item : items) {
+        if (!item.equals(JAVA_SCHEME)) {
+          schemes.add(item.trim());
+        }
+      }
+      return schemes;
+    }
+  }
+
+  public static void verifyContext(String location) {
+    try {
+      String scheme = new URI(location).getScheme();
+      if (scheme != null && !allowedSchemes.contains(scheme)) {
+        throw new IllegalArgumentException("Invalid JNDI URI: " + location);
+      }
+    } catch (URISyntaxException ex) {
+      logger.trace("{}} is not a valid URI", location);
+    }
+  }
+
   @Override
   protected void doConfigure(Context context) throws FlumeException {
     sourceCounter = new SourceCounter(getName());
@@ -97,6 +132,7 @@ public class JMSSource extends AbstractPollableSource implements BatchSizeSuppor
         JMSSourceConfiguration.INITIAL_CONTEXT_FACTORY, "").trim();
 
     providerUrl = context.getString(JMSSourceConfiguration.PROVIDER_URL, "").trim();
+    verifyContext(providerUrl);
 
     destinationName = context.getString(JMSSourceConfiguration.DESTINATION_NAME, "").trim();
 
@@ -179,6 +215,7 @@ public class JMSSource extends AbstractPollableSource implements BatchSizeSuppor
     String connectionFactoryName = context.getString(
         JMSSourceConfiguration.CONNECTION_FACTORY,
         JMSSourceConfiguration.CONNECTION_FACTORY_DEFAULT).trim();
+    verifyContext(connectionFactoryName);
 
     assertNotEmpty(initialContextFactoryName, String.format(
         "Initial Context Factory is empty. This is specified by %s",
@@ -299,14 +336,12 @@ public class JMSSource extends AbstractPollableSource implements BatchSizeSuppor
       sourceCounter.incrementChannelWriteFail();
     } catch (JMSException jmsException) {
       logger.warn("JMSException consuming events", jmsException);
-      if (++jmsExceptionCounter > errorThreshold) {
-        if (consumer != null) {
-          logger.warn("Exceeded JMSException threshold, closing consumer");
-          sourceCounter.incrementEventReadFail();
-          consumer.rollback();
-          consumer.close();
-          consumer = null;
-        }
+      if (++jmsExceptionCounter > errorThreshold && consumer != null) {
+        logger.warn("Exceeded JMSException threshold, closing consumer");
+        sourceCounter.incrementEventReadFail();
+        consumer.rollback();
+        consumer.close();
+        consumer = null;
       }
     } catch (Throwable throwable) {
       logger.error("Unexpected error processing events", throwable);

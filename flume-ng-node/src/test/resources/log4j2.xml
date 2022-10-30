@@ -16,7 +16,7 @@
  limitations under the License.
 
 -->
-<Configuration status="OFF">
+<Configuration status="ERROR">
   <Appenders>
     <Console name="Console" target="SYSTEM_OUT">
       <PatternLayout pattern="%d (%t) [%p - %l] %m%n" />
@@ -24,7 +24,7 @@
   </Appenders>
   <Loggers>
     <Logger name="org.apache.flume" level="DEBUG"/>
-    <Root level="INFO">
+    <Root level="DEBUG">
       <AppenderRef ref="Console" />
     </Root>
   </Loggers>
