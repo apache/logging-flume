@@ -21,13 +21,7 @@ package org.apache.flume.instrumentation.http;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import org.apache.flume.Channel;
 import org.apache.flume.Context;
-import org.apache.flume.Transaction;
-import org.apache.flume.channel.MemoryChannel;
-import org.apache.flume.channel.PseudoTxnMemoryChannel;
-import org.apache.flume.conf.Configurables;
-import org.apache.flume.event.EventBuilder;
 import org.apache.flume.instrumentation.MonitorService;
 import org.apache.flume.instrumentation.util.JMXTestUtils;
 import org.junit.Assert;
@@ -38,62 +32,22 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
-import java.net.ServerSocket;
 import java.net.URL;
 import java.util.Map;
 
-public class TestHTTPMetricsServer {
+public class TestHTTPMetricsServer extends BaseHTTPMetricsTest {
 
-  Channel memChannel = new MemoryChannel();
-  Channel pmemChannel = new PseudoTxnMemoryChannel();
-  Type mapType = new TypeToken<Map<String, Map<String, String>>>() {}.getType();
-  Gson gson = new Gson();
-
-  private static int getFreePort() throws Exception {
-    try (ServerSocket socket = new ServerSocket(0)) {
-      return socket.getLocalPort();
-    }
-  }
+  private Type mapType = new TypeToken<Map<String, Map<String, String>>>() {}.getType();
+  private Gson gson = new Gson();
 
   @Test
   public void testJSON() throws Exception {
-    memChannel.setName("memChannel");
-    pmemChannel.setName("pmemChannel");
-    Context c = new Context();
-    Configurables.configure(memChannel, c);
-    Configurables.configure(pmemChannel, c);
-    memChannel.start();
-    pmemChannel.start();
-    Transaction txn = memChannel.getTransaction();
-    txn.begin();
-    memChannel.put(EventBuilder.withBody("blah".getBytes()));
-    memChannel.put(EventBuilder.withBody("blah".getBytes()));
-    txn.commit();
-    txn.close();
 
-    txn = memChannel.getTransaction();
-    txn.begin();
-    memChannel.take();
-    txn.commit();
-    txn.close();
-
-
-    Transaction txn2 = pmemChannel.getTransaction();
-    txn2.begin();
-    pmemChannel.put(EventBuilder.withBody("blah".getBytes()));
-    pmemChannel.put(EventBuilder.withBody("blah".getBytes()));
-    txn2.commit();
-    txn2.close();
-
-    txn2 = pmemChannel.getTransaction();
-    txn2.begin();
-    pmemChannel.take();
-    txn2.commit();
-    txn2.close();
+    runLoad();
 
     testWithPort(getFreePort());
-    memChannel.stop();
-    pmemChannel.stop();
+
+    shutdown();
   }
 
   private void testWithPort(int port) throws Exception {
@@ -103,7 +57,7 @@ public class TestHTTPMetricsServer {
     srv.configure(context);
     srv.start();
     Thread.sleep(1000);
-    URL url = new URL("http://0.0.0.0:" + String.valueOf(port) + "/metrics");
+    URL url = new URL("http://0.0.0.0:" + port + "/metrics");
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     conn.setRequestMethod("GET");
     BufferedReader reader = new BufferedReader(
@@ -134,14 +88,14 @@ public class TestHTTPMetricsServer {
     doTestForbiddenMethods(getFreePort(),"OPTIONS");
   }
 
-  public void doTestForbiddenMethods(int port, String method) throws Exception {
+  private void doTestForbiddenMethods(int port, String method) throws Exception {
     MonitorService srv = new HTTPMetricsServer();
     Context context = new Context();
     context.put(HTTPMetricsServer.CONFIG_PORT, String.valueOf(port));
     srv.configure(context);
     srv.start();
     Thread.sleep(1000);
-    URL url = new URL("http://0.0.0.0:" + String.valueOf(port) + "/metrics");
+    URL url = new URL("http://0.0.0.0:" + port + "/metrics");
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     conn.setRequestMethod(method);
     Assert.assertEquals(HttpServletResponse.SC_FORBIDDEN, conn.getResponseCode());
