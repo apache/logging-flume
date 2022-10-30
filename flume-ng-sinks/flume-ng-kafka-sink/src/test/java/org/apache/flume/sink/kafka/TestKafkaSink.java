@@ -39,7 +39,6 @@ import org.apache.flume.shared.kafka.test.PartitionOption;
 import org.apache.flume.shared.kafka.test.PartitionTestScenario;
 import org.apache.flume.sink.kafka.util.TestUtil;
 import org.apache.flume.source.avro.AvroFlumeEvent;
-import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -69,13 +68,10 @@ import static org.apache.flume.shared.kafka.KafkaSSLUtil.SSL_DISABLE_FQDN_CHECK;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.AVRO_EVENT;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.BATCH_SIZE;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.BOOTSTRAP_SERVERS_CONFIG;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.BROKER_LIST_FLUME_KEY;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_KEY_SERIALIZER;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_TOPIC;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.KAFKA_PREFIX;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.KAFKA_PRODUCER_PREFIX;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.OLD_BATCH_SIZE;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.REQUIRED_ACKS_FLUME_KEY;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.TOPIC_CONFIG;
 import static org.apache.kafka.clients.CommonClientConfigs.SECURITY_PROTOCOL_CONFIG;
 import static org.apache.kafka.common.config.SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG;
@@ -136,26 +132,6 @@ public class TestKafkaSink {
     //check that documented property overrides defaults
     assertEquals(kafkaProps.getProperty("bootstrap.servers"),
                  "localhost:9092,localhost:9092");
-  }
-
-  @Test
-  public void testOldProperties() {
-    KafkaSink kafkaSink = new KafkaSink();
-    Context context = new Context();
-    context.put("topic", "test-topic");
-    context.put(OLD_BATCH_SIZE, "300");
-    context.put(BROKER_LIST_FLUME_KEY, "localhost:9092,localhost:9092");
-    context.put(REQUIRED_ACKS_FLUME_KEY, "all");
-    Configurables.configure(kafkaSink, context);
-
-    Properties kafkaProps = kafkaSink.getKafkaProps();
-
-    assertEquals(kafkaSink.getTopic(), "test-topic");
-    assertEquals(kafkaSink.getBatchSize(), 300);
-    assertEquals(kafkaProps.getProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG),
-                 "localhost:9092,localhost:9092");
-    assertEquals(kafkaProps.getProperty(ProducerConfig.ACKS_CONFIG), "all");
-
   }
 
   @Test

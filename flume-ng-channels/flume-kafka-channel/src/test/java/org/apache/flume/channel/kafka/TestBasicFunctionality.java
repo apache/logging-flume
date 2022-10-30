@@ -23,8 +23,6 @@ import org.apache.flume.Event;
 import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.instrumentation.kafka.KafkaChannelCounter;
-import org.apache.kafka.clients.CommonClientConfigs;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.Assert;
@@ -39,10 +37,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.BOOTSTRAP_SERVERS_CONFIG;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.BROKER_LIST_FLUME_KEY;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.GROUP_ID_FLUME;
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.KEY_HEADER;
-import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.READ_SMALLEST_OFFSET;
 import static org.apache.flume.channel.kafka.KafkaChannelConfiguration.TOPIC_CONFIG;
 
 public class TestBasicFunctionality extends TestKafkaChannelBase {
@@ -64,29 +59,6 @@ public class TestBasicFunctionality extends TestKafkaChannelBase {
     Assert.assertEquals(producerProps.getProperty("some-parameter"), "1");
     Assert.assertEquals(consumerProps.getProperty("another-parameter"), "1");
   }
-
-  @Test
-  public void testOldConfig() throws Exception {
-    Context context = new Context();
-    context.put(BROKER_LIST_FLUME_KEY, testUtil.getKafkaServerUrl());
-    context.put(GROUP_ID_FLUME, "flume-something");
-    context.put(READ_SMALLEST_OFFSET, "true");
-    context.put("topic", topic);
-
-    final KafkaChannel channel = new KafkaChannel();
-    Configurables.configure(channel, context);
-
-    Properties consumerProps = channel.getConsumerProps();
-    Properties producerProps = channel.getProducerProps();
-
-    Assert.assertEquals(producerProps.getProperty(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG),
-        testUtil.getKafkaServerUrl());
-    Assert.assertEquals(consumerProps.getProperty(ConsumerConfig.GROUP_ID_CONFIG),
-        "flume-something");
-    Assert.assertEquals(consumerProps.getProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG),
-        "earliest");
-  }
-
 
   @Test
   public void testStopAndStart() throws Exception {

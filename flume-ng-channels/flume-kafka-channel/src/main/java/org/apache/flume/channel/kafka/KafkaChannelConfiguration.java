@@ -52,22 +52,4 @@ public class KafkaChannelConfiguration {
   public static final String PARTITION_HEADER_NAME = "partitionIdHeader";
   public static final String STATIC_PARTITION_CONF = "defaultPartitionId";
 
-  public static final String MIGRATE_ZOOKEEPER_OFFSETS = "migrateZookeeperOffsets";
-  public static final boolean DEFAULT_MIGRATE_ZOOKEEPER_OFFSETS = true;
-
-  /*** Old Configuration Parameters ****/
-  public static final String BROKER_LIST_KEY = "metadata.broker.list";
-  public static final String REQUIRED_ACKS_KEY = "request.required.acks";
-  public static final String BROKER_LIST_FLUME_KEY = "brokerList";
-  //public static final String TOPIC = "topic";
-  public static final String GROUP_ID_FLUME = "groupId";
-  public static final String AUTO_COMMIT_ENABLED = "auto.commit.enable";
-  public static final String ZOOKEEPER_CONNECT = "zookeeper.connect";
-  public static final String ZOOKEEPER_CONNECT_FLUME_KEY = "zookeeperConnect";
-  public static final String TIMEOUT = "timeout";
-  public static final String DEFAULT_TIMEOUT = "100";
-  public static final String CONSUMER_TIMEOUT = "consumer.timeout.ms";
-
-  public static final String READ_SMALLEST_OFFSET = "readSmallestOffset";
-  public static final boolean DEFAULT_READ_SMALLEST_OFFSET = false;
 }

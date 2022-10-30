@@ -19,6 +19,7 @@ on:
   push:
     branches:
       - trunk
+      - build-dev
   pull_request:
 
 jobs:
@@ -52,6 +53,17 @@ jobs:
       - name: Inspect environment (MacOS)
         if: runner.os == 'macOS'
         run: env | grep '^JAVA'
+        
+      - name: Show disk usage before
+        run: df -kh
+        
+      - name: Remove unwanted packages
+        run: |
+            sudo rm -rf /usr/share/dotnet
+            sudo rm -rf /usr/local/lib/android
+            
+      - name: Show disk usage before maven
+        run: df -kh
 
       - name: Build with Maven (Linux)
         if: runner.os == 'Linux'
@@ -81,3 +93,6 @@ jobs:
           -DtrimStackTrace=false \
           -Dsurefire.rerunFailingTestsCount=2 \
           -P skipDocker
+          
+      - name: Show disk usage after
+        run: df -kh        

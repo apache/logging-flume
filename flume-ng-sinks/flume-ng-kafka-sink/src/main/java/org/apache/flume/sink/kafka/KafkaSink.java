@@ -65,7 +65,6 @@ import static org.apache.flume.shared.kafka.KafkaSSLUtil.isSSLEnabled;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.BOOTSTRAP_SERVERS_CONFIG;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.BATCH_SIZE;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_BATCH_SIZE;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.BROKER_LIST_FLUME_KEY;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_ACKS;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_KEY_SERIALIZER;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_TOPIC;
@@ -73,12 +72,8 @@ import static org.apache.flume.sink.kafka.KafkaSinkConstants.DEFAULT_VALUE_SERIA
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.KAFKA_HEADER;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.KAFKA_PRODUCER_PREFIX;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.KEY_HEADER;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.OLD_BATCH_SIZE;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.REQUIRED_ACKS_FLUME_KEY;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.TIMESTAMP_HEADER;
 import static org.apache.flume.sink.kafka.KafkaSinkConstants.TOPIC_CONFIG;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.KEY_SERIALIZER_KEY;
-import static org.apache.flume.sink.kafka.KafkaSinkConstants.MESSAGE_SERIALIZER_KEY;
 
 /**
  * A Flume Sink that can publish messages to Kafka.
@@ -338,8 +333,6 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
   @Override
   public void configure(Context context) {
 
-    translateOldProps(context);
-
     String topicStr = context.getString(TOPIC_CONFIG);
     if (topicStr == null || topicStr.isEmpty()) {
       topicStr = DEFAULT_TOPIC;
@@ -391,60 +384,6 @@ public class KafkaSink extends AbstractSink implements Configurable, BatchSizeSu
 
     if (counter == null) {
       counter = new KafkaSinkCounter(getName());
-    }
-  }
-
-  private void translateOldProps(Context ctx) {
-
-    if (!(ctx.containsKey(TOPIC_CONFIG))) {
-      ctx.put(TOPIC_CONFIG, ctx.getString("topic"));
-      logger.warn("{} is deprecated. Please use the parameter {}", "topic", TOPIC_CONFIG);
-    }
-
-    //Broker List
-    // If there is no value we need to check and set the old param and log a warning message
-    if (!(ctx.containsKey(BOOTSTRAP_SERVERS_CONFIG))) {
-      String brokerList = ctx.getString(BROKER_LIST_FLUME_KEY);
-      if (brokerList == null || brokerList.isEmpty()) {
-        throw new ConfigurationException("Bootstrap Servers must be specified");
-      } else {
-        ctx.put(BOOTSTRAP_SERVERS_CONFIG, brokerList);
-        logger.warn("{} is deprecated. Please use the parameter {}",
-                    BROKER_LIST_FLUME_KEY, BOOTSTRAP_SERVERS_CONFIG);
-      }
-    }
-
-    //batch Size
-    if (!(ctx.containsKey(BATCH_SIZE))) {
-      String oldBatchSize = ctx.getString(OLD_BATCH_SIZE);
-      if ( oldBatchSize != null  && !oldBatchSize.isEmpty())  {
-        ctx.put(BATCH_SIZE, oldBatchSize);
-        logger.warn("{} is deprecated. Please use the parameter {}", OLD_BATCH_SIZE, BATCH_SIZE);
-      }
-    }
-
-    // Acks
-    if (!(ctx.containsKey(KAFKA_PRODUCER_PREFIX + ProducerConfig.ACKS_CONFIG))) {
-      String requiredKey = ctx.getString(
-              KafkaSinkConstants.REQUIRED_ACKS_FLUME_KEY);
-      if (!(requiredKey == null) && !(requiredKey.isEmpty())) {
-        ctx.put(KAFKA_PRODUCER_PREFIX + ProducerConfig.ACKS_CONFIG, requiredKey);
-        logger.warn("{} is deprecated. Please use the parameter {}", REQUIRED_ACKS_FLUME_KEY,
-                KAFKA_PRODUCER_PREFIX + ProducerConfig.ACKS_CONFIG);
-      }
-    }
-
-    if (ctx.containsKey(KEY_SERIALIZER_KEY )) {
-      logger.warn("{} is deprecated. Flume now uses the latest Kafka producer which implements " +
-          "a different interface for serializers. Please use the parameter {}",
-          KEY_SERIALIZER_KEY,KAFKA_PRODUCER_PREFIX + ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG);
-    }
-
-    if (ctx.containsKey(MESSAGE_SERIALIZER_KEY)) {
-      logger.warn("{} is deprecated. Flume now uses the latest Kafka producer which implements " +
-                  "a different interface for serializers. Please use the parameter {}",
-                  MESSAGE_SERIALIZER_KEY,
-                  KAFKA_PRODUCER_PREFIX + ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG);
     }
   }
 
@@ -513,7 +452,7 @@ class SinkCallback implements Callback {
 
   public void onCompletion(RecordMetadata metadata, Exception exception) {
     if (exception != null) {
-      logger.debug("Error sending message to Kafka {} ", exception.getMessage());
+      logger.warn("Error sending message to Kafka {} ", exception.getMessage());
     }
 
     if (logger.isDebugEnabled()) {
