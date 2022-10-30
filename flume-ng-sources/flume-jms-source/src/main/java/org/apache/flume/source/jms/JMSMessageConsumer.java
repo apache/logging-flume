@@ -99,6 +99,7 @@ class JMSMessageConsumer {
               throw new IllegalStateException(String.valueOf(destinationType));
           }
         } else {
+          JMSSource.verifyContext(destinationName);
           destination = (Destination) initialContext.lookup(destinationName);
         }
       } catch (JMSException e) {

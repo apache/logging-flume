@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: flume-test
+
+server:
+  port: 41414
+
+flume:
+  metrics: http
+  sources:
+    source1:
+      totalEvents: 10000
+  channels:
+    channel1:
+      capacity: 10000

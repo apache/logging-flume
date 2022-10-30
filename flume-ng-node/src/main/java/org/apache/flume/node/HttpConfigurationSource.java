@@ -37,6 +37,7 @@ public class HttpConfigurationSource implements ConfigurationSource {
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpConfigurationSource.class);
   private static final int NOT_MODIFIED = 304;
   private static final int NOT_AUTHORIZED = 401;
+  private static final int NOT_FOUND = 404;
   private static final int OK = 200;
   private static final int BUF_SIZE = 1024;
 
@@ -118,6 +119,9 @@ public class HttpConfigurationSource implements ConfigurationSource {
               }
               throw new ConfigurationException("Unable to access " + uri.toString(), e);
             }
+          }
+          case NOT_FOUND: {
+            throw new ConfigurationException("Unable to locate " + uri.toString());
           }
           case NOT_AUTHORIZED: {
             throw new ConfigurationException("Authorization failed");

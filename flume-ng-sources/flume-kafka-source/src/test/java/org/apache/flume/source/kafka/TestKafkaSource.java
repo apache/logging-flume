@@ -19,7 +19,6 @@ package org.apache.flume.source.kafka;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
-
 import kafka.zk.KafkaZkClient;
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.EncoderFactory;
@@ -37,7 +36,6 @@ import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -45,6 +43,10 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.TopicExistsException;
+import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.header.internals.RecordHeader;
+import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.apache.kafka.common.security.JaasUtils;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.utils.Time;
@@ -64,7 +66,10 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -74,11 +79,13 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
+import static org.apache.flume.shared.kafka.KafkaSSLUtil.SSL_DISABLE_FQDN_CHECK;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.AVRO_EVENT;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.BATCH_DURATION_MS;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.BATCH_SIZE;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.BOOTSTRAP_SERVERS;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_AUTO_COMMIT;
+import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_TOPIC_HEADER;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.KAFKA_CONSUMER_PREFIX;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.OLD_GROUP_ID;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.PARTITION_HEADER;
@@ -86,9 +93,13 @@ import static org.apache.flume.source.kafka.KafkaSourceConstants.TIMESTAMP_HEADE
 import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPIC;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPICS;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.TOPICS_REGEX;
-import static org.apache.flume.source.kafka.KafkaSourceConstants.DEFAULT_TOPIC_HEADER;
 import static org.apache.flume.source.kafka.KafkaSourceConstants.ZOOKEEPER_CONNECT_FLUME_KEY;
+import static org.apache.kafka.clients.CommonClientConfigs.SECURITY_PROTOCOL_CONFIG;
+import static org.apache.kafka.common.config.SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG;
+import static org.apache.kafka.common.config.SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG;
+import static org.apache.kafka.common.config.SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
@@ -829,6 +840,49 @@ public class TestKafkaSource {
     events.clear();
   }
 
+
+  /**
+   * Tests the availability of the custom topic header in the output events,
+   * based on the configuration parameters added in FLUME-3046
+   * @throws InterruptedException
+   * @throws EventDeliveryException
+   */
+  @Test
+  public void testTopicKafkaHeaderSet() throws InterruptedException, EventDeliveryException {
+    final String correlatorHeader = "FLUME_CORRELATOR";
+    context.put(TOPICS, topic0);
+    context.put(KafkaSourceConstants.TOPIC_HEADER, "customTopicHeader");
+    context.put(KafkaSourceConstants.KAFKA_HEADER + "correlator", correlatorHeader);
+    context.put(TIMESTAMP_HEADER, "true");
+    kafkaSource.configure(context);
+
+    startKafkaSource();
+
+    Thread.sleep(500L);
+
+    long date = ZonedDateTime.of(2022, 10, 7, 8, 0, 0, 0,
+            ZoneId.systemDefault()).toInstant().toEpochMilli();
+    Headers headers = new RecordHeaders();
+    headers.add(new RecordHeader(correlatorHeader, "12345".getBytes(StandardCharsets.UTF_8)));
+    kafkaServer.produce(topic0, 0, date, "", "hello, world2".getBytes(StandardCharsets.UTF_8),
+        headers);
+
+    Thread.sleep(500L);
+
+    Status status = kafkaSource.process();
+    assertEquals(Status.READY, status);
+    Assert.assertEquals("hello, world2", new String(events.get(0).getBody(),
+        Charsets.UTF_8));
+    Map<String, String> flumeHeaders = events.get(0).getHeaders();
+    Assert.assertEquals(Long.toString(date), flumeHeaders.get("timestamp"));
+    Assert.assertEquals(topic0, flumeHeaders.get("customTopicHeader"));
+    Assert.assertEquals("12345", flumeHeaders.get("correlator"));
+
+    kafkaSource.stop();
+    events.clear();
+  }
+
+
   /**
    * Tests the unavailability of the topic header in the output events,
    * based on the configuration parameters added in FLUME-3046
@@ -1016,4 +1070,58 @@ public class TestKafkaSource {
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootStrapServers);
     return props;
   }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testSslSource() throws EventDeliveryException,
+          SecurityException,
+          IllegalArgumentException,
+          InterruptedException {
+    context.put(TOPICS, topic0);
+    context.put(BATCH_SIZE, "1");
+    context.put(BOOTSTRAP_SERVERS, kafkaServer.getBootstrapSslServers());
+    context.put(KAFKA_CONSUMER_PREFIX + SECURITY_PROTOCOL_CONFIG, "SSL");
+    context.put(KAFKA_CONSUMER_PREFIX + SSL_TRUSTSTORE_LOCATION_CONFIG, "src/test/resources/truststorefile.jks");
+    context.put(KAFKA_CONSUMER_PREFIX + SSL_TRUSTSTORE_PASSWORD_CONFIG, "password");
+    context.put(KAFKA_CONSUMER_PREFIX + SSL_DISABLE_FQDN_CHECK, "true");
+    kafkaSource.configure(context);
+    startKafkaSource();
+
+    Thread.sleep(500L);
+    kafkaServer.produce(topic0, "", "hello, world");
+    Thread.sleep(500L);
+
+    Assert.assertEquals("", kafkaSource.getConsumerProps().get(SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG));
+    Assert.assertEquals(Status.READY, kafkaSource.process());
+    Assert.assertEquals(1, events.size());
+    Assert.assertEquals("hello, world",
+            new String(events.get(0).getBody(), Charsets.UTF_8)
+    );
+  }
+
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testSslWithFqdnValidationFailedSource() throws EventDeliveryException,
+          SecurityException,
+          IllegalArgumentException,
+          InterruptedException {
+    context.put(TOPICS, topic0);
+    context.put(BATCH_SIZE, "1");
+    context.put(BOOTSTRAP_SERVERS, kafkaServer.getBootstrapSslIpPortServers());
+    context.put(KAFKA_CONSUMER_PREFIX + SECURITY_PROTOCOL_CONFIG, "SSL");
+    context.put(KAFKA_CONSUMER_PREFIX + SSL_TRUSTSTORE_LOCATION_CONFIG, "src/test/resources/truststorefile.jks");
+    context.put(KAFKA_CONSUMER_PREFIX + SSL_TRUSTSTORE_PASSWORD_CONFIG, "password");
+    kafkaSource.configure(context);
+    startKafkaSource();
+
+    Thread.sleep(500L);
+    kafkaServer.produce(topic0, "", "hello, world");
+    Thread.sleep(500L);
+
+    assertNull(kafkaSource.getConsumerProps().get(SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG));
+    Assert.assertEquals(Status.BACKOFF, kafkaSource.process());
+  }
+
+
 }

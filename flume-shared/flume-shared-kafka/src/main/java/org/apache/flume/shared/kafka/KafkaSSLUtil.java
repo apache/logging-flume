@@ -27,6 +27,8 @@ import java.util.Properties;
 
 public class KafkaSSLUtil {
 
+  public static final String SSL_DISABLE_FQDN_CHECK = "ssl.disableTLSHostnameVerification";
+
   private KafkaSSLUtil() {
   }
 
@@ -61,7 +63,7 @@ public class KafkaSSLUtil {
     }
   }
 
-  private static boolean isSSLEnabled(Properties kafkaProps) {
+  public static boolean isSSLEnabled(Properties kafkaProps) {
     String securityProtocol =
         kafkaProps.getProperty(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG);
 

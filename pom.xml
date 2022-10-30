@@ -27,12 +27,14 @@ limitations under the License.
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.apache.flume</groupId>
   <artifactId>flume-parent</artifactId>
-  <version>1.10.0-SNAPSHOT</version>
+  <version>1.11.1-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Apache Flume</name>
 
   <properties>
+    <!-- Update for year of distribution. Should be set by the maven-release-plugin at release time. -->
+    <project.build.outputTimestamp>2022-01-02T00:00:00Z</project.build.outputTimestamp>
     <!-- Set default encoding to UTF-8 to remove maven complaints -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
@@ -40,10 +42,12 @@ limitations under the License.
     <sourceJavaVersion>1.8</sourceJavaVersion>
     <targetJavaVersion>1.8</targetJavaVersion>
 
+    <!-- Signing User for release -->
+    <GPGSigningUserName>rgoers@apache.org</GPGSigningUserName>
+
     <!-- defaults for flaky test and focused test exclusions -->
     <test.exclude.pattern>$</test.exclude.pattern> <!-- junk pattern -->
     <test.include.pattern>**/Test*.java</test.include.pattern>
-    <siteUrlDeployment>file://people.apache.org/www/incubator.apache.org/flume</siteUrlDeployment>
     <stagingDirectory>${project.basedir}/target/docs</stagingDirectory>
 
     <activemq.version>5.7.0</activemq.version>
@@ -60,14 +64,13 @@ limitations under the License.
     <commons-lang.version>2.6</commons-lang.version>
     <commons-text.version>1.9</commons-text.version>
     <curator.version>5.1.0</curator.version>
-    <derby.version>10.14.1.0</derby.version>
+    <derby.version>10.14.2.0</derby.version>
     <dropwizard-metrics.version>4.1.18</dropwizard-metrics.version>
-    <elasticsearch.version>0.90.1</elasticsearch.version>
     <fasterxml.jackson.version>2.13.2</fasterxml.jackson.version>
     <fasterxml.jackson.databind.version>2.13.2.1</fasterxml.jackson.databind.version>
     <fest-reflect.version>1.4</fest-reflect.version>
     <geronimo-jms.version>1.1.1</geronimo-jms.version>
-    <gson.version>2.2.2</gson.version>
+    <gson.version>2.9.1</gson.version>
     <guava.version>18.0</guava.version>
     <guava-old.version>11.0.2</guava-old.version>
     <hadoop.version>2.10.1</hadoop.version>
@@ -78,7 +81,7 @@ limitations under the License.
     <httpclient.version>4.5.13</httpclient.version>
     <irclib.version>1.10</irclib.version>
     <jersey.version>1.8</jersey.version>
-    <jetty.version>9.4.38.v20210224</jetty.version>
+    <jetty.version>9.4.41.v20210516</jetty.version>
     <jdom.version>1.1.3</jdom.version>
     <joda-time.version>2.9.9</joda-time.version>
     <junit.version>4.13.2</junit.version>
@@ -86,23 +89,25 @@ limitations under the License.
     <kite.version>1.1.0</kite.version>
     <kudu.version>1.10.0</kudu.version>
     <lifecycle-mapping.version>1.0.0</lifecycle-mapping.version>
-    <log4j.version>2.17.1</log4j.version>
+    <log4j.version>2.18.0</log4j.version>
     <mapdb.version>0.9.9</mapdb.version>
-    <mina.version>2.0.4</mina.version>
+    <mina.version>2.1.5</mina.version>
     <mockito.version>1.9.0</mockito.version>
     <mvn-antrun-plugin.version>1.8</mvn-antrun-plugin.version>
+    <!-- Do not upgrade the assumbly plugin version until MASSEMBLY-941 is fixed -->
     <mvn-assembly-plugin.version>3.1.0</mvn-assembly-plugin.version>
     <mvn-build-helper-plugin>3.0.0</mvn-build-helper-plugin>
     <mvn-checkstyle-plugin.version>3.1.2</mvn-checkstyle-plugin.version>
     <mvn-checksum-plugin.version>1.7</mvn-checksum-plugin.version>
     <mvn-clean-plugin.version>3.1.0</mvn-clean-plugin.version>
     <mvn-compiler-plugin.version>3.8.1</mvn-compiler-plugin.version>
+    <mvn-deploy-plugin.version>2.8.2</mvn-deploy-plugin.version>
     <mvn-gpg-plugin.version>1.6</mvn-gpg-plugin.version>
+    <mvn-jar-plugin.version>3.2.2</mvn-jar-plugin.version>
     <mvn-javadoc-plugin.version>2.9</mvn-javadoc-plugin.version>
     <mvn-paranamer-plugin.version>2.8</mvn-paranamer-plugin.version>
     <mvn-pmd-plugin.version>3.15.0</mvn-pmd-plugin.version>
     <mvn-site-plugin.version>3.7.1</mvn-site-plugin.version>
-    <mvn-sphinx-plugin>1.0.3</mvn-sphinx-plugin>
     <mvn-spotbugs-plugin.version>4.2.0</mvn-spotbugs-plugin.version>
     <mvn-surefire-plugin.version>2.22.2</mvn-surefire-plugin.version>
     <!--<netty.version>3.10.6.Final</netty.version>-->
@@ -112,13 +117,14 @@ limitations under the License.
     <prometheus.version>0.15.0</prometheus.version>
     <rat.version>0.12</rat.version>
     <scala.version>2.13</scala.version>
-    <scala-library.version>2.13.7</scala-library.version>
+    <scala-library.version>2.13.9</scala-library.version>
     <snappy-java.version>1.1.8.4</snappy-java.version>
     <solr-global.version>4.3.0</solr-global.version>
     <slf4j.version>1.7.32</slf4j.version>
     <system-rules.version>1.17.0</system-rules.version>
     <thrift.version>0.14.1</thrift.version>
-    <twitter4j.version>3.0.3</twitter4j.version>
+    <twitter4j.version>4.0.7</twitter4j.version>
+    <twitter4j-media.version>4.0.6</twitter4j-media.version>
     <wiremock.version>1.53</wiremock.version>
     <zlib.version>1.1.3</zlib.version>
     <zookeeper.version>3.6.2</zookeeper.version>
@@ -143,6 +149,7 @@ limitations under the License.
     <module>flume-shared</module>
     <module>flume-ng-configfilters</module>
     <module>build-support</module>
+    <module>flume-spring-boot</module>
   </modules>
 
   <profiles>
@@ -188,6 +195,9 @@ limitations under the License.
                 <goals>
                   <goal>sign</goal>
                 </goals>
+                <configuration>
+                  <keyname>${GPGSigningUserName}</keyname>
+                </configuration>
               </execution>
             </executions>
           </plugin>
@@ -429,19 +439,6 @@ limitations under the License.
     <url>http://www.apache.org</url>
   </organization>
 
-  <distributionManagement>
-    <repository>
-      <id>apache.staging.https</id>
-      <name>Apache Staging Repository</name>
-      <url>https://repository.apache.org/service/local/staging/deploy/maven2/</url>
-    </repository>
-    <site>
-      <id>apache.website</id>
-      <url>${siteUrlDeployment}</url>
-      <name>Flume Site</name>
-    </site>
-  </distributionManagement>
-
   <build>
 
     <plugins>
@@ -487,6 +484,7 @@ limitations under the License.
               <excludes>
                   <exclude>**/*.sha512</exclude>
               </excludes>
+            <keyname>${GPGSigningUserName}</keyname>
           </configuration>
         </plugin>
 
@@ -498,6 +496,36 @@ limitations under the License.
             <source>${sourceJavaVersion}</source>
             <target>${targetJavaVersion}</target>
           </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>${mvn-jar-plugin.version}</version>
+          <executions>
+            <execution>
+              <id>default-jar</id>
+              <goals>
+                <goal>jar</goal>
+              </goals>
+              <configuration>
+                <archive>
+                  <manifestEntries>
+                    <Specification-Title>${project.name}</Specification-Title>
+                    <Specification-Version>${project.version}</Specification-Version>
+                    <Specification-Vendor>${project.organization.name}</Specification-Vendor>
+                    <Implementation-Title>${project.name}</Implementation-Title>
+                    <Implementation-Version>${project.version}</Implementation-Version>
+                    <Implementation-Vendor>${project.organization.name}</Implementation-Vendor>
+                    <Implementation-Vendor-Id>org.apache</Implementation-Vendor-Id>
+                    <X-Compile-Source-JDK>${maven.compiler.source}</X-Compile-Source-JDK>
+                    <X-Compile-Target-JDK>${maven.compiler.target}</X-Compile-Target-JDK>
+                    <Automatic-Module-Name>${module.name}</Automatic-Module-Name>
+                  </manifestEntries>
+                </archive>
+              </configuration>
+            </execution>
+          </executions>
         </plugin>
 
         <plugin>
@@ -529,6 +557,7 @@ limitations under the License.
             <excludes>
               <exclude>**/.idea/</exclude>
               <exclude>**/*.iml</exclude>
+              <exclude>src/main/resources/META-INF/services/**/*</exclude>
               <exclude>**/nb-configuration.xml</exclude>
               <exclude>.git/</exclude>
               <exclude>patchprocess/</exclude>
@@ -617,6 +646,7 @@ limitations under the License.
               <!-- include ONLY flume multi-module dependencies -->
               <dependencySourceInclude>org.apache.flume:*</dependencySourceInclude>
             </dependencySourceIncludes>
+            <additionalparam>-Xdoclint:none</additionalparam>
           </configuration>
         </plugin>
 
@@ -1004,24 +1034,6 @@ limitations under the License.
         <artifactId>joda-time</artifactId>
         <version>${joda-time.version}</version>
       </dependency>
-      <!-- Adding zookeeper as dependency, beacuse it was
-           pulling different version of zookeeper as transient
-           dependency from asynchbase. -->
-
-      <dependency>
-        <groupId>org.elasticsearch</groupId>
-        <artifactId>elasticsearch</artifactId>
-        <version>${elasticsearch.version}</version>
-        <optional>true</optional>
-      </dependency>
-
-      <dependency>
-        <groupId>org.elasticsearch</groupId>
-        <artifactId>elasticsearch</artifactId>
-        <version>${elasticsearch.version}</version>
-        <classifier>tests</classifier>
-        <scope>test</scope>
-      </dependency>
 
       <dependency>
         <groupId>org.apache.geronimo.specs</groupId>
@@ -1142,12 +1154,6 @@ limitations under the License.
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-ng-hbase2-sink</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.flume.flume-ng-sinks</groupId>
-        <artifactId>flume-ng-elasticsearch-sink</artifactId>
         <version>${project.version}</version>
       </dependency>
 
@@ -1354,7 +1360,7 @@ limitations under the License.
       <dependency>
         <groupId>org.twitter4j</groupId>
         <artifactId>twitter4j-media-support</artifactId>
-        <version>${twitter4j.version}</version>
+        <version>${twitter4j-media.version}</version>
       </dependency>
       <dependency>
         <groupId>org.twitter4j</groupId>
@@ -1834,15 +1840,6 @@ limitations under the License.
             </reports>
           </reportSet>
         </reportSets>
-      </plugin>
-      <plugin>
-        <groupId>org.tomdz.maven</groupId>
-        <artifactId>sphinx-maven-plugin</artifactId>
-        <version>${mvn-sphinx-plugin}</version>
-        <inherited>false</inherited>
-        <configuration>
-          <sourceDirectory>${project.basedir}/flume-ng-doc/sphinx</sourceDirectory>
-        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

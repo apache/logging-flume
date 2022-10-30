@@ -320,16 +320,16 @@ public class Application {
       option.setRequired(false);
       options.addOption(option);
 
-      option = new Option("c", "conf-provider", true,
+      option = new Option("prov", "conf-provider", true,
               "specify a configuration provider class (required if -f, -u, and -z are missing)");
       option.setRequired(false);
       options.addOption(option);
 
-      option = new Option("n", "conf-user", true, "user name to access configuration uri");
+      option = new Option("user", "conf-user", true, "user name to access configuration uri");
       option.setRequired(false);
       options.addOption(option);
 
-      option = new Option("p", "conf-password", true, "password to access configuration uri");
+      option = new Option("pwd", "conf-password", true, "password to access configuration uri");
       option.setRequired(false);
       options.addOption(option);
 
@@ -395,7 +395,7 @@ public class Application {
         }
       }
 
-      if (commandLine.hasOption("c") || commandLine.hasOption("conf-provider")) {
+      if (commandLine.hasOption("prov") || commandLine.hasOption("conf-provider")) {
         String className = commandLine.getOptionValue("conf-provider");
         try {
           Class<?> clazz = Application.class.getClassLoader().loadClass(className);

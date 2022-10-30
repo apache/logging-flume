@@ -1,0 +1,1893 @@
+
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
+
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
+
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
+
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
+
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
+
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
+
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
+
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+   END OF TERMS AND CONDITIONS
+
+   APPENDIX: How to apply the Apache License to your work.
+
+      To apply the Apache License to your work, attach the following
+      boilerplate notice, with the fields enclosed by brackets "[]"
+      replaced with your own identifying information. (Don't include
+      the brackets!)  The text should be enclosed in the appropriate
+      comment syntax for the file format. We also recommend that a
+      file or class name and description of purpose be included on the
+      same "printed page" as the copyright notice for easier
+      identification within third-party archives.
+
+   Copyright [yyyy] [name of copyright owner]
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+----
+Bundled third-party works licensed other than under the Apache License, Version 2.0:
+
+This product contains the following works avaialble under the MIT License:
+
+* a modified portion of 'SLF4J' Copyright (c) 2004-2011 QOS.ch. All rights reserved.
+* a modified portion of 'jbzip2' Copyright (c) 2010-2011 Matthew J. Francis and
+  Contributors of the jbzip2 Project
+* a modified portion of 'libdivsufsort' Copyright (c) 2003-2008 Yuta Mori All Rights Reserved.
+* a modified portion of 'jfastlz' Copyright (c) 2009 William Kinney
+* a modified portion of 'Hyper HPACK' Copyright (c) 2014 Cory Benfield
+* a modified portion of 'nghttp2 HPACK'
+  Copyright (c) 2012, 2014, 2015, 2016 Tatsuhiro Tsujikawa
+  Copyright (c) 2012, 2014, 2015, 2016 nghttp2 contributors
+* jquery.tipsy.js, tipsy.js, and tipsy.css used by the Apache Avro Java IPC implementation
+  Copyright (c) 2008 Jason Frame (jason@onehackoranother.com)
+* g.Raphael 0.4.1 used by the Apache Avro Java IPC implementation
+  Copyright (c) 2009 Dmitry Baranovskiy (http://g.raphaeljs.com)
+* jQuery v1.4.2 used by the Apache Avro Java IPC implementation
+  Copyright 2010, John Resig
+* Sizzle.js included via jQuery used by the Apache Avro Java IPC implementation
+  Copyright 2010, The Dojo Foundation
+* SLF4J API Copyright (c) 2004-2007 QOS.ch. All rights reserved.
+
+Permission is hereby granted, free  of charge, to any person obtaining
+a  copy  of this  software  and  associated  documentation files  (the
+"Software"), to  deal in  the Software without  restriction, including
+without limitation  the rights to  use, copy, modify,  merge, publish,
+distribute,  sublicense, and/or sell  copies of  the Software,  and to
+permit persons to whom the Software  is furnished to do so, subject to
+the following conditions:
+
+The  above  copyright  notice  and  this permission  notice  shall  be
+included in all copies or substantial portions of the Software.
+
+THE  SOFTWARE IS  PROVIDED  "AS  IS", WITHOUT  WARRANTY  OF ANY  KIND,
+EXPRESS OR  IMPLIED, INCLUDING  BUT NOT LIMITED  TO THE  WARRANTIES OF
+MERCHANTABILITY,    FITNESS    FOR    A   PARTICULAR    PURPOSE    AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE,  ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+----
+
+Zstd-jni: JNI bindings to Zstd Library
+
+Copyright (c) 2015-present, Luben Karavelov/ All rights reserved.
+
+2-Clause BSD License
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice, this
+  list of conditions and the following disclaimer in the documentation and/or
+  other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+----
+Available under the terms of the BSD 3-Clause License:
+
+* JZLib Copyright (c) 2000-2011 ymnk, JCraft,Inc. All rights reserved.
+* a modified portion of 'Webbit', an event based WebSocket and HTTP server.
+  Copyright (c) 2011, Joe Walnes, Aslak Hellesøy and contributor. All rights
+  reserved.
+* a modified portion of 'Protocol Buffers' Copyright 2013 Google Inc.  All rights reserved.
+* protovis-r3.2.js used by the Apache Avro Java IPC implementation.
+  Copyright (c) 2010, Stanford Visualization Group. All rights reserved.
+* Snappy Copyright 2011, Google Inc. All rights reserved (via Snappy Java)
+
+
+3-Clause BSD License
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+  1. Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+
+  2. Redistributions in binary form must reproduce the above copyright 
+     notice, this list of conditions and the following disclaimer in 
+     the documentation and/or other materials provided with the distribution.
+
+  3. The names of the authors may not be used to endorse or promote products
+     derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL JCRAFT,
+INC. OR ANY CONTRIBUTORS TO THIS SOFTWARE BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+----
+
+This product contains the following works available in the Public Domain:
+
+* the extensions to Java Collections Framework which has been derived from
+  the works by JSR-166 EG, Doug Lea, and Jason T. Greene
+  http://gee.cs.oswego.edu/cgi-bin/viewcvs.cgi/jsr166/
+  http://viewvc.jboss.org/cgi-bin/viewvc.cgi/jbosscache/experimental/jsr166/
+* a modified version of Robert Harder's Public Domain Base64 Encoder and Decoder 
+  http://iharder.sourceforge.net/current/java/base64/
+
+Public Domain attestation:
+
+The person or persons who have associated work with this document (the
+"Dedicator" or "Certifier") hereby either (a) certifies that, to the best of
+his knowledge, the work of authorship identified is in the public domain of
+the country from which the work is published, or (b) hereby dedicates whatever
+copyright the dedicators holds in the work of authorship identified below (the
+"Work") to the public domain. A certifier, moreover, dedicates any copyright
+interest he may have in the associated work, and for these purposes, is
+described as a "dedicator" below.
+
+A certifier has taken reasonable steps to verify the copyright status of this
+work. Certifier recognizes that his good faith efforts may not shield him from
+liability if in fact the work certified is not in the public domain.
+
+Dedicator makes this dedication for the benefit of the public at large and to
+the detriment of the Dedicator's heirs and successors. Dedicator intends this
+dedication to be an overt act of relinquishment in perpetuate of all present
+and future rights under copyright law, whether vested or contingent, in the
+Work. Dedicator understands that such relinquishment of all rights includes
+the relinquishment of all rights to enforce (by lawsuit or otherwise) those
+copyrights in the Work.
+
+Dedicator recognizes that, once placed in the public domain, the Work may be
+freely reproduced, distributed, transmitted, used, modified, built upon, or
+otherwise exploited by anyone for any purpose, commercial or non-commercial,
+and in any way, including by methods that have not yet been invented or
+conceived.
+
+----
+
+The files in the package org.apache.commons.compress.archivers.sevenz
+were derived from the LZMA SDK, version 9.20 (C/ and CPP/7zip/),
+which has been placed in the public domain:
+
+LZMA SDK is placed in the public domain.
+
+Anyone is free to copy, modify, publish, use, compile, sell, or distribute the
+original LZMA SDK code, either in source code form or as a compiled binary, for
+any purpose, commercial or non-commercial, and by any means.
+
+----
+
+This product contains XZ for Java
+
+All the files in this package have been written by Lasse Collin,
+Igor Pavlov, and/or Brett Okken. All these files have been put into
+the public domain. You can do whatever you want with these files.
+
+This software is provided "as is", without any warranty.
+
+----
+
+This product contains the dnsinfo.h header file,
+Copyright (c) 2004-2006, 2008, 2009, 2011 Apple Inc. All rights reserved.
+
+APPLE PUBLIC SOURCE LICENSE
+Version 2.0 -  August 6, 2003
+
+Please read this License carefully before downloading this software.  By
+downloading or using this software, you are agreeing to be bound by the terms of
+this License.  If you do not or cannot agree to the terms of this License,
+please do not download or use the software.
+
+Apple Note:  In January 2007, Apple changed its corporate name from "Apple
+Computer, Inc." to "Apple Inc."  This change has been reflected below and
+copyright years updated, but no other changes have been made to the APSL 2.0.
+
+1.	General; Definitions.  This License applies to any program or other work
+which Apple Inc. ("Apple") makes publicly available and which contains a notice
+placed by Apple identifying such program or work as "Original Code" and stating
+that it is subject to the terms of this Apple Public Source License version 2.0
+("License").  As used in this License:
+
+1.1	 "Applicable Patent Rights" mean:  (a) in the case where Apple is the
+grantor of rights, (i) claims of patents that are now or hereafter acquired,
+owned by or assigned to Apple and (ii) that cover subject matter contained in
+the Original Code, but only to the extent necessary to use, reproduce and/or
+distribute the Original Code without infringement; and (b) in the case where You
+are the grantor of rights, (i) claims of patents that are now or hereafter
+acquired, owned by or assigned to You and (ii) that cover subject matter in Your
+Modifications, taken alone or in combination with Original Code.
+
+1.2	"Contributor" means any person or entity that creates or contributes to
+the creation of Modifications.
+
+1.3	 "Covered Code" means the Original Code, Modifications, the combination
+of Original Code and any Modifications, and/or any respective portions thereof.
+
+1.4	"Externally Deploy" means: (a) to sublicense, distribute or otherwise
+make Covered Code available, directly or indirectly, to anyone other than You;
+and/or (b) to use Covered Code, alone or as part of a Larger Work, in any way to
+provide a service, including but not limited to delivery of content, through
+electronic communication with a client other than You.
+
+1.5	"Larger Work" means a work which combines Covered Code or portions
+thereof with code not governed by the terms of this License.
+
+1.6	"Modifications" mean any addition to, deletion from, and/or change to,
+the substance and/or structure of the Original Code, any previous Modifications,
+the combination of Original Code and any previous Modifications, and/or any
+respective portions thereof.  When code is released as a series of files, a
+Modification is:  (a) any addition to or deletion from the contents of a file
+containing Covered Code; and/or (b) any new file or other representation of
+computer program statements that contains any part of Covered Code. 
+
+1.7	"Original Code" means (a) the Source Code of a program or other work as
+originally made available by Apple under this License, including the Source Code
+of any updates or upgrades to such programs or works made available by Apple
+under this License, and that has been expressly identified by Apple as such in
+the header file(s) of such work; and (b) the object code compiled from such
+Source Code and originally made available by Apple under this License
+
+1.8	"Source Code" means the human readable form of a program or other work
+that is suitable for making modifications to it, including all modules it
+contains, plus any associated interface definition files, scripts used to
+control compilation and installation of an executable (object code).
+
+1.9	"You" or "Your" means an individual or a legal entity exercising rights
+under this License.  For legal entities, "You" or "Your" includes any entity
+which controls, is controlled by, or is under common control with, You, where
+"control" means (a) the power, direct or indirect, to cause the direction or
+management of such entity, whether by contract or otherwise, or (b) ownership of
+fifty percent (50%) or more of the outstanding shares or beneficial ownership of
+such entity.
+
+2.	Permitted Uses; Conditions & Restrictions.   Subject to the terms and
+conditions of this License, Apple hereby grants You, effective on the date You
+accept this License and download the Original Code, a world-wide, royalty-free,
+non-exclusive license, to the extent of Apple's Applicable Patent Rights and
+copyrights covering the Original Code, to do the following:
+
+2.1	Unmodified Code.  You may use, reproduce, display, perform, internally
+distribute within Your organization, and Externally Deploy verbatim, unmodified
+copies of the Original Code, for commercial or non-commercial purposes, provided
+that in each instance:
+
+(a)	You must retain and reproduce in all copies of Original Code the
+copyright and other proprietary notices and disclaimers of Apple as they appear
+in the Original Code, and keep intact all notices in the Original Code that
+refer to this License; and
+
+(b) 	You must include a copy of this License with every copy of Source Code
+of Covered Code and documentation You distribute or Externally Deploy, and You
+may not offer or impose any terms on such Source Code that alter or restrict
+this License or the recipients' rights hereunder, except as permitted under
+Section 6.
+
+2.2	Modified Code.  You may modify Covered Code and use, reproduce, display,
+perform, internally distribute within Your organization, and Externally Deploy
+Your Modifications and Covered Code, for commercial or non-commercial purposes,
+provided that in each instance You also meet all of these conditions:
+
+(a)	You must satisfy all the conditions of Section 2.1 with respect to the
+Source Code of the Covered Code; 
+
+(b)	You must duplicate, to the extent it does not already exist, the notice
+in Exhibit A in each file of the Source Code of all Your Modifications, and
+cause the modified files to carry prominent notices stating that You changed the
+files and the date of any change; and
+
+(c)	If You Externally Deploy Your Modifications, You must make Source Code
+of all Your Externally Deployed Modifications either available to those to whom
+You have Externally Deployed Your Modifications, or publicly available.  Source
+Code of Your Externally Deployed Modifications must be released under the terms
+set forth in this License, including the license grants set forth in Section 3
+below, for as long as you Externally Deploy the Covered Code or twelve (12)
+months from the date of initial External Deployment, whichever is longer. You
+should preferably distribute the Source Code of Your Externally Deployed
+Modifications electronically (e.g. download from a web site).
+
+2.3	Distribution of Executable Versions.  In addition, if You Externally
+Deploy Covered Code (Original Code and/or Modifications) in object code,
+executable form only, You must include a prominent notice, in the code itself as
+well as in related documentation, stating that Source Code of the Covered Code
+is available under the terms of this License with information on how and where
+to obtain such Source Code.  
+
+2.4	Third Party Rights.  You expressly acknowledge and agree that although
+Apple and each Contributor grants the licenses to their respective portions of
+the Covered Code set forth herein, no assurances are provided by Apple or any
+Contributor that the Covered Code does not infringe the patent or other
+intellectual property rights of any other entity. Apple and each Contributor
+disclaim any liability to You for claims brought by any other entity based on
+infringement of intellectual property rights or otherwise. As a condition to
+exercising the rights and licenses granted hereunder, You hereby assume sole
+responsibility to secure any other intellectual property rights needed, if any.
+For example, if a third party patent license is required to allow You to
+distribute the Covered Code, it is Your responsibility to acquire that license
+before distributing the Covered Code.
+
+3.	Your Grants.  In consideration of, and as a condition to, the licenses
+granted to You under this License, You hereby grant to any person or entity
+receiving or distributing Covered Code under this License a non-exclusive,
+royalty-free, perpetual, irrevocable license, under Your Applicable Patent
+Rights and other intellectual property rights (other than patent) owned or
+controlled by You, to use, reproduce, display, perform, modify, sublicense,
+distribute and Externally Deploy Your Modifications of the same scope and extent
+as Apple's licenses under Sections 2.1 and 2.2 above.  
+
+4.	Larger Works.  You may create a Larger Work by combining Covered Code
+with other code not governed by the terms of this License and distribute the
+Larger Work as a single product.  In each such instance, You must make sure the
+requirements of this License are fulfilled for the Covered Code or any portion
+thereof. 
+
+5.	Limitations on Patent License.   Except as expressly stated in Section
+2, no other patent rights, express or implied, are granted by Apple herein.
+Modifications and/or Larger Works may require additional patent licenses from
+Apple which Apple may grant in its sole discretion.  
+
+6.	Additional Terms.  You may choose to offer, and to charge a fee for,
+warranty, support, indemnity or liability obligations and/or other rights
+consistent with the scope of the license granted herein ("Additional Terms") to
+one or more recipients of Covered Code. However, You may do so only on Your own
+behalf and as Your sole responsibility, and not on behalf of Apple or any
+Contributor. You must obtain the recipient's agreement that any such Additional
+Terms are offered by You alone, and You hereby agree to indemnify, defend and
+hold Apple and every Contributor harmless for any liability incurred by or
+claims asserted against Apple or such Contributor by reason of any such
+Additional Terms. 
+
+7.	Versions of the License.  Apple may publish revised and/or new versions
+of this License from time to time.  Each version will be given a distinguishing
+version number.  Once Original Code has been published under a particular
+version of this License, You may continue to use it under the terms of that
+version. You may also choose to use such Original Code under the terms of any
+subsequent version of this License published by Apple.  No one other than Apple
+has the right to modify the terms applicable to Covered Code created under this
+License.  
+
+8.	NO WARRANTY OR SUPPORT.  The Covered Code may contain in whole or in
+part pre-release, untested, or not fully tested works.  The Covered Code may
+contain errors that could cause failures or loss of data, and may be incomplete
+or contain inaccuracies.  You expressly acknowledge and agree that use of the
+Covered Code, or any portion thereof, is at Your sole and entire risk.  THE
+COVERED CODE IS PROVIDED "AS IS" AND WITHOUT WARRANTY, UPGRADES OR SUPPORT OF
+ANY KIND AND APPLE AND APPLE'S LICENSOR(S) (COLLECTIVELY REFERRED TO AS "APPLE"
+FOR THE PURPOSES OF SECTIONS 8 AND 9) AND ALL CONTRIBUTORS EXPRESSLY DISCLAIM
+ALL WARRANTIES AND/OR CONDITIONS, EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED
+TO, THE IMPLIED WARRANTIES AND/OR CONDITIONS OF MERCHANTABILITY, OF SATISFACTORY
+QUALITY, OF FITNESS FOR A PARTICULAR PURPOSE, OF ACCURACY, OF QUIET ENJOYMENT,
+AND NONINFRINGEMENT OF THIRD PARTY RIGHTS.  APPLE AND EACH CONTRIBUTOR DOES NOT
+WARRANT AGAINST INTERFERENCE WITH YOUR ENJOYMENT OF THE COVERED CODE, THAT THE
+FUNCTIONS CONTAINED IN THE COVERED CODE WILL MEET YOUR REQUIREMENTS, THAT THE
+OPERATION OF THE COVERED CODE WILL BE UNINTERRUPTED OR ERROR-FREE, OR THAT
+DEFECTS IN THE COVERED CODE WILL BE CORRECTED.  NO ORAL OR WRITTEN INFORMATION
+OR ADVICE GIVEN BY APPLE, AN APPLE AUTHORIZED REPRESENTATIVE OR ANY CONTRIBUTOR
+SHALL CREATE A WARRANTY.  You acknowledge that the Covered Code is not intended
+for use in the operation of nuclear facilities, aircraft navigation,
+communication systems, or air traffic control machines in which case the failure
+of the Covered Code could lead to death, personal injury, or severe physical or
+environmental damage.
+
+9.	LIMITATION OF LIABILITY. TO THE EXTENT NOT PROHIBITED BY LAW, IN NO
+EVENT SHALL APPLE OR ANY CONTRIBUTOR BE LIABLE FOR ANY INCIDENTAL, SPECIAL,
+INDIRECT OR CONSEQUENTIAL DAMAGES ARISING OUT OF OR RELATING TO THIS LICENSE OR
+YOUR USE OR INABILITY TO USE THE COVERED CODE, OR ANY PORTION THEREOF, WHETHER
+UNDER A THEORY OF CONTRACT, WARRANTY, TORT (INCLUDING NEGLIGENCE), PRODUCTS
+LIABILITY OR OTHERWISE, EVEN IF APPLE OR SUCH CONTRIBUTOR HAS BEEN ADVISED OF
+THE POSSIBILITY OF SUCH DAMAGES AND NOTWITHSTANDING THE FAILURE OF ESSENTIAL
+PURPOSE OF ANY REMEDY. SOME JURISDICTIONS DO NOT ALLOW THE LIMITATION OF
+LIABILITY OF INCIDENTAL OR CONSEQUENTIAL DAMAGES, SO THIS LIMITATION MAY NOT
+APPLY TO YOU. In no event shall Apple's total liability to You for all damages
+(other than as may be required by applicable law) under this License exceed the
+amount of fifty dollars ($50.00).
+
+10.	Trademarks.  This License does not grant any rights to use the
+trademarks or trade names  "Apple", "Mac", "Mac OS", "QuickTime", "QuickTime
+Streaming Server" or any other trademarks, service marks, logos or trade names
+belonging to Apple (collectively "Apple Marks") or to any trademark, service
+mark, logo or trade name belonging to any Contributor.  You agree not to use any
+Apple Marks in or as part of the name of products derived from the Original Code
+or to endorse or promote products derived from the Original Code other than as
+expressly permitted by and in strict compliance at all times with Apple's third
+party trademark usage guidelines which are posted at
+http://www.apple.com/legal/guidelinesfor3rdparties.html.  
+
+11.	Ownership. Subject to the licenses granted under this License, each
+Contributor retains all rights, title and interest in and to any Modifications
+made by such Contributor.  Apple retains all rights, title and interest in and
+to the Original Code and any Modifications made by or on behalf of Apple ("Apple
+Modifications"), and such Apple Modifications will not be automatically subject
+to this License.  Apple may, at its sole discretion, choose to license such
+Apple Modifications under this License, or on different terms from those
+contained in this License or may choose not to license them at all.  
+
+12.	Termination.  
+
+12.1	Termination.  This License and the rights granted hereunder will
+terminate:
+
+(a)	automatically without notice from Apple if You fail to comply with any
+term(s) of this License and fail to cure such breach within 30 days of becoming
+aware of such breach; (b)	immediately in the event of the circumstances
+described in Section 13.5(b); or (c)	automatically without notice from Apple
+if You, at any time during the term of this License, commence an action for
+patent infringement against Apple; provided that Apple did not first commence an
+action for patent infringement against You in that instance.
+
+12.2	Effect of Termination.  Upon termination, You agree to immediately stop
+any further use, reproduction, modification, sublicensing and distribution of
+the Covered Code.  All sublicenses to the Covered Code which have been properly
+granted prior to termination shall survive any termination of this License.
+Provisions which, by their nature, should remain in effect beyond the
+termination of this License shall survive, including but not limited to Sections
+3, 5, 8, 9, 10, 11, 12.2 and 13.  No party will be liable to any other for
+compensation, indemnity or damages of any sort solely as a result of terminating
+this License in accordance with its terms, and termination of this License will
+be without prejudice to any other right or remedy of any party.
+
+13. 	Miscellaneous.
+
+13.1	Government End Users.   The Covered Code is a "commercial item" as
+defined in FAR 2.101.  Government software and technical data rights in the
+Covered Code include only those rights customarily provided to the public as
+defined in this License. This customary commercial license in technical data and
+software is provided in accordance with FAR 12.211 (Technical Data) and 12.212
+(Computer Software) and, for Department of Defense purchases, DFAR 252.227-7015
+(Technical Data -- Commercial Items) and 227.7202-3 (Rights in Commercial
+Computer Software or Computer Software Documentation).  Accordingly, all U.S.
+Government End Users acquire Covered Code with only those rights set forth
+herein.
+
+13.2	Relationship of Parties.  This License will not be construed as creating
+an agency, partnership, joint venture or any other form of legal association
+between or among You, Apple or any Contributor, and You will not represent to
+the contrary, whether expressly, by implication, appearance or otherwise.
+
+13.3	Independent Development.   Nothing in this License will impair Apple's
+right to acquire, license, develop, have others develop for it, market and/or
+distribute technology or products that perform the same or similar functions as,
+or otherwise compete with, Modifications, Larger Works, technology or products
+that You may develop, produce, market or distribute.
+
+13.4	Waiver; Construction.  Failure by Apple or any Contributor to enforce
+any provision of this License will not be deemed a waiver of future enforcement
+of that or any other provision.  Any law or regulation which provides that the
+language of a contract shall be construed against the drafter will not apply to
+this License.
+
+13.5	Severability.  (a) If for any reason a court of competent jurisdiction
+finds any provision of this License, or portion thereof, to be unenforceable,
+that provision of the License will be enforced to the maximum extent permissible
+so as to effect the economic benefits and intent of the parties, and the
+remainder of this License will continue in full force and effect.  (b)
+Notwithstanding the foregoing, if applicable law prohibits or restricts You from
+fully and/or specifically complying with Sections 2 and/or 3 or prevents the
+enforceability of either of those Sections, this License will immediately
+terminate and You must immediately discontinue any use of the Covered Code and
+destroy all copies of it that are in your possession or control.
+
+13.6	Dispute Resolution.  Any litigation or other dispute resolution between
+You and Apple relating to this License shall take place in the Northern District
+of California, and You and Apple hereby consent to the personal jurisdiction of,
+and venue in, the state and federal courts within that District with respect to
+this License. The application of the United Nations Convention on Contracts for
+the International Sale of Goods is expressly excluded.
+
+13.7	Entire Agreement; Governing Law.  This License constitutes the entire
+agreement between the parties with respect to the subject matter hereof.  This
+License shall be governed by the laws of the United States and the State of
+California, except that body of California law concerning conflicts of law. 
+
+Where You are located in the province of Quebec, Canada, the following clause
+applies:  The parties hereby confirm that they have requested that this License
+and all related documents be drafted in English.  Les parties ont exigÃ© que le
+prÃ©sent contrat et tous les documents connexes soient rÃ©digÃ©s en anglais.
+
+EXHIBIT A. 
+
+"Portions Copyright (c) 1999-2007 Apple Inc.  All Rights Reserved.
+
+This file contains Original Code and/or Modifications of Original Code as
+defined in and that are subject to the Apple Public Source License Version 2.0
+(the 'License').  You may not use this file except in compliance with the
+License.  Please obtain a copy of the License at
+http://www.opensource.apple.com/apsl/ and read it before using this file.
+
+The Original Code and all software distributed under the License are distributed
+on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION,
+ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET
+ENJOYMENT OR NON-INFRINGEMENT.  Please see the License for the specific language
+governing rights and limitations under the License." 
+
+----
+
+This product includes the Public Suffix List
+licensed under the terms of the Mozilla Public License, v. 2.0
+
+Mozilla Public License Version 2.0
+==================================
+
+1. Definitions
+--------------
+
+1.1. "Contributor"
+    means each individual or legal entity that creates, contributes to
+    the creation of, or owns Covered Software.
+
+1.2. "Contributor Version"
+    means the combination of the Contributions of others (if any) used
+    by a Contributor and that particular Contributor's Contribution.
+
+1.3. "Contribution"
+    means Covered Software of a particular Contributor.
+
+1.4. "Covered Software"
+    means Source Code Form to which the initial Contributor has attached
+    the notice in Exhibit A, the Executable Form of such Source Code
+    Form, and Modifications of such Source Code Form, in each case
+    including portions thereof.
+
+1.5. "Incompatible With Secondary Licenses"
+    means
+
+    (a) that the initial Contributor has attached the notice described
+        in Exhibit B to the Covered Software; or
+
+    (b) that the Covered Software was made available under the terms of
+        version 1.1 or earlier of the License, but not also under the
+        terms of a Secondary License.
+
+1.6. "Executable Form"
+    means any form of the work other than Source Code Form.
+
+1.7. "Larger Work"
+    means a work that combines Covered Software with other material, in
+    a separate file or files, that is not Covered Software.
+
+1.8. "License"
+    means this document.
+
+1.9. "Licensable"
+    means having the right to grant, to the maximum extent possible,
+    whether at the time of the initial grant or subsequently, any and
+    all of the rights conveyed by this License.
+
+1.10. "Modifications"
+    means any of the following:
+
+    (a) any file in Source Code Form that results from an addition to,
+        deletion from, or modification of the contents of Covered
+        Software; or
+
+    (b) any new file in Source Code Form that contains any Covered
+        Software.
+
+1.11. "Patent Claims" of a Contributor
+    means any patent claim(s), including without limitation, method,
+    process, and apparatus claims, in any patent Licensable by such
+    Contributor that would be infringed, but for the grant of the
+    License, by the making, using, selling, offering for sale, having
+    made, import, or transfer of either its Contributions or its
+    Contributor Version.
+
+1.12. "Secondary License"
+    means either the GNU General Public License, Version 2.0, the GNU
+    Lesser General Public License, Version 2.1, the GNU Affero General
+    Public License, Version 3.0, or any later versions of those
+    licenses.
+
+1.13. "Source Code Form"
+    means the form of the work preferred for making modifications.
+
+1.14. "You" (or "Your")
+    means an individual or a legal entity exercising rights under this
+    License. For legal entities, "You" includes any entity that
+    controls, is controlled by, or is under common control with You. For
+    purposes of this definition, "control" means (a) the power, direct
+    or indirect, to cause the direction or management of such entity,
+    whether by contract or otherwise, or (b) ownership of more than
+    fifty percent (50%) of the outstanding shares or beneficial
+    ownership of such entity.
+
+2. License Grants and Conditions
+--------------------------------
+
+2.1. Grants
+
+Each Contributor hereby grants You a world-wide, royalty-free,
+non-exclusive license:
+
+(a) under intellectual property rights (other than patent or trademark)
+    Licensable by such Contributor to use, reproduce, make available,
+    modify, display, perform, distribute, and otherwise exploit its
+    Contributions, either on an unmodified basis, with Modifications, or
+    as part of a Larger Work; and
+
+(b) under Patent Claims of such Contributor to make, use, sell, offer
+    for sale, have made, import, and otherwise transfer either its
+    Contributions or its Contributor Version.
+
+2.2. Effective Date
+
+The licenses granted in Section 2.1 with respect to any Contribution
+become effective for each Contribution on the date the Contributor first
+distributes such Contribution.
+
+2.3. Limitations on Grant Scope
+
+The licenses granted in this Section 2 are the only rights granted under
+this License. No additional rights or licenses will be implied from the
+distribution or licensing of Covered Software under this License.
+Notwithstanding Section 2.1(b) above, no patent license is granted by a
+Contributor:
+
+(a) for any code that a Contributor has removed from Covered Software;
+    or
+
+(b) for infringements caused by: (i) Your and any other third party's
+    modifications of Covered Software, or (ii) the combination of its
+    Contributions with other software (except as part of its Contributor
+    Version); or
+
+(c) under Patent Claims infringed by Covered Software in the absence of
+    its Contributions.
+
+This License does not grant any rights in the trademarks, service marks,
+or logos of any Contributor (except as may be necessary to comply with
+the notice requirements in Section 3.4).
+
+2.4. Subsequent Licenses
+
+No Contributor makes additional grants as a result of Your choice to
+distribute the Covered Software under a subsequent version of this
+License (see Section 10.2) or under the terms of a Secondary License (if
+permitted under the terms of Section 3.3).
+
+2.5. Representation
+
+Each Contributor represents that the Contributor believes its
+Contributions are its original creation(s) or it has sufficient rights
+to grant the rights to its Contributions conveyed by this License.
+
+2.6. Fair Use
+
+This License is not intended to limit any rights You have under
+applicable copyright doctrines of fair use, fair dealing, or other
+equivalents.
+
+2.7. Conditions
+
+Sections 3.1, 3.2, 3.3, and 3.4 are conditions of the licenses granted
+in Section 2.1.
+
+3. Responsibilities
+-------------------
+
+3.1. Distribution of Source Form
+
+All distribution of Covered Software in Source Code Form, including any
+Modifications that You create or to which You contribute, must be under
+the terms of this License. You must inform recipients that the Source
+Code Form of the Covered Software is governed by the terms of this
+License, and how they can obtain a copy of this License. You may not
+attempt to alter or restrict the recipients' rights in the Source Code
+Form.
+
+3.2. Distribution of Executable Form
+
+If You distribute Covered Software in Executable Form then:
+
+(a) such Covered Software must also be made available in Source Code
+    Form, as described in Section 3.1, and You must inform recipients of
+    the Executable Form how they can obtain a copy of such Source Code
+    Form by reasonable means in a timely manner, at a charge no more
+    than the cost of distribution to the recipient; and
+
+(b) You may distribute such Executable Form under the terms of this
+    License, or sublicense it under different terms, provided that the
+    license for the Executable Form does not attempt to limit or alter
+    the recipients' rights in the Source Code Form under this License.
+
+3.3. Distribution of a Larger Work
+
+You may create and distribute a Larger Work under terms of Your choice,
+provided that You also comply with the requirements of this License for
+the Covered Software. If the Larger Work is a combination of Covered
+Software with a work governed by one or more Secondary Licenses, and the
+Covered Software is not Incompatible With Secondary Licenses, this
+License permits You to additionally distribute such Covered Software
+under the terms of such Secondary License(s), so that the recipient of
+the Larger Work may, at their option, further distribute the Covered
+Software under the terms of either this License or such Secondary
+License(s).
+
+3.4. Notices
+
+You may not remove or alter the substance of any license notices
+(including copyright notices, patent notices, disclaimers of warranty,
+or limitations of liability) contained within the Source Code Form of
+the Covered Software, except that You may alter any license notices to
+the extent required to remedy known factual inaccuracies.
+
+3.5. Application of Additional Terms
+
+You may choose to offer, and to charge a fee for, warranty, support,
+indemnity or liability obligations to one or more recipients of Covered
+Software. However, You may do so only on Your own behalf, and not on
+behalf of any Contributor. You must make it absolutely clear that any
+such warranty, support, indemnity, or liability obligation is offered by
+You alone, and You hereby agree to indemnify every Contributor for any
+liability incurred by such Contributor as a result of warranty, support,
+indemnity or liability terms You offer. You may include additional
+disclaimers of warranty and limitations of liability specific to any
+jurisdiction.
+
+4. Inability to Comply Due to Statute or Regulation
+---------------------------------------------------
+
+If it is impossible for You to comply with any of the terms of this
+License with respect to some or all of the Covered Software due to
+statute, judicial order, or regulation then You must: (a) comply with
+the terms of this License to the maximum extent possible; and (b)
+describe the limitations and the code they affect. Such description must
+be placed in a text file included with all distributions of the Covered
+Software under this License. Except to the extent prohibited by statute
+or regulation, such description must be sufficiently detailed for a
+recipient of ordinary skill to be able to understand it.
+
+5. Termination
+--------------
+
+5.1. The rights granted under this License will terminate automatically
+if You fail to comply with any of its terms. However, if You become
+compliant, then the rights granted under this License from a particular
+Contributor are reinstated (a) provisionally, unless and until such
+Contributor explicitly and finally terminates Your grants, and (b) on an
+ongoing basis, if such Contributor fails to notify You of the
+non-compliance by some reasonable means prior to 60 days after You have
+come back into compliance. Moreover, Your grants from a particular
+Contributor are reinstated on an ongoing basis if such Contributor
+notifies You of the non-compliance by some reasonable means, this is the
+first time You have received notice of non-compliance with this License
+from such Contributor, and You become compliant prior to 30 days after
+Your receipt of the notice.
+
+5.2. If You initiate litigation against any entity by asserting a patent
+infringement claim (excluding declaratory judgment actions,
+counter-claims, and cross-claims) alleging that a Contributor Version
+directly or indirectly infringes any patent, then the rights granted to
+You by any and all Contributors for the Covered Software under Section
+2.1 of this License shall terminate.
+
+5.3. In the event of termination under Sections 5.1 or 5.2 above, all
+end user license agreements (excluding distributors and resellers) which
+have been validly granted by You or Your distributors under this License
+prior to termination shall survive termination.
+
+************************************************************************
+*                                                                      *
+*  6. Disclaimer of Warranty                                           *
+*  -------------------------                                           *
+*                                                                      *
+*  Covered Software is provided under this License on an "as is"       *
+*  basis, without warranty of any kind, either expressed, implied, or  *
+*  statutory, including, without limitation, warranties that the       *
+*  Covered Software is free of defects, merchantable, fit for a        *
+*  particular purpose or non-infringing. The entire risk as to the     *
+*  quality and performance of the Covered Software is with You.        *
+*  Should any Covered Software prove defective in any respect, You     *
+*  (not any Contributor) assume the cost of any necessary servicing,   *
+*  repair, or correction. This disclaimer of warranty constitutes an   *
+*  essential part of this License. No use of any Covered Software is   *
+*  authorized under this License except under this disclaimer.         *
+*                                                                      *
+************************************************************************
+
+************************************************************************
+*                                                                      *
+*  7. Limitation of Liability                                          *
+*  --------------------------                                          *
+*                                                                      *
+*  Under no circumstances and under no legal theory, whether tort      *
+*  (including negligence), contract, or otherwise, shall any           *
+*  Contributor, or anyone who distributes Covered Software as          *
+*  permitted above, be liable to You for any direct, indirect,         *
+*  special, incidental, or consequential damages of any character      *
+*  including, without limitation, damages for lost profits, loss of    *
+*  goodwill, work stoppage, computer failure or malfunction, or any    *
+*  and all other commercial damages or losses, even if such party      *
+*  shall have been informed of the possibility of such damages. This   *
+*  limitation of liability shall not apply to liability for death or   *
+*  personal injury resulting from such party's negligence to the       *
+*  extent applicable law prohibits such limitation. Some               *
+*  jurisdictions do not allow the exclusion or limitation of           *
+*  incidental or consequential damages, so this exclusion and          *
+*  limitation may not apply to You.                                    *
+*                                                                      *
+************************************************************************
+
+8. Litigation
+-------------
+
+Any litigation relating to this License may be brought only in the
+courts of a jurisdiction where the defendant maintains its principal
+place of business and such litigation shall be governed by laws of that
+jurisdiction, without reference to its conflict-of-law provisions.
+Nothing in this Section shall prevent a party's ability to bring
+cross-claims or counter-claims.
+
+9. Miscellaneous
+----------------
+
+This License represents the complete agreement concerning the subject
+matter hereof. If any provision of this License is held to be
+unenforceable, such provision shall be reformed only to the extent
+necessary to make it enforceable. Any law or regulation which provides
+that the language of a contract shall be construed against the drafter
+shall not be used to construe this License against a Contributor.
+
+10. Versions of the License
+---------------------------
+
+10.1. New Versions
+
+Mozilla Foundation is the license steward. Except as provided in Section
+10.3, no one other than the license steward has the right to modify or
+publish new versions of this License. Each version will be given a
+distinguishing version number.
+
+10.2. Effect of New Versions
+
+You may distribute the Covered Software under the terms of the version
+of the License under which You originally received the Covered Software,
+or under the terms of any subsequent version published by the license
+steward.
+
+10.3. Modified Versions
+
+If you create software not governed by this License, and you want to
+create a new license for such software, you may create and use a
+modified version of this License if you rename the license and remove
+any references to the name of the license steward (except to note that
+such modified license differs from this License).
+
+10.4. Distributing Source Code Form that is Incompatible With Secondary
+Licenses
+
+If You choose to distribute Source Code Form that is Incompatible With
+Secondary Licenses under the terms of this version of the License, the
+notice described in Exhibit B of this License must be attached.
+
+Exhibit A - Source Code Form License Notice
+-------------------------------------------
+
+  This Source Code Form is subject to the terms of the Mozilla Public
+  License, v. 2.0. If a copy of the MPL was not distributed with this
+  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+If it is not possible or desirable to put the notice in a particular
+file, then You may include the notice in a location (such as a LICENSE
+file in a relevant directory) where a recipient would be likely to look
+for such a notice.
+
+You may add additional accurate notices of copyright ownership.
+
+Exhibit B - "Incompatible With Secondary Licenses" Notice
+---------------------------------------------------------
+
+  This Source Code Form is "Incompatible With Secondary Licenses", as
+  defined by the Mozilla Public License, v. 2.0.
+
+----
+
+This product contains the following XML Schemas for Java EE Deployment Descriptors:
+ - javaee_5.xsd
+ - javaee_web_services_1_2.xsd
+ - javaee_web_services_client_1_2.xsd
+ - javaee_6.xsd
+ - javaee_web_services_1_3.xsd
+ - javaee_web_services_client_1_3.xsd
+ - jsp_2_2.xsd
+ - web-app_3_0.xsd
+ - web-common_3_0.xsd
+ - web-fragment_3_0.xsd
+ - javaee_7.xsd
+ - javaee_web_services_1_4.xsd
+ - javaee_web_services_client_1_4.xsd
+ - jsp_2_3.xsd
+ - web-app_3_1.xsd
+ - web-common_3_1.xsd
+ - web-fragment_3_1.xsd
+
+Licensed under the terms of the CDDL v1.0. 
+
+COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0
+
+1. Definitions.
+
+   1.1. Contributor. means each individual or entity that creates or contributes
+        to the creation of Modifications.
+
+   1.2. Contributor Version. means the combination of the Original Software,
+        prior Modifications used by a Contributor (if any), and the
+        Modifications made by that particular Contributor.
+
+   1.3. Covered Software. means (a) the Original Software, or (b) Modifications,
+        or (c) the combination of files containing Original Software with files
+        containing Modifications, in each case including portions thereof.
+
+   1.4. Executable. means the Covered Software in any form other than Source
+        Code.
+
+   1.5. Initial Developer. means the individual or entity that first makes
+        Original Software available under this License.
+
+   1.6. Larger Work. means a work which combines Covered Software or portions
+        thereof with code not governed by the terms of this License.
+
+   1.7. License. means this document.
+
+   1.8. Licensable. means having the right to grant, to the maximum extent
+        possible, whether at the time of the initial grant or subsequently
+        acquired, any and all of the rights conveyed herein.
+
+   1.9. Modifications. means the Source Code and Executable form of any of the
+        following:
+
+        A. Any file that results from an addition to, deletion from or
+           modification of the contents of a file containing Original Software
+           or previous Modifications;
+
+        B. Any new file that contains any part of the Original Software or
+           previous Modification; or
+
+        C. Any new file that is contributed or otherwise made available under
+           the terms of this License.
+
+   1.10. Original Software. means the Source Code and Executable form of
+         computer software code that is originally released under this License.
+
+   1.11. Patent Claims. means any patent claim(s), now owned or hereafter
+         acquired, including without limitation, method, process, and apparatus
+         claims, in any patent Licensable by grantor.
+
+   1.12. Source Code. means (a) the common form of computer software code in
+         which modifications are made and (b) associated documentation included
+         in or with such code.
+
+   1.13. You. (or .Your.) means an individual or a legal entity exercising
+         rights under, and complying with all of the terms of, this License. For
+         legal entities, .You. includes any entity which controls, is controlled
+         by, or is under common control with You. For purposes of this
+         definition, .control. means (a) the power, direct or indirect, to cause
+         the direction or management of such entity, whether by contract or
+         otherwise, or (b) ownership of more than fifty percent (50%) of the
+         outstanding shares or beneficial ownership of such entity.
+
+2. License Grants.
+
+      2.1. The Initial Developer Grant.
+
+      Conditioned upon Your compliance with Section 3.1 below and subject to
+      third party intellectual property claims, the Initial Developer hereby
+      grants You a world-wide, royalty-free, non-exclusive license:
+
+        (a) under intellectual property rights (other than patent or trademark)
+            Licensable by Initial Developer, to use, reproduce, modify, display,
+            perform, sublicense and distribute the Original Software (or
+            portions thereof), with or without Modifications, and/or as part of
+            a Larger Work; and
+
+        (b) under Patent Claims infringed by the making, using or selling of
+            Original Software, to make, have made, use, practice, sell, and
+            offer for sale, and/or otherwise dispose of the Original Software
+            (or portions thereof).
+
+        (c) The licenses granted in Sections 2.1(a) and (b) are effective on the
+            date Initial Developer first distributes or otherwise makes the
+            Original Software available to a third party under the terms of this
+            License.
+
+        (d) Notwithstanding Section 2.1(b) above, no patent license is granted:
+            (1) for code that You delete from the Original Software, or (2) for
+            infringements caused by: (i) the modification of the Original
+            Software, or (ii) the combination of the Original Software with
+            other software or devices.
+
+    2.2. Contributor Grant.
+
+    Conditioned upon Your compliance with Section 3.1 below and subject to third
+    party intellectual property claims, each Contributor hereby grants You a
+    world-wide, royalty-free, non-exclusive license:
+
+        (a) under intellectual property rights (other than patent or trademark)
+            Licensable by Contributor to use, reproduce, modify, display,
+            perform, sublicense and distribute the Modifications created by such
+            Contributor (or portions thereof), either on an unmodified basis,
+            with other Modifications, as Covered Software and/or as part of a
+            Larger Work; and
+
+        (b) under Patent Claims infringed by the making, using, or selling of
+            Modifications made by that Contributor either alone and/or in
+            combination with its Contributor Version (or portions of such
+            combination), to make, use, sell, offer for sale, have made, and/or
+            otherwise dispose of: (1) Modifications made by that Contributor (or
+            portions thereof); and (2) the combination of Modifications made by
+            that Contributor with its Contributor Version (or portions of such
+            combination).
+
+        (c) The licenses granted in Sections 2.2(a) and 2.2(b) are effective on
+            the date Contributor first distributes or otherwise makes the
+            Modifications available to a third party.
+
+        (d) Notwithstanding Section 2.2(b) above, no patent license is granted:
+            (1) for any code that Contributor has deleted from the Contributor
+            Version; (2) for infringements caused by: (i) third party
+            modifications of Contributor Version, or (ii) the combination of
+            Modifications made by that Contributor with other software (except
+            as part of the Contributor Version) or other devices; or (3) under
+            Patent Claims infringed by Covered Software in the absence of
+            Modifications made by that Contributor.
+
+3. Distribution Obligations.
+
+      3.1. Availability of Source Code.
+      Any Covered Software that You distribute or otherwise make available in
+      Executable form must also be made available in Source Code form and that
+      Source Code form must be distributed only under the terms of this License.
+      You must include a copy of this License with every copy of the Source Code
+      form of the Covered Software You distribute or otherwise make available.
+      You must inform recipients of any such Covered Software in Executable form
+      as to how they can obtain such Covered Software in Source Code form in a
+      reasonable manner on or through a medium customarily used for software
+      exchange.
+
+      3.2. Modifications.
+      The Modifications that You create or to which You contribute are governed
+      by the terms of this License. You represent that You believe Your
+      Modifications are Your original creation(s) and/or You have sufficient
+      rights to grant the rights conveyed by this License.
+
+      3.3. Required Notices.
+      You must include a notice in each of Your Modifications that identifies
+      You as the Contributor of the Modification. You may not remove or alter
+      any copyright, patent or trademark notices contained within the Covered
+      Software, or any notices of licensing or any descriptive text giving
+      attribution to any Contributor or the Initial Developer.
+
+      3.4. Application of Additional Terms.
+      You may not offer or impose any terms on any Covered Software in Source
+      Code form that alters or restricts the applicable version of this License
+      or the recipients. rights hereunder. You may choose to offer, and to
+      charge a fee for, warranty, support, indemnity or liability obligations to
+      one or more recipients of Covered Software. However, you may do so only on
+      Your own behalf, and not on behalf of the Initial Developer or any
+      Contributor. You must make it absolutely clear that any such warranty,
+      support, indemnity or liability obligation is offered by You alone, and
+      You hereby agree to indemnify the Initial Developer and every Contributor
+      for any liability incurred by the Initial Developer or such Contributor as
+      a result of warranty, support, indemnity or liability terms You offer.
+
+      3.5. Distribution of Executable Versions.
+      You may distribute the Executable form of the Covered Software under the
+      terms of this License or under the terms of a license of Your choice,
+      which may contain terms different from this License, provided that You are
+      in compliance with the terms of this License and that the license for the
+      Executable form does not attempt to limit or alter the recipient.s rights
+      in the Source Code form from the rights set forth in this License. If You
+      distribute the Covered Software in Executable form under a different
+      license, You must make it absolutely clear that any terms which differ
+      from this License are offered by You alone, not by the Initial Developer
+      or Contributor. You hereby agree to indemnify the Initial Developer and
+      every Contributor for any liability incurred by the Initial Developer or
+      such Contributor as a result of any such terms You offer.
+
+      3.6. Larger Works.
+      You may create a Larger Work by combining Covered Software with other code
+      not governed by the terms of this License and distribute the Larger Work
+      as a single product. In such a case, You must make sure the requirements
+      of this License are fulfilled for the Covered Software.
+
+4. Versions of the License.
+
+      4.1. New Versions.
+      Sun Microsystems, Inc. is the initial license steward and may publish
+      revised and/or new versions of this License from time to time. Each
+      version will be given a distinguishing version number. Except as provided
+      in Section 4.3, no one other than the license steward has the right to
+      modify this License.
+
+      4.2. Effect of New Versions.
+      You may always continue to use, distribute or otherwise make the Covered
+      Software available under the terms of the version of the License under
+      which You originally received the Covered Software. If the Initial
+      Developer includes a notice in the Original Software prohibiting it from
+      being distributed or otherwise made available under any subsequent version
+      of the License, You must distribute and make the Covered Software
+      available under the terms of the version of the License under which You
+      originally received the Covered Software. Otherwise, You may also choose
+      to use, distribute or otherwise make the Covered Software available under
+      the terms of any subsequent version of the License published by the
+      license steward.
+
+      4.3. Modified Versions.
+      When You are an Initial Developer and You want to create a new license for
+      Your Original Software, You may create and use a modified version of this
+      License if You: (a) rename the license and remove any references to the
+      name of the license steward (except to note that the license differs from
+      this License); and (b) otherwise make it clear that the license contains
+      terms which differ from this License.
+
+5. DISCLAIMER OF WARRANTY.
+
+   COVERED SOFTWARE IS PROVIDED UNDER THIS LICENSE ON AN .AS IS. BASIS, WITHOUT
+   WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, WITHOUT
+   LIMITATION, WARRANTIES THAT THE COVERED SOFTWARE IS FREE OF DEFECTS,
+   MERCHANTABLE, FIT FOR A PARTICULAR PURPOSE OR NON-INFRINGING. THE ENTIRE RISK
+   AS TO THE QUALITY AND PERFORMANCE OF THE COVERED SOFTWARE IS WITH YOU. SHOULD
+   ANY COVERED SOFTWARE PROVE DEFECTIVE IN ANY RESPECT, YOU (NOT THE INITIAL
+   DEVELOPER OR ANY OTHER CONTRIBUTOR) ASSUME THE COST OF ANY NECESSARY
+   SERVICING, REPAIR OR CORRECTION. THIS DISCLAIMER OF WARRANTY CONSTITUTES AN
+   ESSENTIAL PART OF THIS LICENSE. NO USE OF ANY COVERED SOFTWARE IS AUTHORIZED
+   HEREUNDER EXCEPT UNDER THIS DISCLAIMER.
+
+6. TERMINATION.
+
+      6.1. This License and the rights granted hereunder will terminate
+           automatically if You fail to comply with terms herein and fail to
+           cure such breach within 30 days of becoming aware of the breach.
+           Provisions which, by their nature, must remain in effect beyond the
+           termination of this License shall survive.
+
+      6.2. If You assert a patent infringement claim (excluding declaratory
+           judgment actions) against Initial Developer or a Contributor (the
+           Initial Developer or Contributor against whom You assert such claim
+           is referred to as .Participant.) alleging that the Participant
+           Software (meaning the Contributor Version where the Participant is a
+           Contributor or the Original Software where the Participant is the
+           Initial Developer) directly or indirectly infringes any patent, then
+           any and all rights granted directly or indirectly to You by such
+           Participant, the Initial Developer (if the Initial Developer is not
+           the Participant) and all Contributors under Sections 2.1 and/or 2.2
+           of this License shall, upon 60 days notice from Participant terminate
+           prospectively and automatically at the expiration of such 60 day
+           notice period, unless if within such 60 day period You withdraw Your
+           claim with respect to the Participant Software against such
+           Participant either unilaterally or pursuant to a written agreement
+           with Participant.
+
+      6.3. In the event of termination under Sections 6.1 or 6.2 above, all end
+           user licenses that have been validly granted by You or any
+           distributor hereunder prior to termination (excluding licenses
+           granted to You by any distributor) shall survive termination.
+
+7. LIMITATION OF LIABILITY.
+
+   UNDER NO CIRCUMSTANCES AND UNDER NO LEGAL THEORY, WHETHER TORT (INCLUDING
+   NEGLIGENCE), CONTRACT, OR OTHERWISE, SHALL YOU, THE INITIAL DEVELOPER, ANY
+   OTHER CONTRIBUTOR, OR ANY DISTRIBUTOR OF COVERED SOFTWARE, OR ANY SUPPLIER OF
+   ANY OF SUCH PARTIES, BE LIABLE TO ANY PERSON FOR ANY INDIRECT, SPECIAL,
+   INCIDENTAL, OR CONSEQUENTIAL DAMAGES OF ANY CHARACTER INCLUDING, WITHOUT
+   LIMITATION, DAMAGES FOR LOST PROFITS, LOSS OF GOODWILL, WORK STOPPAGE,
+   COMPUTER FAILURE OR MALFUNCTION, OR ANY AND ALL OTHER COMMERCIAL DAMAGES OR
+   LOSSES, EVEN IF SUCH PARTY SHALL HAVE BEEN INFORMED OF THE POSSIBILITY OF
+   SUCH DAMAGES. THIS LIMITATION OF LIABILITY SHALL NOT APPLY TO LIABILITY FOR
+   DEATH OR PERSONAL INJURY RESULTING FROM SUCH PARTY.S NEGLIGENCE TO THE EXTENT
+   APPLICABLE LAW PROHIBITS SUCH LIMITATION. SOME JURISDICTIONS DO NOT ALLOW THE
+   EXCLUSION OR LIMITATION OF INCIDENTAL OR CONSEQUENTIAL DAMAGES, SO THIS
+   EXCLUSION AND LIMITATION MAY NOT APPLY TO YOU.
+
+8. U.S. GOVERNMENT END USERS.
+
+   The Covered Software is a .commercial item,. as that term is defined in 48
+   C.F.R. 2.101 (Oct. 1995), consisting of .commercial computer software. (as
+   that term is defined at 48 C.F.R. ? 252.227-7014(a)(1)) and commercial
+   computer software documentation. as such terms are used in 48 C.F.R. 12.212
+   (Sept. 1995). Consistent with 48 C.F.R. 12.212 and 48 C.F.R. 227.7202-1
+   through 227.7202-4 (June 1995), all U.S. Government End Users acquire Covered
+   Software with only those rights set forth herein. This U.S. Government Rights
+   clause is in lieu of, and supersedes, any other FAR, DFAR, or other clause or
+   provision that addresses Government rights in computer software under this
+   License.
+
+9. MISCELLANEOUS.
+
+   This License represents the complete agreement concerning subject matter
+   hereof. If any provision of this License is held to be unenforceable, such
+   provision shall be reformed only to the extent necessary to make it
+   enforceable. This License shall be governed by the law of the jurisdiction
+   specified in a notice contained within the Original Software (except to the
+   extent applicable law, if any, provides otherwise), excluding such
+   jurisdiction's conflict-of-law provisions. Any litigation relating to this
+   License shall be subject to the jurisdiction of the courts located in the
+   jurisdiction and venue specified in a notice contained within the Original
+   Software, with the losing party responsible for costs, including, without
+   limitation, court costs and reasonable attorneys. fees and expenses. The
+   application of the United Nations Convention on Contracts for the
+   International Sale of Goods is expressly excluded. Any law or regulation
+   which provides that the language of a contract shall be construed against
+   the drafter shall not apply to this License. You agree that You alone are
+   responsible for compliance with the United States export administration
+   regulations (and the export control laws and regulation of any other
+   countries) when You use, distribute or otherwise make available any Covered
+   Software.
+
+10. RESPONSIBILITY FOR CLAIMS.
+
+   As between Initial Developer and the Contributors, each party is responsible
+   for claims and damages arising, directly or indirectly, out of its
+   utilization of rights under this License and You agree to work with Initial
+   Developer and Contributors to distribute such responsibility on an equitable
+   basis. Nothing herein is intended or shall be deemed to constitute any
+   admission of liability.
+
+   NOTICE PURSUANT TO SECTION 9 OF THE COMMON DEVELOPMENT AND DISTRIBUTION
+   LICENSE (CDDL)
+
+   The code released under the CDDL shall be governed by the laws of the State
+   of California (excluding conflict-of-law provisions). Any litigation relating
+   to this License shall be subject to the jurisdiction of the Federal Courts of
+   the Northern District of California and the state courts of the State of
+   California, with venue lying in Santa Clara County, California.
+
+----
+
+This product contains the javax.annotation API 1.3.2
+Licensed under CDDL v1.1
+
+Copyright (c) 2012-2017 Oracle and/or its affiliates. All rights reserved.
+
+COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.1
+
+1. Definitions.
+
+    1.1. "Contributor" means each individual or entity that creates or
+    contributes to the creation of Modifications.
+
+    1.2. "Contributor Version" means the combination of the Original
+    Software, prior Modifications used by a Contributor (if any), and
+    the Modifications made by that particular Contributor.
+
+    1.3. "Covered Software" means (a) the Original Software, or (b)
+    Modifications, or (c) the combination of files containing Original
+    Software with files containing Modifications, in each case including
+    portions thereof.
+
+    1.4. "Executable" means the Covered Software in any form other than
+    Source Code.
+
+    1.5. "Initial Developer" means the individual or entity that first
+    makes Original Software available under this License.
+
+    1.6. "Larger Work" means a work which combines Covered Software or
+    portions thereof with code not governed by the terms of this License.
+
+    1.7. "License" means this document.
+
+    1.8. "Licensable" means having the right to grant, to the maximum
+    extent possible, whether at the time of the initial grant or
+    subsequently acquired, any and all of the rights conveyed herein.
+
+    1.9. "Modifications" means the Source Code and Executable form of
+    any of the following:
+
+    A. Any file that results from an addition to, deletion from or
+    modification of the contents of a file containing Original Software
+    or previous Modifications;
+
+    B. Any new file that contains any part of the Original Software or
+    previous Modification; or
+
+    C. Any new file that is contributed or otherwise made available
+    under the terms of this License.
+
+    1.10. "Original Software" means the Source Code and Executable form
+    of computer software code that is originally released under this
+    License.
+
+    1.11. "Patent Claims" means any patent claim(s), now owned or
+    hereafter acquired, including without limitation, method, process,
+    and apparatus claims, in any patent Licensable by grantor.
+
+    1.12. "Source Code" means (a) the common form of computer software
+    code in which modifications are made and (b) associated
+    documentation included in or with such code.
+
+    1.13. "You" (or "Your") means an individual or a legal entity
+    exercising rights under, and complying with all of the terms of,
+    this License. For legal entities, "You" includes any entity which
+    controls, is controlled by, or is under common control with You. For
+    purposes of this definition, "control" means (a) the power, direct
+    or indirect, to cause the direction or management of such entity,
+    whether by contract or otherwise, or (b) ownership of more than
+    fifty percent (50%) of the outstanding shares or beneficial
+    ownership of such entity.
+
+2. License Grants.
+
+    2.1. The Initial Developer Grant.
+
+    Conditioned upon Your compliance with Section 3.1 below and subject
+    to third party intellectual property claims, the Initial Developer
+    hereby grants You a world-wide, royalty-free, non-exclusive license:
+
+    (a) under intellectual property rights (other than patent or
+    trademark) Licensable by Initial Developer, to use, reproduce,
+    modify, display, perform, sublicense and distribute the Original
+    Software (or portions thereof), with or without Modifications,
+    and/or as part of a Larger Work; and
+
+    (b) under Patent Claims infringed by the making, using or selling of
+    Original Software, to make, have made, use, practice, sell, and
+    offer for sale, and/or otherwise dispose of the Original Software
+    (or portions thereof).
+
+    (c) The licenses granted in Sections 2.1(a) and (b) are effective on
+    the date Initial Developer first distributes or otherwise makes the
+    Original Software available to a third party under the terms of this
+    License.
+
+    (d) Notwithstanding Section 2.1(b) above, no patent license is
+    granted: (1) for code that You delete from the Original Software, or
+    (2) for infringements caused by: (i) the modification of the
+    Original Software, or (ii) the combination of the Original Software
+    with other software or devices.
+
+    2.2. Contributor Grant.
+
+    Conditioned upon Your compliance with Section 3.1 below and subject
+    to third party intellectual property claims, each Contributor hereby
+    grants You a world-wide, royalty-free, non-exclusive license:
+
+    (a) under intellectual property rights (other than patent or
+    trademark) Licensable by Contributor to use, reproduce, modify,
+    display, perform, sublicense and distribute the Modifications
+    created by such Contributor (or portions thereof), either on an
+    unmodified basis, with other Modifications, as Covered Software
+    and/or as part of a Larger Work; and
+
+    (b) under Patent Claims infringed by the making, using, or selling
+    of Modifications made by that Contributor either alone and/or in
+    combination with its Contributor Version (or portions of such
+    combination), to make, use, sell, offer for sale, have made, and/or
+    otherwise dispose of: (1) Modifications made by that Contributor (or
+    portions thereof); and (2) the combination of Modifications made by
+    that Contributor with its Contributor Version (or portions of such
+    combination).
+
+    (c) The licenses granted in Sections 2.2(a) and 2.2(b) are effective
+    on the date Contributor first distributes or otherwise makes the
+    Modifications available to a third party.
+
+    (d) Notwithstanding Section 2.2(b) above, no patent license is
+    granted: (1) for any code that Contributor has deleted from the
+    Contributor Version; (2) for infringements caused by: (i) third
+    party modifications of Contributor Version, or (ii) the combination
+    of Modifications made by that Contributor with other software
+    (except as part of the Contributor Version) or other devices; or (3)
+    under Patent Claims infringed by Covered Software in the absence of
+    Modifications made by that Contributor.
+
+3. Distribution Obligations.
+
+    3.1. Availability of Source Code.
+
+    Any Covered Software that You distribute or otherwise make available
+    in Executable form must also be made available in Source Code form
+    and that Source Code form must be distributed only under the terms
+    of this License. You must include a copy of this License with every
+    copy of the Source Code form of the Covered Software You distribute
+    or otherwise make available. You must inform recipients of any such
+    Covered Software in Executable form as to how they can obtain such
+    Covered Software in Source Code form in a reasonable manner on or
+    through a medium customarily used for software exchange.
+
+    3.2. Modifications.
+
+    The Modifications that You create or to which You contribute are
+    governed by the terms of this License. You represent that You
+    believe Your Modifications are Your original creation(s) and/or You
+    have sufficient rights to grant the rights conveyed by this License.
+
+    3.3. Required Notices.
+
+    You must include a notice in each of Your Modifications that
+    identifies You as the Contributor of the Modification. You may not
+    remove or alter any copyright, patent or trademark notices contained
+    within the Covered Software, or any notices of licensing or any
+    descriptive text giving attribution to any Contributor or the
+    Initial Developer.
+
+    3.4. Application of Additional Terms.
+
+    You may not offer or impose any terms on any Covered Software in
+    Source Code form that alters or restricts the applicable version of
+    this License or the recipients' rights hereunder. You may choose to
+    offer, and to charge a fee for, warranty, support, indemnity or
+    liability obligations to one or more recipients of Covered Software.
+    However, you may do so only on Your own behalf, and not on behalf of
+    the Initial Developer or any Contributor. You must make it
+    absolutely clear that any such warranty, support, indemnity or
+    liability obligation is offered by You alone, and You hereby agree
+    to indemnify the Initial Developer and every Contributor for any
+    liability incurred by the Initial Developer or such Contributor as a
+    result of warranty, support, indemnity or liability terms You offer.
+
+    3.5. Distribution of Executable Versions.
+
+    You may distribute the Executable form of the Covered Software under
+    the terms of this License or under the terms of a license of Your
+    choice, which may contain terms different from this License,
+    provided that You are in compliance with the terms of this License
+    and that the license for the Executable form does not attempt to
+    limit or alter the recipient's rights in the Source Code form from
+    the rights set forth in this License. If You distribute the Covered
+    Software in Executable form under a different license, You must make
+    it absolutely clear that any terms which differ from this License
+    are offered by You alone, not by the Initial Developer or
+    Contributor. You hereby agree to indemnify the Initial Developer and
+    every Contributor for any liability incurred by the Initial
+    Developer or such Contributor as a result of any such terms You offer.
+
+    3.6. Larger Works.
+
+    You may create a Larger Work by combining Covered Software with
+    other code not governed by the terms of this License and distribute
+    the Larger Work as a single product. In such a case, You must make
+    sure the requirements of this License are fulfilled for the Covered
+    Software.
+
+4. Versions of the License.
+
+    4.1. New Versions.
+
+    Oracle is the initial license steward and may publish revised and/or
+    new versions of this License from time to time. Each version will be
+    given a distinguishing version number. Except as provided in Section
+    4.3, no one other than the license steward has the right to modify
+    this License.
+
+    4.2. Effect of New Versions.
+
+    You may always continue to use, distribute or otherwise make the
+    Covered Software available under the terms of the version of the
+    License under which You originally received the Covered Software. If
+    the Initial Developer includes a notice in the Original Software
+    prohibiting it from being distributed or otherwise made available
+    under any subsequent version of the License, You must distribute and
+    make the Covered Software available under the terms of the version
+    of the License under which You originally received the Covered
+    Software. Otherwise, You may also choose to use, distribute or
+    otherwise make the Covered Software available under the terms of any
+    subsequent version of the License published by the license steward.
+
+    4.3. Modified Versions.
+
+    When You are an Initial Developer and You want to create a new
+    license for Your Original Software, You may create and use a
+    modified version of this License if You: (a) rename the license and
+    remove any references to the name of the license steward (except to
+    note that the license differs from this License); and (b) otherwise
+    make it clear that the license contains terms which differ from this
+    License.
+
+5. DISCLAIMER OF WARRANTY.
+
+    COVERED SOFTWARE IS PROVIDED UNDER THIS LICENSE ON AN "AS IS" BASIS,
+    WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED,
+    INCLUDING, WITHOUT LIMITATION, WARRANTIES THAT THE COVERED SOFTWARE
+    IS FREE OF DEFECTS, MERCHANTABLE, FIT FOR A PARTICULAR PURPOSE OR
+    NON-INFRINGING. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF
+    THE COVERED SOFTWARE IS WITH YOU. SHOULD ANY COVERED SOFTWARE PROVE
+    DEFECTIVE IN ANY RESPECT, YOU (NOT THE INITIAL DEVELOPER OR ANY
+    OTHER CONTRIBUTOR) ASSUME THE COST OF ANY NECESSARY SERVICING,
+    REPAIR OR CORRECTION. THIS DISCLAIMER OF WARRANTY CONSTITUTES AN
+    ESSENTIAL PART OF THIS LICENSE. NO USE OF ANY COVERED SOFTWARE IS
+    AUTHORIZED HEREUNDER EXCEPT UNDER THIS DISCLAIMER.
+
+6. TERMINATION.
+
+    6.1. This License and the rights granted hereunder will terminate
+    automatically if You fail to comply with terms herein and fail to
+    cure such breach within 30 days of becoming aware of the breach.
+    Provisions which, by their nature, must remain in effect beyond the
+    termination of this License shall survive.
+
+    6.2. If You assert a patent infringement claim (excluding
+    declaratory judgment actions) against Initial Developer or a
+    Contributor (the Initial Developer or Contributor against whom You
+    assert such claim is referred to as "Participant") alleging that the
+    Participant Software (meaning the Contributor Version where the
+    Participant is a Contributor or the Original Software where the
+    Participant is the Initial Developer) directly or indirectly
+    infringes any patent, then any and all rights granted directly or
+    indirectly to You by such Participant, the Initial Developer (if the
+    Initial Developer is not the Participant) and all Contributors under
+    Sections 2.1 and/or 2.2 of this License shall, upon 60 days notice
+    from Participant terminate prospectively and automatically at the
+    expiration of such 60 day notice period, unless if within such 60
+    day period You withdraw Your claim with respect to the Participant
+    Software against such Participant either unilaterally or pursuant to
+    a written agreement with Participant.
+
+    6.3. If You assert a patent infringement claim against Participant
+    alleging that the Participant Software directly or indirectly
+    infringes any patent where such claim is resolved (such as by
+    license or settlement) prior to the initiation of patent
+    infringement litigation, then the reasonable value of the licenses
+    granted by such Participant under Sections 2.1 or 2.2 shall be taken
+    into account in determining the amount or value of any payment or
+    license.
+
+    6.4. In the event of termination under Sections 6.1 or 6.2 above,
+    all end user licenses that have been validly granted by You or any
+    distributor hereunder prior to termination (excluding licenses
+    granted to You by any distributor) shall survive termination.
+
+7. LIMITATION OF LIABILITY.
+
+    UNDER NO CIRCUMSTANCES AND UNDER NO LEGAL THEORY, WHETHER TORT
+    (INCLUDING NEGLIGENCE), CONTRACT, OR OTHERWISE, SHALL YOU, THE
+    INITIAL DEVELOPER, ANY OTHER CONTRIBUTOR, OR ANY DISTRIBUTOR OF
+    COVERED SOFTWARE, OR ANY SUPPLIER OF ANY OF SUCH PARTIES, BE LIABLE
+    TO ANY PERSON FOR ANY INDIRECT, SPECIAL, INCIDENTAL, OR
+    CONSEQUENTIAL DAMAGES OF ANY CHARACTER INCLUDING, WITHOUT
+    LIMITATION, DAMAGES FOR LOSS OF GOODWILL, WORK STOPPAGE, COMPUTER
+    FAILURE OR MALFUNCTION, OR ANY AND ALL OTHER COMMERCIAL DAMAGES OR
+    LOSSES, EVEN IF SUCH PARTY SHALL HAVE BEEN INFORMED OF THE
+    POSSIBILITY OF SUCH DAMAGES. THIS LIMITATION OF LIABILITY SHALL NOT
+    APPLY TO LIABILITY FOR DEATH OR PERSONAL INJURY RESULTING FROM SUCH
+    PARTY'S NEGLIGENCE TO THE EXTENT APPLICABLE LAW PROHIBITS SUCH
+    LIMITATION. SOME JURISDICTIONS DO NOT ALLOW THE EXCLUSION OR
+    LIMITATION OF INCIDENTAL OR CONSEQUENTIAL DAMAGES, SO THIS EXCLUSION
+    AND LIMITATION MAY NOT APPLY TO YOU.
+
+8. U.S. GOVERNMENT END USERS.
+
+    The Covered Software is a "commercial item," as that term is defined
+    in 48 C.F.R. 2.101 (Oct. 1995), consisting of "commercial computer
+    software" (as that term is defined at 48 C.F.R. §
+    252.227-7014(a)(1)) and "commercial computer software documentation"
+    as such terms are used in 48 C.F.R. 12.212 (Sept. 1995). Consistent
+    with 48 C.F.R. 12.212 and 48 C.F.R. 227.7202-1 through 227.7202-4
+    (June 1995), all U.S. Government End Users acquire Covered Software
+    with only those rights set forth herein. This U.S. Government Rights
+    clause is in lieu of, and supersedes, any other FAR, DFAR, or other
+    clause or provision that addresses Government rights in computer
+    software under this License.
+
+9. MISCELLANEOUS.
+
+    This License represents the complete agreement concerning subject
+    matter hereof. If any provision of this License is held to be
+    unenforceable, such provision shall be reformed only to the extent
+    necessary to make it enforceable. This License shall be governed by
+    the law of the jurisdiction specified in a notice contained within
+    the Original Software (except to the extent applicable law, if any,
+    provides otherwise), excluding such jurisdiction's conflict-of-law
+    provisions. Any litigation relating to this License shall be subject
+    to the jurisdiction of the courts located in the jurisdiction and
+    venue specified in a notice contained within the Original Software,
+    with the losing party responsible for costs, including, without
+    limitation, court costs and reasonable attorneys' fees and expenses.
+    The application of the United Nations Convention on Contracts for
+    the International Sale of Goods is expressly excluded. Any law or
+    regulation which provides that the language of a contract shall be
+    construed against the drafter shall not apply to this License. You
+    agree that You alone are responsible for compliance with the United
+    States export administration regulations (and the export control
+    laws and regulation of any other countries) when You use, distribute
+    or otherwise make available any Covered Software.
+
+10. RESPONSIBILITY FOR CLAIMS.
+
+    As between Initial Developer and the Contributors, each party is
+    responsible for claims and damages arising, directly or indirectly,
+    out of its utilization of rights under this License and You agree to
+    work with Initial Developer and Contributors to distribute such
+    responsibility on an equitable basis. Nothing herein is intended or
+    shall be deemed to constitute any admission of liability.
+
+------------------------------------------------------------------------
+
+NOTICE PURSUANT TO SECTION 9 OF THE COMMON DEVELOPMENT AND DISTRIBUTION
+LICENSE (CDDL)
+
+The code released under the CDDL shall be governed by the laws of the
+State of California (excluding conflict-of-law provisions). Any
+litigation relating to this License shall be subject to the jurisdiction
+of the Federal Courts of the Northern District of California and the
+state courts of the State of California, with venue lying in Santa Clara
+County, California.
+
+----
+
+This product includes (via Snappy Java) a statically linked libstdc++. This
+inclusion is allowed by  "GCC RUntime Library Exception" 
+
+
+GCC RUNTIME LIBRARY EXCEPTION
+
+Version 3.1, 31 March 2009
+
+Copyright (C) 2009 Free Software Foundation, Inc.
+
+Everyone is permitted to copy and distribute verbatim copies of this
+license document, but changing it is not allowed.
+
+This GCC Runtime Library Exception ("Exception") is an additional
+permission under section 7 of the GNU General Public License, version
+3 ("GPLv3"). It applies to a given file (the "Runtime Library") that
+bears a notice placed by the copyright holder of the file stating that
+the file is governed by GPLv3 along with this Exception.
+
+When you use GCC to compile a program, GCC may combine portions of
+certain GCC header files and runtime libraries with the compiled
+program. The purpose of this Exception is to allow compilation of
+non-GPL (including proprietary) programs to use, in this way, the
+header files and runtime libraries covered by this Exception.
+
+0. Definitions.
+
+A file is an "Independent Module" if it either requires the Runtime
+Library for execution after a Compilation Process, or makes use of an
+interface provided by the Runtime Library, but is not otherwise based
+on the Runtime Library.
+
+"GCC" means a version of the GNU Compiler Collection, with or without
+modifications, governed by version 3 (or a specified later version) of
+the GNU General Public License (GPL) with the option of using any
+subsequent versions published by the FSF.
+
+"GPL-compatible Software" is software whose conditions of propagation,
+modification and use would permit combination with GCC in accord with
+the license of GCC.
+
+"Target Code" refers to output from any compiler for a real or virtual
+target processor architecture, in executable form or suitable for
+input to an assembler, loader, linker and/or execution
+phase. Notwithstanding that, Target Code does not include data in any
+format that is used as a compiler intermediate representation, or used
+for producing a compiler intermediate representation.
+
+The "Compilation Process" transforms code entirely represented in
+non-intermediate languages designed for human-written code, and/or in
+Java Virtual Machine byte code, into Target Code. Thus, for example,
+use of source code generators and preprocessors need not be considered
+part of the Compilation Process, since the Compilation Process can be
+understood as starting with the output of the generators or
+preprocessors.
+
+A Compilation Process is "Eligible" if it is done using GCC, alone or
+with other GPL-compatible software, or if it is done without using any
+work based on GCC. For example, using non-GPL-compatible Software to
+optimize any GCC intermediate representations would not qualify as an
+Eligible Compilation Process.
+
+1. Grant of Additional Permission.
+
+You have permission to propagate a work of Target Code formed by
+combining the Runtime Library with Independent Modules, even if such
+propagation would otherwise violate the terms of GPLv3, provided that
+all Target Code was generated by Eligible Compilation Processes. You
+may then convey such a combination under terms of your choice,
+consistent with the licensing of the Independent Modules.
+
+2. No Weakening of GCC Copyleft.
+
+The availability of this Exception does not imply any general
+presumption that third-party software is unaffected by the copyleft
+requirements of the license of GCC.
+    
+
+Hopefully that text is self-explanatory. If it isn't, you need to speak to your lawyer, or the Free Software Foundation.
