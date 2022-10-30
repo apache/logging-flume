@@ -55,14 +55,5 @@ public class KafkaSinkConstants {
   public static final String DEFAULT_TOPIC = "default-flume-topic";
   public static final String DEFAULT_ACKS = "1";
 
-  /* Old Properties */
-
-  /* Properties */
-
-  public static final String OLD_BATCH_SIZE = "batchSize";
-  public static final String MESSAGE_SERIALIZER_KEY = "serializer.class";
-  public static final String KEY_SERIALIZER_KEY = "key.serializer.class";
-  public static final String BROKER_LIST_FLUME_KEY = "brokerList";
-  public static final String REQUIRED_ACKS_FLUME_KEY = "requiredAcks";
 }
 

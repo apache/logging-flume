@@ -524,9 +524,9 @@ Findbugs.
 same as jar-with-dependencies
 
 ```
-   kafka-clients-2.7.2.jar
-   kafka-raft-2.7.2.jar
-   kafka_2.13-2.7.2.jar
+   kafka-clients-3.3.1.jar
+   kafka-raft-3.3.1.jar
+   kafka_2.13-3.3.1.jar
 ```
 
 ALv2. Entry in NOTICE.  Additional entry in NOTICE and LICENSE for

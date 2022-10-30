@@ -38,16 +38,8 @@ public class KafkaSourceConstants {
   public static final String DEFAULT_GROUP_ID = "flume";
   public static final String KAFKA_HEADER = "header.";
 
-  public static final String MIGRATE_ZOOKEEPER_OFFSETS = "migrateZookeeperOffsets";
-  public static final boolean DEFAULT_MIGRATE_ZOOKEEPER_OFFSETS = true;
-
   public static final String AVRO_EVENT = "useFlumeEventFormat";
   public static final boolean DEFAULT_AVRO_EVENT = false;
-
-  /* Old Properties */
-  public static final String ZOOKEEPER_CONNECT_FLUME_KEY = "zookeeperConnect";
-  public static final String TOPIC = "topic";
-  public static final String OLD_GROUP_ID = "groupId";
 
   // flume event headers
   public static final String DEFAULT_TOPIC_HEADER = "topic";
