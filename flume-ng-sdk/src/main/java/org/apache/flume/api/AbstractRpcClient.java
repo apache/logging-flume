@@ -83,7 +83,7 @@ public abstract class AbstractRpcClient implements RpcClient {
           batchSize = parsedBatch;
         }
       } catch (NumberFormatException e) {
-        logger.warn("Batchsize is not valid for RpcClient: " + strBatchSize +
+        logger.warn("BatchSize is not valid for RpcClient: " + strBatchSize +
             ". Default value assigned.", e);
       }
     }
