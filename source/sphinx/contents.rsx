@@ -18,9 +18,9 @@ Contents
 ========
 
 * :ref:`Project information <project-info.html>`
-* :ref:`Download Apache Flume <http://www.apache.org/dyn/closer.cgi/incubator/flume>`
+* :ref:`Download Apache Flume <https://www.apache.org/dyn/closer.cgi/flume>`
 * :ref:`Flume Issue Tracking (JIRA) <https://issues.apache.org/jira/browse/FLUME>`
-* :ref:`Flume Source Code (SVN) <https://svn.apache.org/repos/asf/incubator/flume/>`
+* :ref:`Flume Source Code (SVN) <https://svn.apache.org/repos/asf/flume/>`
 * :ref:`License <license.html>`
 
 * :ref:`doc`

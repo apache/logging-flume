@@ -32,7 +32,7 @@ Apache Flume is a top-level project at the Apache Software Foundation.
 There are currently two release code lines available, versions 0.9.x and 1.x.
 This documentation applies to the 1.x codeline.
 For the 0.9.x codeline, please see the `Flume 0.9.x Developer Guide
-<http://archive.cloudera.com/cdh/3/flume/DeveloperGuide/>`_.
+<https://archive.cloudera.com/cdh/3/flume/DeveloperGuide/>`_.
 
 Architecture
 ------------
