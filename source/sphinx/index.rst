@@ -541,10 +541,10 @@ Apache Flume 1.3.1 is a maintainance release for the 1.3.0 release, and includes
 several bug fixes and performance enhancements.
 
 This release can be downloaded from the Flume download page at:
-http://flume.apache.org/download.html
+https://flume.apache.org/download.html
 
 The change log and documentation are available on the 1.3.1 release page:
-http://flume.apache.org/releases/1.3.1.html
+https://flume.apache.org/releases/1.3.1.html
 
 Your help and feedback is more than welcome!
 
@@ -573,10 +573,10 @@ link below, here are a few new feature highlights:
 * File Channel Encryption
 
 This release can be downloaded from the Flume download page at:
-http://flume.apache.org/download.html
+https://flume.apache.org/download.html
 
 The change log and documentation are available on the 1.3.0 release page:
-http://flume.apache.org/releases/1.3.0.html
+https://flume.apache.org/releases/1.3.0.html
 
 Your help and feedback is more than welcome!
 
@@ -604,10 +604,10 @@ link below, here are a few new feature highlights:
 * New JMX-based monitoring support
 
 This release can be downloaded from the Flume download page at:
-http://flume.apache.org/download.html
+https://flume.apache.org/download.html
 
 The change log and documentation are available on the 1.2.0 release page:
-http://flume.apache.org/releases/1.2.0.html
+https://flume.apache.org/releases/1.2.0.html
 
 Your help and feedback is more than welcome!
 

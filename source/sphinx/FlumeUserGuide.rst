@@ -1819,7 +1819,7 @@ header.NAME                         --           Used to identify which headers 
                                                  of NAME should match the Flume header name and the value should be the name of the header to be used
                                                  as the Kafka header name.
 kafka.consumer.security.protocol    PLAINTEXT    Set to SASL_PLAINTEXT, SASL_SSL or SSL if writing to Kafka using some level of security. See below for additional info on secure setup.
-*more consumer security props*                   If using SASL_PLAINTEXT, SASL_SSL or SSL refer to `Kafka security <http://kafka.apache.org/documentation.html#security>`_ for additional
+*more consumer security props*                   If using SASL_PLAINTEXT, SASL_SSL or SSL refer to `Kafka security <https://kafka.apache.org/documentation.html#security>`_ for additional
                                                  properties that need to be set on consumer.
 Other Kafka Consumer Properties     --           These properties are used to configure the Kafka Consumer. Any consumer property supported
                                                  by Kafka can be used. The only requirement is to prepend the property name with the prefix
@@ -1847,7 +1847,7 @@ migrateZookeeperOffsets          true                 When no Kafka stored offse
                                                       Once migrated this can be set to false, though that should generally not be required.
                                                       If no Zookeeper offset is found, the Kafka configuration kafka.consumer.auto.offset.reset
                                                       defines how offsets are handled.
-                                                      Check `Kafka documentation <http://kafka.apache.org/documentation.html#newconsumerconfigs>`_
+                                                      Check `Kafka documentation <https://kafka.apache.org/documentation.html#consumerconfigs>`_
                                                       for details
 ===============================  ===================  ================================================================================================
 
@@ -1890,14 +1890,14 @@ Setting ``kafka.consumer.security.protocol`` to any of the following value means
 .. warning::
     There is a performance degradation when SSL is enabled,
     the magnitude of which depends on the CPU type and the JVM implementation.
-    Reference: `Kafka security overview <http://kafka.apache.org/documentation#security_overview>`_
+    Reference: `Kafka security overview <https://kafka.apache.org/documentation#security_overview>`_
     and the jira for tracking this issue:
     `KAFKA-2561 <https://issues.apache.org/jira/browse/KAFKA-2561>`_
 
 
 **TLS and Kafka Source:**
 
-Please read the steps described in `Configuring Kafka Clients SSL <http://kafka.apache.org/documentation#security_configclients>`_
+Please read the steps described in `Configuring Kafka Clients SSL <https://kafka.apache.org/documentation#security_configclients>`_
 to learn about additional configuration settings for fine tuning for example any of the following:
 security provider, cipher suites, enabled protocols, truststore or keystore types.
 
@@ -1955,7 +1955,7 @@ provide the required additional secret for both consumer keystores:
 
 To use Kafka source with a Kafka cluster secured with Kerberos, set the ``consumer.security.protocol`` properties noted above for consumer.
 The Kerberos keytab and principal to be used with Kafka brokers is specified in a JAAS file's "KafkaClient" section. "Client" section describes the Zookeeper connection if needed.
-See `Kafka doc <http://kafka.apache.org/documentation.html#security_sasl_clientconfig>`_
+See `Kafka doc <https://kafka.apache.org/documentation.html#security_sasl_clientconfig>`_
 for information on the JAAS file contents. The location of this JAAS file and optionally the system wide kerberos configuration can be specified via JAVA_OPTS in flume-env.sh:
 
 .. code-block:: properties
@@ -1992,7 +1992,7 @@ Example secure configuration using SASL_SSL:
 
 
 Sample JAAS file. For reference of its content please see client config sections of the desired authentication mechanism (GSSAPI/PLAIN)
-in Kafka documentation of `SASL configuration <http://kafka.apache.org/documentation#security_sasl_clientconfig>`_.
+in Kafka documentation of `SASL configuration <https://kafka.apache.org/documentation#security_sasl_clientconfig>`_.
 Since the Kafka Source may also connect to Zookeeper for offset migration, the "Client" section was also added to this example.
 This won't be needed unless you require offset migration, or you require this section for other secure components.
 Also please make sure that the operating system user of the Flume processes has read privileges on the jaas and keytab files.
@@ -2398,10 +2398,10 @@ enableSSL                        false                Use *ssl*. Deprecated valu
 ===============================  ===================  =============================================================================================
 
 N.B. Jetty-specific settings are set using the setter-methods on the objects listed above. For full details see the Javadoc for these classes
-(`QueuedThreadPool <http://www.eclipse.org/jetty/javadoc/9.4.6.v20170531/org/eclipse/jetty/util/thread/QueuedThreadPool.html>`_,
-`HttpConfiguration <http://www.eclipse.org/jetty/javadoc/9.4.6.v20170531/org/eclipse/jetty/server/HttpConfiguration.html>`_,
-`SslContextFactory <http://www.eclipse.org/jetty/javadoc/9.4.6.v20170531/org/eclipse/jetty/util/ssl/SslContextFactory.html>`_ and
-`ServerConnector <http://www.eclipse.org/jetty/javadoc/9.4.6.v20170531/org/eclipse/jetty/server/ServerConnector.html>`_).
+(`QueuedThreadPool <https://www.eclipse.org/jetty/javadoc/jetty-9/org/eclipse/jetty/util/thread/QueuedThreadPool.html>`_,
+`HttpConfiguration <https://www.eclipse.org/jetty/javadoc/jetty-9/org/eclipse/jetty/server/HttpConfiguration.html>`_,
+`SslContextFactory <https://www.eclipse.org/jetty/javadoc/jetty-9/org/eclipse/jetty/util/ssl/SslContextFactory.html>`_ and
+`ServerConnector <https://www.eclipse.org/jetty/javadoc/jetty-9/org/eclipse/jetty/server/ServerConnector.html>`_).
 
 When using Jetty-specific setings, named properites above will take precedence (for example excludeProtocols will take
 precedence over SslContextFactory.ExcludeProtocols). All properties will be inital lower case.
@@ -3258,7 +3258,7 @@ serializer.*         --                                                         
 async.*              --                                                            Properties to be passed to asyncHbase library.
                                                                                    These properties have precedence over the old ``zookeeperQuorum`` and ``znodeParent`` values.
                                                                                    You can find the list of the available properties at
-                                                                                   `the documentation page of AsyncHBase <http://opentsdb.github.io/asynchbase/docs/build/html/configuration.html#properties>`_.
+                                                                                   `the documentation page of AsyncHBase <https://opentsdb.github.io/asynchbase/docs/build/html/configuration.html#properties>`_.
 ===================  ============================================================  ====================================================================================
 
 Note that this sink takes the Zookeeper Quorum and parent znode information in
@@ -3288,7 +3288,7 @@ This sink extracts data from Flume events, transforms it, and loads it in near-r
 
 This sink is well suited for use cases that stream raw data into HDFS (via the HdfsSink) and simultaneously extract, transform and load the same data into Solr (via MorphlineSolrSink). In particular, this sink can process arbitrary heterogeneous raw data from disparate data sources and turn it into a data model that is useful to Search applications.
 
-The ETL functionality is customizable using a `morphline configuration file <http://cloudera.github.io/cdk/docs/current/cdk-morphlines/index.html>`_ that defines a chain of transformation commands that pipe event records from one command to another.
+The ETL functionality is customizable using a `morphline configuration file <https://cloudera.github.io/cdk/docs/current/cdk-morphlines/index.html>`_ that defines a chain of transformation commands that pipe event records from one command to another.
 
 Morphlines can be seen as an evolution of Unix pipelines where the data model is generalized to work with streams of generic records, including arbitrary binary payloads. A morphline command is a bit like a Flume Interceptor. Morphlines can be embedded into Hadoop components such as Flume.
 
@@ -3404,7 +3404,7 @@ auth.proxyUser                --       The effective user for HDFS actions, if d
 Kafka Sink
 ~~~~~~~~~~
 This is a Flume Sink implementation that can publish data to a
-`Kafka <http://kafka.apache.org/>`_ topic. One of the objective is to integrate Flume
+`Kafka <https://kafka.apache.org/>`_ topic. One of the objective is to integrate Flume
 with Kafka so that pull based processing systems can process the data coming
 through various Flume sources.
 
@@ -3450,7 +3450,7 @@ timestampHeader                     --                   The header containing t
 header.NAME                         --                   Used to identify which headers from the Flume Event should be passed to Kafka. The value of NAME should match
                                                          the Flume header name and the value should be the name of the header to be used as the Kafka header name.
 kafka.producer.security.protocol    PLAINTEXT            Set to SASL_PLAINTEXT, SASL_SSL or SSL if writing to Kafka using some level of security. See below for additional info on secure setup.
-*more producer security props*                           If using SASL_PLAINTEXT, SASL_SSL or SSL refer to `Kafka security <http://kafka.apache.org/documentation.html#security>`_ for additional
+*more producer security props*                           If using SASL_PLAINTEXT, SASL_SSL or SSL refer to `Kafka security <https://kafka.apache.org/documentation.html#security>`_ for additional
                                                          properties that need to be set on producer.
 Other Kafka Producer Properties     --                   These properties are used to configure the Kafka Producer. Any producer property supported
                                                          by Kafka can be used. The only requirement is to prepend the property name with the prefix
@@ -3513,14 +3513,14 @@ Setting ``kafka.producer.security.protocol`` to any of the following value means
 .. warning::
     There is a performance degradation when SSL is enabled,
     the magnitude of which depends on the CPU type and the JVM implementation.
-    Reference: `Kafka security overview <http://kafka.apache.org/documentation#security_overview>`_
+    Reference: `Kafka security overview <https://kafka.apache.org/documentation#security_overview>`_
     and the jira for tracking this issue:
     `KAFKA-2561 <https://issues.apache.org/jira/browse/KAFKA-2561>`__
 
 
 **TLS and Kafka Sink:**
 
-Please read the steps described in `Configuring Kafka Clients SSL <http://kafka.apache.org/documentation#security_configclients>`_
+Please read the steps described in `Configuring Kafka Clients SSL <https://kafka.apache.org/documentation#security_configclients>`_
 to learn about additional configuration settings for fine tuning for example any of the following:
 security provider, cipher suites, enabled protocols, truststore or keystore types.
 
@@ -3577,7 +3577,7 @@ provide the required additional secret for producer keystore:
 
 To use Kafka sink with a Kafka cluster secured with Kerberos, set the ``producer.security.protocol`` property noted above for producer.
 The Kerberos keytab and principal to be used with Kafka brokers is specified in a JAAS file's "KafkaClient" section. "Client" section describes the Zookeeper connection if needed.
-See `Kafka doc <http://kafka.apache.org/documentation.html#security_sasl_clientconfig>`_
+See `Kafka doc <https://kafka.apache.org/documentation.html#security_sasl_clientconfig>`_
 for information on the JAAS file contents. The location of this JAAS file and optionally the system wide kerberos configuration can be specified via JAVA_OPTS in flume-env.sh:
 
 .. code-block:: properties
@@ -3613,7 +3613,7 @@ Example secure configuration using SASL_SSL:
 
 
 Sample JAAS file. For reference of its content please see client config sections of the desired authentication mechanism (GSSAPI/PLAIN)
-in Kafka documentation of `SASL configuration <http://kafka.apache.org/documentation#security_sasl_clientconfig>`_.
+in Kafka documentation of `SASL configuration <https://kafka.apache.org/documentation#security_sasl_clientconfig>`_.
 Unlike the Kafka Source or Kafka Channel a "Client" section is not required, unless it is needed by other connecting components. Also please make sure
 that the operating system user of the Flume processes has read privileges on the jaas and keytab files.
 
@@ -3865,7 +3865,7 @@ kafka.consumer.auto.offset.reset         latest                      What to do 
                                                                      anything else: throw exception to the consumer.
 kafka.producer.security.protocol         PLAINTEXT                   Set to SASL_PLAINTEXT, SASL_SSL or SSL if writing to Kafka using some level of security. See below for additional info on secure setup.
 kafka.consumer.security.protocol         PLAINTEXT                   Same as kafka.producer.security.protocol but for reading/consuming from Kafka.
-*more producer/consumer security props*                              If using SASL_PLAINTEXT, SASL_SSL or SSL refer to `Kafka security <http://kafka.apache.org/documentation.html#security>`_ for additional
+*more producer/consumer security props*                              If using SASL_PLAINTEXT, SASL_SSL or SSL refer to `Kafka security <https://kafka.apache.org/documentation.html#security>`_ for additional
                                                                      properties that need to be set on producer/consumer.
 =======================================  ==========================  ===============================================================================================================
 
@@ -3914,14 +3914,14 @@ Setting ``kafka.producer|consumer.security.protocol`` to any of the following va
 .. warning::
     There is a performance degradation when SSL is enabled,
     the magnitude of which depends on the CPU type and the JVM implementation.
-    Reference: `Kafka security overview <http://kafka.apache.org/documentation#security_overview>`_
+    Reference: `Kafka security overview <https://kafka.apache.org/documentation#security_overview>`_
     and the jira for tracking this issue:
     `KAFKA-2561 <https://issues.apache.org/jira/browse/KAFKA-2561>`_
 
 
 **TLS and Kafka Channel:**
 
-Please read the steps described in `Configuring Kafka Clients SSL <http://kafka.apache.org/documentation#security_configclients>`_
+Please read the steps described in `Configuring Kafka Clients SSL <https://kafka.apache.org/documentation#security_configclients>`_
 to learn about additional configuration settings for fine tuning for example any of the following:
 security provider, cipher suites, enabled protocols, truststore or keystore types.
 
@@ -3988,7 +3988,7 @@ provide the required additional secret for both consumer and producer keystores:
 
 To use Kafka channel with a Kafka cluster secured with Kerberos, set the ``producer/consumer.security.protocol`` properties noted above for producer and/or consumer.
 The Kerberos keytab and principal to be used with Kafka brokers is specified in a JAAS file's "KafkaClient" section. "Client" section describes the Zookeeper connection if needed.
-See `Kafka doc <http://kafka.apache.org/documentation.html#security_sasl_clientconfig>`_
+See `Kafka doc <https://kafka.apache.org/documentation.html#security_sasl_clientconfig>`_
 for information on the JAAS file contents. The location of this JAAS file and optionally the system wide kerberos configuration can be specified via JAVA_OPTS in flume-env.sh:
 
 .. code-block:: properties
@@ -4034,7 +4034,7 @@ Example secure configuration using SASL_SSL:
 
 
 Sample JAAS file. For reference of its content please see client config sections of the desired authentication mechanism (GSSAPI/PLAIN)
-in Kafka documentation of `SASL configuration <http://kafka.apache.org/documentation#security_sasl_clientconfig>`_.
+in Kafka documentation of `SASL configuration <https://kafka.apache.org/documentation#security_sasl_clientconfig>`_.
 Since the Kafka Source may also connect to Zookeeper for offset migration, the "Client" section was also added to this example.
 This won't be needed unless you require offset migration, or you require this section for other secure components.
 Also please make sure that the operating system user of the Flume processes has read privileges on the jaas and keytab files.
@@ -4769,7 +4769,7 @@ prefix            ""       The prefix string constant to prepend to each generat
 Morphline Interceptor
 ~~~~~~~~~~~~~~~~~~~~~
 
-This interceptor filters the events through a `morphline configuration file <http://cloudera.github.io/cdk/docs/current/cdk-morphlines/index.html>`_ that defines a chain of transformation commands that pipe records from one command to another.
+This interceptor filters the events through a `morphline configuration file <https://cloudera.github.io/cdk/docs/current/cdk-morphlines/index.html>`_ that defines a chain of transformation commands that pipe records from one command to another.
 For example the morphline can ignore certain events or alter or insert certain event headers via regular expression based pattern matching, or it can auto-detect and set a MIME type via Apache Tika on events that are intercepted. For example, this kind of packet sniffing can be used for content based dynamic routing in a Flume topology.
 MorphlineInterceptor can also help to implement dynamic routing to multiple Apache Solr collections (e.g. for multi-tenancy).
 
@@ -5430,7 +5430,7 @@ flume-env.sh, like
 
   export JAVA_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=5445 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"
 
-NOTE: The sample above disables the security. To enable Security, please refer http://docs.oracle.com/javase/6/docs/technotes/guides/management/agent.html
+NOTE: The sample above disables the security. To enable Security, please refer https://docs.oracle.com/javase/6/docs/technotes/guides/management/agent.html
 
 Ganglia Reporting
 -----------------
