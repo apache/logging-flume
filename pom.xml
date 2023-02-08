@@ -113,7 +113,8 @@ limitations under the License.
     <!--<netty.version>3.10.6.Final</netty.version>-->
     <netty-all.version>4.1.72.Final</netty-all.version>
     <parquet.version>1.11.2</parquet.version>
-    <protobuf.version>2.5.0</protobuf.version>
+    <external.protobuf.version>2.5.0</external.protobuf.version>
+    <protobuf.plugin.version>0.6.1</protobuf.plugin.version>
     <prometheus.version>0.15.0</prometheus.version>
     <rat.version>0.12</rat.version>
     <scala.version>2.13</scala.version>
@@ -128,6 +129,7 @@ limitations under the License.
     <wiremock.version>1.53</wiremock.version>
     <zlib.version>1.1.3</zlib.version>
     <zookeeper.version>3.6.2</zookeeper.version>
+    <os.maven.version>1.5.0.Final</os.maven.version>
     <redirectTestOutput>true</redirectTestOutput>
   </properties>
 
@@ -440,7 +442,13 @@ limitations under the License.
   </organization>
 
   <build>
-
+    <extensions>
+      <extension>
+        <groupId>kr.motd.maven</groupId>
+        <artifactId>os-maven-plugin</artifactId>
+        <version>${os.maven.version}</version>
+      </extension>
+    </extensions>
     <plugins>
 
       <plugin>
@@ -527,7 +535,11 @@ limitations under the License.
             </execution>
           </executions>
         </plugin>
-
+        <plugin>
+          <groupId>org.xolstice.maven.plugins</groupId>
+          <artifactId>protobuf-maven-plugin</artifactId>
+          <version>${protobuf.plugin.version}</version>
+        </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
@@ -923,7 +935,7 @@ limitations under the License.
         <groupId>com.google.protobuf</groupId>
         <artifactId>protobuf-java</artifactId>
         <scope>compile</scope>
-        <version>${protobuf.version}</version>
+        <version>${external.protobuf.version}</version>
       </dependency>
 
       <dependency>
