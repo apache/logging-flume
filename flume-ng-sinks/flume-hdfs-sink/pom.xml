@@ -102,6 +102,12 @@ limitations under the License.
 
     <dependency>
       <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-hdfs-client</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-auth</artifactId>
       <optional>true</optional>
     </dependency>
