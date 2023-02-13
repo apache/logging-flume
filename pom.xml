@@ -73,7 +73,8 @@ limitations under the License.
     <gson.version>2.9.1</gson.version>
     <guava.version>18.0</guava.version>
     <guava-old.version>11.0.2</guava-old.version>
-    <hadoop.version>2.10.1</hadoop.version>
+    <hadoop3.version>3.2.2</hadoop3.version>
+    <hadoop.version>${hadoop3.version}</hadoop.version>
     <hbase.version>1.7.1</hbase.version>
     <hbase2.version>2.4.11</hbase2.version>
     <hive.version>1.2.2</hive.version>
@@ -1525,6 +1526,29 @@ limitations under the License.
       <dependency>
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-hdfs</artifactId>
+        <version>${hadoop.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>tomcat</groupId>
+            <artifactId>jasper-compiler</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>tomcat</groupId>
+            <artifactId>jasper-runtime</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-hdfs-client</artifactId>
         <version>${hadoop.version}</version>
         <exclusions>
           <exclusion>
