@@ -71,8 +71,7 @@ public class TestLog4jAppenderWithAvro {
   @Before
   public void setUp() throws Exception {
     URL schemaUrl = getClass().getClassLoader().getResource("myrecord.avsc");
-    Files.copy(Resources.newInputStreamSupplier(schemaUrl),
-        new File("/tmp/myrecord.avsc"));
+    Resources.asByteSource(schemaUrl).copyTo(Files.asByteSink(new File("/tmp/myrecord.avsc")));
 
     port = getFreePort();
     source = new AvroSource();

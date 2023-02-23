@@ -23,7 +23,7 @@
 package org.apache.flume.source;
 
 import com.google.common.base.Preconditions;
-import com.google.common.cache.Cache;
+import com.google.common.cache.LoadingCache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.collect.Maps;
@@ -59,7 +59,7 @@ public class SyslogParser {
   private static final int RFC5424_PREFIX_LEN = 19;
   private final DateTimeFormatter timeParser;
 
-  private Cache<String, Long> timestampCache;
+  private LoadingCache<String, Long> timestampCache;
 
   public SyslogParser() {
     timeParser = DateTimeFormat.forPattern(timePat).withZoneUTC();
