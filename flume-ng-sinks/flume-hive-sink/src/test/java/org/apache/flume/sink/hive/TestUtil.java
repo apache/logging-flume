@@ -28,7 +28,6 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.MetaException;
-import org.apache.hadoop.hive.ql.CommandNeedRetryException;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.shims.ShimLoader;
@@ -58,6 +57,17 @@ public class TestUtil {
     conf.setVar(HiveConf.ConfVars.HIVE_TXN_MANAGER, txnMgr);
     conf.setBoolVar(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY, true);
     conf.set("fs.raw.impl", RawFileSystem.class.getName());
+    try{
+      conf.setBoolVar(HiveConf.ConfVars.METASTORE_SCHEMA_VERIFICATION, false );
+      conf.setVar(HiveConf.ConfVars.METASTORECONNECTURLKEY, "jdbc:derby:;databaseName=metastore_db;create=true");
+      conf.setVar(HiveConf.ConfVars.METASTORE_CONNECTION_DRIVER, "org.apache.derby.jdbc.EmbeddedDriver");
+      conf.setBoolVar(HiveConf.ConfVars.METASTORE_AUTO_CREATE_ALL, true);
+      conf.setIntVar(HiveConf.ConfVars.METASTORE_SERVER_PORT, 0);
+      conf.setVar(HiveConf.ConfVars.METASTOREWAREHOUSE, System.getProperty("java.io.tmpdir"));
+    }catch (Throwable t){
+      t.printStackTrace();
+    }
+
   }
 
   public static void createDbAndTable(Driver driver, String databaseName,
@@ -148,7 +158,7 @@ public class TestUtil {
   }
 
   public static ArrayList<String> listRecordsInTable(Driver driver, String dbName, String tblName)
-      throws CommandNeedRetryException, IOException {
+      throws  IOException {
     driver.run("select * from " + dbName + "." + tblName);
     ArrayList<String> res = new ArrayList<String>();
     driver.getResults(res);
@@ -158,7 +168,7 @@ public class TestUtil {
   public static ArrayList<String> listRecordsInPartition(Driver driver, String dbName,
                                                          String tblName, String continent,
                                                          String country)
-      throws CommandNeedRetryException, IOException {
+      throws IOException {
     driver.run("select * from " + dbName + "." + tblName + " where continent='"
             + continent + "' and country='" + country + "'");
     ArrayList<String> res = new ArrayList<String>();
@@ -217,15 +227,8 @@ public class TestUtil {
   private static boolean runDDL(Driver driver, String sql) throws QueryFailedException {
     int retryCount = 1; // # of times to retry if first attempt fails
     for (int attempt = 0; attempt <= retryCount; ++attempt) {
-      try {
         driver.run(sql);
-        return true;
-      } catch (CommandNeedRetryException e) {
-        if (attempt == retryCount) {
-          throw new QueryFailedException(sql, e);
-        }
         continue;
-      }
     } // for
     return false;
   }

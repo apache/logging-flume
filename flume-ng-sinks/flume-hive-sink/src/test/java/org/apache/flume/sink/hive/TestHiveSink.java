@@ -37,7 +37,6 @@ import org.apache.hadoop.hive.cli.CliSessionState;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.txn.TxnDbUtil;
-import org.apache.hadoop.hive.ql.CommandNeedRetryException;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.session.SessionState;
@@ -105,8 +104,8 @@ public class TestHiveSink {
     TestUtil.setConfValues(conf);
 
     // 1) prepare hive
-    TxnDbUtil.cleanDb();
-    TxnDbUtil.prepDb();
+    TxnDbUtil.cleanDb(conf);
+    TxnDbUtil.prepDb(conf);
 
     // 2) Setup Hive client
     SessionState.start(new CliSessionState(conf));
@@ -283,7 +282,7 @@ public class TestHiveSink {
 
   @Test
   public void testHeartBeat()
-          throws EventDeliveryException, IOException, CommandNeedRetryException {
+          throws EventDeliveryException, IOException {
     int batchSize = 2;
     int batchCount = 3;
     int totalRecords = batchCount * batchSize;
@@ -407,7 +406,7 @@ public class TestHiveSink {
   }
 
   private void checkRecordCountInTable(int expectedCount, String db, String tbl)
-          throws CommandNeedRetryException, IOException {
+          throws IOException {
     int count = TestUtil.listRecordsInTable(driver, db, tbl).size();
     Assert.assertEquals(expectedCount, count);
   }
