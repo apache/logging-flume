@@ -50,6 +50,7 @@
     <Logger name="org.apache.hadoop" level="INFO"/>
     <Logger name="org.apache.hadoop.hive" level="ERROR"/>
     <Root level="INFO">
+      <AppenderRef ref="Console" />
       <AppenderRef ref="LogFile" />
     </Root>
   </Loggers>

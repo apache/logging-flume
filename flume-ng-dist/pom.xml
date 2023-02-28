@@ -91,6 +91,29 @@
           <skip>true</skip>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>com.spotify</groupId>
+        <artifactId>dockerfile-maven-plugin</artifactId>
+        <version>${dockerfile.version}</version>
+        <!-- Wire up to the default build phases -->
+        <executions>
+          <execution>
+            <id>default</id>
+            <goals>
+              <goal>build</goal>
+              <goal>push</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <repository>apache/flume</repository>
+          <tag>${project.version}</tag>
+          <buildArgs>
+            <ASSEMBLY_VERSION>${project.version}</ASSEMBLY_VERSION>
+          </buildArgs>
+          <skip>${docker.skip}</skip>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 
