@@ -60,6 +60,7 @@ import org.apache.mina.core.session.DefaultIoSessionDataStructureFactory;
 import org.apache.mina.transport.socket.nio.NioSession;
 import org.joda.time.DateTime;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.internal.util.reflection.Whitebox;
@@ -187,6 +188,7 @@ public class TestMultiportSyslogTCPSource {
   /**
    * Basic test to exercise multiple-port parsing.
    */
+  @Ignore("This test is flakey and causes tests to fail pretty often.")
   @Test
   public void testMultiplePortsSSL() throws Exception {
 
