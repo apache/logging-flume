@@ -48,7 +48,7 @@ public class KafkaChannelConfiguration {
 
   public static final String KEY_HEADER = "key";
 
-  public static final String DEFAULT_AUTO_OFFSET_RESET = "earliest";
+  public static final String DEFAULT_AUTO_OFFSET_RESET = "latest";
 
   public static final String PARSE_AS_FLUME_EVENT = "parseAsFlumeEvent";
   public static final boolean DEFAULT_PARSE_AS_FLUME_EVENT = true;
