@@ -55,6 +55,8 @@ import twitter4j.TwitterStream;
 import twitter4j.TwitterStreamFactory;
 import twitter4j.User;
 import twitter4j.auth.AccessToken;
+import twitter4j.FilterQuery;
+
 
 /**
  * Demo Flume source that connects via Streaming API to the 1% sample twitter
@@ -73,7 +75,8 @@ public class TwitterSource
 
   private TwitterStream twitterStream;
   private Schema avroSchema;
-
+  private String[] filterKeywords = new String[0];
+  
   private long docCount = 0;
   private long startTime = 0;
   private long exceptionCount = 0;
@@ -109,12 +112,21 @@ public class TwitterSource
     String consumerSecret = context.getString("consumerSecret");
     String accessToken = context.getString("accessToken");
     String accessTokenSecret = context.getString("accessTokenSecret");
-
+    String keywordsString = context.getString("keywords");
+    LOGGER.info("Provided Keywords: " + keywordsString);
+    if (keywordsString != null && !keywordsString.equals("")) {
+      filterKeywords = keywordsString.split(",");
+    }
+    
+    
     twitterStream = new TwitterStreamFactory().getInstance();
     twitterStream.setOAuthConsumer(consumerKey, consumerSecret);
     twitterStream.setOAuthAccessToken(new AccessToken(accessToken,
                                                       accessTokenSecret));
     twitterStream.addListener(this);
+
+   
+    
     avroSchema = createAvroSchema();
     dataFileWriter = new DataFileWriter<GenericRecord>(
         new GenericDatumWriter<GenericRecord>(avroSchema));
@@ -137,7 +149,17 @@ public class TwitterSource
     totalTextIndexed = 0;
     skippedDocs = 0;
     batchEndTime = System.currentTimeMillis() + maxBatchDurationMillis;
-    twitterStream.sample();
+    
+   
+    if (filterKeywords != null && filterKeywords.length > 0) {
+      FilterQuery fq = new FilterQuery();
+      fq.track(filterKeywords);
+      twitterStream.filter(fq);
+    } else {
+      twitterStream.sample();
+    }
+    
+    
     LOGGER.info("Twitter source {} started.", getName());
     // This should happen at the end of the start method, since this will 
     // change the lifecycle status of the component to tell the Flume 
