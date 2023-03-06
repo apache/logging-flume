@@ -194,6 +194,7 @@ public class HBaseSink extends AbstractSink implements Configurable, BatchSizeSu
     }
     sinkCounter.incrementConnectionClosedCount();
     sinkCounter.stop();
+    serializer.close();
   }
 
   @SuppressWarnings("unchecked")
