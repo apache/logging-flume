@@ -151,7 +151,6 @@ limitations under the License.
     <module>flume-shared</module>
     <module>flume-ng-configfilters</module>
     <module>build-support</module>
-    <module>flume-spring-boot</module>
   </modules>
 
   <profiles>
