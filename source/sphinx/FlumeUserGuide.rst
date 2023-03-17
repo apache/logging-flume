@@ -510,7 +510,9 @@ channel3. The mapping can be set in the agent's configuration file.
 
 Spring Boot Setup
 =================
-As of version 1.11.0 Flume supports being packaged as a Spring Boot application.
+Apache Flume provides the flume-spring-boot module to provide support for packaging and
+configuring an application using Spring Boot. Version 2.0.0 or greater of flume-spring-boot
+should be used.
 
 Flume "normally" follows a paradigm where each component implements the Configurable
 interface and must implement the configure method to configure itself by retrieving
@@ -546,31 +548,32 @@ Component Scanning
 ------------------
 Spring Boot will automatically locate all the Spring components provided by Flume.
 However, in order for the Flume application to be configured Spring needs the
-base Java package name used by the application in order for Spring to locate
-these components.This is accomplished in the application by creating a class
-that implements `org.apache.flume.spring.boot.config.PackageProvider` that is
-registered as a Java service. For example::
+configuration and package names used by the application in order for Spring to locate
+these components.This is accomplished in the application by providing a META-INF/spring.factories
+file that enables auto configuration for one class that will then provide the component
+scanning information for the rest of the application. For example:
 
-    public class WylieCouotePackageProvider implements PackageProvider {
-      private static final String[] PACKAGES = {"org.acme.coyote.wylie"};
+META-INF/spring.factories::
 
-      @Override
-      public List<String> getPackages() {
-        return Arrays.asList(PACKAGES);
-      }
+  org.springframework.boot.autoconfigure.EnableAutoConfiguration=com.sample.myapp.config.AppConfig
+
+com.sample.config.AppConfig.java::
+
+    package com.sample.myapp.config;
+
+    import org.springframework.context.annotation.ComponentScan;
+    import org.springframework.context.annotation.Configuration;
+
+    @Configuration
+    @ComponentScan(basePackages="com.sample.myapp")
+    public class MyConfiguration {
+
     }
 
-would then be registered in a file with a fully qualified name of
-`src/main/resources/META-INF/services/org.apache.flume.spring.boot.config.PackageProvider`
-which would contain::
-
-  org.acme.coyote.wylie.config.WylieCoyotePackageProvider
-
-This would result in all classes in the `org.acme.coyote.wylie` package and
+This will result in all classes in the `com.sample.myapp` package and
 it`s sub-packages being scanned by Spring for components to be included. Note
 that classes found there may also use Spring's `@Import` annotation to include
-classes in other packages. In addition, since the getPackages method returns
-a List more than one package can be specified.
+classes in other packages.
 
 Component Wiring
 ----------------
@@ -586,6 +589,7 @@ sequence numbers, writes them to a MemoryChannel and then consumes these events
 without publishing them anywhere would look like::
 
     @Configuration
+    @ComponentScan(basePackages="com.sample.myapp")
     public class AppConfig extends AbstractFlumeConfiguration {
 
       @Bean
