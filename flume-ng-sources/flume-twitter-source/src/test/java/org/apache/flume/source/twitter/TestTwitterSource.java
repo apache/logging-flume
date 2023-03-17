@@ -24,6 +24,7 @@ import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import org.apache.flume.Channel;
@@ -125,7 +126,7 @@ public class TestTwitterSource extends Assert {
 
   @Test
   public void testCarrotDateFormatBug() throws Exception {
-    SimpleDateFormat formatterFrom = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy");
+    SimpleDateFormat formatterFrom = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy", Locale.ENGLISH);
     formatterFrom.parse("Fri Oct 26 22:53:55 +0000 2012");
   }
 
