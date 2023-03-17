@@ -67,7 +67,7 @@ class JMSMessageConsumer {
 
     try {
       try {
-        if (userName.isPresent()) {
+        if (userName.isPresent() && password.isPresent()) {
           connection = connectionFactory.createConnection(userName.get(), password.get());
         } else {
           connection = connectionFactory.createConnection();
