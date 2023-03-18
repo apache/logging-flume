@@ -533,7 +533,7 @@ ALv2. Entry in NOTICE.  Additional entry in NOTICE and LICENSE for
 PureJavaCrc32C; portions 2-Clause BSD.
 
 ```
-   libthrift-0.14.1.jar
+   libthrift-0.14.2.jar
 ```
 
 same as jar-with-dependencies
