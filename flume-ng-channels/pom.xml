@@ -34,6 +34,5 @@ limitations under the License.
     <module>flume-jdbc-channel</module>
     <module>flume-file-channel</module>
     <module>flume-spillable-memory-channel</module>
-    <module>flume-kafka-channel</module>
   </modules>
 </project>

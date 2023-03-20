@@ -128,7 +128,7 @@
       <artifactId>flume-jdbc-channel</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume.flume-ng-channels</groupId>
+      <groupId>org.apache.flume</groupId>
       <artifactId>flume-kafka-channel</artifactId>
     </dependency>
     <dependency>
@@ -156,8 +156,8 @@
       <artifactId>flume-ng-morphline-solr-sink</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume.flume-ng-sinks</groupId>
-      <artifactId>flume-ng-kafka-sink</artifactId>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-kafka-sink</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flume.flume-ng-sinks</groupId>
@@ -176,7 +176,7 @@
       <artifactId>flume-twitter-source</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume.flume-ng-sources</groupId>
+      <groupId>org.apache.flume</groupId>
       <artifactId>flume-kafka-source</artifactId>
     </dependency>
     <dependency>

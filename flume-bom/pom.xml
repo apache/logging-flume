@@ -37,14 +37,14 @@ limitations under the License.
     <flume-irc.version>1.11.1-SNAPSHOT</flume-irc.version>
     <flume-jdbc.version>1.11.1-SNAPSHOT</flume-jdbc.version>
     <flume-jms.version>1.11.1-SNAPSHOT</flume-jms.version>
-    <flume-kafka.version>1.11.1-SNAPSHOT</flume-kafka.version>
+    <flume-kafka.version>2.0.0-SNAPSHOT</flume-kafka.version>
     <flume-log4jappender.version>1.11.1-SNAPSHOT</flume-log4jappender.version>
     <flume-scribe.version>1.11.1-SNAPSHOT</flume-scribe.version>
     <flume-spring-boot.version>2.0.0-SNAPSHOT</flume-spring-boot.version>
     <flume-taildir.version>1.11.1-SNAPSHOT</flume-taildir.version>
     <flume-tools.version>1.11.1-SNAPSHOT</flume-tools.version>
     <flume-twitter.version>2.0.0-SNAPSHOT</flume-twitter.version>
-    <legacy.version>1.11.1-SNAPSHOT</legacy.version>
+    <flume-legacy.version>1.11.1-SNAPSHOT</flume-legacy.version>
     <morphline.version>1.11.1-SNAPSHOT</morphline.version>
   </properties>
 
@@ -123,7 +123,7 @@ limitations under the License.
       <dependency>
         <groupId>org.apache.flume.flume-ng-channels</groupId>
         <artifactId>flume-jdbc-channel</artifactId>
-        <version>$flume-jdbc.version}</version>
+        <version>${flume-jdbc.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.flume.flume-ng-channels</groupId>
@@ -131,7 +131,7 @@ limitations under the License.
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.flume.flume-ng-channels</groupId>
+        <groupId>org.apache.flume</groupId>
         <artifactId>flume-kafka-channel</artifactId>
         <version>${flume-kafka.version}</version>
       </dependency>
@@ -151,14 +151,20 @@ limitations under the License.
         <version>${flume-log4jappender.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.apache.flume.flume-ng-clients</groupId>
+        <artifactId>flume-ng-log4jappender</artifactId>
+        <version>${flume-log4jappender.version}</version>
+        <classifier>jar-with-dependencies</classifier>
+      </dependency>
+      <dependency>
         <groupId>org.apache.flume.flume-ng-legacy-sources</groupId>
         <artifactId>flume-thrift-source</artifactId>
-        <version>${legacy.version}</version>
+        <version>${flume-legacy.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.flume.flume-ng-legacy-sources</groupId>
         <artifactId>flume-avro-source</artifactId>
-        <version>${legacy.verison}</version>
+        <version>${flume-legacy.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
@@ -196,8 +202,8 @@ limitations under the License.
         <version>${flume-hadoop.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.flume.flume-ng-sinks</groupId>
-        <artifactId>flume-ng-kafka-sink</artifactId>
+        <groupId>org.apache.flume</groupId>
+        <artifactId>flume-kafka-sink</artifactId>
         <version>${flume-kafka.version}</version>
       </dependency>
       <dependency>
@@ -211,6 +217,16 @@ limitations under the License.
         <version>${flume-jms.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.apache.flume.flume-ng-sinks</groupId>
+        <artifactId>flume-dataset-sink</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.flume</groupId>
+        <artifactId>flume-kafka-source</artifactId>
+        <version>${flume-kafka.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.apache.flume.flume-ng-sources</groupId>
         <artifactId>flume-scribe-source</artifactId>
         <version>${flume-scribe.version}</version>
@@ -221,7 +237,7 @@ limitations under the License.
         <version>${flume-taildir.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.flume.flume-shared</groupId>
+        <groupId>org.apache.flume</groupId>
         <artifactId>flume-shared-kafka</artifactId>
         <version>${flume-kafka.version}</version>
       </dependency>
