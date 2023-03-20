@@ -25,6 +25,7 @@
     <artifactId>flume-parent</artifactId>
     <groupId>org.apache.flume</groupId>
     <version>1.11.1-SNAPSHOT</version>
+    <relativePath>../flume-parent/pom.xml</relativePath>
   </parent>
 
   <artifactId>flume-ng-dist</artifactId>

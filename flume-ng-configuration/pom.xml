@@ -21,7 +21,7 @@ limitations under the License.
     <artifactId>flume-parent</artifactId>
     <groupId>org.apache.flume</groupId>
     <version>1.11.1-SNAPSHOT</version>
-    <relativePath>..</relativePath>
+    <relativePath>../flume-parent/pom.xml</relativePath>
   </parent>
   <artifactId>flume-ng-configuration</artifactId>
   <name>Flume NG Configuration</name>
