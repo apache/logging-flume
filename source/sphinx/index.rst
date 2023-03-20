@@ -639,5 +639,6 @@ Feel free to post to the User's mailing list with any questions.
    source
    testing
    license
+   subprojects
 
 ..
