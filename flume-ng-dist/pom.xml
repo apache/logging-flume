@@ -125,7 +125,7 @@
       <artifactId>flume-spillable-memory-channel</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume.flume-ng-channels</groupId>
+      <groupId>org.apache.flume</groupId>
       <artifactId>flume-jdbc-channel</artifactId>
     </dependency>
     <dependency>

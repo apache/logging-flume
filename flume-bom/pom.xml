@@ -35,7 +35,7 @@ limitations under the License.
     <flume-hadoop.version>1.11.1-SNAPSHOT</flume-hadoop.version>
     <flume-http.version>1.11.1-SNAPSHOT</flume-http.version>
     <flume-irc.version>1.11.1-SNAPSHOT</flume-irc.version>
-    <flume-jdbc.version>1.11.1-SNAPSHOT</flume-jdbc.version>
+    <flume-jdbc.version>2.0.0-SNAPSHOT</flume-jdbc.version>
     <flume-jms.version>1.11.1-SNAPSHOT</flume-jms.version>
     <flume-kafka.version>2.0.0-SNAPSHOT</flume-kafka.version>
     <flume-log4jappender.version>1.11.1-SNAPSHOT</flume-log4jappender.version>
@@ -121,7 +121,7 @@ limitations under the License.
         <version>${flume-twitter.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.flume.flume-ng-channels</groupId>
+        <groupId>org.apache.flume</groupId>
         <artifactId>flume-jdbc-channel</artifactId>
         <version>${flume-jdbc.version}</version>
       </dependency>

@@ -66,10 +66,10 @@
       <artifactId>flume-irc-sink</artifactId>
     </dependency>
 
-    <dependency>
+    <!--<dependency>
       <groupId>org.apache.flume.flume-ng-channels</groupId>
       <artifactId>flume-jdbc-channel</artifactId>
-    </dependency>
+    </dependency>-->
 
     <dependency>
       <groupId>org.apache.flume.flume-ng-channels</groupId>
