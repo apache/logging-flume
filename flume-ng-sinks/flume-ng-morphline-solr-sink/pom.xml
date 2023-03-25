@@ -58,7 +58,7 @@ limitations under the License.
     <repository>
       <id>maven-restlet</id>
       <name>Restlet Public Maven Repo</name>
-      <url>https://maven.restlet.org</url>
+      <url>https://maven.restlet.talend.com</url>
       <snapshots>
         <enabled>false</enabled>
       </snapshots>
