@@ -17,7 +17,6 @@
  * under the License.
  */
 
-
 package org.apache.flume.sink.hive;
 
 import org.apache.hadoop.fs.FileStatus;
@@ -57,14 +56,14 @@ public class TestUtil {
     conf.setVar(HiveConf.ConfVars.HIVE_TXN_MANAGER, txnMgr);
     conf.setBoolVar(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY, true);
     conf.set("fs.raw.impl", RawFileSystem.class.getName());
-    try{
+    try {
       conf.setBoolVar(HiveConf.ConfVars.METASTORE_SCHEMA_VERIFICATION, false );
       conf.setVar(HiveConf.ConfVars.METASTORECONNECTURLKEY, "jdbc:derby:;databaseName=metastore_db;create=true");
       conf.setVar(HiveConf.ConfVars.METASTORE_CONNECTION_DRIVER, "org.apache.derby.jdbc.EmbeddedDriver");
       conf.setBoolVar(HiveConf.ConfVars.METASTORE_AUTO_CREATE_ALL, true);
       conf.setIntVar(HiveConf.ConfVars.METASTORE_SERVER_PORT, 0);
       conf.setVar(HiveConf.ConfVars.METASTOREWAREHOUSE, System.getProperty("java.io.tmpdir"));
-    }catch (Throwable t){
+    } catch (Throwable t) {
       t.printStackTrace();
     }
 
@@ -227,9 +226,9 @@ public class TestUtil {
   private static boolean runDDL(Driver driver, String sql) throws QueryFailedException {
     int retryCount = 1; // # of times to retry if first attempt fails
     for (int attempt = 0; attempt <= retryCount; ++attempt) {
-        driver.run(sql);
-        continue;
-    } // for
+      driver.run(sql);
+      continue;
+    }
     return false;
   }
 

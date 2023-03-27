@@ -38,7 +38,6 @@ limitations under the License.
   <modules>
     <module>flume-hdfs-sink</module>
     <module>flume-irc-sink</module>
-    <module>flume-ng-hbase-sink</module>
     <module>flume-ng-hbase2-sink</module>
     <module>flume-ng-morphline-solr-sink</module>
     <module>flume-http-sink</module>
