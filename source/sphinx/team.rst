@@ -16,14 +16,9 @@ Team
    :header: "Name", "Email", "Id", "Role"
    :widths: 30, 25, 20, 25
 
-   "Arvind Prabhakar", "arvind at apache.org", "arvind", "PMC Member"
+
    "Balázs Donát Bessenyei", "bessbd at apache.org", "bessbd", "PMC Chair"
-   "Denes Arvay", "denes at apache.org", "denes", "PMC Member"
-   "Jaroslav Cecho", "jarcec at apache.org", "jarcec","PMC Member"
-   "Jonathan Hsieh", "jmhsieh at apache.org", "jmhsieh", "PMC Member"
-   "Juhani Connolly", "juhanic at apache.org", "juhanic", "PMC Member"
    "Mike Percy", "mpercy at apache.org", "mpercy", "PMC Member"
-   "Ahmed Radwan", "ahmed at apache.org", "ahmed", "PMC Member"
    "Ralph Goers", "rgoers at apache.org", "rgoers", "PMC Member"
    "Sean Busbey", "busbey at apache.org", "busbey", "Committer"
    "Tristan Stevens", "tristan at apache.org", "tristan", "PMC Member"
@@ -35,15 +30,21 @@ The following individuals are recognized as former PMC Members or Project Commit
    :widths: 25, 25, 15, 15, 15
 
    "Aaron Kimball", "kimballa at apache.org", "kimballa", "PMC Member", "Last active 2011"
+   "Ahmed Radwan", "ahmed at apache.org", "ahmed", "PMC Member", "Last active 2019"
    "Ashish Paliwal", "apaliwal at apache.org", "apaliwal", "Committer", "Last active 2017"
    "Andrew Bayer", "abayer at apache.org", "abayer", "PMC Member", "Last active 2015"
+   "Arvind Prabhakar", "arvind at apache.org", "arvind", "PMC Member", "Requested to be inactive in 2023"
    "Brock Noland", "brock at apache.org", "brock", "PMC Member", "Last active 2019"
    "Bruce Mitchener", "brucem at apache.org", "brucem", "PMC Member", "Last active - project creation"
+   "Denes Arvay", "denes at apache.org", "denes", "PMC Member", "Last active 2020 "
    "Derek Deeter", "ddeeter at apache.org", "ddeeter", "PMC Member", "Last active - project creation"
    "Eric Sammer", "esammer at apache.org", "esammer", "PMC Member", "Last active 2017"
    "Hari Shreedharan", "hshreedharan at apache.org", "hshreedharan", "PMC Member", "Emeritus 2022"
    "Henry Robinson", "henry at apache.org", "henry", "PMC Member", "Last active - project creation"
+   "Jaroslav Cecho", "jarcec at apache.org", "jarcec","PMC Member", "Last active 2020"
    "Johny Rufus", "johnyrufus at apache.org", "johnyrufus", "Committer", "Last active 2017"
+   "Jonathan Hsieh", "jmhsieh at apache.org", "jmhsieh", "PMC Member", "Last active 2020"
+   "Juhani Connolly", "juhanic at apache.org", "juhanic", "PMC Member", "Last active 2020"
    "Mingjie Lai", "mlai at apache.org", "mlai", "PMC Member", "Last active 2012"
    "Mubarak Seyed", "mubarak at apache.org","mubarak", "Committer", "Last active 2017"
    "Nick Verbeck", "nerdynick at apache.org", "nerdynick", "PMC Member", "Last active 2011"
