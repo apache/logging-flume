@@ -197,11 +197,6 @@ limitations under the License.
         <version>${flume-hadoop.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.flume.flume-ng-sinks</groupId>
-        <artifactId>flume-ng-hbase-sink</artifactId>
-        <version>${flume-hadoop.version}</version>
-      </dependency>
-      <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-kafka-sink</artifactId>
         <version>${flume-kafka.version}</version>
