@@ -43,7 +43,6 @@ limitations under the License.
     <module>flume-ng-node</module>
     <module>flume-ng-dist</module>
     <module>flume-ng-channels</module>
-    <module>flume-ng-legacy-sources</module>
     <module>flume-ng-clients</module>
     <module>flume-ng-sdk</module>
     <module>flume-ng-tests</module>

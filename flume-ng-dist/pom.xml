@@ -177,12 +177,12 @@
       <artifactId>flume-kafka-source</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume.flume-ng-legacy-sources</groupId>
-      <artifactId>flume-avro-source</artifactId>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-legacy-avro-source</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume.flume-ng-legacy-sources</groupId>
-      <artifactId>flume-thrift-source</artifactId>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-legacy-thrift-source</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flume.flume-ng-sources</groupId>

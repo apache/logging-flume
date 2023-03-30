@@ -44,7 +44,7 @@ limitations under the License.
     <flume-taildir.version>1.11.1-SNAPSHOT</flume-taildir.version>
     <flume-tools.version>1.11.1-SNAPSHOT</flume-tools.version>
     <flume-twitter.version>2.0.0-SNAPSHOT</flume-twitter.version>
-    <flume-legacy.version>1.11.1-SNAPSHOT</flume-legacy.version>
+    <flume-legacy.version>2.0.0-SNAPSHOT</flume-legacy.version>
     <morphline.version>1.11.1-SNAPSHOT</morphline.version>
   </properties>
 
@@ -157,13 +157,13 @@ limitations under the License.
         <classifier>jar-with-dependencies</classifier>
       </dependency>
       <dependency>
-        <groupId>org.apache.flume.flume-ng-legacy-sources</groupId>
-        <artifactId>flume-thrift-source</artifactId>
+        <groupId>org.apache.flume</groupId>
+        <artifactId>flume-legacy-thrift-source</artifactId>
         <version>${flume-legacy.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.flume.flume-ng-legacy-sources</groupId>
-        <artifactId>flume-avro-source</artifactId>
+        <groupId>org.apache.flume</groupId>
+        <artifactId>flume-legacy-avro-source</artifactId>
         <version>${flume-legacy.version}</version>
       </dependency>
       <dependency>
