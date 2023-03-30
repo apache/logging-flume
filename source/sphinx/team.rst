@@ -16,7 +16,7 @@ Team
    :header: "Name", "Email", "Id", "Role"
    :widths: 30, 25, 20, 25
 
-
+   "Ashish Paliwal", "apaliwal at apache.org", "apaliwal", "Committer"
    "Balázs Donát Bessenyei", "bessbd at apache.org", "bessbd", "PMC Chair"
    "Mike Percy", "mpercy at apache.org", "mpercy", "PMC Member"
    "Ralph Goers", "rgoers at apache.org", "rgoers", "PMC Member"
@@ -31,7 +31,6 @@ The following individuals are recognized as former PMC Members or Project Commit
 
    "Aaron Kimball", "kimballa at apache.org", "kimballa", "PMC Member", "Last active 2011"
    "Ahmed Radwan", "ahmed at apache.org", "ahmed", "PMC Member", "Last active 2019"
-   "Ashish Paliwal", "apaliwal at apache.org", "apaliwal", "Committer", "Last active 2017"
    "Andrew Bayer", "abayer at apache.org", "abayer", "PMC Member", "Last active 2015"
    "Arvind Prabhakar", "arvind at apache.org", "arvind", "PMC Member", "Requested to be inactive in 2023"
    "Brock Noland", "brock at apache.org", "brock", "PMC Member", "Last active 2019"
