@@ -1328,7 +1328,7 @@ public class TestHDFSEventSink {
 
     sink.process();
     sink.process();
-    Thread.sleep(1001);
+    Thread.sleep(1101);
     // previous file should have timed out now
     // this can throw BucketClosedException(from the bucketWriter having
     // closed),this is not an issue as the sink will retry and get a fresh
