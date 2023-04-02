@@ -25,7 +25,7 @@ Then verify the signatures using::
     % gpg --import KEYS
     % gpg --verify apache-flume-spring-boot-2.0.0-src.tar.gz.asc
 
-Apache Flume 2.0.0 is signed by Ralph Goers B3D8E1BA
+Apache Flume Spring Boot 2.0.0 is signed by Ralph Goers B3D8E1BA
 
 In addition, you can verify the SHA512 checksum on the files. A Unix program called sha or sha512sum is included in
 many Unix distributions. Note that verifying the checksum is unnecessary if the PGP signature has been validated.
