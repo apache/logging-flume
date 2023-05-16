@@ -217,8 +217,8 @@ source: https://www.opensource.apple.com/source/configd/configd-453.19/dnsinfo/d
 Scala
 scala-collection-compat
 scala-java8-compat
-Copyright (c) 2002-2023 EPFL
-Copyright (c) 2011-2023 Lightbend, Inc.
+Copyright (c) 2002-2022 EPFL
+Copyright (c) 2011-2022 Lightbend, Inc.
 
 Scala includes software developed at
 LAMP/EPFL (https://lamp.epfl.ch/) and
