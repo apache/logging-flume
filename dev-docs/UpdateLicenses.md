@@ -484,14 +484,14 @@ CDDL v1.0. Entry in LICENSE and NOTICE.
 BSD-like project specific. Entry in LICENSE and NOTICE.
 
 ```
-   jetty-http-9.4.41.v20210516.jar
-   jetty-io-9.4.41.v20210516.jar
-   jetty-jmx-9.4.41.v20210516.jar
-   jetty-security-9.4.41.v20210516.jar
-   jetty-server-9.4.41.v20210516.jar
-   jetty-servlet-9.4.41.v20210516.jar
-   jetty-util-9.4.41.v20210516.jar
-   jetty-util-ajax-9.4.41.v20210516.jar
+   jetty-http-9.4.51.v20230217.jar
+   jetty-io-9.4.51.v20230217.jar
+   jetty-jmx-9.4.51.v20230217.jar
+   jetty-security-9.4.51.v20230217.jar
+   jetty-server-9.4.51.v20230217.jar
+   jetty-servlet-9.4.51.v20230217.jar
+   jetty-util-9.4.51.v20230217.jar
+   jetty-util-9.4.51.v20230217.jar
 ```
 
 ALv2. Entry in NOTICE. Additional entry for UnixCrypt.
