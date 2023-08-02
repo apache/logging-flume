@@ -159,7 +159,7 @@ public class TestDefaultJMSMessageConverter {
   public void testBytesMessagePartialReturn() throws Exception {
     createBytesMessage();
     when(((BytesMessage)message).readBytes(any(byte[].class)))
-      .thenReturn(BYTES.length + 1);
+        .thenReturn(BYTES.length + 1);
     createHeaders();
     converter.convert(message);
   }

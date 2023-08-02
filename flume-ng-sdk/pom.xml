@@ -21,12 +21,20 @@ limitations under the License.
   <parent>
     <artifactId>flume-parent</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.8.0-SNAPSHOT</version>
+    <version>1.11.1-SNAPSHOT</version>
+    <relativePath>../flume-parent/pom.xml</relativePath>
   </parent>
 
   <artifactId>flume-ng-sdk</artifactId>
   <name>Flume NG SDK</name>
   <description>Flume Software Development Kit: Stable public API for integration with Flume 1.x</description>
+
+  <properties>
+    <!-- TODO fix spotbugs/pmd violations -->
+    <spotbugs.maxAllowedViolations>69</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>170</pmd.maxAllowedViolations>
+    <module.name>org.apache.flume.sdk</module.name>
+  </properties>
 
   <profiles>
     <profile>
@@ -100,7 +108,7 @@ limitations under the License.
         <plugin>
           <groupId>org.eclipse.m2e</groupId>
           <artifactId>lifecycle-mapping</artifactId>
-          <version>1.0.0</version>
+          <version>${lifecycle-mapping.version}</version>
           <configuration>
             <lifecycleMappingMetadata>
               <pluginExecutions>
@@ -121,7 +129,7 @@ limitations under the License.
                   <pluginExecutionFilter>
                     <groupId>com.thoughtworks.paranamer</groupId>
                     <artifactId>paranamer-maven-plugin</artifactId>
-                    <versionRange>[2.3,)</versionRange>
+                    <versionRange>[${mvn-paranamer-plugin.version},)</versionRange>
                     <goals>
                       <goal>generate</goal>
                     </goals>
@@ -203,10 +211,21 @@ limitations under the License.
     </dependency>
 
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
-      <!-- only used for tests -->
-      <optional>true</optional>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-jul</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-1.2-api</artifactId>
+      <scope>test</scope>
     </dependency>
 
     <dependency>
@@ -216,18 +235,28 @@ limitations under the License.
 
     <dependency>
       <groupId>org.apache.avro</groupId>
-      <artifactId>avro-ipc</artifactId>
+      <artifactId>avro-ipc-netty</artifactId>
     </dependency>
 
     <dependency>
       <groupId>io.netty</groupId>
-      <artifactId>netty</artifactId>
+      <artifactId>netty-all</artifactId>
     </dependency>
 
     <dependency>
       <groupId>org.apache.thrift</groupId>
       <artifactId>libthrift</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>com.jcraft</groupId>
+      <artifactId>jzlib</artifactId>
+    </dependency>
+
+	  <dependency>
+	    <groupId>commons-lang</groupId>
+	    <artifactId>commons-lang</artifactId>
+	  </dependency>
 
   </dependencies>
 </project>

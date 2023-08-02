@@ -39,8 +39,8 @@ import org.apache.flume.channel.file.Log.Builder;
 import org.apache.flume.channel.file.encryption.EncryptionConfiguration;
 import org.apache.flume.channel.file.encryption.KeyProvider;
 import org.apache.flume.channel.file.encryption.KeyProviderFactory;
-import org.apache.flume.instrumentation.ChannelCounter;
 import org.apache.flume.channel.file.instrumentation.FileChannelCounter;
+import org.apache.flume.conf.TransactionCapacitySupported;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,7 +74,7 @@ import java.util.concurrent.TimeUnit;
 @InterfaceAudience.Private
 @InterfaceStability.Stable
 @Disposable
-public class FileChannel extends BasicChannelSemantics {
+public class FileChannel extends BasicChannelSemantics implements TransactionCapacitySupported {
 
   private static final Logger LOG = LoggerFactory.getLogger(FileChannel.class);
 
@@ -270,6 +270,7 @@ public class FileChannel extends BasicChannelSemantics {
     if (channelCounter == null) {
       channelCounter = new FileChannelCounter(getName());
     }
+    channelCounter.setUnhealthy(0);
   }
 
   @Override
@@ -277,25 +278,7 @@ public class FileChannel extends BasicChannelSemantics {
     LOG.info("Starting {}...", this);
     channelCounter.start();
     try {
-      Builder builder = new Log.Builder();
-      builder.setCheckpointInterval(checkpointInterval);
-      builder.setMaxFileSize(maxFileSize);
-      builder.setMinimumRequiredSpace(minimumRequiredSpace);
-      builder.setQueueSize(capacity);
-      builder.setCheckpointDir(checkpointDir);
-      builder.setLogDirs(dataDirs);
-      builder.setChannelName(getName());
-      builder.setUseLogReplayV1(useLogReplayV1);
-      builder.setUseFastReplay(useFastReplay);
-      builder.setEncryptionKeyProvider(encryptionKeyProvider);
-      builder.setEncryptionKeyAlias(encryptionActiveKey);
-      builder.setEncryptionCipherProvider(encryptionCipherProvider);
-      builder.setUseDualCheckpoints(useDualCheckpoints);
-      builder.setCompressBackupCheckpoint(compressBackupCheckpoint);
-      builder.setBackupCheckpointDir(backupCheckpointDir);
-      builder.setFsyncPerTransaction(fsyncPerTransaction);
-      builder.setFsyncInterval(fsyncInterval);
-      builder.setCheckpointOnClose(checkpointOnClose);
+      Builder builder = createLogBuilder();
       log = builder.build();
       log.replay();
       setOpen(true);
@@ -307,6 +290,7 @@ public class FileChannel extends BasicChannelSemantics {
           + channelNameDescriptor);
     } catch (Throwable t) {
       setOpen(false);
+      channelCounter.setUnhealthy(1);
       startupError = t;
       LOG.error("Failed to start the file channel " + channelNameDescriptor, t);
       if (t instanceof Error) {
@@ -318,6 +302,31 @@ public class FileChannel extends BasicChannelSemantics {
       channelCounter.setChannelCapacity(capacity);
     }
     super.start();
+  }
+
+  @VisibleForTesting
+  Builder createLogBuilder() {
+    Builder builder = new Log.Builder();
+    builder.setCheckpointInterval(checkpointInterval);
+    builder.setMaxFileSize(maxFileSize);
+    builder.setMinimumRequiredSpace(minimumRequiredSpace);
+    builder.setQueueSize(capacity);
+    builder.setCheckpointDir(checkpointDir);
+    builder.setLogDirs(dataDirs);
+    builder.setChannelName(getName());
+    builder.setUseLogReplayV1(useLogReplayV1);
+    builder.setUseFastReplay(useFastReplay);
+    builder.setEncryptionKeyProvider(encryptionKeyProvider);
+    builder.setEncryptionKeyAlias(encryptionActiveKey);
+    builder.setEncryptionCipherProvider(encryptionCipherProvider);
+    builder.setUseDualCheckpoints(useDualCheckpoints);
+    builder.setCompressBackupCheckpoint(compressBackupCheckpoint);
+    builder.setBackupCheckpointDir(backupCheckpointDir);
+    builder.setFsyncPerTransaction(fsyncPerTransaction);
+    builder.setFsyncInterval(fsyncInterval);
+    builder.setCheckpointOnClose(checkpointOnClose);
+    builder.setChannelCounter(channelCounter);
+    return builder;
   }
 
   @Override
@@ -436,6 +445,11 @@ public class FileChannel extends BasicChannelSemantics {
     return channelCounter;
   }
 
+  @Override
+  public long getTransactionCapacity() {
+    return transactionCapacity;
+  }
+
   /**
    * Transaction backed by a file. This transaction supports either puts
    * or takes but not both.
@@ -449,12 +463,12 @@ public class FileChannel extends BasicChannelSemantics {
     private final FlumeEventQueue queue;
     private final Semaphore queueRemaining;
     private final String channelNameDescriptor;
-    private final ChannelCounter channelCounter;
+    private final FileChannelCounter channelCounter;
     private final boolean fsyncPerTransaction;
 
     public FileBackedTransaction(Log log, long transactionID,
                                  int transCapacity, int keepAlive, Semaphore queueRemaining,
-                                 String name, boolean fsyncPerTransaction, ChannelCounter
+                                 String name, boolean fsyncPerTransaction, FileChannelCounter
                                      counter) {
       this.log = log;
       queue = log.getFlumeEventQueue();
@@ -503,6 +517,7 @@ public class FileChannel extends BasicChannelSemantics {
         queue.addWithoutCommit(ptr, transactionID);
         success = true;
       } catch (IOException e) {
+        channelCounter.incrementEventPutErrorCount();
         throw new ChannelException("Put failed due to IO error "
             + channelNameDescriptor, e);
       } finally {
@@ -549,6 +564,7 @@ public class FileChannel extends BasicChannelSemantics {
               Event event = log.get(ptr);
               return event;
             } catch (IOException e) {
+              channelCounter.incrementEventTakeErrorCount();
               throw new ChannelException("Take failed due to IO error "
                   + channelNameDescriptor, e);
             } catch (NoopRecordException e) {
@@ -556,6 +572,7 @@ public class FileChannel extends BasicChannelSemantics {
                   "tool found. Will retrieve next event", e);
               takeList.remove(ptr);
             } catch (CorruptEventException ex) {
+              channelCounter.incrementEventTakeErrorCount();
               if (fsyncPerTransaction) {
                 throw new ChannelException(ex);
               }

@@ -58,11 +58,9 @@ public abstract class TransactionEventRecord implements Writable {
 
   @Override
   public void readFields(DataInput in) throws IOException {
-
   }
   @Override
   public void write(DataOutput out) throws IOException {
-
   }
 
   abstract void writeProtos(OutputStream out) throws IOException;
@@ -77,7 +75,6 @@ public abstract class TransactionEventRecord implements Writable {
   }
 
   abstract short getRecordType();
-
 
   /**
    * Provides a minimum guarantee we are not reading complete junk

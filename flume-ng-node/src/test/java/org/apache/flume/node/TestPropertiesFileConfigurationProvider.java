@@ -43,11 +43,15 @@ public class TestPropertiesFileConfigurationProvider  {
       TestPropertiesFileConfigurationProvider.class.getClassLoader()
           .getResource("flume-conf.properties").getFile());
 
-  private PropertiesFileConfigurationProvider provider;
+  private UriConfigurationProvider provider;
+  private List<ConfigurationSource> sources;
 
   @Before
   public void setUp() throws Exception {
-    provider = new PropertiesFileConfigurationProvider("test", TESTFILE);
+    ConfigurationSource source = new FileConfigurationSource(TESTFILE.toURI());
+    sources = Lists.newArrayList(source);
+    provider = new UriConfigurationProvider("test", sources, null, null, 0);
+    provider.start();
   }
 
   @After

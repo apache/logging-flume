@@ -41,7 +41,6 @@ import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.server.TNonblockingServer;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TThreadPoolServer;
-import org.apache.thrift.transport.TFastFramedTransport;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TNonblockingServerTransport;
 import org.apache.thrift.transport.TServerSocket;
@@ -49,23 +48,19 @@ import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TSSLTransportFactory;
 import org.apache.thrift.transport.TTransportFactory;
 import org.apache.thrift.transport.TSaslServerTransport;
+import org.apache.thrift.transport.layered.TFastFramedTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLServerSocket;
 import javax.security.sasl.Sasl;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
-import java.security.KeyStore;
-import java.security.Security;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -75,7 +70,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.security.PrivilegedAction;
 
-public class ThriftSource extends AbstractSource implements Configurable, EventDrivenSource {
+public class ThriftSource extends SslContextAwareAbstractSource
+    implements Configurable, EventDrivenSource {
 
   public static final Logger logger = LoggerFactory.getLogger(ThriftSource.class);
 
@@ -99,12 +95,6 @@ public class ThriftSource extends AbstractSource implements Configurable, EventD
   public static final String BINARY_PROTOCOL = "binary";
   public static final String COMPACT_PROTOCOL = "compact";
 
-  private static final String SSL_KEY = "ssl";
-  private static final String KEYSTORE_KEY = "keystore";
-  private static final String KEYSTORE_PASSWORD_KEY = "keystore-password";
-  private static final String KEYSTORE_TYPE_KEY = "keystore-type";
-  private static final String EXCLUDE_PROTOCOLS = "exclude-protocols";
-
   private static final String KERBEROS_KEY = "kerberos";
   private static final String AGENT_PRINCIPAL = "agent-principal";
   private static final String AGENT_KEYTAB = "agent-keytab";
@@ -116,17 +106,13 @@ public class ThriftSource extends AbstractSource implements Configurable, EventD
   private TServer server;
   private ExecutorService servingExecutor;
   private String protocol;
-  private String keystore;
-  private String keystorePassword;
-  private String keystoreType;
-  private final List<String> excludeProtocols = new LinkedList<String>();
-  private boolean enableSsl = false;
   private boolean enableKerberos = false;
   private String principal;
   private FlumeAuthenticator flumeAuth;
 
   @Override
   public void configure(Context context) {
+    configureSsl(context);
     logger.info("Configuring thrift source.");
     port = context.getInteger(CONFIG_PORT);
     Preconditions.checkNotNull(port, "Port must be specified for Thrift " +
@@ -157,33 +143,6 @@ public class ThriftSource extends AbstractSource implements Configurable, EventD
                 protocol.equalsIgnoreCase(COMPACT_PROTOCOL)),
         "binary or compact are the only valid Thrift protocol types to " +
                 "choose from.");
-
-    enableSsl = context.getBoolean(SSL_KEY, false);
-    if (enableSsl) {
-      keystore = context.getString(KEYSTORE_KEY);
-      keystorePassword = context.getString(KEYSTORE_PASSWORD_KEY);
-      keystoreType = context.getString(KEYSTORE_TYPE_KEY, "JKS");
-      String excludeProtocolsStr = context.getString(EXCLUDE_PROTOCOLS);
-      if (excludeProtocolsStr == null) {
-        excludeProtocols.add("SSLv3");
-      } else {
-        excludeProtocols.addAll(Arrays.asList(excludeProtocolsStr.split(" ")));
-        if (!excludeProtocols.contains("SSLv3")) {
-          excludeProtocols.add("SSLv3");
-        }
-      }
-      Preconditions.checkNotNull(keystore,
-              KEYSTORE_KEY + " must be specified when SSL is enabled");
-      Preconditions.checkNotNull(keystorePassword,
-              KEYSTORE_PASSWORD_KEY + " must be specified when SSL is enabled");
-      try {
-        KeyStore ks = KeyStore.getInstance(keystoreType);
-        ks.load(new FileInputStream(keystore), keystorePassword.toCharArray());
-      } catch (Exception ex) {
-        throw new FlumeException(
-                "Thrift source configured with invalid keystore: " + keystore, ex);
-      }
-    }
 
     principal = context.getString(AGENT_PRINCIPAL);
     String keytab = context.getString(AGENT_KEYTAB);
@@ -248,33 +207,23 @@ public class ThriftSource extends AbstractSource implements Configurable, EventD
     super.start();
   }
 
-  private String getkeyManagerAlgorithm() {
-    String algorithm = Security.getProperty(
-            "ssl.KeyManagerFactory.algorithm");
-    return (algorithm != null) ?
-            algorithm : KeyManagerFactory.getDefaultAlgorithm();
-  }
-
   private TServerTransport getSSLServerTransport() {
     try {
       TServerTransport transport;
       TSSLTransportFactory.TSSLTransportParameters params =
               new TSSLTransportFactory.TSSLTransportParameters();
 
-      params.setKeyStore(keystore, keystorePassword, getkeyManagerAlgorithm(), keystoreType);
+      params.setKeyStore(getKeystore(), getKeystorePassword(),
+          KeyManagerFactory.getDefaultAlgorithm(), getKeystoreType());
       transport = TSSLTransportFactory.getServerSocket(
               port, 120000, InetAddress.getByName(bindAddress), params);
 
       ServerSocket serverSock = ((TServerSocket) transport).getServerSocket();
       if (serverSock instanceof SSLServerSocket) {
         SSLServerSocket sslServerSock = (SSLServerSocket) serverSock;
-        List<String> enabledProtocols = new ArrayList<String>();
-        for (String protocol : sslServerSock.getEnabledProtocols()) {
-          if (!excludeProtocols.contains(protocol)) {
-            enabledProtocols.add(protocol);
-          }
-        }
-        sslServerSock.setEnabledProtocols(enabledProtocols.toArray(new String[0]));
+        SSLParameters sslParameters = sslServerSock.getSSLParameters();
+        sslServerSock.setEnabledCipherSuites(getFilteredCipherSuites(sslParameters));
+        sslServerSock.setEnabledProtocols(getFilteredProtocols(sslParameters));
       }
       return transport;
     } catch (Throwable throwable) {
@@ -301,7 +250,7 @@ public class ThriftSource extends AbstractSource implements Configurable, EventD
   }
 
   private TServer getTThreadedSelectorServer() {
-    if (enableSsl || enableKerberos) {
+    if (isSslEnabled() || enableKerberos) {
       return null;
     }
     Class<?> serverClass;
@@ -351,7 +300,7 @@ public class ThriftSource extends AbstractSource implements Configurable, EventD
 
   private TServer getTThreadPoolServer() {
     TServerTransport serverTransport;
-    if (enableSsl) {
+    if (isSslEnabled()) {
       serverTransport = getSSLServerTransport();
     } else {
       serverTransport = getTServerTransport();
@@ -430,6 +379,7 @@ public class ThriftSource extends AbstractSource implements Configurable, EventD
       } catch (ChannelException ex) {
         logger.warn("Thrift source " + getName() + " could not append events " +
                     "to the channel.", ex);
+        sourceCounter.incrementChannelWriteFail();
         return Status.FAILED;
       }
       sourceCounter.incrementAppendAcceptedCount();
@@ -451,6 +401,7 @@ public class ThriftSource extends AbstractSource implements Configurable, EventD
         getChannelProcessor().processEventBatch(flumeEvents);
       } catch (ChannelException ex) {
         logger.warn("Thrift source %s could not append events to the channel.", getName());
+        sourceCounter.incrementChannelWriteFail();
         return Status.FAILED;
       }
 

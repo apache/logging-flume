@@ -23,13 +23,17 @@ import org.apache.flume.Event;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.event.EventBuilder;
-import org.jboss.netty.buffer.ChannelBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Clock;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -42,6 +46,8 @@ import java.util.Set;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import io.netty.buffer.ByteBuf;
 
 @InterfaceAudience.Private
 @InterfaceStability.Evolving
@@ -93,6 +99,7 @@ public class SyslogUtils {
   public static final Integer MIN_SIZE = 10;
   public static final Integer DEFAULT_SIZE = 2500;
   private final boolean isUdp;
+  private Clock clock;
   private boolean isBadEvent;
   private boolean isIncompleteEvent;
   private Integer maxSize;
@@ -171,10 +178,9 @@ public class SyslogUtils {
       if (keepFields.contains(SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS_TIMESTAMP)) {
         body = timestamp + " " + body;
       }
-      if (keepFields.contains(SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS_VERSION)) {
-        if (version != null && !version.isEmpty()) {
-          body = version + " " + body;
-        }
+      if (keepFields.contains(SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS_VERSION)
+          && version != null && !version.isEmpty()) {
+        body = version + " " + body;
       }
       if (keepFields.contains(SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS_PRIORITY)) {
         body = "<" + priority + ">" + body;
@@ -184,21 +190,58 @@ public class SyslogUtils {
     return body;
   }
 
+  public static String getIP(SocketAddress socketAddress) {
+    try {
+      InetSocketAddress inetSocketAddress = (InetSocketAddress) socketAddress;
+      String ip = inetSocketAddress.getAddress().getHostAddress();
+      if (ip != null) {
+        return ip;
+      } else {
+        throw new NullPointerException("The returned IP is null");
+      }
+    } catch (Exception e) {
+      logger.warn("Unable to retrieve client IP address", e);
+    }
+    // return a safe value instead of null
+    return "";
+  }
+
+  public static String getHostname(SocketAddress socketAddress) {
+    try {
+      InetSocketAddress inetSocketAddress = (InetSocketAddress) socketAddress;
+      String hostname = inetSocketAddress.getHostName();
+      if (hostname != null) {
+        return hostname;
+      } else {
+        throw new NullPointerException("The returned hostname is null");
+      }
+    } catch (Exception e) {
+      logger.warn("Unable to retrieve client hostname", e);
+    }
+    // return a safe value instead of null
+    return "";
+  }
+
   public SyslogUtils() {
     this(false);
   }
 
   public SyslogUtils(boolean isUdp) {
     this(DEFAULT_SIZE,
-        new HashSet<String>(Arrays.asList(SyslogSourceConfigurationConstants.DEFAULT_KEEP_FIELDS)),
+        new HashSet<>(Arrays.asList(SyslogSourceConfigurationConstants.DEFAULT_KEEP_FIELDS)),
         isUdp);
   }
 
-  public SyslogUtils(Integer eventSize, Set<String> keepFields, boolean isUdp) {
+  public SyslogUtils(Integer defaultSize, Set<String> keepFields, boolean isUdp) {
+    this(defaultSize, keepFields, isUdp, Clock.system(Clock.systemDefaultZone().getZone()));
+  }
+
+  public SyslogUtils(Integer eventSize, Set<String> keepFields, boolean isUdp, Clock clock) {
     this.isUdp = isUdp;
+    this.clock = clock;
     isBadEvent = false;
     isIncompleteEvent = false;
-    maxSize = (eventSize < MIN_SIZE) ? MIN_SIZE : eventSize;
+    maxSize = eventSize < MIN_SIZE ? MIN_SIZE : eventSize;
     baos = new ByteArrayOutputStream(eventSize);
     this.keepFields = keepFields;
     initHeaderFormats();
@@ -206,24 +249,19 @@ public class SyslogUtils {
 
   // extend the default header formatter
   public void addFormats(Map<String, String> formatProp) {
-    if (formatProp.isEmpty() || !formatProp.containsKey(
-        SyslogSourceConfigurationConstants.CONFIG_REGEX)) {
+    if (formatProp.isEmpty() || !formatProp.containsKey(SyslogSourceConfigurationConstants.CONFIG_REGEX)) {
       return;
     }
     SyslogFormatter fmt1 = new SyslogFormatter();
-    fmt1.regexPattern = Pattern.compile(
-        formatProp.get(SyslogSourceConfigurationConstants.CONFIG_REGEX));
+    fmt1.regexPattern = Pattern.compile(formatProp.get(SyslogSourceConfigurationConstants.CONFIG_REGEX));
     if (formatProp.containsKey(SyslogSourceConfigurationConstants.CONFIG_SEARCH)) {
-      fmt1.searchPattern.add(
-          formatProp.get(SyslogSourceConfigurationConstants.CONFIG_SEARCH));
+      fmt1.searchPattern.add(formatProp.get(SyslogSourceConfigurationConstants.CONFIG_SEARCH));
     }
     if (formatProp.containsKey(SyslogSourceConfigurationConstants.CONFIG_REPLACE)) {
-      fmt1.replacePattern.add(
-          formatProp.get(SyslogSourceConfigurationConstants.CONFIG_REPLACE));
+      fmt1.replacePattern.add(formatProp.get(SyslogSourceConfigurationConstants.CONFIG_REPLACE));
     }
     if (formatProp.containsKey(SyslogSourceConfigurationConstants.CONFIG_DATEFORMAT)) {
-      fmt1.dateFormat.add(new SimpleDateFormat(
-          formatProp.get(SyslogSourceConfigurationConstants.CONFIG_DATEFORMAT)));
+      fmt1.dateFormat.add(new SimpleDateFormat(formatProp.get(SyslogSourceConfigurationConstants.CONFIG_DATEFORMAT)));
     }
     formats.add(0, fmt1);
   }
@@ -265,8 +303,6 @@ public class SyslogUtils {
     START, PRIO, DATA
   }
 
-  ;
-
   public enum SyslogStatus {
     OTHER("Unknown"),
     INVALID("Invalid"),
@@ -274,7 +310,7 @@ public class SyslogUtils {
 
     private final String syslogStatus;
 
-    private SyslogStatus(String status) {
+    SyslogStatus(String status) {
       syslogStatus = status;
     }
 
@@ -301,16 +337,16 @@ public class SyslogUtils {
       Map<String, String> headers = new HashMap<String, String>();
       headers.put(SYSLOG_FACILITY, String.valueOf(facility));
       headers.put(SYSLOG_SEVERITY, String.valueOf(sev));
-      if ((priority != null) && (priority.length() > 0)) {
+      if (priority != null && priority.length() > 0) {
         headers.put("priority", priority);
       }
-      if ((version != null) && (version.length() > 0)) {
+      if (version != null && version.length() > 0) {
         headers.put("version", version);
       }
-      if ((timeStamp != null) && timeStamp.length() > 0) {
+      if (timeStamp != null && timeStamp.length() > 0) {
         headers.put("timestamp", timeStamp);
       }
-      if ((hostName != null) && (hostName.length() > 0)) {
+      if (hostName != null && hostName.length() > 0) {
         headers.put("host", hostName);
       }
       if (isBadEvent) {
@@ -323,7 +359,7 @@ public class SyslogUtils {
       }
 
       if (!keepAllFields(keepFields)) {
-        if ((msgBody != null) && (msgBody.length() > 0)) {
+        if (msgBody != null && msgBody.length() > 0) {
           body = msgBody.getBytes();
         } else {
           // Parse failed.
@@ -364,12 +400,13 @@ public class SyslogUtils {
             }
             // Add year to timestamp if needed
             if (fmt.addYear) {
-              value = String.valueOf(Calendar.getInstance().get(Calendar.YEAR)) + value;
+              value = clock.instant().atOffset(ZoneOffset.UTC).get(ChronoField.YEAR) + value;
             }
             // try the available time formats to timestamp
             for (int dt = 0; dt < fmt.dateFormat.size(); dt++) {
               try {
                 Date parsedDate = fmt.dateFormat.get(dt).parse(value);
+
                 /*
                  * Some code to try and add some smarts to the year insertion.
                  * Original code just added the current year which was okay-ish, but around
@@ -384,8 +421,8 @@ public class SyslogUtils {
                  * 1 month in the future) of timestamps.
                  */
                 if (fmt.addYear) {
-                  Calendar cal = Calendar.getInstance();
-                  cal.setTime(parsedDate);
+                  Calendar calParsed = Calendar.getInstance();
+                  calParsed.setTime(parsedDate);
                   Calendar calMinusOneMonth = Calendar.getInstance();
                   calMinusOneMonth.setTime(parsedDate);
                   calMinusOneMonth.add(Calendar.MONTH, -1);
@@ -394,19 +431,21 @@ public class SyslogUtils {
                   calPlusElevenMonths.setTime(parsedDate);
                   calPlusElevenMonths.add(Calendar.MONTH, +11);
 
-                  if (cal.getTimeInMillis() > System.currentTimeMillis() &&
-                      calMinusOneMonth.getTimeInMillis() > System.currentTimeMillis()) {
+                  long currentTimeMillis = clock.millis();
+
+                  if (calParsed.getTimeInMillis() > currentTimeMillis &&
+                      calMinusOneMonth.getTimeInMillis() > currentTimeMillis) {
                     //Need to roll back a year
                     Calendar c1 = Calendar.getInstance();
                     c1.setTime(parsedDate);
                     c1.add(Calendar.YEAR, -1);
                     parsedDate = c1.getTime();
-                  } else if (cal.getTimeInMillis() < System.currentTimeMillis() &&
-                             calPlusElevenMonths.getTimeInMillis() < System.currentTimeMillis()) {
+                  } else if (calParsed.getTimeInMillis() < currentTimeMillis &&
+                             calPlusElevenMonths.getTimeInMillis() < currentTimeMillis) {
                     //Need to roll forward a year
                     Calendar c1 = Calendar.getInstance();
                     c1.setTime(parsedDate);
-                    c1.add(Calendar.YEAR, -1);
+                    c1.add(Calendar.YEAR, +1);
                     parsedDate = c1.getTime();
                   }
                 }
@@ -445,7 +484,7 @@ public class SyslogUtils {
   }
 
   // extract relevant syslog data needed for building Flume event
-  public Event extractEvent(ChannelBuffer in) {
+  public Event extractEvent(ByteBuf in) {
 
     /* for protocol debugging
     ByteBuffer bb = in.toByteBuffer();
@@ -459,76 +498,72 @@ public class SyslogUtils {
     Event e = null;
     boolean doneReading = false;
 
-    try {
-      while (!doneReading && in.readable()) {
-        b = in.readByte();
-        switch (m) {
-          case START:
-            if (b == '<') {
-              baos.write(b);
-              m = Mode.PRIO;
-            } else if (b == '\n') {
-              //If the character is \n, it was because the last event was exactly
-              //as long  as the maximum size allowed and
-              //the only remaining character was the delimiter - '\n', or
-              //multiple delimiters were sent in a row.
-              //Just ignore it, and move forward, don't change the mode.
-              //This is a no-op, just ignore it.
-              logger.debug("Delimiter found while in START mode, ignoring..");
-
-            } else {
-              isBadEvent = true;
-              baos.write(b);
-              //Bad event, just dump everything as if it is data.
-              m = Mode.DATA;
-            }
-            break;
-          case PRIO:
+    while (!doneReading && in.isReadable()) {
+      b = in.readByte();
+      switch (m) {
+        case START:
+          if (b == '<') {
             baos.write(b);
-            if (b == '>') {
-              if (prio.length() == 0) {
-                isBadEvent = true;
-              }
+            m = Mode.PRIO;
+          } else if (b == '\n') {
+            //If the character is \n, it was because the last event was exactly
+            //as long  as the maximum size allowed and
+            //the only remaining character was the delimiter - '\n', or
+            //multiple delimiters were sent in a row.
+            //Just ignore it, and move forward, don't change the mode.
+            //This is a no-op, just ignore it.
+            logger.debug("Delimiter found while in START mode, ignoring..");
+
+          } else {
+            isBadEvent = true;
+            baos.write(b);
+            //Bad event, just dump everything as if it is data.
+            m = Mode.DATA;
+          }
+          break;
+        case PRIO:
+          baos.write(b);
+          if (b == '>') {
+            if (prio.length() == 0) {
+              isBadEvent = true;
+            }
+            m = Mode.DATA;
+          } else {
+            char ch = (char) b;
+            prio.append(ch);
+            // Priority is max 3 digits per both RFC 3164 and 5424
+            // With this check there is basically no danger of
+            // boas.size() exceeding this.maxSize before getting to the
+            // DATA state where this is actually checked
+            if (!Character.isDigit(ch) || prio.length() > 3) {
+              isBadEvent = true;
+              //If we hit a bad priority, just write as if everything is data.
               m = Mode.DATA;
-            } else {
-              char ch = (char) b;
-              prio.append(ch);
-              // Priority is max 3 digits per both RFC 3164 and 5424
-              // With this check there is basically no danger of
-              // boas.size() exceeding this.maxSize before getting to the
-              // DATA state where this is actually checked
-              if (!Character.isDigit(ch) || prio.length() > 3) {
-                isBadEvent = true;
-                //If we hit a bad priority, just write as if everything is data.
-                m = Mode.DATA;
-              }
             }
-            break;
-          case DATA:
-            // TCP syslog entries are separated by '\n'
-            if (b == '\n') {
-              e = buildEvent();
-              doneReading = true;
-            } else {
-              baos.write(b);
-            }
-            if (baos.size() == this.maxSize && !doneReading) {
-              isIncompleteEvent = true;
-              e = buildEvent();
-              doneReading = true;
-            }
-            break;
-        }
-
+          }
+          break;
+        case DATA:
+          // TCP syslog entries are separated by '\n'
+          if (b == '\n') {
+            e = buildEvent();
+            doneReading = true;
+          } else {
+            baos.write(b);
+          }
+          if (baos.size() == this.maxSize && !doneReading) {
+            isIncompleteEvent = true;
+            e = buildEvent();
+            doneReading = true;
+          }
+          break;
       }
 
-      // UDP doesn't send a newline, so just use what we received
-      if (e == null && isUdp) {
-        doneReading = true;
-        e = buildEvent();
-      }
-    } finally {
-      // no-op
+    }
+
+    // UDP doesn't send a newline, so just use what we received
+    if (e == null && isUdp) {
+      doneReading = true;
+      e = buildEvent();
     }
 
     return e;

@@ -23,77 +23,46 @@ limitations under the License.
   <parent>
     <artifactId>flume-parent</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.8.0-SNAPSHOT</version>
+    <version>1.11.1-SNAPSHOT</version>
+    <relativePath>../flume-parent/pom.xml</relativePath>
   </parent>
 
-  <groupId>org.apache.flume</groupId>
   <artifactId>flume-ng-sinks</artifactId>
   <name>Flume NG Sinks</name>
   <packaging>pom</packaging>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
+  <properties>
+    <flume.sink.kudu.enabled>true</flume.sink.kudu.enabled>
+  </properties>
 
   <modules>
     <module>flume-hdfs-sink</module>
     <module>flume-irc-sink</module>
-    <module>flume-ng-hbase-sink</module>
-    <module>flume-ng-elasticsearch-sink</module>
+    <module>flume-ng-hbase2-sink</module>
     <module>flume-ng-morphline-solr-sink</module>
-    <module>flume-ng-kafka-sink</module>
     <module>flume-http-sink</module>
+    <module>flume-hive-sink</module>
   </modules>
 
   <profiles>
-
     <profile>
-      <id>hadoop-1.0</id>
+      <id>x86_64</id>
       <activation>
+        <os>
+          <arch>amd64</arch>
+        </os>
         <property>
-          <name>flume.hadoop.profile</name>
-          <value>1</value>
+          <name>flume.sink.kudu.enabled</name>
+          <value>true</value>
         </property>
       </activation>
-    </profile>
-
-    <profile>
-      <id>hadoop-2</id>
-      <activation>
-        <property>
-          <name>flume.hadoop.profile</name>
-          <value>2</value>
-        </property>
-      </activation>
-      <!-- add the flume-dataset-sink, which is only compatible with hadoop-2
-           -->
       <modules>
-        <module>flume-dataset-sink</module>
-        <module>flume-hive-sink</module>
+        <!-- kudu-binary.jar is available only for x86_64 systems
+        https://issues.apache.org/jira/browse/KUDU-3264
+        -->
+        <module>flume-ng-kudu-sink</module>
       </modules>
     </profile>
-
-    <profile>
-      <id>hbase-1</id>
-      <activation>
-        <property>
-          <name>!flume.hadoop.profile</name>
-        </property>
-      </activation>
-      <!-- add the flume-dataset-sink, which is only compatible with hadoop-2
-           -->
-      <modules>
-        <module>flume-dataset-sink</module>
-        <module>flume-hive-sink</module>
-      </modules>
-    </profile>
-
-
   </profiles>
 
 </project>

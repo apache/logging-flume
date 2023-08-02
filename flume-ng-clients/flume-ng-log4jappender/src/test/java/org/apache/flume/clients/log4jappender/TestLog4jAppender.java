@@ -21,11 +21,14 @@ package org.apache.flume.clients.log4jappender;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.net.ServerSocket;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import junit.framework.Assert;
 
@@ -41,6 +44,7 @@ import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.source.AvroSource;
+import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -48,16 +52,23 @@ import org.apache.log4j.PropertyConfigurator;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public class TestLog4jAppender {
   private AvroSource source;
   private Channel ch;
   private Properties props;
 
+  private static int getFreePort() throws Exception {
+    try (ServerSocket socket = new ServerSocket(0)) {
+      return socket.getLocalPort();
+    }
+  }
+
   @Before
   public void initiate() throws Exception {
-    int port = 25430;
-    source = new AvroSource();
+    int port = getFreePort();
+    source = Mockito.spy(new AvroSource());
     ch = new MemoryChannel();
     Configurables.configure(ch, new Context());
 
@@ -72,20 +83,17 @@ public class TestLog4jAppender {
     FileReader reader = new FileReader(TESTFILE);
     props = new Properties();
     props.load(reader);
+    props.put("log4j.appender.out2.Port", String.valueOf(port));
     reader.close();
   }
 
   private void configureSource() {
-    List<Channel> channels = new ArrayList<Channel>();
-    channels.add(ch);
-
     ChannelSelector rcs = new ReplicatingChannelSelector();
-    rcs.setChannels(channels);
-
+    rcs.setChannels(Collections.singletonList(ch));
     source.setChannelProcessor(new ChannelProcessor(rcs));
-
     source.start();
   }
+
   @Test
   public void testLog4jAppender() throws IOException {
     configureSource();
@@ -115,6 +123,7 @@ public class TestLog4jAppender {
           Level.toLevel(Integer.valueOf(hdrs.get(Log4jAvroHeaders.LOG_LEVEL
               .toString()))
           ));
+      Assert.assertNotNull(hdrs.get(Log4jAvroHeaders.ADDRESS.toString()));
 
       Assert.assertEquals(logger.getName(),
           hdrs.get(Log4jAvroHeaders.LOGGER_NAME.toString()));
@@ -124,7 +133,64 @@ public class TestLog4jAppender {
       transaction.commit();
       transaction.close();
     }
+  }
 
+  private void testBatchedSending(int numEvents) {
+    configureSource();
+    PropertyConfigurator.configure(props);
+
+    Logger logger = LogManager.getLogger(getClass());
+    List<String> events = IntStream.range(0, numEvents).mapToObj(String::valueOf)
+        .collect(Collectors.toList());
+    logger.info(events);
+
+    Transaction tx = ch.getTransaction();
+    tx.begin();
+    for (String s : events) {
+      Event e = ch.take();
+      Assert.assertNotNull(e);
+      Assert.assertEquals(s, new String(e.getBody()));
+    }
+    Assert.assertNull("There should be no more events in the channel", ch.take());
+  }
+
+  @Test
+  public void testLogBatch() {
+    testBatchedSending(5);
+    Mockito.verify(source, Mockito.times(1)).appendBatch(Mockito.anyList());
+    Mockito.verify(source, Mockito.times(0)).append(Mockito.any(AvroFlumeEvent.class));
+  }
+
+  @Test
+  public void testLogSingleMessage() {
+    configureSource();
+    PropertyConfigurator.configure(props);
+
+    Logger logger = LogManager.getLogger(getClass());
+    logger.info("test");
+
+    Transaction tx = ch.getTransaction();
+    tx.begin();
+    Event e = ch.take();
+    Assert.assertNotNull(e);
+    Assert.assertEquals("test", new String(e.getBody()));
+
+    Mockito.verify(source, Mockito.times(0)).appendBatch(Mockito.anyList());
+    Mockito.verify(source, Mockito.times(1)).append(Mockito.any(AvroFlumeEvent.class));
+  }
+
+  @Test
+  public void testLogSingleMessageInCollection() {
+    testBatchedSending(1);
+    Mockito.verify(source, Mockito.times(0)).appendBatch(Mockito.anyList());
+    Mockito.verify(source, Mockito.times(1)).append(Mockito.any(AvroFlumeEvent.class));
+  }
+
+  @Test
+  public void testLogEmptyBatch() {
+    testBatchedSending(0);
+    Mockito.verify(source, Mockito.times(0)).appendBatch(Mockito.anyList());
+    Mockito.verify(source, Mockito.times(0)).append(Mockito.any(AvroFlumeEvent.class));
   }
 
   @Test
@@ -135,7 +201,6 @@ public class TestLog4jAppender {
     Logger logger = LogManager.getLogger(TestLog4jAppender.class);
     source.stop();
     sendAndAssertFail(logger);
-
   }
 
   @Test(expected = EventDeliveryException.class)

@@ -23,27 +23,16 @@ limitations under the License.
   <parent>
     <artifactId>flume-parent</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.8.0-SNAPSHOT</version>
+    <version>1.11.1-SNAPSHOT</version>
+    <relativePath>../flume-parent/pom.xml</relativePath>
   </parent>
 
-  <groupId>org.apache.flume</groupId>
   <artifactId>flume-ng-channels</artifactId>
   <name>Flume NG Channels</name>
   <packaging>pom</packaging>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
-
   <modules>
-    <module>flume-jdbc-channel</module>
     <module>flume-file-channel</module>
     <module>flume-spillable-memory-channel</module>
-    <module>flume-kafka-channel</module>
   </modules>
 </project>

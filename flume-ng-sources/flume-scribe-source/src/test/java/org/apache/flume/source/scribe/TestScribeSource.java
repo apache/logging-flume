@@ -24,19 +24,25 @@ import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
+import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.transport.layered.TFramedTransport;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.internal.util.reflection.Whitebox;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.mockito.Matchers.anyListOf;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 
 /**
  *
@@ -80,8 +86,7 @@ public class TestScribeSource {
     scribeSource.start();
   }
 
-  @Test
-  public void testScribeMessage() throws Exception {
+  private void sendSingle() throws org.apache.thrift.TException {
     TTransport transport = new TFramedTransport(new TSocket("localhost", port));
 
     TProtocol protocol = new TBinaryProtocol(transport);
@@ -91,6 +96,11 @@ public class TestScribeSource {
     List<LogEntry> logEntries = new ArrayList<LogEntry>(1);
     logEntries.add(logEntry);
     client.Log(logEntries);
+  }
+
+  @Test
+  public void testScribeMessage() throws Exception {
+    sendSingle();
 
     // try to get it from Channels
     Transaction tx = memoryChannel.getTransaction();
@@ -129,6 +139,21 @@ public class TestScribeSource {
     }
     tx.commit();
     tx.close();
+  }
+
+  @Test
+  public void testErrorCounter() throws Exception {
+    ChannelProcessor cp = mock(ChannelProcessor.class);
+    doThrow(new ChannelException("dummy")).when(cp).processEventBatch(anyListOf(Event.class));
+    ChannelProcessor origCp = scribeSource.getChannelProcessor();
+    scribeSource.setChannelProcessor(cp);
+
+    sendSingle();
+
+    scribeSource.setChannelProcessor(origCp);
+
+    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(scribeSource, "sourceCounter");
+    org.junit.Assert.assertEquals(1, sc.getChannelWriteFail());
   }
 
   @AfterClass

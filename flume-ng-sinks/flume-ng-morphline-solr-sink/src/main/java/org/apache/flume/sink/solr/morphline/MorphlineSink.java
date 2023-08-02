@@ -22,6 +22,7 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Transaction;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.conf.LogPrivacyUtil;
@@ -36,7 +37,7 @@ import org.kitesdk.morphline.api.Command;
  * Flume sink that extracts search documents from Flume events and processes them using a morphline
  * {@link Command} chain.
  */
-public class MorphlineSink extends AbstractSink implements Configurable {
+public class MorphlineSink extends AbstractSink implements Configurable, BatchSizeSupported {
 
   private int maxBatchSize = 1000;
   private long maxBatchDurationMillis = 1000;
@@ -110,7 +111,7 @@ public class MorphlineSink extends AbstractSink implements Configurable {
         handler.stop();
       }
       sinkCounter.stop();
-      LOGGER.info("Morphline Sink {} stopped. Metrics: {}, {}", getName(), sinkCounter);
+      LOGGER.info("Morphline Sink {} stopped. Metrics: {}", getName(), sinkCounter);
     } finally {
       super.stop();
     }
@@ -166,6 +167,7 @@ public class MorphlineSink extends AbstractSink implements Configurable {
       // Ooops - need to rollback and back off
       LOGGER.error("Morphline Sink " + getName() + ": Unable to process event from channel " +
           myChannel.getName() + ". Exception follows.", t);
+      sinkCounter.incrementEventWriteOrChannelFail(t);
       try {
         if (!isMorphlineTransactionCommitted) {
           handler.rollbackTransaction();
@@ -193,7 +195,12 @@ public class MorphlineSink extends AbstractSink implements Configurable {
       txn.close();
     }
   }
-  
+
+  @Override
+  public long getBatchSize() {
+    return getMaxBatchSize();
+  }
+
   @Override
   public String toString() {
     int i = getClass().getName().lastIndexOf('.') + 1;

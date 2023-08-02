@@ -32,14 +32,14 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.Session;
+import javax.jms.Topic;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import java.util.ArrayList;
 import java.util.List;
 
 class JMSMessageConsumer {
-  private static final Logger logger = LoggerFactory
-      .getLogger(JMSMessageConsumer.class);
+  private static final Logger logger = LoggerFactory.getLogger(JMSMessageConsumer.class);
 
   private final int batchSize;
   private final long pollTimeout;
@@ -54,7 +54,9 @@ class JMSMessageConsumer {
                      String destinationName, JMSDestinationLocator destinationLocator,
                      JMSDestinationType destinationType, String messageSelector, int batchSize,
                      long pollTimeout, JMSMessageConverter messageConverter,
-                     Optional<String> userName, Optional<String> password) {
+                     Optional<String> userName, Optional<String> password,
+                     Optional<String> clientId, boolean createDurableSubscription,
+                     String durableSubscriptionName) {
     this.batchSize = batchSize;
     this.pollTimeout = pollTimeout;
     this.messageConverter = messageConverter;
@@ -62,67 +64,82 @@ class JMSMessageConsumer {
         + "than zero");
     Preconditions.checkArgument(pollTimeout >= 0, "Poll timeout cannot be " +
         "negative");
-    try {
-      if (userName.isPresent()) {
-        connection = connectionFactory.createConnection(userName.get(),
-            password.get());
-      } else {
-        connection = connectionFactory.createConnection();
-      }
-      connection.start();
-    } catch (JMSException e) {
-      throw new FlumeException("Could not create connection to broker", e);
-    }
 
     try {
-      session = connection.createSession(true, Session.SESSION_TRANSACTED);
-    } catch (JMSException e) {
-      throw new FlumeException("Could not create session", e);
-    }
-
-    try {
-      if (destinationLocator.equals(JMSDestinationLocator.CDI)) {
-        switch (destinationType) {
-          case QUEUE:
-            destination = session.createQueue(destinationName);
-            break;
-          case TOPIC:
-            destination = session.createTopic(destinationName);
-            break;
-          default:
-            throw new IllegalStateException(String.valueOf(destinationType));
+      try {
+        if (userName.isPresent() && password.isPresent()) {
+          connection = connectionFactory.createConnection(userName.get(), password.get());
+        } else {
+          connection = connectionFactory.createConnection();
         }
-      } else {
-        destination = (Destination) initialContext.lookup(destinationName);
+        if (clientId.isPresent()) {
+          connection.setClientID(clientId.get());
+        }
+        connection.start();
+      } catch (JMSException e) {
+        throw new FlumeException("Could not create connection to broker", e);
       }
-    } catch (JMSException e) {
-      throw new FlumeException("Could not create destination " + destinationName, e);
-    } catch (NamingException e) {
-      throw new FlumeException("Could not find destination " + destinationName, e);
-    }
 
-    try {
-      messageConsumer = session.createConsumer(destination,
-          messageSelector.isEmpty() ? null : messageSelector);
-    } catch (JMSException e) {
-      throw new FlumeException("Could not create consumer", e);
+      try {
+        session = connection.createSession(true, Session.SESSION_TRANSACTED);
+      } catch (JMSException e) {
+        throw new FlumeException("Could not create session", e);
+      }
+
+      try {
+        if (destinationLocator.equals(JMSDestinationLocator.CDI)) {
+          switch (destinationType) {
+            case QUEUE:
+              destination = session.createQueue(destinationName);
+              break;
+            case TOPIC:
+              destination = session.createTopic(destinationName);
+              break;
+            default:
+              throw new IllegalStateException(String.valueOf(destinationType));
+          }
+        } else {
+          JMSSource.verifyContext(destinationName);
+          destination = (Destination) initialContext.lookup(destinationName);
+        }
+      } catch (JMSException e) {
+        throw new FlumeException("Could not create destination " + destinationName, e);
+      } catch (NamingException e) {
+        throw new FlumeException("Could not find destination " + destinationName, e);
+      }
+
+      try {
+        if (createDurableSubscription) {
+          messageConsumer = session.createDurableSubscriber(
+                  (Topic) destination, durableSubscriptionName,
+                  messageSelector.isEmpty() ? null : messageSelector, true);
+        } else {
+          messageConsumer = session.createConsumer(destination,
+                  messageSelector.isEmpty() ? null : messageSelector);
+        }
+      } catch (JMSException e) {
+        throw new FlumeException("Could not create consumer", e);
+      }
+      String startupMsg = String.format("Connected to '%s' of type '%s' with " +
+                      "user '%s', batch size '%d', selector '%s' ", destinationName,
+              destinationType, userName.isPresent() ? userName.get() : "null",
+              batchSize, messageSelector.isEmpty() ? null : messageSelector);
+      logger.info(startupMsg);
+    } catch (Exception e) {
+      close();
+      throw e;
     }
-    String startupMsg = String.format("Connected to '%s' of type '%s' with " +
-            "user '%s', batch size '%d', selector '%s' ", destinationName,
-        destinationType, userName.isPresent() ? userName.get() : "null",
-        batchSize, messageSelector.isEmpty() ? null : messageSelector);
-    logger.info(startupMsg);
   }
 
   List<Event> take() throws JMSException {
     List<Event> result = new ArrayList<Event>(batchSize);
     Message message;
-    message = messageConsumer.receive(pollTimeout);
+    message = receive();
     if (message != null) {
       result.addAll(messageConverter.convert(message));
       int max = batchSize - 1;
       for (int i = 0; i < max; i++) {
-        message = messageConsumer.receiveNoWait();
+        message = receiveNoWait();
         if (message == null) {
           break;
         }
@@ -135,11 +152,35 @@ class JMSMessageConsumer {
     return result;
   }
 
+  private Message receive() throws JMSException {
+    try {
+      return messageConsumer.receive(pollTimeout);
+    } catch (RuntimeException runtimeException) {
+      JMSException jmsException = new JMSException("JMS provider has thrown runtime exception: "
+              + runtimeException.getMessage());
+      jmsException.setLinkedException(runtimeException);
+      throw jmsException;
+    }
+  }
+
+  private Message receiveNoWait() throws JMSException {
+    try {
+      return messageConsumer.receiveNoWait();
+    } catch (RuntimeException runtimeException) {
+      JMSException jmsException = new JMSException("JMS provider has thrown runtime exception: "
+              + runtimeException.getMessage());
+      jmsException.setLinkedException(runtimeException);
+      throw jmsException;
+    }
+  }
+
   void commit() {
     try {
       session.commit();
     } catch (JMSException jmsException) {
       logger.warn("JMS Exception processing commit", jmsException);
+    } catch (RuntimeException runtimeException) {
+      logger.warn("Runtime Exception processing commit", runtimeException);
     }
   }
 
@@ -148,6 +189,8 @@ class JMSMessageConsumer {
       session.rollback();
     } catch (JMSException jmsException) {
       logger.warn("JMS Exception processing rollback", jmsException);
+    } catch (RuntimeException runtimeException) {
+      logger.warn("Runtime Exception processing rollback", runtimeException);
     }
   }
 

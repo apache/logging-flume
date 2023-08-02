@@ -120,7 +120,7 @@ public interface EventSerializer {
   /**
    * Specify whether this output format supports reopening files for append.
    * For example, this method should return {@code false} if
-   * {@link beforeClose()} writes a trailer that "finalizes" the file
+   * {@link #beforeClose()} writes a trailer that "finalizes" the file
    * (this type of behavior is file format-specific).<br/>
    * Could have been named {@code supportsAppend()}.
    */

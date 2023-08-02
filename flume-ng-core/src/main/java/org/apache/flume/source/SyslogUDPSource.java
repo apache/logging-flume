@@ -22,10 +22,9 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import com.google.common.annotations.VisibleForTesting;
+
 import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -33,94 +32,54 @@ import org.apache.flume.EventDrivenSource;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.instrumentation.SourceCounter;
-import org.jboss.netty.bootstrap.ConnectionlessBootstrap;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.channel.AdaptiveReceiveBufferSizePredictorFactory;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.ChannelPipelineFactory;
-import org.jboss.netty.channel.Channels;
-import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.SimpleChannelHandler;
-import org.jboss.netty.channel.socket.oio.OioDatagramChannelFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SyslogUDPSource extends AbstractSource
-                             implements EventDrivenSource, Configurable {
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.DatagramPacket;
+import io.netty.channel.socket.nio.NioDatagramChannel;
 
-  private int port;
-  private int maxsize = 1 << 16; // 64k is max allowable in RFC 5426
-  private String host = null;
-  private Channel nettyChannel;
-  private Map<String, String> formaterProp;
-  private Set<String> keepFields;
-
-  private static final Logger logger = LoggerFactory.getLogger(SyslogUDPSource.class);
-
-  private SourceCounter sourceCounter;
+public class SyslogUDPSource extends AbstractSource implements EventDrivenSource, Configurable {
 
   // Default Min size
   public static final int DEFAULT_MIN_SIZE = 2048;
   public static final int DEFAULT_INITIAL_SIZE = DEFAULT_MIN_SIZE;
-
-  public class syslogHandler extends SimpleChannelHandler {
-    private SyslogUtils syslogUtils = new SyslogUtils(DEFAULT_INITIAL_SIZE, null, true);
-
-    public void setFormater(Map<String, String> prop) {
-      syslogUtils.addFormats(prop);
-    }
-
-    public void setKeepFields(Set<String> keepFields) {
-      syslogUtils.setKeepFields(keepFields);
-    }
-
-    @Override
-    public void messageReceived(ChannelHandlerContext ctx, MessageEvent mEvent) {
-      try {
-        syslogUtils.setEventSize(maxsize);
-        Event e = syslogUtils.extractEvent((ChannelBuffer)mEvent.getMessage());
-        if (e == null) {
-          return;
-        }
-        sourceCounter.incrementEventReceivedCount();
-
-        getChannelProcessor().processEvent(e);
-        sourceCounter.incrementEventAcceptedCount();
-      } catch (ChannelException ex) {
-        logger.error("Error writting to channel", ex);
-        return;
-      } catch (RuntimeException ex) {
-        logger.error("Error parsing event from syslog stream, event dropped", ex);
-        return;
-      }
-    }
-  }
+  private static final Logger logger = LoggerFactory.getLogger(SyslogUDPSource.class);
+  private final int maxsize = 1 << 16; // 64k is max allowable in RFC 5426
+  private int port;
+  private String host = null;
+  private Map<String, String> formaterProp;
+  private Set<String> keepFields;
+  private String clientIPHeader;
+  private String clientHostnameHeader;
+  private EventLoopGroup group;
+  private Channel channel;
+  private SourceCounter sourceCounter;
 
   @Override
   public void start() {
     // setup Netty server
-    ConnectionlessBootstrap serverBootstrap = new ConnectionlessBootstrap(
-        new OioDatagramChannelFactory(Executors.newCachedThreadPool()));
-    final syslogHandler handler = new syslogHandler();
-    handler.setFormater(formaterProp);
-    handler.setKeepFields(keepFields);
-    serverBootstrap.setOption("receiveBufferSizePredictorFactory",
-        new AdaptiveReceiveBufferSizePredictorFactory(DEFAULT_MIN_SIZE,
-            DEFAULT_INITIAL_SIZE, maxsize));
-    serverBootstrap.setPipelineFactory(new ChannelPipelineFactory() {
-      @Override
-      public ChannelPipeline getPipeline() {
-        return Channels.pipeline(handler);
+    group = new NioEventLoopGroup();
+    try {
+      Bootstrap b = new Bootstrap();
+      b.group(group)
+          .channel(NioDatagramChannel.class)
+          .option(ChannelOption.SO_BROADCAST, true)
+          .handler(new SyslogUdpHandler(formaterProp, keepFields, clientIPHeader, clientHostnameHeader));
+      if (host == null) {
+        channel = b.bind(port).sync().channel();
+      } else {
+        channel = b.bind(host, port).sync().channel();
       }
-    });
-
-    if (host == null) {
-      nettyChannel = serverBootstrap.bind(new InetSocketAddress(port));
-    } else {
-      nettyChannel = serverBootstrap.bind(new InetSocketAddress(host, port));
+    } catch (InterruptedException ex) {
+      logger.warn("netty server startup was interrupted", ex);
     }
 
     sourceCounter.start();
@@ -131,33 +90,23 @@ public class SyslogUDPSource extends AbstractSource
   public void stop() {
     logger.info("Syslog UDP Source stopping...");
     logger.info("Metrics: {}", sourceCounter);
-    if (nettyChannel != null) {
-      nettyChannel.close();
-      try {
-        nettyChannel.getCloseFuture().await(60, TimeUnit.SECONDS);
-      } catch (InterruptedException e) {
-        logger.warn("netty server stop interrupted", e);
-      } finally {
-        nettyChannel = null;
-      }
-    }
-
+    group.shutdownGracefully();
     sourceCounter.stop();
     super.stop();
   }
 
   @Override
   public void configure(Context context) {
-    Configurables.ensureRequiredNonNull(
-        context, SyslogSourceConfigurationConstants.CONFIG_PORT);
+    Configurables.ensureRequiredNonNull(context, SyslogSourceConfigurationConstants.CONFIG_PORT);
     port = context.getInteger(SyslogSourceConfigurationConstants.CONFIG_PORT);
     host = context.getString(SyslogSourceConfigurationConstants.CONFIG_HOST);
-    formaterProp = context.getSubProperties(
-        SyslogSourceConfigurationConstants.CONFIG_FORMAT_PREFIX);
+    formaterProp = context.getSubProperties(SyslogSourceConfigurationConstants.CONFIG_FORMAT_PREFIX);
     keepFields = SyslogUtils.chooseFieldsToKeep(
         context.getString(
             SyslogSourceConfigurationConstants.CONFIG_KEEP_FIELDS,
             SyslogSourceConfigurationConstants.DEFAULT_KEEP_FIELDS));
+    clientIPHeader = context.getString(SyslogSourceConfigurationConstants.CONFIG_CLIENT_IP_HEADER);
+    clientHostnameHeader = context.getString(SyslogSourceConfigurationConstants.CONFIG_CLIENT_HOSTNAME_HEADER);
 
     if (sourceCounter == null) {
       sourceCounter = new SourceCounter(getName());
@@ -166,7 +115,7 @@ public class SyslogUDPSource extends AbstractSource
 
   @VisibleForTesting
   InetSocketAddress getBoundAddress() {
-    SocketAddress localAddress = nettyChannel.getLocalAddress();
+    SocketAddress localAddress = channel.localAddress();
     if (!(localAddress instanceof InetSocketAddress)) {
       throw new IllegalArgumentException("Not bound to an internet address");
     }
@@ -176,5 +125,49 @@ public class SyslogUDPSource extends AbstractSource
   @VisibleForTesting
   SourceCounter getSourceCounter() {
     return sourceCounter;
+  }
+
+  public class SyslogUdpHandler extends SimpleChannelInboundHandler<DatagramPacket> {
+    SyslogUtils syslogUtils = new SyslogUtils(DEFAULT_INITIAL_SIZE, null, true);
+    private final String clientIPHeader;
+    private final String clientHostnameHeader;
+
+    SyslogUdpHandler(Map<String, String> formatProps, Set<String> keepFields, String clientIPHeader,
+        String clientHostnameHeader) {
+      syslogUtils.addFormats(formatProps);
+      syslogUtils.setKeepFields(keepFields);
+      this.clientIPHeader = clientIPHeader;
+      this.clientHostnameHeader = clientHostnameHeader;
+    }
+
+    @Override
+    protected void channelRead0(ChannelHandlerContext ctx, DatagramPacket packet) throws Exception {
+      try {
+        syslogUtils.setEventSize(maxsize);
+        Event e = syslogUtils.extractEvent(packet.content());
+        if (e == null) {
+          return;
+        }
+
+        if (clientIPHeader != null) {
+          e.getHeaders().put(clientIPHeader, SyslogUtils.getIP(packet.sender()));
+        }
+
+        if (clientHostnameHeader != null) {
+          e.getHeaders().put(clientHostnameHeader, SyslogUtils.getHostname(packet.sender()));
+        }
+
+        sourceCounter.incrementEventReceivedCount();
+
+        getChannelProcessor().processEvent(e);
+        sourceCounter.incrementEventAcceptedCount();
+      } catch (ChannelException ex) {
+        logger.error("Error writting to channel", ex);
+        sourceCounter.incrementChannelWriteFail();
+      } catch (RuntimeException ex) {
+        logger.error("Error parsing event from syslog stream, event dropped", ex);
+        sourceCounter.incrementEventReadFail();
+      }
+    }
   }
 }

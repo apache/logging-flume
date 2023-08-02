@@ -62,7 +62,7 @@ public class DurablePositionTracker implements PositionTracker {
    * our writes may never be visible.
    * @param trackerFile
    * @param target
-   * @return
+   * @return DurablePositionTracker
    * @throws IOException
    */
   public static DurablePositionTracker getInstance(File trackerFile,
@@ -109,7 +109,6 @@ public class DurablePositionTracker implements PositionTracker {
         new DurablePositionTracker(trackerFile, existingTarget);
     return newTracker;
   }
-
 
   /**
    * If the file exists, read it and open it for append.

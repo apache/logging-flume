@@ -24,7 +24,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.Files;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -33,12 +34,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.zip.GZIPInputStream;
-
 
 /**
  * Attempts to setup a staged install using explicitly specified tar-ball
@@ -46,7 +48,7 @@ import java.util.zip.GZIPInputStream;
  */
 public class StagedInstall {
 
-  private static final Logger LOGGER = Logger.getLogger(StagedInstall.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(StagedInstall.class);
 
   public static final String PROP_PATH_TO_DIST_TARBALL =
       "flume.dist.tarball";
@@ -78,6 +80,12 @@ public class StagedInstall {
     return INSTANCE;
   }
 
+  public static int findFreePort() throws IOException {
+    try (ServerSocket socket = new ServerSocket(0)) {
+      return socket.getLocalPort();
+    }
+  }
+
   public synchronized boolean isRunning() {
     return process != null;
   }
@@ -100,19 +108,26 @@ public class StagedInstall {
     Thread.sleep(3000); // sleep for 3s to let system shutdown
   }
 
-  public synchronized void startAgent(String name, String configResource)
+  public synchronized int startAgent(String name, String configResource)
       throws Exception {
     if (process != null) {
       throw new Exception("A process is already running");
     }
-
+    int port = findFreePort();
     Properties props = new Properties();
     props.load(ClassLoader.getSystemResourceAsStream(configResource));
-
+    props.put("rpccagent.sources.src1.port", String.valueOf(port));
     startAgent(name, props);
+    return port;
   }
 
-  public synchronized void startAgent(String name, Properties properties)
+  public synchronized void startAgent(String name, Properties properties) throws Exception {
+    startAgent(name, properties, new HashMap<>(), new HashMap<>());
+  }
+
+  public synchronized void startAgent(
+      String name, Properties properties,  Map<String, String> environmentVariables,
+      Map<String, String> commandOptions)
       throws Exception {
     Preconditions.checkArgument(!name.isEmpty(), "agent name must not be empty");
     Preconditions.checkNotNull(properties, "properties object must not be null");
@@ -144,6 +159,8 @@ public class StagedInstall {
             + ENV_FLUME_ROOT_LOGGER_VALUE);
     builder.add("-D" + ENV_FLUME_LOG_FILE + "=" + logFileName);
 
+    commandOptions.forEach((key, value) -> builder.add(key, value));
+
     List<String> cmdArgs = builder.build();
 
     LOGGER.info("Using command: " + Joiner.on(" ").join(cmdArgs));
@@ -151,6 +168,7 @@ public class StagedInstall {
     ProcessBuilder pb = new ProcessBuilder(cmdArgs);
 
     Map<String, String> env = pb.environment();
+    env.putAll(environmentVariables);
 
     LOGGER.debug("process environment: " + env);
 
@@ -438,7 +456,7 @@ public class StagedInstall {
               LOGGER.warn("Invalid file: " + file.getCanonicalPath());
             }
           } else {
-            StringBuilder sb = new StringBuilder("Multiple candate tarballs");
+            StringBuilder sb = new StringBuilder("Multiple candidate tarballs");
             sb.append(" found in directory ");
             sb.append(testFile.getCanonicalPath()).append(": ");
             boolean first = true;

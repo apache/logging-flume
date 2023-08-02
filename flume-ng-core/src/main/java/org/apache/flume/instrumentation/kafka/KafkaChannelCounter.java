@@ -17,7 +17,6 @@
  */
 package org.apache.flume.instrumentation.kafka;
 
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.flume.instrumentation.ChannelCounter;
 
 public class KafkaChannelCounter extends ChannelCounter

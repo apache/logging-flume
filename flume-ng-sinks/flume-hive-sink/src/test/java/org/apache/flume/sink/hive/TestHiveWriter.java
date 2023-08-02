@@ -19,6 +19,11 @@
 
 package org.apache.flume.sink.hive;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import junit.framework.Assert;
 import org.apache.flume.Context;
@@ -27,7 +32,6 @@ import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.hadoop.hive.cli.CliSessionState;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.txn.TxnDbUtil;
-import org.apache.hadoop.hive.ql.CommandNeedRetryException;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hive.hcatalog.streaming.HiveEndPoint;
@@ -35,11 +39,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class TestHiveWriter {
   static final String dbName = "testing";
@@ -99,8 +98,8 @@ public class TestHiveWriter {
   @Before
   public void setUp() throws Exception {
     // 1) prepare hive
-    TxnDbUtil.cleanDb();
-    TxnDbUtil.prepDb();
+    TxnDbUtil.cleanDb(conf);
+    TxnDbUtil.prepDb(conf);
 
     // 1) Setup tables
     TestUtil.dropDB(conf, dbName);
@@ -207,7 +206,7 @@ public class TestHiveWriter {
   }
 
   private void checkRecordCountInTable(int expectedCount)
-          throws CommandNeedRetryException, IOException {
+          throws IOException {
     int count = TestUtil.listRecordsInTable(driver, dbName, tblName).size();
     Assert.assertEquals(expectedCount, count);
   }

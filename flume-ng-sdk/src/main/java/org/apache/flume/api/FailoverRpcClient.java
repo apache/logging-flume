@@ -19,7 +19,6 @@
 package org.apache.flume.api;
 
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -89,23 +88,8 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
       }
     }
 
-    String strBatchSize = properties.getProperty(
-        RpcClientConfigurationConstants.CONFIG_BATCH_SIZE);
+    batchSize = parseBatchSize(properties);
 
-    if (strBatchSize != null && strBatchSize.trim().length() > 0) {
-      try {
-        batchSize = Integer.parseInt(strBatchSize);
-        if (batchSize < 1) {
-          logger.warn("A batch-size less than 1 was specified: " + batchSize
-              + ". Using default instead.");
-          batchSize = RpcClientConfigurationConstants.DEFAULT_BATCH_SIZE;
-        }
-      } catch (NumberFormatException ex) {
-        logger.warn("Invalid batch size specified: " + strBatchSize
-            + ". Using default instead.");
-      }
-
-    }
     isActive = true;
   }
 

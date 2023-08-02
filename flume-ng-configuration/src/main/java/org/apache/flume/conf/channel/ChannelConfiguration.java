@@ -16,20 +16,13 @@
  */
 package org.apache.flume.conf.channel;
 
-import org.apache.flume.Context;
 import org.apache.flume.conf.ComponentConfiguration;
 import org.apache.flume.conf.ConfigurationException;
-import org.apache.flume.conf.source.SourceConfiguration;
 
 public class ChannelConfiguration extends ComponentConfiguration {
 
   public ChannelConfiguration(String componentName) {
     super(componentName);
-  }
-
-  @Override
-  public void configure(Context context) throws ConfigurationException {
-    super.configure(context);
   }
 
   public enum ChannelConfigurationType {
@@ -65,7 +58,7 @@ public class ChannelConfiguration extends ComponentConfiguration {
     @SuppressWarnings("unchecked")
     public ChannelConfiguration getConfiguration(String name)
         throws ConfigurationException {
-      if (this.equals(ChannelConfigurationType.OTHER)) {
+      if (this == OTHER) {
         return new ChannelConfiguration(name);
       }
       Class<? extends ChannelConfiguration> clazz;

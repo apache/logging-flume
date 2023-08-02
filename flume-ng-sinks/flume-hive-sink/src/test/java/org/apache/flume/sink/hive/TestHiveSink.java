@@ -23,10 +23,12 @@ package org.apache.flume.sink.hive;
 import com.google.common.collect.Lists;
 import junit.framework.Assert;
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Transaction;
+import org.apache.flume.channel.BasicTransactionSemantics;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.SimpleEvent;
@@ -35,7 +37,6 @@ import org.apache.hadoop.hive.cli.CliSessionState;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.txn.TxnDbUtil;
-import org.apache.hadoop.hive.ql.CommandNeedRetryException;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.session.SessionState;
@@ -44,6 +45,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
+import org.mockito.internal.util.reflection.Whitebox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -101,8 +104,8 @@ public class TestHiveSink {
     TestUtil.setConfValues(conf);
 
     // 1) prepare hive
-    TxnDbUtil.cleanDb();
-    TxnDbUtil.prepDb();
+    TxnDbUtil.cleanDb(conf);
+    TxnDbUtil.prepDb(conf);
 
     // 2) Setup Hive client
     SessionState.start(new CliSessionState(conf));
@@ -129,10 +132,8 @@ public class TestHiveSink {
     TestUtil.dropDB(conf, dbName);
   }
 
-
-  @Test
-  public void testSingleWriterSimplePartitionedTable()
-          throws EventDeliveryException, IOException, CommandNeedRetryException {
+  public void testSingleWriter(boolean partitioned, String dbName, String tblName,
+                               Channel pChannel) throws Exception {
     int totalRecords = 4;
     int batchSize = 2;
     int batchCount = totalRecords / batchSize;
@@ -141,14 +142,16 @@ public class TestHiveSink {
     context.put("hive.metastore", metaStoreURI);
     context.put("hive.database",dbName);
     context.put("hive.table",tblName);
-    context.put("hive.partition", PART1_VALUE + "," + PART2_VALUE);
+    if (partitioned) {
+      context.put("hive.partition", PART1_VALUE + "," + PART2_VALUE);
+    }
     context.put("autoCreatePartitions","false");
     context.put("batchSize","" + batchSize);
     context.put("serializer", HiveDelimitedTextSerializer.ALIAS);
     context.put("serializer.fieldnames", COL1 + ",," + COL2 + ",");
     context.put("heartBeatInterval", "0");
 
-    Channel channel = startSink(sink, context);
+    Channel channel = startSink(sink, context, pChannel);
 
     List<String> bodies = Lists.newArrayList();
 
@@ -171,8 +174,14 @@ public class TestHiveSink {
     for (int i = 0; i < batchCount ; i++) {
       sink.process();
     }
+    checkRecordCountInTable(totalRecords, dbName, tblName);
     sink.stop();
     checkRecordCountInTable(totalRecords, dbName, tblName);
+  }
+
+  @Test
+  public void testSingleWriterSimplePartitionedTable() throws Exception {
+    testSingleWriter(true, dbName, tblName, null);
   }
 
   @Test
@@ -185,47 +194,7 @@ public class TestHiveSink {
                               null, dbLocation);
 
     try {
-      int totalRecords = 4;
-      int batchSize = 2;
-      int batchCount = totalRecords / batchSize;
-
-      Context context = new Context();
-      context.put("hive.metastore", metaStoreURI);
-      context.put("hive.database", dbName2);
-      context.put("hive.table", tblName2);
-      context.put("autoCreatePartitions","false");
-      context.put("batchSize","" + batchSize);
-      context.put("serializer", HiveDelimitedTextSerializer.ALIAS);
-      context.put("serializer.fieldnames", COL1 + ",," + COL2 + ",");
-      context.put("heartBeatInterval", "0");
-
-      Channel channel = startSink(sink, context);
-
-      List<String> bodies = Lists.newArrayList();
-
-      // Push the events in two batches
-      Transaction txn = channel.getTransaction();
-      txn.begin();
-      for (int j = 1; j <= totalRecords; j++) {
-        Event event = new SimpleEvent();
-        String body = j + ",blah,This is a log message,other stuff";
-        event.setBody(body.getBytes());
-        bodies.add(body);
-        channel.put(event);
-      }
-
-      txn.commit();
-      txn.close();
-
-      checkRecordCountInTable(0, dbName2, tblName2);
-      for (int i = 0; i < batchCount ; i++) {
-        sink.process();
-      }
-
-      // check before & after  stopping sink
-      checkRecordCountInTable(totalRecords, dbName2, tblName2);
-      sink.stop();
-      checkRecordCountInTable(totalRecords, dbName2, tblName2);
+      testSingleWriter(false, dbName2, tblName2, null);
     } finally {
       TestUtil.dropDB(conf, dbName2);
     }
@@ -313,7 +282,7 @@ public class TestHiveSink {
 
   @Test
   public void testHeartBeat()
-          throws EventDeliveryException, IOException, CommandNeedRetryException {
+          throws EventDeliveryException, IOException {
     int batchSize = 2;
     int batchCount = 3;
     int totalRecords = batchCount * batchSize;
@@ -398,6 +367,23 @@ public class TestHiveSink {
     checkRecordCountInTable(totalRecords, dbName, tblName);
   }
 
+  @Test
+  public void testErrorCounter() throws Exception {
+    Channel channel = Mockito.mock(Channel.class);
+    Mockito.when(channel.take()).thenThrow(new ChannelException("dummy"));
+    Transaction transaction = Mockito.mock(BasicTransactionSemantics.class);
+    Mockito.when(channel.getTransaction()).thenReturn(transaction);
+
+    try {
+      testSingleWriter(true, dbName, tblName, channel);
+    } catch (EventDeliveryException e) {
+      //Expected exception
+    }
+
+    SinkCounter sinkCounter = (SinkCounter) Whitebox.getInternalState(sink, "sinkCounter");
+    Assert.assertEquals(1, sinkCounter.getChannelReadFail());
+  }
+
   private void sleep(int n) {
     try {
       Thread.sleep(n);
@@ -406,9 +392,13 @@ public class TestHiveSink {
   }
 
   private static Channel startSink(HiveSink sink, Context context) {
+    return startSink(sink, context, null);
+  }
+
+  private static Channel startSink(HiveSink sink, Context context, Channel pChannel) {
     Configurables.configure(sink, context);
 
-    Channel channel = new MemoryChannel();
+    Channel channel = pChannel == null ? new MemoryChannel() : pChannel;
     Configurables.configure(channel, context);
     sink.setChannel(channel);
     sink.start();
@@ -416,7 +406,7 @@ public class TestHiveSink {
   }
 
   private void checkRecordCountInTable(int expectedCount, String db, String tbl)
-          throws CommandNeedRetryException, IOException {
+          throws IOException {
     int count = TestUtil.listRecordsInTable(driver, db, tbl).size();
     Assert.assertEquals(expectedCount, count);
   }

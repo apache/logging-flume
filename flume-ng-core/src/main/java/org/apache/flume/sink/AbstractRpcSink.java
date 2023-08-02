@@ -20,7 +20,6 @@ package org.apache.flume.sink;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.flume.Channel;
@@ -30,8 +29,10 @@ import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
 import org.apache.flume.Transaction;
+import org.apache.flume.api.AbstractRpcClient;
 import org.apache.flume.api.RpcClient;
 import org.apache.flume.api.RpcClientConfigurationConstants;
+import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.instrumentation.SinkCounter;
 import org.slf4j.Logger;
@@ -44,8 +45,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * This sink provides the basic RPC functionality for Flume. This sink takes
@@ -141,7 +140,8 @@ import java.util.concurrent.locks.ReentrantLock;
  * This method will be called whenever this sink needs to create a new
  * connection to the source.
  */
-public abstract class AbstractRpcSink extends AbstractSink implements Configurable {
+public abstract class AbstractRpcSink extends AbstractSink implements Configurable,
+    BatchSizeSupported {
 
   private static final Logger logger = LoggerFactory.getLogger(AbstractRpcSink.class);
   private String hostname;
@@ -155,6 +155,11 @@ public abstract class AbstractRpcSink extends AbstractSink implements Configurab
   private final ScheduledExecutorService cxnResetExecutor =
       Executors.newSingleThreadScheduledExecutor(
           new ThreadFactoryBuilder().setNameFormat("Rpc Sink Reset Thread").build());
+
+  // batchSize is used in the clients, here it is only used for config validation
+  // before the client is configured
+  private int batchSize;
+
 
   @Override
   public void configure(Context context) {
@@ -173,6 +178,8 @@ public abstract class AbstractRpcSink extends AbstractSink implements Configurab
     for (Entry<String, String> entry: context.getParameters().entrySet()) {
       clientProps.setProperty(entry.getKey(), entry.getValue());
     }
+
+    batchSize = AbstractRpcClient.parseBatchSize(clientProps);
 
     if (sinkCounter == null) {
       sinkCounter = new SinkCounter(getName());
@@ -383,8 +390,10 @@ public abstract class AbstractRpcSink extends AbstractSink implements Configurab
       } else if (t instanceof ChannelException) {
         logger.error("Rpc Sink " + getName() + ": Unable to get event from" +
             " channel " + channel.getName() + ". Exception follows.", t);
+        sinkCounter.incrementChannelReadFail();
         status = Status.BACKOFF;
       } else {
+        sinkCounter.incrementEventWriteFail();
         destroyConnection();
         throw new EventDeliveryException("Failed to send events", t);
       }
@@ -398,5 +407,10 @@ public abstract class AbstractRpcSink extends AbstractSink implements Configurab
   @VisibleForTesting
   RpcClient getUnderlyingClient() {
     return client;
+  }
+
+  @Override
+  public long getBatchSize() {
+    return batchSize;
   }
 }

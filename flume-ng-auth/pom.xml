@@ -21,28 +21,20 @@ limitations under the License.
   <parent>
     <artifactId>flume-parent</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.8.0-SNAPSHOT</version>
+    <version>1.11.1-SNAPSHOT</version>
+    <relativePath>../flume-parent/pom.xml</relativePath>
   </parent>
 
   <artifactId>flume-ng-auth</artifactId>
   <name>Flume Auth</name>
   <description>Flume Authentication</description>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
-        <version>2.3.7</version>
-        <inherited>true</inherited>
-        <extensions>true</extensions>
-      </plugin>
-    </plugins>
-  </build>
+  <properties>
+    <!-- TODO fix spotbugs/pmd violations -->
+    <spotbugs.maxAllowedViolations>1</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>7</pmd.maxAllowedViolations>
+    <module.name>org.apache.flume.auth</module.name>
+  </properties>
 
   <dependencies>
 
@@ -58,13 +50,20 @@ limitations under the License.
     </dependency>
 
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-1.2-api</artifactId>
+      <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.apache.hadoop</groupId>
-      <artifactId>${hadoop.common.artifact.id}</artifactId>
+      <artifactId>hadoop-common</artifactId>
       <optional>true</optional>
     </dependency>
 
@@ -76,10 +75,14 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-minikdc</artifactId>
-      <version>${hadoop2.version}</version>
       <scope>test</scope>
     </dependency>
-
+    <dependency>
+      <!-- add this to satisfy the dependency requirement of apacheds-jdbm1 in minikdc-->
+      <groupId>org.apache.directory.jdbm</groupId>
+      <artifactId>apacheds-jdbm1</artifactId>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>

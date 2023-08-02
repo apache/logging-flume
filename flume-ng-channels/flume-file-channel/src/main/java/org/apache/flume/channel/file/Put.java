@@ -82,8 +82,11 @@ class Put extends TransactionEventRecord {
       for (String key : headers.keySet()) {
         String value = headers.get(key);
         headerBuilder.clear();
-        eventBuilder.addHeaders(headerBuilder.setKey(key)
-            .setValue(value).build());
+        headerBuilder.setKey(key);
+        if (value != null) {
+          headerBuilder.setValue(value);
+        }
+        eventBuilder.addHeaders(headerBuilder.build());
       }
     }
     eventBuilder.setBody(ByteString.copyFrom(event.getBody()));

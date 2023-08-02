@@ -126,6 +126,33 @@ public class TestUtils {
   }
 
   public static void forceCheckpoint(FileChannel channel) {
+    // The compiler doesn't know that an IOException can be thrown here so won't let us catch it or
+    // even check for it normally.
+    // If the checkpoint backup is in progress, then retry.
+    String ioeClass = IOException.class.getName();
+    for (int i = 0; i < 10; ++i) {
+      try {
+        doForcedCheckpoint(channel);
+        break;
+      } catch (Throwable ioe) {
+        Throwable cause = ioe.getCause();
+        if (cause != null && cause.getClass().getName().equals(ioeClass)) {
+          String message = cause.getMessage();
+          if (message != null && message.startsWith("Previous backup")) {
+            try {
+              Thread.sleep(200);
+            } catch (InterruptedException ex) {
+              // Ignore it.
+            }
+            continue;
+          }
+        }
+        throw ioe;
+      }
+    }
+  }
+
+  public static void doForcedCheckpoint(FileChannel channel) {
     Log log = field("log")
             .ofType(Log.class)
             .in(channel)
@@ -133,11 +160,12 @@ public class TestUtils {
 
     Assert.assertTrue("writeCheckpoint returned false",
             method("writeCheckpoint")
-            .withReturnType(Boolean.class)
-            .withParameterTypes(Boolean.class)
-            .in(log)
-            .invoke(true));
+                    .withReturnType(Boolean.class)
+                    .withParameterTypes(Boolean.class)
+                    .in(log)
+                    .invoke(true));
   }
+
 
   public static Set<String> takeEvents(Channel channel, int batchSize) throws Exception {
     return takeEvents(channel, batchSize, false);

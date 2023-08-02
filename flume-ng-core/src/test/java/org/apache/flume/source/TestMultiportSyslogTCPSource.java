@@ -24,11 +24,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
+import java.security.cert.X509Certificate;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -36,7 +38,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiConsumer;
+
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelException;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -50,23 +55,39 @@ import org.apache.flume.source.MultiportSyslogTCPSource.LineSplitter;
 import org.apache.flume.source.MultiportSyslogTCPSource.MultiportSyslogHandler;
 import org.apache.flume.source.MultiportSyslogTCPSource.ParsedBuffer;
 import org.apache.flume.source.MultiportSyslogTCPSource.ThreadSafeDecoder;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.DefaultIoSessionDataStructureFactory;
 import org.apache.mina.transport.socket.nio.NioSession;
 import org.joda.time.DateTime;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.mockito.Mockito;
+import org.mockito.internal.util.reflection.Whitebox;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
 
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
 public class TestMultiportSyslogTCPSource {
+  private static final Logger LOGGER = LogManager.getLogger();
+  private static final String TEST_CLIENT_IP_HEADER = "testClientIPHeader";
+  private static final String TEST_CLIENT_HOSTNAME_HEADER = "testClientHostnameHeader";
 
-  private static final Logger logger =
-      LoggerFactory.getLogger(TestMultiportSyslogTCPSource.class);
+  private static final int getFreePort() throws IOException {
+    try (ServerSocket socket = new ServerSocket(0)) {
+      return socket.getLocalPort();
+    }
+  }
 
-  private static final int BASE_TEST_SYSLOG_PORT = 14455;
   private final DateTime time = new DateTime();
   private final String stamp1 = time.toString();
   private final String host1 = "localhost.localdomain";
@@ -84,50 +105,62 @@ public class TestMultiportSyslogTCPSource {
     return msg1.getBytes();
   }
 
-  /**
-   * Basic test to exercise multiple-port parsing.
-   */
-  @Test
-  public void testMultiplePorts() throws IOException, ParseException {
-    MultiportSyslogTCPSource source = new MultiportSyslogTCPSource();
-    Channel channel = new MemoryChannel();
-
+  private List<Integer> testNPorts(MultiportSyslogTCPSource source, Channel channel,
+      List<Event> channelEvents, int numPorts, ChannelProcessor channelProcessor,
+      BiConsumer<Integer, byte[]> eventSenderFuncton, Context additionalContext)
+      throws IOException {
+    LOGGER.info("source: {}, channel: {}, numPorts: {}", source.toString(),
+        channel.getName(), numPorts);
     Context channelContext = new Context();
     channelContext.put("capacity", String.valueOf(2000));
     channelContext.put("transactionCapacity", String.valueOf(2000));
     Configurables.configure(channel, channelContext);
 
-    List<Channel> channels = Lists.newArrayList();
-    channels.add(channel);
+    if (channelProcessor == null) {
+      List<Channel> channels = Lists.newArrayList();
+      channels.add(channel);
 
-    ChannelSelector rcs = new ReplicatingChannelSelector();
-    rcs.setChannels(channels);
+      ChannelSelector rcs = new ReplicatingChannelSelector();
+      rcs.setChannels(channels);
 
-    source.setChannelProcessor(new ChannelProcessor(rcs));
-    Context context = new Context();
-    StringBuilder ports = new StringBuilder();
-    for (int i = 0; i < 1000; i++) {
-      ports.append(String.valueOf(BASE_TEST_SYSLOG_PORT + i)).append(" ");
+      source.setChannelProcessor(new ChannelProcessor(rcs));
+    } else {
+      source.setChannelProcessor(channelProcessor);
     }
+
+    List<Integer> portList = new ArrayList<>(numPorts);
+    while (portList.size() < numPorts) {
+      int port = getFreePort();
+      if (!portList.contains(port)) {
+        portList.add(port);
+      }
+    }
+
+    StringBuilder ports = new StringBuilder();
+    for (int i = 0; i < numPorts; i++) {
+      ports.append(String.valueOf(portList.get(i))).append(" ");
+    }
+    LOGGER.info("ports: {}", ports.toString());
+    Context context = new Context();
     context.put(SyslogSourceConfigurationConstants.CONFIG_PORTS,
         ports.toString().trim());
+    context.put("portHeader", "port");
+    context.putAll(additionalContext.getParameters());
     source.configure(context);
     source.start();
 
-    Socket syslogSocket;
-    for (int i = 0; i < 1000 ; i++) {
-      syslogSocket = new Socket(
-              InetAddress.getLocalHost(), BASE_TEST_SYSLOG_PORT + i);
-      syslogSocket.getOutputStream().write(getEvent(i));
-      syslogSocket.close();
+    for (int i = 0; i < numPorts; i++) {
+      byte[] data = getEvent(i);
+      eventSenderFuncton.accept(portList.get(i), data);
+      LOGGER.info("Sent {} to port {}", new String(data), portList.get(i));
     }
 
-    List<Event> channelEvents = new ArrayList<Event>();
     Transaction txn = channel.getTransaction();
     txn.begin();
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < numPorts; i++) {
       Event e = channel.take();
       if (e == null) {
+        LOGGER.error("Got a null event for port number: {}", i);
         throw new NullPointerException("Event is null");
       }
       channelEvents.add(e);
@@ -139,18 +172,127 @@ public class TestMultiportSyslogTCPSource {
     } finally {
       txn.close();
     }
+
+    return portList;
+  }
+
+  /**
+   * Basic test to exercise multiple-port parsing.
+   */
+  @Test
+  public void testMultiplePorts() throws IOException, ParseException {
+    MultiportSyslogTCPSource source = new MultiportSyslogTCPSource();
+    Channel channel = new MemoryChannel();
+    channel.setName("MultiplePorts");
+    List<Event> channelEvents = new ArrayList<>();
+    int numPorts = 1000;
+
+    final List<Socket> socketList = new ArrayList<>();
+    List<Integer> portList = testNPorts(source, channel, channelEvents,
+        numPorts, null, getSimpleEventSender(socketList), new Context());
+
     //Since events can arrive out of order, search for each event in the array
-    for (int i = 0; i < 1000 ; i++) {
+    processEvents(channelEvents, numPorts, portList);
+    closeSockets(socketList);
+    source.stop();
+  }
+
+  /**
+   * Basic test to exercise multiple-port parsing.
+   */
+  @Ignore("This test is flakey and causes tests to fail pretty often.")
+  @Test
+  public void testMultiplePortsSSL() throws Exception {
+
+    SSLContext sslContext = SSLContext.getInstance("TLS");
+    sslContext.init(null, new TrustManager[]{new X509TrustManager() {
+        @Override
+        public void checkClientTrusted(X509Certificate[] certs, String s) {
+          // nothing
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] certs, String s) {
+          // nothing
+        }
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers() {
+          return new X509Certificate[0];
+        }
+      } },
+        null);
+
+    SocketFactory socketFactory = sslContext.getSocketFactory();
+
+    Context context = new Context();
+    context.put("ssl", "true");
+    context.put("keystore", "src/test/resources/server.flume-keystore.p12");
+    context.put("keystore-password", "password");
+    context.put("keystore-type", "PKCS12");
+
+
+    MultiportSyslogTCPSource source = new MultiportSyslogTCPSource();
+    Channel channel = new MemoryChannel();
+    channel.setName("MultiPortSSL");
+    List<Event> channelEvents = new ArrayList<>();
+    int numPorts = 10;
+    List<Socket> socketList = new ArrayList<>();
+
+    List<Integer> portList = testNPorts(source, channel, channelEvents,
+        numPorts, null, getSSLEventSender(socketFactory, socketList), context);
+
+    //Since events can arrive out of order, search for each event in the array
+    processEvents(channelEvents, numPorts, portList);
+    closeSockets(socketList);
+    source.stop();
+  }
+
+  private void closeSockets(List<Socket> socketList) {
+    socketList.forEach((socket) -> {
+      try {
+        socket.close();
+      } catch (IOException ioe) {
+        LOGGER.warn("Error closing socket: {}", ioe.getMessage());
+      }
+    });
+  }
+
+  private BiConsumer<Integer, byte[]> getSSLEventSender(SocketFactory socketFactory,
+      final List<Socket> socketList) {
+    return (port, event) -> {
+      try {
+        Socket syslogSocket = socketFactory.createSocket(InetAddress.getLocalHost(), port);
+        socketList.add(syslogSocket);
+        syslogSocket.getOutputStream().write(event);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    };
+  }
+
+  private BiConsumer<Integer, byte[]> getSimpleEventSender(final List<Socket> socketList) {
+    return (Integer port, byte[] event) -> {
+      try {
+        Socket syslogSocket = new Socket(InetAddress.getLocalHost(), port);
+        socketList.add(syslogSocket);
+        syslogSocket.getOutputStream().write(event);
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    };
+  }
+
+  private void processEvents(List<Event> channelEvents, int numPorts, List<Integer> portList) {
+    for (int i = 0; i < numPorts ; i++) {
       Iterator<Event> iter = channelEvents.iterator();
       while (iter.hasNext()) {
         Event e = iter.next();
         Map<String, String> headers = e.getHeaders();
         // rely on port to figure out which event it is
         Integer port = null;
-        if (headers.containsKey(
-            SyslogSourceConfigurationConstants.DEFAULT_PORT_HEADER)) {
-          port = Integer.parseInt(headers.get(
-                SyslogSourceConfigurationConstants.DEFAULT_PORT_HEADER));
+        if (headers.containsKey("port")) {
+          port = Integer.parseInt(headers.get("port"));
         }
         iter.remove();
 
@@ -161,13 +303,12 @@ public class TestMultiportSyslogTCPSource {
         Assert.assertEquals(host1, host2);
 
         if (port != null) {
-          int num = port - BASE_TEST_SYSLOG_PORT;
+          int num = portList.indexOf(port);
           Assert.assertEquals(data1 + " " + String.valueOf(num),
               new String(e.getBody()));
         }
       }
     }
-    source.stop();
   }
 
   /**
@@ -202,12 +343,10 @@ public class TestMultiportSyslogTCPSource {
         parsedLine.buffer.getString(Charsets.UTF_8.newDecoder()));
     parsedLine.buffer.rewind();
 
-    MultiportSyslogTCPSource.MultiportSyslogHandler handler =
-        new MultiportSyslogTCPSource.MultiportSyslogHandler(maxLen, 100, null,
-        null, SyslogSourceConfigurationConstants.DEFAULT_PORT_HEADER,
+    MultiportSyslogHandler handler = new MultiportSyslogHandler(
+        maxLen, 100, null, null, null, null, null,
         new ThreadSafeDecoder(Charsets.UTF_8),
-        new ConcurrentHashMap<Integer, ThreadSafeDecoder>(),
-        null);
+        new ConcurrentHashMap<Integer, ThreadSafeDecoder>(),null);
 
     Event event = handler.parseEvent(parsedLine, Charsets.UTF_8.newDecoder());
     String body = new String(event.getBody(), Charsets.UTF_8);
@@ -231,10 +370,9 @@ public class TestMultiportSyslogTCPSource {
     // defaults to UTF-8
     MultiportSyslogHandler handler = new MultiportSyslogHandler(
         1000, 10, new ChannelProcessor(new ReplicatingChannelSelector()),
-        new SourceCounter("test"), "port",
+        new SourceCounter("test"), null, null, null,
         new ThreadSafeDecoder(Charsets.UTF_8),
-        new ConcurrentHashMap<Integer, ThreadSafeDecoder>(),
-        null);
+        new ConcurrentHashMap<Integer, ThreadSafeDecoder>(),null);
 
     ParsedBuffer parsedBuf = new ParsedBuffer();
     parsedBuf.incomplete = false;
@@ -274,6 +412,23 @@ public class TestMultiportSyslogTCPSource {
     Assert.assertArrayEquals("Raw message data should be kept in body of event",
         badUtf8Seq, evt.getBody());
 
+    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(handler, "sourceCounter");
+    Assert.assertEquals(1, sc.getEventReadFail());
+
+  }
+
+  @Test
+  public void testHandlerGenericFail() throws Exception {
+    // defaults to UTF-8
+    MultiportSyslogHandler handler = new MultiportSyslogHandler(
+        1000, 10, new ChannelProcessor(new ReplicatingChannelSelector()),
+        new SourceCounter("test"), null, null, null,
+        new ThreadSafeDecoder(Charsets.UTF_8),
+        new ConcurrentHashMap<Integer, ThreadSafeDecoder>(), null);
+
+    handler.exceptionCaught(null, new RuntimeException("dummy"));
+    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(handler, "sourceCounter");
+    Assert.assertEquals(1, sc.getGenericProcessingFail());
   }
 
   // helper function
@@ -333,9 +488,8 @@ public class TestMultiportSyslogTCPSource {
 
     // defaults to UTF-8
     MultiportSyslogHandler handler = new MultiportSyslogHandler(
-        1000, 10, chanProc, new SourceCounter("test"), "port",
-        new ThreadSafeDecoder(Charsets.UTF_8), portCharsets,
-        null);
+        1000, 10, chanProc, new SourceCounter("test"), null, null, null,
+        new ThreadSafeDecoder(Charsets.UTF_8), portCharsets, null);
 
     // initialize buffers
     handler.sessionCreated(session1);
@@ -381,6 +535,85 @@ public class TestMultiportSyslogTCPSource {
     evt = takeEvent(chan);
     Assert.assertNotNull("Event vanished!", evt);
     Assert.assertNull(evt.getHeaders().get(SyslogUtils.EVENT_STATUS));
+
+    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(handler, "sourceCounter");
+    Assert.assertEquals(1, sc.getEventReadFail());
+  }
+
+  @Test
+  public void testErrorCounterChannelWriteFail() throws Exception {
+    MultiportSyslogTCPSource source = new MultiportSyslogTCPSource();
+    Channel channel = new MemoryChannel();
+    List<Event> channelEvents = new ArrayList<>();
+    ChannelProcessor cp = Mockito.mock(ChannelProcessor.class);
+    doThrow(new ChannelException("dummy")).doNothing().when(cp)
+        .processEventBatch(anyListOf(Event.class));
+    List<Socket> socketList = new ArrayList<>();
+    try {
+      testNPorts(source, channel, channelEvents, 1, cp,
+          getSimpleEventSender(socketList), new Context());
+    } catch (Exception e) {
+      //
+    }
+    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(source, "sourceCounter");
+    closeSockets(socketList);
+    Assert.assertEquals(1, sc.getChannelWriteFail());
+    source.stop();
+  }
+
+  @Test
+  public void testClientHeaders() throws IOException {
+
+    MultiportSyslogTCPSource source = new MultiportSyslogTCPSource();
+    Channel channel = new MemoryChannel();
+
+    Configurables.configure(channel, new Context());
+
+    List<Channel> channels = Lists.newArrayList();
+    channels.add(channel);
+
+    ChannelSelector rcs = new ReplicatingChannelSelector();
+    rcs.setChannels(channels);
+
+    source.setChannelProcessor(new ChannelProcessor(rcs));
+    int port = getFreePort();
+    Context context = new Context();
+    InetAddress loopbackAddress = InetAddress.getLoopbackAddress();
+    context.put("host", loopbackAddress.getHostAddress());
+    context.put("ports", String.valueOf(port));
+    context.put("clientIPHeader", TEST_CLIENT_IP_HEADER);
+    context.put("clientHostnameHeader", TEST_CLIENT_HOSTNAME_HEADER);
+
+    source.configure(context);
+    source.start();
+
+    //create a socket to send a test event
+    Socket syslogSocket = new Socket(loopbackAddress.getHostAddress(), port);
+    syslogSocket.getOutputStream().write(getEvent(0));
+
+    Event e = takeEvent(channel);
+
+    source.stop();
+
+    Map<String, String> headers = e.getHeaders();
+
+    checkHeader(headers, TEST_CLIENT_IP_HEADER, loopbackAddress.getHostAddress());
+    checkHeader(headers, TEST_CLIENT_HOSTNAME_HEADER, loopbackAddress.getHostName());
+  }
+
+  private static void checkHeader(Map<String, String> headers, String headerName,
+      String expectedValue) {
+    assertTrue("Missing event header: " + headerName, headers.containsKey(headerName));
+
+    String headerValue = headers.get(headerName);
+    if (TEST_CLIENT_HOSTNAME_HEADER.equals(headerName)) {
+      if (!TestSyslogUtils.isLocalHost(headerValue)) {
+        fail("Expected either 'localhost' or '127.0.0.1' but got " + headerValue);
+      }
+    } else {
+      assertEquals("Event header value does not match: " + headerName,
+              expectedValue, headerValue);
+    }
   }
 
 }

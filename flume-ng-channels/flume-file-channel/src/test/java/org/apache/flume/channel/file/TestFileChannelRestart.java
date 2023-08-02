@@ -48,6 +48,7 @@ import static org.apache.flume.channel.file.TestUtils.compareInputAndOut;
 import static org.apache.flume.channel.file.TestUtils.consumeChannel;
 import static org.apache.flume.channel.file.TestUtils.fillChannel;
 import static org.apache.flume.channel.file.TestUtils.forceCheckpoint;
+import static org.apache.flume.channel.file.TestUtils.doForcedCheckpoint;
 import static org.apache.flume.channel.file.TestUtils.putEvents;
 import static org.apache.flume.channel.file.TestUtils.putWithoutCommit;
 import static org.apache.flume.channel.file.TestUtils.takeEvents;
@@ -823,12 +824,12 @@ public class TestFileChannelRestart extends TestFileChannelBase {
     Set<String> in = putEvents(channel, "restart", 10, 100);
     Assert.assertEquals(100, in.size());
     slowdownBackup(channel);
-    forceCheckpoint(channel);
+    doForcedCheckpoint(channel);
     in = putEvents(channel, "restart", 10, 100);
     takeEvents(channel, 10, 100);
     Assert.assertEquals(100, in.size());
     try {
-      forceCheckpoint(channel);
+      doForcedCheckpoint(channel);
     } catch (ReflectionError ex) {
       throw ex.getCause();
     } finally {

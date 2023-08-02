@@ -18,10 +18,12 @@
  */
 package org.apache.flume.conf.sink;
 
+import org.apache.flume.conf.ComponentWithClassName;
+
 /**
  * Enumeration of built in sink types available in the system.
  */
-public enum SinkType {
+public enum SinkType implements ComponentWithClassName {
 
   /**
    * Place holder for custom sinks not part of this enumeration.
@@ -95,6 +97,13 @@ public enum SinkType {
   ASYNCHBASE("org.apache.flume.sink.hbase.AsyncHBaseSink"),
 
   /**
+   * HBase2 sink
+   *
+   * @see org.apache.flume.sink.hbase2.HBase2Sink
+   */
+  HBASE2("org.apache.flume.sink.hbase2.HBase2Sink"),
+
+  /**
    * MorphlineSolr sink
    *
    * @see org.apache.flume.sink.solr.morphline.MorphlineSolrSink
@@ -120,8 +129,14 @@ public enum SinkType {
     this.sinkClassName = sinkClassName;
   }
 
+  @Deprecated
   public String getSinkClassName() {
     return sinkClassName;
   }
 
+
+  @Override
+  public String getClassName() {
+    return sinkClassName;
+  }
 }

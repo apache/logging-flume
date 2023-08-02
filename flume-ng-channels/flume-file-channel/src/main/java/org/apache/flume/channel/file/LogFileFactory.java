@@ -35,7 +35,8 @@ class LogFileFactory {
   private static final Logger LOGGER =
       LoggerFactory.getLogger(LogFileFactory.class);
 
-  private LogFileFactory() {}
+  private LogFileFactory() {
+  }
 
   static LogFile.MetaDataWriter getMetaDataWriter(File file, int logFileID)
       throws IOException {

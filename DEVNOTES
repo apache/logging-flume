@@ -41,17 +41,7 @@ to most devs are "compile" -> "test" -> "package" -> "install".
 
 Set MAVEN_OPTS to give the Flume build enough RAM to build.
 
-  export MAVEN_OPTS="-Xmx512M -XX:MaxPermSize=512M"
-
-Note: If you see a permgen error (below), you need to increase the perm gen size.
-
-[ERROR] PermGen space -> [Help 1]
-[ERROR] 
-[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
-[ERROR] Re-run Maven using the -X switch to enable full debug logging.
-[ERROR] 
-[ERROR] For more information about the errors and possible solutions, please read the following articles:
-[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/OutOfMemoryError
+  export MAVEN_OPTS="-Xms512m -Xmx1024m"
 
 Builds
 ------

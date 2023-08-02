@@ -27,6 +27,7 @@ import org.apache.flume.Event;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.annotations.Recyclable;
+import org.apache.flume.conf.TransactionCapacitySupported;
 import org.apache.flume.instrumentation.ChannelCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +51,7 @@ import java.util.concurrent.TimeUnit;
 @InterfaceAudience.Public
 @InterfaceStability.Stable
 @Recyclable
-public class MemoryChannel extends BasicChannelSemantics {
+public class MemoryChannel extends BasicChannelSemantics implements TransactionCapacitySupported {
   private static Logger LOGGER = LoggerFactory.getLogger(MemoryChannel.class);
   private static final Integer defaultCapacity = 100;
   private static final Integer defaultTransCapacity = 100;
@@ -378,5 +379,9 @@ public class MemoryChannel extends BasicChannelSemantics {
   @VisibleForTesting
   int getBytesRemainingValue() {
     return bytesRemaining.availablePermits();
+  }
+
+  public long getTransactionCapacity() {
+    return transCapacity;
   }
 }

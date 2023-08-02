@@ -129,11 +129,17 @@ public abstract class JMSMessageConsumerTestBase {
     }
   }
 
-  JMSMessageConsumer create() {
+  JMSMessageConsumer create(JMSDestinationType destinationType,
+      JMSDestinationLocator destinationLocator, String destinationName) {
     return new JMSMessageConsumer(WONT_USE, connectionFactory, destinationName,
         destinationLocator, destinationType, messageSelector, batchSize,
-        pollTimeout, converter, userName, password);
+        pollTimeout, converter, userName, password, Optional.<String>absent(), false, "");
   }
+
+  JMSMessageConsumer create() {
+    return create(this.destinationType, this.destinationLocator, this.destinationName);
+  }
+
   @After
   public void tearDown() throws Exception {
     beforeTearDown();

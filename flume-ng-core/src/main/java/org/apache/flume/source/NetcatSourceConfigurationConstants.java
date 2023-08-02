@@ -30,7 +30,6 @@ public class NetcatSourceConfigurationConstants {
    */
   public static final String CONFIG_PORT = "port";
 
-
   /**
    * Ack every event received with an "OK" back to the sender
    */

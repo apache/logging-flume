@@ -45,6 +45,7 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumReader;
 import org.apache.commons.lang.StringUtils;
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelException;
 import org.apache.flume.Clock;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -52,10 +53,12 @@ import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Sink.Status;
 import org.apache.flume.SystemClock;
 import org.apache.flume.Transaction;
+import org.apache.flume.channel.BasicTransactionSemantics;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.event.SimpleEvent;
+import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.lifecycle.LifecycleException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.CommonConfigurationKeys;
@@ -75,6 +78,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.mockito.internal.util.reflection.Whitebox;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
@@ -754,6 +758,8 @@ public class TestHDFSEventSink {
     sink.stop();
     verifyOutputSequenceFiles(fs, conf, dirPath.toUri().getPath(), fileName, bodies);
 
+    SinkCounter sc = (SinkCounter) Whitebox.getInternalState(sink, "sinkCounter");
+    Assert.assertEquals(1, sc.getEventWriteFail());
   }
 
 
@@ -930,6 +936,9 @@ public class TestHDFSEventSink {
     sink.stop();
 
     verifyOutputSequenceFiles(fs, conf, dirPath.toUri().getPath(), fileName, bodies);
+
+    SinkCounter sc = (SinkCounter) Whitebox.getInternalState(sink, "sinkCounter");
+    Assert.assertEquals(1, sc.getEventWriteFail());
   }
 
   /**
@@ -1170,6 +1179,9 @@ public class TestHDFSEventSink {
     }
 
     sink.stop();
+
+    SinkCounter sc = (SinkCounter) Whitebox.getInternalState(sink, "sinkCounter");
+    Assert.assertEquals(2, sc.getEventWriteFail());
   }
 
   /*
@@ -1316,7 +1328,7 @@ public class TestHDFSEventSink {
 
     sink.process();
     sink.process();
-    Thread.sleep(1001);
+    Thread.sleep(1101);
     // previous file should have timed out now
     // this can throw BucketClosedException(from the bucketWriter having
     // closed),this is not an issue as the sink will retry and get a fresh
@@ -1624,5 +1636,52 @@ public class TestHDFSEventSink {
     }
 
     sink.stop();
+  }
+
+  @Test
+  public void testChannelException() {
+    LOG.debug("Starting...");
+    Context context = new Context();
+    context.put("hdfs.path", testPath);
+    context.put("keep-alive", "0");
+    Configurables.configure(sink, context);
+    Channel channel = Mockito.mock(Channel.class);
+    Mockito.when(channel.take()).thenThrow(new ChannelException("dummy"));
+    Mockito.when(channel.getTransaction())
+        .thenReturn(Mockito.mock(BasicTransactionSemantics.class));
+    sink.setChannel(channel);
+    sink.start();
+    try {
+      sink.process();
+    } catch (EventDeliveryException e) {
+      //
+    }
+    sink.stop();
+
+    SinkCounter sc = (SinkCounter) Whitebox.getInternalState(sink, "sinkCounter");
+    Assert.assertEquals(1, sc.getChannelReadFail());
+  }
+
+  @Test
+  public void testEmptyInUseSuffix() {
+    String inUseSuffixConf = "aaaa";
+    Context context = new Context();
+    context.put("hdfs.path", testPath);
+    context.put("hdfs.inUseSuffix", inUseSuffixConf);
+
+    //hdfs.emptyInUseSuffix not defined
+    Configurables.configure(sink, context);
+    String inUseSuffix = (String) Whitebox.getInternalState(sink, "inUseSuffix");
+    Assert.assertEquals(inUseSuffixConf, inUseSuffix);
+
+    context.put("hdfs.emptyInUseSuffix", "true");
+    Configurables.configure(sink, context);
+    inUseSuffix = (String) Whitebox.getInternalState(sink, "inUseSuffix");
+    Assert.assertEquals("", inUseSuffix);
+
+    context.put("hdfs.emptyInUseSuffix", "false");
+    Configurables.configure(sink, context);
+    inUseSuffix = (String) Whitebox.getInternalState(sink, "inUseSuffix");
+    Assert.assertEquals(inUseSuffixConf, inUseSuffix);
   }
 }

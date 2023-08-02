@@ -33,7 +33,8 @@ import java.io.IOException;
  */
 public class FlumeAuthenticationUtil {
 
-  private FlumeAuthenticationUtil() {}
+  private FlumeAuthenticationUtil() {
+  }
 
   private static KerberosAuthenticator kerbAuthenticator;
 

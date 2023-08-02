@@ -21,7 +21,7 @@ limitations under the License.
   <parent>
     <artifactId>flume-ng-clients</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.8.0-SNAPSHOT</version>
+    <version>1.11.1-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
 
@@ -29,19 +29,21 @@ limitations under the License.
   <artifactId>flume-ng-log4jappender</artifactId>
   <name>Flume NG Log4j Appender</name>
 
+  <properties>
+    <!-- TODO fix spotbugs/pmd violations -->
+    <spotbugs.maxAllowedViolations>2</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>1</pmd.maxAllowedViolations>
+    <module.name>org.apache.flume.clients.log4jappender</module.name>
+  </properties>
+
   <build>
     <plugins>
       <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
-
-      <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <configuration>
-          <descriptorRefs>
-            <descriptorRef>jar-with-dependencies</descriptorRef>
-          </descriptorRefs>
+          <descriptors>
+            <descriptor>src/main/assembly/descriptor.xml</descriptor>
+          </descriptors>
         </configuration>
         <executions>
           <execution>
@@ -67,6 +69,8 @@ limitations under the License.
     <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
+      <version>1.2.17</version>
+      <scope>compile</scope>
     </dependency>
 
     <dependency>
@@ -84,6 +88,12 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.flume</groupId>
       <artifactId>flume-ng-configuration</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-all</artifactId>
       <scope>test</scope>
     </dependency>
 

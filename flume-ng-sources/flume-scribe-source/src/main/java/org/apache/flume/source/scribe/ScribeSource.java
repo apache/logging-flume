@@ -19,7 +19,6 @@
 
 package org.apache.flume.source.scribe;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,11 +35,10 @@ import org.apache.flume.source.scribe.Scribe.Iface;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.server.THsHaServer;
-import org.apache.thrift.server.TNonblockingServer;
 import org.apache.thrift.server.TServer;
-import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TNonblockingServerTransport;
+import org.apache.thrift.transport.layered.TFramedTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,7 +94,8 @@ public class ScribeSource extends AbstractSource implements
         TNonblockingServerTransport transport = new TNonblockingServerSocket(port);
         THsHaServer.Args args = new THsHaServer.Args(transport);
 
-        args.workerThreads(workers);
+        args.minWorkerThreads(workers);
+        args.maxWorkerThreads(workers);
         args.processor(processor);
         args.transportFactory(new TFramedTransport.Factory(maxReadBufferBytes));
         args.protocolFactory(new TBinaryProtocol.Factory(false, false));
@@ -175,6 +174,7 @@ public class ScribeSource extends AbstractSource implements
           return ResultCode.OK;
         } catch (Exception e) {
           LOG.warn("Scribe source handling failure", e);
+          sourceCounter.incrementEventReadOrChannelFail(e);
         }
       }
 

@@ -23,15 +23,12 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
-import org.apache.commons.io.FileUtils;
 import org.apache.flume.test.util.StagedInstall;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -44,6 +41,14 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
+/**
+ * This test creates NUM_SOURCES directories with NUM_FILES_PER_DIRE files in each
+ * directory. It then starts the agent and waits 10 seconds to check that all
+ * the files have been consumed. Depending on the speed of the system either
+ * the wait interval may need to be increased or the number of files reduced.
+ * This would be better if the test could be signaled when the files have been
+ * processed.
+ */
 public class TestSpooldirSource {
 
   private static final Logger LOGGER =
@@ -66,7 +71,7 @@ public class TestSpooldirSource {
     assertTrue("Unable to create sink output dir: " + spoolParentDir.getPath(),
         spoolParentDir.mkdir());
 
-    final int NUM_SOURCES = 100;
+    final int NUM_SOURCES = 30;
 
     agentProps = new Properties();
     List<String> spooldirSrcNames = Lists.newArrayList();

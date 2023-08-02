@@ -18,7 +18,9 @@
  */
 package org.apache.flume.conf.sink;
 
-public enum SinkProcessorType {
+import org.apache.flume.conf.ComponentWithClassName;
+
+public enum SinkProcessorType implements ComponentWithClassName {
   /**
    * Place holder for custom sinks not part of this enumeration.
    */
@@ -52,7 +54,13 @@ public enum SinkProcessorType {
     this.processorClassName = processorClassName;
   }
 
+  @Deprecated
   public String getSinkProcessorClassName() {
+    return processorClassName;
+  }
+
+  @Override
+  public String getClassName() {
     return processorClassName;
   }
 }

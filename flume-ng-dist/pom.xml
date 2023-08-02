@@ -24,7 +24,8 @@
   <parent>
     <artifactId>flume-parent</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.8.0-SNAPSHOT</version>
+    <version>1.11.1-SNAPSHOT</version>
+    <relativePath>../flume-parent/pom.xml</relativePath>
   </parent>
 
   <artifactId>flume-ng-dist</artifactId>
@@ -49,59 +50,50 @@
                 <descriptor>src/main/assembly/bin.xml</descriptor>
                 <descriptor>src/main/assembly/src.xml</descriptor>
               </descriptors>
-              <tarLongFileMode>gnu</tarLongFileMode>
+              <tarLongFileMode>posix</tarLongFileMode>
             </configuration>
           </execution>
         </executions>
       </plugin>
-
       <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
+        <groupId>net.nicoulaj.maven.plugins</groupId>
+        <artifactId>checksum-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>checksum</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>files</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <algorithms>
+            <algorithm>SHA-512</algorithm>
+          </algorithms>
+          <attachChecksums>true</attachChecksums>
+          <csvSummary>false</csvSummary>
+          <fileSets>
+            <fileSet>
+              <directory>${project.build.directory}</directory>
+              <includes>
+                <include>*.tar.gz</include>
+              </includes>
+            </fileSet>
+          </fileSets>
+          <failIfNoFiles>false</failIfNoFiles><!-- usually, no file to do checksum: don't consider error -->
+        </configuration>
       </plugin>
-
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <version>${mvn-deploy-plugin.version}</version>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
-
-  <profiles>
-    <profile>
-      <id>hadoop-2</id>
-      <activation>
-        <property>
-          <name>flume.hadoop.profile</name>
-          <value>2</value>
-        </property>
-      </activation>
-      <dependencies>
-        <dependency>
-          <groupId>org.apache.flume.flume-ng-sinks</groupId>
-          <artifactId>flume-dataset-sink</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>org.apache.flume.flume-ng-sinks</groupId>
-          <artifactId>flume-hive-sink</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-    <profile>
-      <id>hbase-1</id>
-      <activation>
-        <property>
-          <name>!flume.hadoop.profile</name>
-        </property>
-      </activation>
-      <dependencies>
-        <dependency>
-          <groupId>org.apache.flume.flume-ng-sinks</groupId>
-          <artifactId>flume-dataset-sink</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>org.apache.flume.flume-ng-sinks</groupId>
-          <artifactId>flume-hive-sink</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-  </profiles>
 
   <dependencies>
     <dependency>
@@ -133,11 +125,11 @@
       <artifactId>flume-spillable-memory-channel</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume.flume-ng-channels</groupId>
+      <groupId>org.apache.flume</groupId>
       <artifactId>flume-jdbc-channel</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume.flume-ng-channels</groupId>
+      <groupId>org.apache.flume</groupId>
       <artifactId>flume-kafka-channel</artifactId>
     </dependency>
     <dependency>
@@ -150,7 +142,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.flume.flume-ng-sinks</groupId>
-      <artifactId>flume-ng-hbase-sink</artifactId>
+      <artifactId>flume-ng-hbase2-sink</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flume.flume-ng-sinks</groupId>
@@ -158,15 +150,15 @@
     </dependency>
     <dependency>
       <groupId>org.apache.flume.flume-ng-sinks</groupId>
-      <artifactId>flume-ng-elasticsearch-sink</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flume.flume-ng-sinks</groupId>
       <artifactId>flume-ng-morphline-solr-sink</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-kafka-sink</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.apache.flume.flume-ng-sinks</groupId>
-      <artifactId>flume-ng-kafka-sink</artifactId>
+      <artifactId>flume-hive-sink</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flume.flume-ng-sources</groupId>
@@ -177,33 +169,61 @@
       <artifactId>flume-jms-source</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume.flume-ng-sources</groupId>
+      <groupId>org.apache.flume</groupId>
       <artifactId>flume-twitter-source</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume.flume-ng-sources</groupId>
+      <groupId>org.apache.flume</groupId>
       <artifactId>flume-kafka-source</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume.flume-ng-legacy-sources</groupId>
-      <artifactId>flume-avro-source</artifactId>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-legacy-avro-source</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume.flume-ng-legacy-sources</groupId>
-      <artifactId>flume-thrift-source</artifactId>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-legacy-thrift-source</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flume.flume-ng-sources</groupId>
       <artifactId>flume-taildir-source</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-ng-environment-variable-config-filter</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-ng-hadoop-credential-store-config-filter</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-ng-external-process-config-filter</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-ng-config-filter-api</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.apache.flume.flume-ng-clients</groupId>
       <artifactId>flume-ng-log4jappender</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.flume.flume-ng-clients</groupId>
       <artifactId>flume-ng-log4jappender</artifactId>
       <classifier>jar-with-dependencies</classifier>
+      <exclusions>
+        <exclusion>
+          <groupId>log4j</groupId>
+          <artifactId>log4j</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.flume</groupId>
@@ -212,6 +232,14 @@
     <dependency>
       <groupId>org.apache.flume</groupId>
       <artifactId>flume-ng-auth</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-1.2-api</artifactId>
     </dependency>
   </dependencies>
 

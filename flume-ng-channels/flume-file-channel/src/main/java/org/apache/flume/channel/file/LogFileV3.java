@@ -52,7 +52,8 @@ public class LogFileV3 extends LogFile {
   protected static final Logger LOGGER =
       LoggerFactory.getLogger(LogFileV3.class);
 
-  private LogFileV3() {}
+  private LogFileV3() {
+  }
 
   static class MetaDataWriter extends LogFile.MetaDataWriter {
     private ProtosFactory.LogFileMetaData logFileMetaData;

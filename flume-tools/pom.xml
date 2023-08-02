@@ -25,7 +25,8 @@ limitations under the License.
   <parent>
     <artifactId>flume-parent</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.8.0-SNAPSHOT</version>
+    <version>1.11.1-SNAPSHOT</version>
+    <relativePath>../flume-parent/pom.xml</relativePath>
   </parent>
 
   <groupId>org.apache.flume</groupId>
@@ -34,7 +35,11 @@ limitations under the License.
   <name>Flume NG Tools</name>
 
   <properties>
+    <!-- TODO fix spotbugs/pmd violations -->
+    <spotbugs.maxAllowedViolations>5</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>2</pmd.maxAllowedViolations>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <module.name>org.apache.flume.tools</module.name>
   </properties>
 
   <dependencies>
@@ -67,70 +72,8 @@ limitations under the License.
     <dependency>
       <groupId>org.easytesting</groupId>
       <artifactId>fest-reflect</artifactId>
-      <version>1.4</version>
     </dependency>
 
   </dependencies>
-  <profiles>
-
-    <profile>
-      <id>hadoop-1.0</id>
-      <activation>
-        <property>
-          <name>flume.hadoop.profile</name>
-          <value>1</value>
-        </property>
-      </activation>
-      <dependencies>
-
-        <dependency>
-          <groupId>org.apache.hadoop</groupId>
-          <artifactId>hadoop-test</artifactId>
-          <scope>test</scope>
-        </dependency>
-
-        <!-- required because the hadoop-core pom is missing these deps
-            and MiniDFSCluster pulls in the webhdfs classes -->
-        <dependency>
-          <groupId>com.sun.jersey</groupId>
-          <artifactId>jersey-core</artifactId>
-          <scope>test</scope>
-        </dependency>
-
-      </dependencies>
-    </profile>
-
-    <profile>
-      <id>hadoop-2</id>
-      <activation>
-        <property>
-          <name>flume.hadoop.profile</name>
-          <value>2</value>
-        </property>
-      </activation>
-      <dependencies>
-
-        <dependency>
-          <groupId>org.apache.hadoop</groupId>
-          <artifactId>hadoop-hdfs</artifactId>
-          <optional>true</optional>
-        </dependency>
-
-        <dependency>
-          <groupId>org.apache.hadoop</groupId>
-          <artifactId>hadoop-auth</artifactId>
-          <optional>true</optional>
-        </dependency>
-
-        <dependency>
-          <groupId>org.apache.hadoop</groupId>
-          <artifactId>hadoop-minicluster</artifactId>
-          <scope>test</scope>
-        </dependency>
-
-      </dependencies>
-    </profile>
-
-  </profiles>
 
 </project>

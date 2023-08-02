@@ -85,7 +85,7 @@ public class SecureThriftRpcClient extends ThriftRpcClient {
     public UgiSaslClientTransport(String mechanism, String authorizationId,
                 String protocol, String serverName, Map<String, String> props,
                 CallbackHandler cbh, TTransport transport, PrivilegedExecutor privilegedExecutor)
-        throws IOException {
+            throws IOException, TTransportException {
       super(mechanism, authorizationId, protocol, serverName, props, cbh, transport);
       this.privilegedExecutor = privilegedExecutor;
     }

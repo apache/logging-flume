@@ -17,11 +17,9 @@
  */
 package org.apache.flume.source.http;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import junit.framework.Assert;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
@@ -32,19 +30,31 @@ import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.JSONEvent;
-import org.apache.http.HttpResponse;
+import org.apache.flume.instrumentation.SourceCounter;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.HttpTrace;
-import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.HttpResponse;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.mockito.internal.util.reflection.Whitebox;
 
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectInstance;
+import javax.management.ObjectName;
+import javax.management.Query;
+import javax.management.QueryExp;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -54,6 +64,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
@@ -64,26 +75,33 @@ import java.net.UnknownHostException;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 import static org.fest.reflect.core.Reflection.field;
+import static org.mockito.Matchers.anyListOf;
+import static org.mockito.Mockito.doThrow;
 
 /**
  *
  */
 public class TestHTTPSource {
 
-  private static HTTPSource source;
+  private static HTTPSource httpSource;
   private static HTTPSource httpsSource;
-//  private static Channel httpsChannel;
+  private static HTTPSource httpsGlobalKeystoreSource;
 
-  private static Channel channel;
-  private static int selectedPort;
-  private static int sslPort;
-  DefaultHttpClient httpClient;
-  HttpPost postRequest;
+  private static Channel httpChannel;
+  private static Channel httpsChannel;
+  private static Channel httpsGlobalKeystoreChannel;
+  private static int httpPort;
+  private static int httpsPort;
+  private static int httpsGlobalKeystorePort;
+  private HttpClient httpClient;
+  private HttpPost postRequest;
 
   private static int findFreePort() throws IOException {
     ServerSocket socket = new ServerSocket(0);
@@ -92,65 +110,99 @@ public class TestHTTPSource {
     return port;
   }
 
-  @BeforeClass
-  public static void setUpClass() throws Exception {
-    selectedPort = findFreePort();
-
-    source = new HTTPSource();
-    channel = new MemoryChannel();
-
-    httpsSource = new HTTPSource();
-    httpsSource.setName("HTTPS Source");
-
+  private static Context getDefaultNonSecureContext(int port) throws IOException {
     Context ctx = new Context();
-    ctx.put("capacity", "100");
-    Configurables.configure(channel, ctx);
+    ctx.put(HTTPSourceConfigurationConstants.CONFIG_BIND, "0.0.0.0");
+    ctx.put(HTTPSourceConfigurationConstants.CONFIG_PORT, String.valueOf(port));
+    ctx.put("QueuedThreadPool.MaxThreads", "100");
+    return ctx;
+  }
 
-    List<Channel> channels = new ArrayList<Channel>(1);
-    channels.add(channel);
-
-    ChannelSelector rcs = new ReplicatingChannelSelector();
-    rcs.setChannels(channels);
-
-    source.setChannelProcessor(new ChannelProcessor(rcs));
-
-    channel.start();
-
-    httpsSource.setChannelProcessor(new ChannelProcessor(rcs));
-
-    // HTTP context
-    Context context = new Context();
-
-    context.put("port", String.valueOf(selectedPort));
-    context.put("host", "0.0.0.0");
-
-    // SSL context props
+  private static Context getDefaultSecureContext(int port) throws IOException {
     Context sslContext = new Context();
+    sslContext.put(HTTPSourceConfigurationConstants.CONFIG_PORT, String.valueOf(port));
     sslContext.put(HTTPSourceConfigurationConstants.SSL_ENABLED, "true");
-    sslPort = findFreePort();
-    sslContext.put(HTTPSourceConfigurationConstants.CONFIG_PORT,
-                   String.valueOf(sslPort));
     sslContext.put(HTTPSourceConfigurationConstants.SSL_KEYSTORE_PASSWORD, "password");
     sslContext.put(HTTPSourceConfigurationConstants.SSL_KEYSTORE,
                    "src/test/resources/jettykeystore");
+    return sslContext;
+  }
 
-    Configurables.configure(source, context);
-    Configurables.configure(httpsSource, sslContext);
-    source.start();
+  private static Context getDefaultSecureContextGlobalKeystore(int port) throws IOException {
+    System.setProperty("javax.net.ssl.keyStore", "src/test/resources/jettykeystore");
+    System.setProperty("javax.net.ssl.keyStorePassword", "password");
+
+    Context sslContext = new Context();
+    sslContext.put(HTTPSourceConfigurationConstants.CONFIG_PORT, String.valueOf(port));
+    sslContext.put(HTTPSourceConfigurationConstants.SSL_ENABLED, "true");
+    return sslContext;
+  }
+
+  @BeforeClass
+  public static void setUpClass() throws Exception {
+    httpSource = new HTTPSource();
+    httpChannel = new MemoryChannel();
+    httpPort = findFreePort();
+    configureSourceAndChannel(httpSource, httpChannel, getDefaultNonSecureContext(httpPort));
+    httpChannel.start();
+    httpSource.start();
+
+    httpsSource = new HTTPSource();
+    httpsChannel = new MemoryChannel();
+    httpsPort = findFreePort();
+    configureSourceAndChannel(httpsSource, httpsChannel, getDefaultSecureContext(httpsPort));
+    httpsChannel.start();
     httpsSource.start();
+
+    httpsGlobalKeystoreSource = new HTTPSource();
+    httpsGlobalKeystoreChannel = new MemoryChannel();
+    httpsGlobalKeystorePort = findFreePort();
+    configureSourceAndChannel(httpsGlobalKeystoreSource, httpsGlobalKeystoreChannel,
+        getDefaultSecureContextGlobalKeystore(httpsGlobalKeystorePort));
+    httpsGlobalKeystoreChannel.start();
+    httpsGlobalKeystoreSource.start();
+
+    System.clearProperty("javax.net.ssl.keyStore");
+    System.clearProperty("javax.net.ssl.keyStorePassword");
+  }
+
+  private static void configureSourceAndChannel(
+      HTTPSource source, Channel channel, Context context
+  ) {
+    Context channelContext = new Context();
+    channelContext.put("capacity", "100");
+    Configurables.configure(channel, channelContext);
+    Configurables.configure(source, context);
+
+    ChannelSelector rcs1 = new ReplicatingChannelSelector();
+    rcs1.setChannels(Collections.singletonList(channel));
+
+    source.setChannelProcessor(new ChannelProcessor(rcs1));
   }
 
   @AfterClass
   public static void tearDownClass() throws Exception {
-    source.stop();
-    channel.stop();
+    httpSource.stop();
+    httpChannel.stop();
     httpsSource.stop();
+    httpsChannel.stop();
+    httpsGlobalKeystoreSource.stop();
+    httpsGlobalKeystoreChannel.stop();
   }
 
   @Before
   public void setUp() {
-    httpClient = new DefaultHttpClient();
-    postRequest = new HttpPost("http://0.0.0.0:" + selectedPort);
+    HttpClientBuilder builder = HttpClientBuilder.create();
+    httpClient = builder.build();
+    postRequest = new HttpPost("http://0.0.0.0:" + httpPort);
+    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(httpSource, "sourceCounter");
+    sc.start();
+  }
+
+  @After
+  public void tearDown() {
+    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(httpSource, "sourceCounter");
+    sc.stop();
   }
 
   @Test
@@ -167,14 +219,14 @@ public class TestHTTPSource {
 
     Assert.assertEquals(HttpServletResponse.SC_OK,
             response.getStatusLine().getStatusCode());
-    Transaction tx = channel.getTransaction();
+    Transaction tx = httpChannel.getTransaction();
     tx.begin();
-    Event e = channel.take();
+    Event e = httpChannel.take();
     Assert.assertNotNull(e);
     Assert.assertEquals("b", e.getHeaders().get("a"));
     Assert.assertEquals("random_body", new String(e.getBody(), "UTF-8"));
 
-    e = channel.take();
+    e = httpChannel.take();
     Assert.assertNotNull(e);
     Assert.assertEquals("f", e.getHeaders().get("e"));
     Assert.assertEquals("random_body2", new String(e.getBody(), "UTF-8"));
@@ -184,14 +236,13 @@ public class TestHTTPSource {
 
   @Test
   public void testTrace() throws Exception {
-    doTestForbidden(new HttpTrace("http://0.0.0.0:" + selectedPort));
+    doTestForbidden(new HttpTrace("http://0.0.0.0:" + httpPort));
   }
 
   @Test
   public void testOptions() throws Exception {
-    doTestForbidden(new HttpOptions("http://0.0.0.0:" + selectedPort));
+    doTestForbidden(new HttpOptions("http://0.0.0.0:" + httpPort));
   }
-
 
   private void doTestForbidden(HttpRequestBase request) throws Exception {
     HttpResponse response = httpClient.execute(request);
@@ -211,14 +262,14 @@ public class TestHTTPSource {
 
     Assert.assertEquals(HttpServletResponse.SC_OK,
             response.getStatusLine().getStatusCode());
-    Transaction tx = channel.getTransaction();
+    Transaction tx = httpChannel.getTransaction();
     tx.begin();
-    Event e = channel.take();
+    Event e = httpChannel.take();
     Assert.assertNotNull(e);
     Assert.assertEquals("b", e.getHeaders().get("a"));
     Assert.assertEquals("random_body", new String(e.getBody(), "UTF-16"));
 
-    e = channel.take();
+    e = httpChannel.take();
     Assert.assertNotNull(e);
     Assert.assertEquals("f", e.getHeaders().get("e"));
     Assert.assertEquals("random_body2", new String(e.getBody(), "UTF-16"));
@@ -236,23 +287,38 @@ public class TestHTTPSource {
 
     Assert.assertEquals(HttpServletResponse.SC_BAD_REQUEST,
             response.getStatusLine().getStatusCode());
+    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(httpSource, "sourceCounter");
+    Assert.assertEquals(1, sc.getEventReadFail());
 
   }
 
   @Test
-  public void testBigBatchDeserializarionUTF8() throws Exception {
+  public void testBigBatchDeserializationUTF8() throws Exception {
     testBatchWithVariousEncoding("UTF-8");
   }
 
   @Test
-  public void testBigBatchDeserializarionUTF16() throws Exception {
+  public void testBigBatchDeserializationUTF16() throws Exception {
     testBatchWithVariousEncoding("UTF-16");
   }
 
   @Test
-  public void testBigBatchDeserializarionUTF32() throws Exception {
+  public void testBigBatchDeserializationUTF32() throws Exception {
     testBatchWithVariousEncoding("UTF-32");
   }
+
+  @Test
+  public void testCounterGenericFail() throws Exception {
+    ChannelProcessor cp = Mockito.mock(ChannelProcessor.class);
+    doThrow(new RuntimeException("dummy")).when(cp).processEventBatch(anyListOf(Event.class));
+    ChannelProcessor oldCp = httpSource.getChannelProcessor();
+    httpSource.setChannelProcessor(cp);
+    testBatchWithVariousEncoding("UTF-8");
+    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(httpSource, "sourceCounter");
+    Assert.assertEquals(1, sc.getGenericProcessingFail());
+    httpSource.setChannelProcessor(oldCp);
+  }
+
   @Test
   public void testSingleEvent() throws Exception {
     StringEntity input = new StringEntity("[{\"headers\" : {\"a\": \"b\"},\"body\":"
@@ -261,9 +327,9 @@ public class TestHTTPSource {
     postRequest.setEntity(input);
 
     httpClient.execute(postRequest);
-    Transaction tx = channel.getTransaction();
+    Transaction tx = httpChannel.getTransaction();
     tx.begin();
-    Event e = channel.take();
+    Event e = httpChannel.take();
     Assert.assertNotNull(e);
     Assert.assertEquals("b", e.getHeaders().get("a"));
     Assert.assertEquals("random_body", new String(e.getBody(),"UTF-8"));
@@ -271,25 +337,117 @@ public class TestHTTPSource {
     tx.close();
   }
 
+  /**
+   * First test that the unconfigured behaviour is as-expected, then add configurations
+   * to a new channel and observe the difference.
+   * For some of the properties, the most convenient way to test is using the MBean interface
+   * We test all of HttpConfiguration, ServerConnector, QueuedThreadPool and SslContextFactory
+   * sub-configurations (but not all properties)
+   */
+  @Test
+  public void testConfigurables() throws Exception {
+    StringEntity input = new StringEntity("[{\"headers\" : {\"a\": \"b\"},\"body\":"
+            + " \"random_body\"}]");
+    input.setContentType("application/json");
+    postRequest.setEntity(input);
+
+    HttpResponse resp = httpClient.execute(postRequest);
+
+    // Testing default behaviour (to not provided X-Powered-By, but to provide Server headers)
+    Assert.assertTrue(resp.getHeaders("X-Powered-By").length == 0);
+    Assert.assertTrue(resp.getHeaders("Server").length == 1);
+
+    Transaction tx = httpChannel.getTransaction();
+    tx.begin();
+    Event e = httpChannel.take();
+    Assert.assertNotNull(e);
+    tx.commit();
+    tx.close();
+    Assert.assertTrue(findMBeans("org.eclipse.jetty.util.thread:type=queuedthreadpool,*",
+        "maxThreads", 123).size() == 0);
+    Assert.assertTrue(findMBeans("org.eclipse.jetty.server:type=serverconnector,*",
+        "acceptQueueSize", 22).size() == 0);
+
+    int newPort = findFreePort();
+    Context configuredSourceContext = getDefaultNonSecureContext(newPort);
+    configuredSourceContext.put("HttpConfiguration.sendServerVersion", "false");
+    configuredSourceContext.put("HttpConfiguration.sendXPoweredBy", "true");
+    configuredSourceContext.put("ServerConnector.acceptQueueSize", "22");
+    configuredSourceContext.put("QueuedThreadPool.maxThreads", "123");
+
+    HTTPSource newSource = new HTTPSource();
+    Channel newChannel = new MemoryChannel();
+    configureSourceAndChannel(newSource, newChannel, configuredSourceContext);
+    newChannel.start();
+    newSource.start();
+
+    HttpPost newPostRequest = new HttpPost("http://0.0.0.0:" + newPort);
+
+    resp = httpClient.execute(newPostRequest);
+    Assert.assertTrue(resp.getHeaders("X-Powered-By").length > 0);
+    Assert.assertTrue(resp.getHeaders("Server").length == 0);
+    Assert.assertTrue(findMBeans("org.eclipse.jetty.util.thread:type=queuedthreadpool,*",
+        "maxThreads", 123).size() == 1);
+    Assert.assertTrue(findMBeans("org.eclipse.jetty.server:type=serverconnector,*",
+        "acceptQueueSize", 22).size() == 1);
+
+    newSource.stop();
+    newChannel.stop();
+
+    //Configure SslContextFactory with junk protocols (expect failure)
+    newPort = findFreePort();
+    configuredSourceContext = getDefaultSecureContext(newPort);
+    configuredSourceContext.put("SslContextFactory.IncludeProtocols", "abc def");
+
+    newSource = new HTTPSource();
+    newChannel = new MemoryChannel();
+
+    configureSourceAndChannel(newSource, newChannel, configuredSourceContext);
+
+    newChannel.start();
+    newSource.start();
+
+    newPostRequest = new HttpPost("http://0.0.0.0:" + newPort);
+    try {
+      doTestHttps(null, newPort, httpsChannel);
+      //We are testing that this fails because we've deliberately configured the wrong protocols
+      Assert.assertTrue(false);
+    } catch (AssertionError ex) {
+      //no-op
+    }
+    newSource.stop();
+    newChannel.stop();
+  }
+
   @Test
   public void testFullChannel() throws Exception {
     HttpResponse response = putWithEncoding("UTF-8", 150).response;
     Assert.assertEquals(HttpServletResponse.SC_SERVICE_UNAVAILABLE,
             response.getStatusLine().getStatusCode());
+    SourceCounter sc = (SourceCounter) Whitebox.getInternalState(httpSource, "sourceCounter");
+    Assert.assertEquals(1, sc.getChannelWriteFail());
   }
 
   @Test
   public void testFail() throws Exception {
     HTTPSourceHandler handler = field("handler").ofType(HTTPSourceHandler.class)
-            .in(source).get();
+            .in(httpSource).get();
     //Cause an exception in the source - this is equivalent to any exception
     //thrown by the handler since the handler is called inside a try-catch
-    field("handler").ofType(HTTPSourceHandler.class).in(source).set(null);
+    field("handler").ofType(HTTPSourceHandler.class).in(httpSource).set(null);
     HttpResponse response = putWithEncoding("UTF-8", 1).response;
     Assert.assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
             response.getStatusLine().getStatusCode());
     //Set the original handler back so tests don't fail after this runs.
-    field("handler").ofType(HTTPSourceHandler.class).in(source).set(handler);
+    field("handler").ofType(HTTPSourceHandler.class).in(httpSource).set(handler);
+  }
+
+  @Test
+  public void testMBeans() throws Exception {
+    MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
+    ObjectName objectName = new ObjectName("org.eclipse.jetty.*:*");
+    Set<ObjectInstance> queryMBeans = mbeanServer.queryMBeans(objectName, null);
+    Assert.assertTrue(queryMBeans.size() > 0);
   }
 
   @Test
@@ -301,10 +459,17 @@ public class TestHTTPSource {
             response.getStatusLine().getStatusCode());
   }
 
+  private Set<ObjectInstance> findMBeans(String name, String attribute, int value)
+      throws MalformedObjectNameException {
+    MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
+    ObjectName objectName = new ObjectName(name);
+    QueryExp q = Query.eq(Query.attr(attribute), Query.value(value));
+    return mbeanServer.queryMBeans(objectName, q);
+  }
 
   private ResultWrapper putWithEncoding(String encoding, int n) throws Exception {
     Type listType = new TypeToken<List<JSONEvent>>() {}.getType();
-    List<JSONEvent> events = Lists.newArrayList();
+    List<JSONEvent> events = new ArrayList<JSONEvent>();
     Random rand = new Random();
     for (int i = 0; i < n; i++) {
       Map<String, String> input = Maps.newHashMap();
@@ -327,18 +492,23 @@ public class TestHTTPSource {
 
   @Test
   public void testHttps() throws Exception {
-    doTestHttps(null);
+    doTestHttps(null, httpsPort, httpsChannel);
   }
 
   @Test (expected = javax.net.ssl.SSLHandshakeException.class)
   public void testHttpsSSLv3() throws Exception {
-    doTestHttps("SSLv3");
+    doTestHttps("SSLv3", httpsPort, httpsChannel);
   }
 
-  public void doTestHttps(String protocol) throws Exception {
+  @Test
+  public void testHttpsGlobalKeystore() throws Exception {
+    doTestHttps(null, httpsGlobalKeystorePort, httpsGlobalKeystoreChannel);
+  }
+
+  private void doTestHttps(String protocol, int port, Channel channel) throws Exception {
     Type listType = new TypeToken<List<JSONEvent>>() {
     }.getType();
-    List<JSONEvent> events = Lists.newArrayList();
+    List<JSONEvent> events = new ArrayList<JSONEvent>();
     Random rand = new Random();
     for (int i = 0; i < 10; i++) {
       Map<String, String> input = Maps.newHashMap();
@@ -354,6 +524,7 @@ public class TestHTTPSource {
     Gson gson = new Gson();
     String json = gson.toJson(events, listType);
     HttpsURLConnection httpsURLConnection = null;
+    Transaction transaction = null;
     try {
       TrustManager[] trustAllCerts = {
         new X509TrustManager() {
@@ -396,8 +567,8 @@ public class TestHTTPSource {
         factory = sc.getSocketFactory();
       }
       HttpsURLConnection.setDefaultSSLSocketFactory(factory);
-      HttpsURLConnection.setDefaultHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-      URL sslUrl = new URL("https://0.0.0.0:" + sslPort);
+      HttpsURLConnection.setDefaultHostnameVerifier(NoopHostnameVerifier.INSTANCE);
+      URL sslUrl = new URL("https://0.0.0.0:" + port);
       httpsURLConnection = (HttpsURLConnection) sslUrl.openConnection();
       httpsURLConnection.setDoInput(true);
       httpsURLConnection.setDoOutput(true);
@@ -407,7 +578,7 @@ public class TestHTTPSource {
       int statusCode = httpsURLConnection.getResponseCode();
       Assert.assertEquals(200, statusCode);
 
-      Transaction transaction = channel.getTransaction();
+      transaction = channel.getTransaction();
       transaction.begin();
       for (int i = 0; i < 10; i++) {
         Event e = channel.take();
@@ -415,9 +586,11 @@ public class TestHTTPSource {
         Assert.assertEquals(String.valueOf(i), e.getHeaders().get("MsgNum"));
       }
 
-      transaction.commit();
-      transaction.close();
     } finally {
+      if (transaction != null) {
+        transaction.commit();
+        transaction.close();
+      }
       httpsURLConnection.disconnect();
     }
   }
@@ -426,7 +599,7 @@ public class TestHTTPSource {
   public void testHttpsSourceNonHttpsClient() throws Exception {
     Type listType = new TypeToken<List<JSONEvent>>() {
     }.getType();
-    List<JSONEvent> events = Lists.newArrayList();
+    List<JSONEvent> events = new ArrayList<JSONEvent>();
     Random rand = new Random();
     for (int i = 0; i < 10; i++) {
       Map<String, String> input = Maps.newHashMap();
@@ -443,7 +616,7 @@ public class TestHTTPSource {
     String json = gson.toJson(events, listType);
     HttpURLConnection httpURLConnection = null;
     try {
-      URL url = new URL("http://0.0.0.0:" + sslPort);
+      URL url = new URL("http://0.0.0.0:" + httpsPort);
       httpURLConnection = (HttpURLConnection) url.openConnection();
       httpURLConnection.setDoInput(true);
       httpURLConnection.setDoOutput(true);
@@ -460,12 +633,12 @@ public class TestHTTPSource {
   }
 
   private void takeWithEncoding(String encoding, int n, List<JSONEvent> events) throws Exception {
-    Transaction tx = channel.getTransaction();
+    Transaction tx = httpChannel.getTransaction();
     tx.begin();
     Event e = null;
     int i = 0;
     while (true) {
-      e = channel.take();
+      e = httpChannel.take();
       if (e == null) {
         break;
       }

@@ -38,6 +38,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -72,7 +73,7 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
     Preconditions.checkNotNull(positionFilePath);
 
     if (logger.isDebugEnabled()) {
-      logger.debug("Initializing {} with directory={}, metaDir={}",
+      logger.debug("Initializing {} with directory={}",
           new Object[] { ReliableTaildirEventReader.class.getSimpleName(), filePaths });
     }
 
@@ -242,7 +243,13 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
       Map<String, String> headers = headerTable.row(taildir.getFileGroup());
 
       for (File f : taildir.getMatchingFiles()) {
-        long inode = getInode(f);
+        long inode;
+        try {
+          inode = getInode(f);
+        } catch (NoSuchFileException e) {
+          logger.info("File has been deleted in the meantime: " + e.getMessage());
+          continue;
+        }
         TailFile tf = tailFiles.get(inode);
         if (tf == null) {
           long startPos = skipToEnd ? f.length() : 0;

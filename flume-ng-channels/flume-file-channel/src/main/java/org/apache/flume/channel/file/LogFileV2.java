@@ -37,7 +37,8 @@ class LogFileV2 extends LogFile {
 
   private static final long OFFSET_CHECKPOINT = 2 * Serialization.SIZE_OF_INT;
 
-  private LogFileV2() {}
+  private LogFileV2() {
+  }
 
   static class MetaDataWriter extends LogFile.MetaDataWriter {
 
@@ -97,7 +98,7 @@ class LogFileV2 extends LogFile {
         long usableSpaceRefreshInterval)
         throws IOException {
       super(file, logFileID, maxFileSize, null, usableSpaceRefreshInterval,
-        true, 0);
+          true, 0);
       RandomAccessFile writeFileHandle = getFileHandle();
       writeFileHandle.writeInt(getVersion());
       writeFileHandle.writeInt(logFileID);

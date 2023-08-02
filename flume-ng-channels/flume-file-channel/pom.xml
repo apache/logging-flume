@@ -24,21 +24,19 @@
   <parent>
     <artifactId>flume-ng-channels</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.8.0-SNAPSHOT</version>
+    <version>1.11.1-SNAPSHOT</version>
   </parent>
 
   <groupId>org.apache.flume.flume-ng-channels</groupId>
   <artifactId>flume-file-channel</artifactId>
   <name>Flume NG file-based channel</name>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
+  <properties>
+    <!-- TODO fix spotbugs violations -->
+    <spotbugs.maxAllowedViolations>86</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>544</pmd.maxAllowedViolations>
+    <module.name>org.apache.flume.channel.file</module.name>
+  </properties>
 
   <dependencies>
 
@@ -91,8 +89,20 @@
     </dependency>
 
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-jcl</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-1.2-api</artifactId>
       <scope>test</scope>
     </dependency>
 
@@ -114,61 +124,29 @@
 
   </dependencies>
 
-  <profiles>
-
-   <profile>
-     <id>compile-proto</id>
-     <build>
-      <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-antrun-plugin</artifactId>
-          <configuration>
-            <skipTests>false</skipTests>
-          </configuration>
-          <executions>
-            <execution>
-              <id>compile-proto</id>
-              <phase>generate-sources</phase>
-              <goals>
-                <goal>run</goal>
-              </goals>
-              <configuration>
-                <target>
-                  <echo file="target/compile-proto.sh">
-                      PROTO_DIR=src/main/proto
-                      JAVA_DIR=src/main/java
-                      which cygpath 2&gt; /dev/null
-                      if [ $? = 1 ]; then
-                        IS_WIN=false
-                      else
-                        IS_WIN=true
-                        WIN_PROTO_DIR=`cygpath --windows $PROTO_DIR`
-                        WIN_JAVA_DIR=`cygpath --windows $JAVA_DIR`
-                      fi
-                      mkdir -p $JAVA_DIR 2&gt; /dev/null
-                      for PROTO_FILE in `ls $PROTO_DIR/*.proto 2&gt; /dev/null`
-                      do
-                          if [ "$IS_WIN" = "true" ]; then
-                            protoc -I$WIN_PROTO_DIR --java_out=$WIN_JAVA_DIR $PROTO_FILE
-                          else
-                            protoc -I$PROTO_DIR --java_out=$JAVA_DIR $PROTO_FILE
-                          fi
-                      done
-                  </echo>
-                  <exec executable="sh" dir="${basedir}" failonerror="true">
-                    <arg line="target/compile-proto.sh"/>
-                  </exec>
-                </target>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
-      </plugins>
-     </build>
-   </profile>
-
-  </profiles>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.xolstice.maven.plugins</groupId>
+        <artifactId>protobuf-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>compile-protoc</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>compile</goal>
+            </goals>
+            <configuration>
+              <protocArtifact>com.google.protobuf:protoc:${external.protobuf.version}:exe:${os.detected.classifier}</protocArtifact>
+              <protoSourceRoot>${basedir}/src/main/proto/</protoSourceRoot>
+              <clearOutputDirectory>false</clearOutputDirectory>
+              <checkStaleness>true</checkStaleness>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 
 
 

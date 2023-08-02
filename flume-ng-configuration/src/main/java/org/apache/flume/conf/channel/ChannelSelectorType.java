@@ -16,10 +16,12 @@
  */
 package org.apache.flume.conf.channel;
 
+import org.apache.flume.conf.ComponentWithClassName;
+
 /**
  * Enumeration of built in channel selector types available in the system.
  */
-public enum ChannelSelectorType {
+public enum ChannelSelectorType implements ComponentWithClassName {
 
   /**
    * Place holder for custom channel selectors not part of this enumeration.
@@ -32,6 +34,11 @@ public enum ChannelSelectorType {
   REPLICATING("org.apache.flume.channel.ReplicatingChannelSelector"),
 
   /**
+   * Load balancing channel selector.
+   */
+  LOAD_BALANCING("org.apache.flume.channel.LoadBalancingChannelSelector"),
+
+  /**
    * Multiplexing channel selector.
    */
   MULTIPLEXING("org.apache.flume.channel.MultiplexingChannelSelector");
@@ -42,7 +49,13 @@ public enum ChannelSelectorType {
     this.channelSelectorClassName = channelSelectorClassName;
   }
 
+  @Deprecated
   public String getChannelSelectorClassName() {
+    return channelSelectorClassName;
+  }
+
+  @Override
+  public String getClassName() {
     return channelSelectorClassName;
   }
 }

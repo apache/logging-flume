@@ -318,5 +318,6 @@ public class EmbeddedAgentConfiguration {
     return JOINER.join(parts);
   }
 
-  private EmbeddedAgentConfiguration() {}
+  private EmbeddedAgentConfiguration() {
+  }
 }

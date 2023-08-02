@@ -19,11 +19,7 @@
 
 package org.apache.flume.source;
 
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import org.apache.avro.ipc.NettyServer;
-import org.apache.avro.ipc.NettyTransceiver;
+import org.apache.avro.ipc.netty.NettyServer;
 import org.apache.avro.ipc.Responder;
 import org.apache.avro.ipc.Server;
 import org.apache.avro.ipc.specific.SpecificResponder;
@@ -39,38 +35,33 @@ import org.apache.flume.conf.Configurables;
 import org.apache.flume.conf.LogPrivacyUtil;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.instrumentation.SourceCounter;
+import org.apache.flume.netty.filter.PatternRule;
 import org.apache.flume.source.avro.AvroFlumeEvent;
 import org.apache.flume.source.avro.AvroSourceProtocol;
 import org.apache.flume.source.avro.Status;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.ChannelPipelineFactory;
-import org.jboss.netty.channel.Channels;
-import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
-import org.jboss.netty.handler.codec.compression.ZlibDecoder;
-import org.jboss.netty.handler.codec.compression.ZlibEncoder;
-import org.jboss.netty.handler.ipfilter.IpFilterRule;
-import org.jboss.netty.handler.ipfilter.IpFilterRuleHandler;
-import org.jboss.netty.handler.ipfilter.PatternRule;
-import org.jboss.netty.handler.ssl.SslHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
-import java.io.FileInputStream;
+
 import java.net.InetSocketAddress;
-import java.security.KeyStore;
-import java.security.Security;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import io.netty.channel.ChannelPipeline;
+import io.netty.handler.codec.compression.JZlibDecoder;
+import io.netty.handler.codec.compression.JZlibEncoder;
+import io.netty.handler.codec.compression.ZlibEncoder;
+import io.netty.handler.ipfilter.IpFilterRule;
+import io.netty.handler.ipfilter.IpFilterRuleType;
+import io.netty.handler.ipfilter.RuleBasedIpFilter;
+import io.netty.handler.ssl.SslHandler;
 
 /**
  * <p>
@@ -123,36 +114,22 @@ import java.util.concurrent.TimeUnit;
  * <p>
  * <b>Metrics</b>
  * </p>
- * <p>
- * TODO
- * </p>
  */
-public class AvroSource extends AbstractSource implements EventDrivenSource,
+public class AvroSource extends SslContextAwareAbstractSource implements EventDrivenSource,
     Configurable, AvroSourceProtocol {
 
   private static final String THREADS = "threads";
 
-  private static final Logger logger = LoggerFactory
-      .getLogger(AvroSource.class);
+  private static final Logger logger = LoggerFactory.getLogger(AvroSource.class);
 
   private static final String PORT_KEY = "port";
   private static final String BIND_KEY = "bind";
   private static final String COMPRESSION_TYPE = "compression-type";
-  private static final String SSL_KEY = "ssl";
   private static final String IP_FILTER_KEY = "ipFilter";
   private static final String IP_FILTER_RULES_KEY = "ipFilterRules";
-  private static final String KEYSTORE_KEY = "keystore";
-  private static final String KEYSTORE_PASSWORD_KEY = "keystore-password";
-  private static final String KEYSTORE_TYPE_KEY = "keystore-type";
-  private static final String EXCLUDE_PROTOCOLS = "exclude-protocols";
   private int port;
   private String bindAddress;
   private String compressionType;
-  private String keystore;
-  private String keystorePassword;
-  private String keystoreType;
-  private final List<String> excludeProtocols = new LinkedList<String>();
-  private boolean enableSsl = false;
   private boolean enableIpFilter;
   private String patternRuleConfigDefinition;
 
@@ -166,6 +143,7 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
 
   @Override
   public void configure(Context context) {
+    configureSsl(context);
     Configurables.ensureRequiredNonNull(context, PORT_KEY, BIND_KEY);
 
     port = context.getInteger(PORT_KEY);
@@ -177,34 +155,6 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
     } catch (NumberFormatException e) {
       logger.warn("AVRO source\'s \"threads\" property must specify an integer value.",
               context.getString(THREADS));
-    }
-
-    enableSsl = context.getBoolean(SSL_KEY, false);
-    keystore = context.getString(KEYSTORE_KEY);
-    keystorePassword = context.getString(KEYSTORE_PASSWORD_KEY);
-    keystoreType = context.getString(KEYSTORE_TYPE_KEY, "JKS");
-    String excludeProtocolsStr = context.getString(EXCLUDE_PROTOCOLS);
-    if (excludeProtocolsStr == null) {
-      excludeProtocols.add("SSLv3");
-    } else {
-      excludeProtocols.addAll(Arrays.asList(excludeProtocolsStr.split(" ")));
-      if (!excludeProtocols.contains("SSLv3")) {
-        excludeProtocols.add("SSLv3");
-      }
-    }
-
-    if (enableSsl) {
-      Preconditions.checkNotNull(keystore,
-          KEYSTORE_KEY + " must be specified when SSL is enabled");
-      Preconditions.checkNotNull(keystorePassword,
-          KEYSTORE_PASSWORD_KEY + " must be specified when SSL is enabled");
-      try {
-        KeyStore ks = KeyStore.getInstance(keystoreType);
-        ks.load(new FileInputStream(keystore), keystorePassword.toCharArray());
-      } catch (Exception ex) {
-        throw new FlumeException(
-            "Avro source configured with invalid keystore: " + keystore, ex);
-      }
     }
 
     enableIpFilter = context.getBoolean(IP_FILTER_KEY, false);
@@ -233,95 +183,70 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
   public void start() {
     logger.info("Starting {}...", this);
 
-    Responder responder = new SpecificResponder(AvroSourceProtocol.class, this);
+    try {
+      Responder responder = new SpecificResponder(AvroSourceProtocol.class, this);
+      boolean enableCompression = compressionType.equalsIgnoreCase("deflate");
 
-    NioServerSocketChannelFactory socketChannelFactory = initSocketChannelFactory();
-
-    ChannelPipelineFactory pipelineFactory = initChannelPipelineFactory();
-
-    server = new NettyServer(responder, new InetSocketAddress(bindAddress, port),
-          socketChannelFactory, pipelineFactory, null);
+      server = new NettyServer(responder, new InetSocketAddress(bindAddress, port),
+              (ch) -> {
+                ChannelPipeline pipeline = ch.pipeline();
+                if (enableCompression) {
+                  ZlibEncoder encoder = new JZlibEncoder(6);
+                  pipeline.addFirst("deflater", encoder);
+                  pipeline.addFirst("inflater", new JZlibDecoder());
+                }
+                Optional<SSLEngine> engine = getSslEngine(false);
+                engine.ifPresent(sslEngine -> pipeline.addLast("ssl", new SslHandler(sslEngine)));
+                if (enableIpFilter) {
+                  logger.info("Setting up ipFilter with the following rule definition: " +
+                          patternRuleConfigDefinition);
+                  RuleBasedIpFilter filter = new RuleBasedIpFilter(rules.toArray(new IpFilterRule[0]));
+                  logger.info("Adding ipFilter with " + rules.size() + " rules");
+                  pipeline.addFirst("ipFilter", filter);
+                }
+              });
+    } catch (Exception nce) {
+      logger.error("Avro source {} startup failed. Cannot initialize Netty server", getName(), nce);
+      stop();
+      throw new FlumeException("Failed to set up server socket", nce);
+    }
 
     connectionCountUpdater = Executors.newSingleThreadScheduledExecutor();
     server.start();
     sourceCounter.start();
     super.start();
     final NettyServer srv = (NettyServer)server;
-    connectionCountUpdater.scheduleWithFixedDelay(new Runnable() {
-
-      @Override
-      public void run() {
-        sourceCounter.setOpenConnectionCount(
-                Long.valueOf(srv.getNumActiveConnections()));
-      }
-    }, 0, 60, TimeUnit.SECONDS);
+    connectionCountUpdater.scheduleWithFixedDelay(
+        () -> sourceCounter.setOpenConnectionCount(Long.valueOf(srv.getNumActiveConnections())),
+        0, 60, TimeUnit.SECONDS);
 
     logger.info("Avro source {} started.", getName());
-  }
-
-  private NioServerSocketChannelFactory initSocketChannelFactory() {
-    NioServerSocketChannelFactory socketChannelFactory;
-    if (maxThreads <= 0) {
-      socketChannelFactory = new NioServerSocketChannelFactory(
-          Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat(
-              "Avro " + NettyTransceiver.class.getSimpleName() + " Boss-%d").build()),
-          Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat(
-              "Avro " + NettyTransceiver.class.getSimpleName() + "  I/O Worker-%d").build()));
-    } else {
-      socketChannelFactory = new NioServerSocketChannelFactory(
-        Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat(
-            "Avro " + NettyTransceiver.class.getSimpleName() + " Boss-%d").build()),
-        Executors.newFixedThreadPool(maxThreads, new ThreadFactoryBuilder().setNameFormat(
-            "Avro " + NettyTransceiver.class.getSimpleName() + "  I/O Worker-%d").build()));
-    }
-    return socketChannelFactory;
-  }
-
-  private ChannelPipelineFactory initChannelPipelineFactory() {
-    ChannelPipelineFactory pipelineFactory;
-    boolean enableCompression = compressionType.equalsIgnoreCase("deflate");
-    if (enableCompression || enableSsl || enableIpFilter) {
-      pipelineFactory = new AdvancedChannelPipelineFactory(
-        enableCompression, enableSsl, keystore,
-        keystorePassword, keystoreType, enableIpFilter,
-        patternRuleConfigDefinition);
-    } else {
-      pipelineFactory = new ChannelPipelineFactory() {
-        @Override
-        public ChannelPipeline getPipeline() throws Exception {
-          return Channels.pipeline();
-        }
-      };
-    }
-    return pipelineFactory;
   }
 
   @Override
   public void stop() {
     logger.info("Avro source {} stopping: {}", getName(), this);
 
-    server.close();
-
-    try {
-      server.join();
-    } catch (InterruptedException e) {
-      logger.info("Avro source " + getName() + ": Interrupted while waiting " +
-          "for Avro server to stop. Exiting. Exception follows.", e);
-    }
-    sourceCounter.stop();
-    connectionCountUpdater.shutdown();
-    while (!connectionCountUpdater.isTerminated()) {
+    if (server != null) {
+      server.close();
       try {
-        Thread.sleep(100);
-      } catch (InterruptedException ex) {
-        logger.error("Interrupted while waiting for connection count executor "
-                + "to terminate", ex);
-        Throwables.propagate(ex);
+        server.join();
+        server = null;
+      } catch (InterruptedException e) {
+        logger.info("Avro source " + getName() + ": Interrupted while waiting " +
+                "for Avro server to stop. Exiting. Exception follows.", e);
+        Thread.currentThread().interrupt();
       }
     }
+
+    sourceCounter.stop();
+    if (connectionCountUpdater != null) {
+      connectionCountUpdater.shutdownNow();
+      connectionCountUpdater = null;
+    }
+
     super.stop();
-    logger.info("Avro source {} stopped. Metrics: {}", getName(),
-        sourceCounter);
+    logger.info("Avro source {} stopped. Metrics: {}", getName(), sourceCounter);
   }
 
   @Override
@@ -333,10 +258,8 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
   /**
    * Helper function to convert a map of CharSequence to a map of String.
    */
-  private static Map<String, String> toStringMap(
-      Map<CharSequence, CharSequence> charSeqMap) {
-    Map<String, String> stringMap =
-        new HashMap<String, String>();
+  private static Map<String, String> toStringMap(Map<CharSequence, CharSequence> charSeqMap) {
+    Map<String, String> stringMap = new HashMap<>();
     for (Map.Entry<CharSequence, CharSequence> entry : charSeqMap.entrySet()) {
       stringMap.put(entry.getKey().toString(), entry.getValue().toString());
     }
@@ -364,6 +287,7 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
     } catch (ChannelException ex) {
       logger.warn("Avro source " + getName() + ": Unable to process event. " +
           "Exception follows.", ex);
+      sourceCounter.incrementChannelWriteFail();
       return Status.FAILED;
     }
 
@@ -394,6 +318,7 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
     } catch (Throwable t) {
       logger.error("Avro source " + getName() + ": Unable to process event " +
           "batch. Exception follows.", t);
+      sourceCounter.incrementChannelWriteFail();
       if (t instanceof Error) {
         throw (Error) t;
       }
@@ -438,106 +363,9 @@ public class AvroSource extends AbstractSource implements EventDrivenSource,
       boolean isAllow = ruleAccessFlag.equals("allow");
       String patternRuleString = (patternTypeFlag.equals("ip") ? "i" : "n")
           + ":" + patternRuleDefinition.substring(secondColonIndex + 1);
-      logger.info("Adding ipFilter PatternRule: "
-          + (isAllow ? "Allow" : "deny") + " " + patternRuleString);
-      return new PatternRule(isAllow, patternRuleString);
-    }
-  }
-
-  /**
-   * Factory of SSL-enabled server worker channel pipelines
-   * Copied from Avro's org.apache.avro.ipc.TestNettyServerWithSSL test
-   */
-  private class AdvancedChannelPipelineFactory
-      implements ChannelPipelineFactory {
-
-    private boolean enableCompression;
-    private boolean enableSsl;
-    private String keystore;
-    private String keystorePassword;
-    private String keystoreType;
-
-    private boolean enableIpFilter;
-    private String patternRuleConfigDefinition;
-
-    public AdvancedChannelPipelineFactory(boolean enableCompression,
-        boolean enableSsl, String keystore, String keystorePassword,
-        String keystoreType, boolean enableIpFilter,
-        String patternRuleConfigDefinition) {
-      this.enableCompression = enableCompression;
-      this.enableSsl = enableSsl;
-      this.keystore = keystore;
-      this.keystorePassword = keystorePassword;
-      this.keystoreType = keystoreType;
-      this.enableIpFilter = enableIpFilter;
-      this.patternRuleConfigDefinition = patternRuleConfigDefinition;
-    }
-
-    private SSLContext createServerSSLContext() {
-      try {
-        KeyStore ks = KeyStore.getInstance(keystoreType);
-        ks.load(new FileInputStream(keystore), keystorePassword.toCharArray());
-
-        // Set up key manager factory to use our key store
-        KeyManagerFactory kmf = KeyManagerFactory.getInstance(getAlgorithm());
-        kmf.init(ks, keystorePassword.toCharArray());
-
-        SSLContext serverContext = SSLContext.getInstance("TLS");
-        serverContext.init(kmf.getKeyManagers(), null, null);
-        return serverContext;
-      } catch (Exception e) {
-        throw new Error("Failed to initialize the server-side SSLContext", e);
-      }
-    }
-
-    private String getAlgorithm() {
-      String algorithm = Security.getProperty(
-          "ssl.KeyManagerFactory.algorithm");
-      if (algorithm == null) {
-        algorithm = "SunX509";
-      }
-      return algorithm;
-    }
-
-    @Override
-    public ChannelPipeline getPipeline() throws Exception {
-      ChannelPipeline pipeline = Channels.pipeline();
-      if (enableCompression) {
-        ZlibEncoder encoder = new ZlibEncoder(6);
-        pipeline.addFirst("deflater", encoder);
-        pipeline.addFirst("inflater", new ZlibDecoder());
-      }
-
-      if (enableSsl) {
-        SSLEngine sslEngine = createServerSSLContext().createSSLEngine();
-        sslEngine.setUseClientMode(false);
-        List<String> enabledProtocols = new ArrayList<String>();
-        for (String protocol : sslEngine.getEnabledProtocols()) {
-          if (!excludeProtocols.contains(protocol)) {
-            enabledProtocols.add(protocol);
-          }
-        }
-        sslEngine.setEnabledProtocols(enabledProtocols.toArray(new String[0]));
-        logger.info("SSLEngine protocols enabled: " +
-            Arrays.asList(sslEngine.getEnabledProtocols()));
-        // addFirst() will make SSL handling the first stage of decoding
-        // and the last stage of encoding this must be added after
-        // adding compression handling above
-        pipeline.addFirst("ssl", new SslHandler(sslEngine));
-      }
-
-      if (enableIpFilter) {
-
-        logger.info("Setting up ipFilter with the following rule definition: " +
-                    patternRuleConfigDefinition);
-        IpFilterRuleHandler ipFilterHandler = new IpFilterRuleHandler();
-        ipFilterHandler.addAll(rules);
-        logger.info("Adding ipFilter with " + ipFilterHandler.size() + " rules");
-
-        pipeline.addFirst("ipFilter", ipFilterHandler);
-      }
-
-      return pipeline;
+      IpFilterRuleType ruleType = isAllow ? IpFilterRuleType.ACCEPT : IpFilterRuleType.REJECT;
+      logger.info("Adding ipFilter PatternRule: {} {}", ruleType, patternRuleString);
+      return new PatternRule(ruleType, patternRuleString);
     }
   }
 }

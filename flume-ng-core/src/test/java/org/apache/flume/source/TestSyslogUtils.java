@@ -18,19 +18,29 @@
  */
 package org.apache.flume.source;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 import org.apache.flume.Event;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
+
+import io.netty.buffer.ByteBuf;
+
+import static io.netty.buffer.Unpooled.*;
 
 public class TestSyslogUtils {
   @Test
@@ -130,7 +140,7 @@ public class TestSyslogUtils {
 
   @Test
   public void TestHeader9() throws ParseException {
-    SimpleDateFormat sdf = new SimpleDateFormat("MMM  d hh:MM:ss");
+    SimpleDateFormat sdf = new SimpleDateFormat("MMM  d hh:MM:ss", Locale.ENGLISH);
     Calendar cal = Calendar.getInstance();
 
     String year = String.valueOf(cal.get(Calendar.YEAR));
@@ -145,7 +155,7 @@ public class TestSyslogUtils {
 
   @Test
   public void TestHeader10() throws ParseException {
-    SimpleDateFormat sdf = new SimpleDateFormat("MMM  d hh:MM:ss");
+    SimpleDateFormat sdf = new SimpleDateFormat("MMM  d hh:MM:ss", Locale.ENGLISH);
     Calendar cal = Calendar.getInstance();
 
     String year = String.valueOf(cal.get(Calendar.YEAR));
@@ -175,7 +185,7 @@ public class TestSyslogUtils {
 
   @Test
   public void TestRfc3164HeaderApacheLogWithNulls() throws ParseException {
-    SimpleDateFormat sdf = new SimpleDateFormat("MMM  d hh:MM:ss");
+    SimpleDateFormat sdf = new SimpleDateFormat("MMM  d hh:MM:ss", Locale.ENGLISH);
     Calendar cal = Calendar.getInstance();
 
     String year = String.valueOf(cal.get(Calendar.YEAR));
@@ -196,43 +206,55 @@ public class TestSyslogUtils {
    */
   @Test
   public void TestRfc3164Dates() throws ParseException {
-    for (int i = -10; i <= 1; i++) {
-      SimpleDateFormat sdf = new SimpleDateFormat("MMM  d hh:MM:ss");
-      Date date = new Date(System.currentTimeMillis());
-      Calendar cal = Calendar.getInstance();
-      cal.setTime(date);
-      cal.add(Calendar.MONTH, i);
+    //We're going to run this test using a mocked clock, once for the next 13 months
+    for (int monthOffset = 0; monthOffset <= 13; monthOffset++) {
+      Clock mockClock = Clock.fixed(
+              LocalDateTime.now().plusMonths(monthOffset).toInstant(ZoneOffset.UTC),
+              Clock.systemDefaultZone().getZone()
+      );
 
-      //Small tweak to avoid the 1 month in the future ticking over by a few seconds between now
-      //and when the checkHeader actually runs
-      if (i == 1) {
-        cal.add(Calendar.DAY_OF_MONTH, -1);
+      //We're then going to try input dates (without the year) for all 12 months, starting
+      //10 months ago, and finishing next month (all relative to our mocked clock)
+      for (int i = -10; i <= 1; i++) {
+        SimpleDateFormat sdf = new SimpleDateFormat("MMM  d hh:MM:ss", Locale.ENGLISH);
+        Date date = new Date(mockClock.millis());
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        cal.add(Calendar.MONTH, i);
+
+        //Small tweak to avoid the 1 month in the future ticking over by a few seconds between now
+        //and when the checkHeader actually runs
+        if (i == 1) {
+          cal.add(Calendar.DAY_OF_MONTH, -1);
+        }
+
+        String stamp1 = sdf.format(cal.getTime());
+
+        String year = String.valueOf(cal.get(Calendar.YEAR));
+        String format1 = "yyyyMMM d HH:mm:ss";
+        String host1 = "ubuntu-11.cloudera.com";
+        String data1 = "some msg";
+
+        // timestamp with 'Z' appended, translates to UTC
+        String msg1 = "<10>" + stamp1 + " " + host1 + " " + data1 + "\n";
+        checkHeader(msg1, year + stamp1, format1, host1, data1, mockClock);
       }
-
-      String stamp1 = sdf.format(cal.getTime());
-
-      String year = String.valueOf(cal.get(Calendar.YEAR));
-      String format1 = "yyyyMMM d HH:mm:ss";
-      String host1 = "ubuntu-11.cloudera.com";
-      String data1 = "some msg";
-
-      // timestamp with 'Z' appended, translates to UTC
-      String msg1 = "<10>" + stamp1 + " " + host1 + " " + data1 + "\n";
-      checkHeader(msg1, year + stamp1, format1, host1, data1);
     }
+
+
   }
 
   public static void checkHeader(String keepFields, String msg1, String stamp1, String format1,
-                                 String host1, String data1) throws ParseException {
+                                 String host1, String data1, Clock clock) throws ParseException {
     SyslogUtils util;
     if (keepFields == null || keepFields.isEmpty()) {
-      util = new SyslogUtils(SyslogUtils.DEFAULT_SIZE, new HashSet<String>(), false);
+      util = new SyslogUtils(SyslogUtils.DEFAULT_SIZE, new HashSet<String>(), false, clock);
     } else {
       util = new SyslogUtils(SyslogUtils.DEFAULT_SIZE,
                              SyslogUtils.chooseFieldsToKeep(keepFields),
-                             false);
+                             false, clock);
     }
-    ChannelBuffer buff = ChannelBuffers.buffer(200);
+    ByteBuf buff = buffer(200);
 
     buff.writeBytes(msg1.getBytes());
     Event e = util.extractEvent(buff);
@@ -256,10 +278,26 @@ public class TestSyslogUtils {
     Assert.assertEquals(data1, new String(e.getBody()));
   }
 
+  public static void checkHeader(String keepFields, String msg1, String stamp1, String format1,
+                                 String host1, String data1) throws ParseException {
+    checkHeader(
+            keepFields, msg1, stamp1, format1,
+            host1, data1, Clock.system(Clock.systemDefaultZone().getZone())
+    );
+  }
+
+  public static void checkHeader(String msg1, String stamp1, String format1,
+                                 String host1, String data1, Clock clock) throws ParseException {
+    checkHeader("none", msg1, stamp1, format1, host1, data1, clock);
+  }
+
   // Check headers for when keepFields is "none".
   public static void checkHeader(String msg1, String stamp1, String format1,
                                  String host1, String data1) throws ParseException {
-    checkHeader("none", msg1, stamp1, format1, host1, data1);
+    checkHeader(
+            "none", msg1, stamp1, format1,
+            host1, data1, Clock.system(Clock.systemDefaultZone().getZone())
+    );
   }
 
   /**
@@ -269,7 +307,7 @@ public class TestSyslogUtils {
   public void testExtractBadEvent1() {
     String badData1 = "<10F> bad bad data\n";
     SyslogUtils util = new SyslogUtils(false);
-    ChannelBuffer buff = ChannelBuffers.buffer(100);
+    ByteBuf buff = buffer(100);
     buff.writeBytes(badData1.getBytes());
     Event e = util.extractEvent(buff);
     if (e == null) {
@@ -290,7 +328,7 @@ public class TestSyslogUtils {
   public void testExtractBadEvent2() {
     String badData1 = "hi guys! <10> bad bad data\n";
     SyslogUtils util = new SyslogUtils(false);
-    ChannelBuffer buff = ChannelBuffers.buffer(100);
+    ByteBuf buff = buffer(100);
     buff.writeBytes(badData1.getBytes());
     Event e = util.extractEvent(buff);
     if (e == null) {
@@ -311,7 +349,7 @@ public class TestSyslogUtils {
   public void testExtractBadEvent3() {
     String badData1 = "<> bad bad data\n";
     SyslogUtils util = new SyslogUtils(false);
-    ChannelBuffer buff = ChannelBuffers.buffer(100);
+    ByteBuf buff = buffer(100);
     buff.writeBytes(badData1.getBytes());
     Event e = util.extractEvent(buff);
     if (e == null) {
@@ -332,7 +370,7 @@ public class TestSyslogUtils {
   public void testExtractBadEvent4() {
     String badData1 = "<123123123123123123123123123123> bad bad data\n";
     SyslogUtils util = new SyslogUtils(false);
-    ChannelBuffer buff = ChannelBuffers.buffer(100);
+    ByteBuf buff = buffer(100);
     buff.writeBytes(badData1.getBytes());
     Event e = util.extractEvent(buff);
     if (e == null) {
@@ -354,7 +392,7 @@ public class TestSyslogUtils {
     String priority = "<10>";
     String goodData1 = "Good good good data\n";
     SyslogUtils util = new SyslogUtils(false);
-    ChannelBuffer buff = ChannelBuffers.buffer(100);
+    ByteBuf buff = buffer(100);
     buff.writeBytes((priority + goodData1).getBytes());
     Event e = util.extractEvent(buff);
     if (e == null) {
@@ -375,7 +413,7 @@ public class TestSyslogUtils {
   public void testBadEventGoodEvent() {
     String badData1 = "hi guys! <10F> bad bad data\n";
     SyslogUtils util = new SyslogUtils(false);
-    ChannelBuffer buff = ChannelBuffers.buffer(100);
+    ByteBuf buff = buffer(100);
     buff.writeBytes(badData1.getBytes());
     String priority = "<10>";
     String goodData1 = "Good good good data\n";
@@ -409,7 +447,7 @@ public class TestSyslogUtils {
     String priority = "<10>";
     String goodData1 = "Good good good data\n";
     SyslogUtils util = new SyslogUtils(false);
-    ChannelBuffer buff = ChannelBuffers.buffer(100);
+    ByteBuf buff = buffer(100);
     buff.writeBytes((priority + goodData1).getBytes());
     buff.writeBytes(badData1.getBytes());
 
@@ -442,7 +480,7 @@ public class TestSyslogUtils {
   public void testBadEventBadEvent() {
     String badData1 = "hi guys! <10F> bad bad data\n";
     SyslogUtils util = new SyslogUtils(false);
-    ChannelBuffer buff = ChannelBuffers.buffer(100);
+    ByteBuf buff = buffer(100);
     buff.writeBytes(badData1.getBytes());
     String badData2 = "hi guys! <20> bad bad data\n";
     buff.writeBytes((badData2).getBytes());
@@ -476,7 +514,7 @@ public class TestSyslogUtils {
     String priority = "<10>";
     String goodData1 = "Good good good data\n";
     SyslogUtils util = new SyslogUtils(false);
-    ChannelBuffer buff = ChannelBuffers.buffer(100);
+    ByteBuf buff = buffer(100);
     buff.writeBytes((priority + goodData1).getBytes());
     String priority2 = "<20>";
     String goodData2 = "Good really good data\n";
@@ -512,7 +550,7 @@ public class TestSyslogUtils {
     String badData1 = "<10> bad bad data bad bad\n";
     // The minimum size (which is 10) overrides the 5 specified here.
     SyslogUtils util = new SyslogUtils(5, null, false);
-    ChannelBuffer buff = ChannelBuffers.buffer(100);
+    ByteBuf buff = buffer(100);
     buff.writeBytes(badData1.getBytes());
     Event e = util.extractEvent(buff);
     if (e == null) {
@@ -565,4 +603,63 @@ public class TestSyslogUtils {
     checkHeader("true", msg1, stamp1 + "+0800", format1, host1, data5);
   }
 
+  @Test
+  public void testGetIPWhenSuccessful() {
+    SocketAddress socketAddress = new InetSocketAddress("localhost", 2000);
+
+    String ip = SyslogUtils.getIP(socketAddress);
+
+    assertEquals("127.0.0.1", ip);
+  }
+
+  @Test
+  public void testGetIPWhenInputIsNull() {
+    SocketAddress socketAddress = null;
+
+    String ip = SyslogUtils.getIP(socketAddress);
+
+    assertEquals("", ip);
+  }
+
+  @Test
+  public void testGetIPWhenInputIsNotInetSocketAddress() {
+    SocketAddress socketAddress = new SocketAddress() {};
+
+    String ip = SyslogUtils.getIP(socketAddress);
+
+    assertEquals("", ip);
+  }
+
+  @Test
+  public void testGetHostnameWhenSuccessful() {
+    SocketAddress socketAddress = new InetSocketAddress("127.0.0.1", 2000);
+
+    String hostname = SyslogUtils.getHostname(socketAddress);
+
+    if (!isLocalHost(hostname)) {
+      fail("Expected either 'localhost' or '127.0.0.1' but got '" + hostname + "'");
+    }
+  }
+
+  @Test
+  public void testGetHostnameWhenInputIsNull() {
+    SocketAddress socketAddress = null;
+
+    String hostname = SyslogUtils.getHostname(socketAddress);
+
+    assertEquals("", hostname);
+  }
+
+  @Test
+  public void testGetHostnameWhenInputIsNotInetSocketAddress() {
+    SocketAddress socketAddress = new SocketAddress() {};
+
+    String hostname = SyslogUtils.getHostname(socketAddress);
+
+    assertEquals("", hostname);
+  }
+
+  public static boolean isLocalHost(String value) {
+    return value != null && (value.endsWith("localhost") || value.equals("127.0.0.1"));
+  }
 }
