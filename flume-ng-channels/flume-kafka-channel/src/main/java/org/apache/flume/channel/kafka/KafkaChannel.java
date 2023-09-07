@@ -60,6 +60,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Option;
 
+import java.util.concurrent.TimeUnit;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -810,7 +811,8 @@ class ChannelCallback implements Callback {
       log.trace("Error sending message to Kafka due to " + exception.getMessage());
     }
     if (log.isDebugEnabled()) {
-      long batchElapsedTime = System.currentTimeMillis() - startTime;
+      long batchElapsedTime = System.currentTimeMillis() 
+        - TimeUnit.NANOSECONDS.toMillis(startTime);
       if (metadata != null) {
         log.debug("Acked message_no " + index + ": " + metadata.topic() + "-" +
                 metadata.partition() + "-" + metadata.offset() + "-" + batchElapsedTime);
