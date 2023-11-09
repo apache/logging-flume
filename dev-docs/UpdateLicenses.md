@@ -150,7 +150,7 @@ CDDLv1.1. Entry in NOTICE and LICENSE.
 ALv2. Etnry in NOTICE.
 
 ```
-   log4j:log4j:jar:1.2.17:compile
+   ch.qos.reload4j:reload4j:jar:1.2.25:compile
 ```
 
 ALv2. Entry in NOTICE.
@@ -414,7 +414,7 @@ derby NOTICE is not relevant.
    flume-twitter-source-<version>.jar
 ```
 
-ALv2. Entry in NOTICE for log4j 1.2.17 from log4jappender
+ALv2. Entry in NOTICE for reload4j 1.2.25 from log4jappender
 jar-with-dependencies.
 
 ```

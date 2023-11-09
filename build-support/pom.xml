@@ -29,9 +29,15 @@ limitations under the License.
         <maven.site.skip>true</maven.site.skip>
         <deploy.plugin.version>2.8.2</deploy.plugin.version>
         <mvn-gpg-plugin.version>1.6</mvn-gpg-plugin.version>
+        <mvn-compiler-plugin.version>3.8.1</mvn-compiler-plugin.version>
     </properties>
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${mvn-compiler-plugin.version}</version>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
