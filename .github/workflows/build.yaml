@@ -1,0 +1,79 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to you under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+name: build
+
+on:
+  push:
+    branches:
+    - "trunk"
+    - "release/*"
+    paths-ignore:
+      - "**.adoc"
+      - "**.md"
+      - "**.txt"
+  pull_request:
+    paths-ignore:
+      - "**.adoc"
+      - "**.md"
+      - "**.txt"
+
+# If the branch is 'trunk' run once per commit.
+# If the branch is 'release/*' allow only one concurrent run.
+concurrency:
+  group: ${{ github.ref_name == 'trunk' && github.ref || github.ref_name }}
+  cancel-in-progress: true
+
+permissions: read-all
+
+jobs:
+
+  build:
+    if: github.actor != 'dependabot[bot]'
+    uses: apache/logging-parent/.github/workflows/build-reusable.yaml@e45457c683302242be5e8e7c3c33edf8f0e0ec0e # 10.4.0
+    with:
+      java-version: 8
+
+  deploy-snapshot:
+    needs: build
+    if: github.repository == 'apache/flume' && github.ref == 'refs/heads/trunk'
+    uses: apache/logging-parent/.github/workflows/deploy-snapshot-reusable.yaml@e45457c683302242be5e8e7c3c33edf8f0e0ec0e # 10.4.0
+    # Secrets for deployments
+    secrets:
+      NEXUS_USER: ${{ secrets.NEXUS_USER }}
+      NEXUS_PW: ${{ secrets.NEXUS_PW }}
+    with:
+      java-version: 8
+
+  deploy-release:
+    needs: build
+    if: github.repository == 'apache/flume' && startsWith(github.ref_name, 'release/')
+    uses: apache/logging-parent/.github/workflows/deploy-release-reusable.yaml@e45457c683302242be5e8e7c3c33edf8f0e0ec0e # 10.4.0
+    # Secrets for deployments
+    secrets:
+      GPG_SECRET_KEY: ${{ secrets.LOGGING_GPG_SECRET_KEY }}
+      LOGGING_STAGE_DEPLOYER_USER: ${{ secrets.LOGGING_STAGE_DEPLOYER_USER }}
+      LOGGING_STAGE_DEPLOYER_PW: ${{ secrets.LOGGING_STAGE_DEPLOYER_PW }}
+      SVN_USERNAME: ${{ secrets.LOGGING_SVN_DEV_USERNAME }}
+      SVN_PASSWORD: ${{ secrets.LOGGING_SVN_DEV_PASSWORD }}
+    # Write permissions to allow the Maven `revision` property update, changelog release, etc.
+    permissions:
+      contents: write
+    with:
+      java-version: 8
+      project-id: flume
+      site-enabled: true
