@@ -139,6 +139,8 @@ limitations under the License.
       </activation>
       <build>
         <plugins>
+          <!--
+            ~ TODO: renders the build not reproducible.
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
@@ -162,6 +164,7 @@ limitations under the License.
               </execution>
             </executions>
           </plugin>
+          -->
 
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
