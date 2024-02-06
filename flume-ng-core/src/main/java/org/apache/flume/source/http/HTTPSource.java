@@ -279,6 +279,12 @@ public class HTTPSource extends SslContextAwareAbstractSource implements
             throws IOException {
       doPost(request, response);
     }
+          
+    @Override
+    public void doOptions(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+      doPost(request, response);
+    }
   }
 
   @Override
