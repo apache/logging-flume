@@ -29,6 +29,7 @@ import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.sink.hdfs.HDFSEventSink.WriterCallback;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
@@ -569,6 +570,9 @@ class BucketWriter {
         throw new BucketClosedException("This bucket writer was closed and " +
           "this handle is thus no longer valid");
       }
+      if (checkQuota(event)) {
+        throw new IOException("This bucket has reached the expected quota"); 
+      }
       open();
     }
 
@@ -595,6 +599,9 @@ class BucketWriter {
 
       if (doRotate) {
         close();
+        if (checkQuota(event)) {
+          throw new IOException("This bucket has reached the expected quota"); 
+        }
         open();
       }
     }
@@ -605,6 +612,9 @@ class BucketWriter {
       callWithTimeout(new CallRunner<Void>() {
         @Override
         public Void call() throws Exception {
+          if (checkQuota(event)) {
+            throw new IOException("This bucket has reached the expected quota"); 
+          }
           writer.append(event); // could block
           return null;
         }
@@ -709,6 +719,43 @@ class BucketWriter {
               + "Your hdfs.callTimeout might be set too low or HDFS calls are "
               + "taking too long.");
     }
+  }
+  
+  private ContentSummary fsCheckQuota(FileSystem fs, Path path) {
+    try {
+      if (fs instanceof DistributedFileSystem) {
+        return fs.getContentSummary(path);
+      }  
+    } catch (IOException e) {
+      LOG.error("Unexpected error while checking quota", e);
+    }
+    return null;
+  }
+  
+  private boolean checkQuota(Event event) {
+    if (filePath != null) {
+      final Path quotaPath = new Path(filePath);
+      final Configuration config = new Configuration();
+      config.setBoolean("fs.automatic.close", false); 
+      ContentSummary cSumm;
+      try {
+        cSumm = fsCheckQuota(quotaPath.getFileSystem(config),quotaPath);
+        if (cSumm != null) {
+          long quota = cSumm.getSpaceQuota();
+          long spaceConsumed = cSumm.getSpaceConsumed();
+          short replica = quotaPath.getFileSystem(config).getDefaultReplication(quotaPath);
+          long block = quotaPath.getFileSystem(config).getDefaultBlockSize(quotaPath);
+          long quotaCondition = block + spaceConsumed + event.getBody().length;
+        
+          if (quota != -1 && ((quotaCondition * replica) >= quota)) {
+            return Boolean.TRUE;
+          }
+        }  
+      } catch (IOException e) {
+        LOG.error("Error on getting quota from " + filePath,e);
+      }
+    }
+    return Boolean.FALSE;
   }
 
   /**
