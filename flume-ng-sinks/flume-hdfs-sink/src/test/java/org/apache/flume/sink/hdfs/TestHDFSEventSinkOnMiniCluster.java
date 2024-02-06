@@ -46,6 +46,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mockito.internal.util.reflection.Whitebox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,8 +87,10 @@ public class TestHDFSEventSinkOnMiniCluster {
    * This is a very basic test that writes one event to HDFS and reads it back.
    */
   @Test
-  public void simpleHDFSTest() throws EventDeliveryException, IOException {
-    cluster = new MiniDFSCluster(new Configuration(), 1, true, null);
+  public void simpleHDFSTest() throws Exception {
+    int numRepl = 3;
+    int numDataNodes = 3;
+    cluster = new MiniDFSCluster(new Configuration(), numDataNodes, true, null);
     cluster.waitActive();
 
     String outputDir = "/flume/simpleHDFSTest";
@@ -133,6 +136,11 @@ public class TestHDFSEventSinkOnMiniCluster {
 
     // store event to HDFS
     sink.process();
+
+    BucketWriter bw = sink.getSfWriters().values().iterator().next();
+    AbstractHDFSWriter writer = (AbstractHDFSWriter) Whitebox.getInternalState(bw, "writer");
+    Assert.assertEquals(numRepl, writer.getFsDesiredReplication());
+    Assert.assertEquals(numRepl, writer.getNumCurrentReplicas());
 
     // shut down flume
     sink.stop();

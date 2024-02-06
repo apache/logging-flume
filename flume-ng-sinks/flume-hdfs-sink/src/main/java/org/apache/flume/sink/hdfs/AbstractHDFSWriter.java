@@ -25,6 +25,7 @@ import org.apache.flume.annotations.InterfaceStability;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hdfs.client.HdfsDataOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,6 +101,8 @@ public abstract class AbstractHDFSWriter implements HDFSWriter {
       logger.error("Unexpected error while checking replication factor", e);
     } catch (IllegalArgumentException e) {
       logger.error("Unexpected error while checking replication factor", e);
+    } catch (IOException e) {
+      logger.error("Unable to get current replication count", e);
     }
     return false;
   }
@@ -160,7 +163,10 @@ public abstract class AbstractHDFSWriter implements HDFSWriter {
    */
   public int getNumCurrentReplicas()
       throws IllegalArgumentException, IllegalAccessException,
-          InvocationTargetException {
+      InvocationTargetException, IOException {
+    if (outputStream != null && outputStream instanceof HdfsDataOutputStream) {
+      return ((HdfsDataOutputStream) outputStream).getCurrentBlockReplication();
+    }
     if (refGetNumCurrentReplicas != null && outputStream != null) {
       OutputStream dfsOutputStream = outputStream.getWrappedStream();
       if (dfsOutputStream != null) {
@@ -180,6 +186,10 @@ public abstract class AbstractHDFSWriter implements HDFSWriter {
   private Method reflectGetNumCurrentReplicas(FSDataOutputStream os) {
     Method m = null;
     if (os != null) {
+      if (os instanceof HdfsDataOutputStream) {
+        logger.debug("Using HdfsDataOutputStream#getCurrentBlockReplication");
+        return null;
+      }
       Class<? extends OutputStream> wrappedStreamClass = os.getWrappedStream()
           .getClass();
       try {
