@@ -680,7 +680,9 @@ class BucketWriter {
         if (fs.exists(srcPath)) { // could block
           LOG.info("Renaming " + srcPath + " to " + dstPath);
           renameTries.incrementAndGet();
-          fs.rename(srcPath, dstPath); // could block
+          if (fs.getStatus(srcPath).getCapacity() != 0) {
+            fs.rename(srcPath, dstPath); // could block
+          }
         }
         return null;
       }
