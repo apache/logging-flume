@@ -618,13 +618,14 @@ class BucketWriter {
     }
 
     // update statistics
-    processSize += event.getBody().length;
-    eventCounter++;
+    processSize += event.getBody().length;    
     batchCounter++;
 
     if (batchCounter == batchSize) {
       flush();
     }
+    
+    eventCounter++;
   }
 
   /**
