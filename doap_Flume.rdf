@@ -49,8 +49,8 @@
     </repository>
     <maintainer>
       <foaf:Person>
-        <foaf:name>Apache Flume Developers</foaf:name>
-          <foaf:mbox rdf:resource="mailto:dev@flume.apache.org"/>
+        <foaf:name>Apache Logging Services</foaf:name>
+          <foaf:mbox rdf:resource="mailto:dev@logging.apache.org"/>
       </foaf:Person>
     </maintainer>
   </Project>
