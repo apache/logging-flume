@@ -47,12 +47,14 @@ import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.formatter.output.BucketPath;
 import org.apache.flume.instrumentation.SinkCounter;
+import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.sink.AbstractSink;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.io.SequenceFile.CompressionType;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionCodecFactory;
+import org.apache.hadoop.util.ShutdownHookManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,6 +84,7 @@ public class HDFSEventSink extends AbstractSink implements Configurable, BatchSi
   private static final long defaultRetryInterval = 180;
   // Retry forever.
   private static final int defaultTryCount = Integer.MAX_VALUE;
+  private static final int veryHighPriorityForHadoopShutdownHookManager = 100;
 
   public static final String IN_USE_SUFFIX_PARAM_NAME = "hdfs.inUseSuffix";
 
@@ -185,9 +188,25 @@ public class HDFSEventSink extends AbstractSink implements Configurable, BatchSi
     return sfWriters;
   }
 
+  private void waitForStopLifecycleStateHook() {
+    while (!getLifecycleState().equals(LifecycleState.STOP)) {
+      try {
+        Thread.sleep(100);
+      } catch (InterruptedException e) {
+        //noop
+      }
+    }
+  }
+
   // read configuration and setup thresholds
   @Override
   public void configure(Context context) {
+    ShutdownHookManager.get().addShutdownHook(new Runnable() {
+      @Override
+      public void run() {
+        HDFSEventSink.this.waitForStopLifecycleStateHook();
+      }
+    }, veryHighPriorityForHadoopShutdownHookManager);
     this.context = context;
 
     filePath = Preconditions.checkNotNull(
