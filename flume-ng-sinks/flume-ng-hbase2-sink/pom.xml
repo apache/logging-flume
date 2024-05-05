@@ -94,6 +94,12 @@
         <version>${hbase2.version}</version>
       </dependency>
 
+      <dependency>
+        <groupId>org.glassfish</groupId>
+        <artifactId>javax.el</artifactId>
+        <version>3.0.1-b12</version>
+      </dependency>
+
     </dependencies>
   </dependencyManagement>
   <dependencies>
