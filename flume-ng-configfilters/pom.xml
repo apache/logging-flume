@@ -27,7 +27,7 @@ limitations under the License.
 
     <artifactId>flume-ng-configfilters</artifactId>
     <packaging>pom</packaging>
-    <name>Flume NG Hadoop Credential Store Config Filter</name>
+    <name>Flume NG Config Filters</name>
 
     <modules>
         <module>flume-ng-environment-variable-config-filter</module>

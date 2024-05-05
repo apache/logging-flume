@@ -40,6 +40,7 @@ limitations under the License.
   <repositories>
     <!-- Our current hive version needs a calcite version that has dependencies not available in Maven Central.
          The pom from calcite gives the HTTP version of this repo address, which gets ignored by current maven.
+         The original conjars repo is dead.  Use the read-only mirror.
       -->
     <repository>
       <releases>
@@ -49,10 +50,20 @@ limitations under the License.
       </releases>
       <id>conjars</id>
       <name>Conjars</name>
-      <url>https://conjars.org/repo</url>
+      <url>https://conjars.wensel.net/repo/</url>
       <layout>default</layout>
     </repository>
   </repositories>
+  
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.glassfish</groupId>
+        <artifactId>javax.el</artifactId>
+        <version>3.0.1-b12</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <dependencies>
 
