@@ -30,13 +30,19 @@ jobs:
 
   build:
     if: github.repository == 'apache/flume' && github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]'
-    uses: apache/logging-parent/.github/workflows/build-reusable.yaml@e45457c683302242be5e8e7c3c33edf8f0e0ec0e # 10.4.0
+    uses: apache/logging-parent/.github/workflows/build-reusable.yaml@rel/11.3.0
+    secrets:
+      DV_ACCESS_TOKEN: ${{ secrets.GE_ACCESS_TOKEN }}
     with:
       java-version: 8
+      develocity-enabled: true
+      reproducibility-check-enabled: false
 
   merge-dependabot:
     needs: build
-    uses: apache/logging-parent/.github/workflows/merge-dependabot-reusable.yaml@e45457c683302242be5e8e7c3c33edf8f0e0ec0e # 10.4.0
+    uses: apache/logging-parent/.github/workflows/merge-dependabot-reusable.yaml@rel/11.3.0
+    with:
+      java-version: 8
     permissions:
       contents: write                                             # to push changelog commits
       pull-requests: write                                        # to close the PR
