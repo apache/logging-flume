@@ -34,7 +34,7 @@ jobs:
     secrets:
       DV_ACCESS_TOKEN: ${{ startsWith(github.ref_name, 'release/') && '' || secrets.GE_ACCESS_TOKEN }}
     with:
-      java-version: 8
+      java-version: 11
       site-enabled: true
       reproducibility-check-enabled: true
       develocity-enabled: ${{ ! startsWith(github.ref_name, 'release/') }}
@@ -48,7 +48,7 @@ jobs:
       NEXUS_USERNAME: ${{ secrets.NEXUS_USER }}
       NEXUS_PASSWORD: ${{ secrets.NEXUS_PW }}
     with:
-      java-version: 8
+      java-version: 11
 
   deploy-release:
     needs: build
@@ -65,5 +65,5 @@ jobs:
     permissions:
       contents: write
     with:
-      java-version: 8
+      java-version: 11
       project-id: flume

@@ -38,4 +38,4 @@ jobs:
       contents: read
       security-events: write
     with:
-      java-version: 8
+      java-version: 11

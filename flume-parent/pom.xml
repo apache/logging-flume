@@ -45,8 +45,7 @@ limitations under the License.
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- Java compiler configuration -->
-    <sourceJavaVersion>1.8</sourceJavaVersion>
-    <targetJavaVersion>1.8</targetJavaVersion>
+    <releaseJavaVersion>8</releaseJavaVersion>
 
     <!-- Signing User for release -->
     <GPGSigningUserName>rgoers@apache.org</GPGSigningUserName>
@@ -485,8 +484,7 @@ limitations under the License.
           <artifactId>maven-compiler-plugin</artifactId>
           <version>${mvn-compiler-plugin.version}</version>
           <configuration>
-            <source>${sourceJavaVersion}</source>
-            <target>${targetJavaVersion}</target>
+            <release>${releaseJavaVersion}</release>
           </configuration>
         </plugin>
 
