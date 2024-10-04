@@ -118,7 +118,7 @@ limitations under the License.
     <rat.version>0.12</rat.version>
     <scala.version>2.13</scala.version>
     <scala-library.version>2.13.9</scala-library.version>
-    <snappy-java.version>1.1.8.4</snappy-java.version>
+    <snappy-java.version>1.1.10.1</snappy-java.version>
     <solr-global.version>4.3.0</solr-global.version>
     <slf4j.version>1.7.32</slf4j.version>
     <system-rules.version>1.17.0</system-rules.version>
