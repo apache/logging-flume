@@ -32,6 +32,12 @@ limitations under the License.
 
   <name>Apache Flume Project</name>
 
+  <properties>
+    <!-- Versions of Develocity extensions used -->
+    <develocity-maven-plugin.version>1.22.2</develocity-maven-plugin.version>
+    <develocity-user-data-extension.version>2.0.1</develocity-user-data-extension.version>
+  </properties>
+
   <modules>
     <module>flume-bom</module>
     <module>flume-parent</module>
@@ -51,5 +57,25 @@ limitations under the License.
     <module>flume-ng-configfilters</module>
     <module>build-support</module>
   </modules>
+
+  <dependencyManagement>
+    <dependencies>
+
+      <!-- Fake entry to be upgraded by Dependabot -->
+      <plugin>
+        <groupId>com.gradle</groupId>
+        <artifactId>develocity-maven-extension</artifactId>
+        <version>${develocity-maven-plugin.version}</version>
+      </plugin>
+
+      <!-- Fake entry to be upgraded by Dependabot -->
+      <dependency>
+        <groupId>com.gradle</groupId>
+        <artifactId>common-custom-user-data-maven-extension</artifactId>
+        <version>${develocity-user-data-extension.version}</version>
+      </dependency>
+
+    </dependencies>
+  </dependencyManagement>
 
 </project>
