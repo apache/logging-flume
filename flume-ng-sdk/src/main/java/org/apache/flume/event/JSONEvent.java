@@ -58,7 +58,7 @@ public class JSONEvent implements Event {
   @Override
   public void setBody(byte[] body) {
     if (body != null) {
-      this.body = new String(body);
+      this.body = new String(body, charset);
     } else {
       this.body = "";
     }
