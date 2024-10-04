@@ -33,8 +33,14 @@ limitations under the License.
   <name>Apache Flume</name>
 
   <properties>
-    <!-- Update for year of distribution. Should be set by the maven-release-plugin at release time. -->
-    <project.build.outputTimestamp>2022-01-02T00:00:00Z</project.build.outputTimestamp>
+    <!-- `project.build.outputTimestamp` is required to be present for reproducible builds.
+     We actually inherit one from the `org.apache:apache` through our parent `org.apache.logging:logging-parent`.
+     Though inheriting this property has two undesired consequences:
+     1. `artifact:compare` dumps an `ERROR` log stating that this `property should not be inherited but defined` (apache/logging-parent#50)
+     2. This value is employed in various places while creating the distribution
+     To mitigate these, we define a *dummy* value here and let the CI replace it during a release.
+     Hence, *DO NOT MANUALLY EDIT THIS VALUE*! -->
+    <project.build.outputTimestamp>2024-09-24T13:33:09Z</project.build.outputTimestamp>
     <!-- Set default encoding to UTF-8 to remove maven complaints -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
