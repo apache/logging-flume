@@ -70,6 +70,8 @@ limitations under the License.
     <commons-text.version>1.10.0</commons-text.version>
     <curator.version>5.1.0</curator.version>
     <derby.version>10.14.2.0</derby.version>
+    <develocity-maven-plugin.version>1.22.2</develocity-maven-plugin.version>
+    <develocity-user-data-extension.version>2.0.1</develocity-user-data-extension.version>
     <dropwizard-metrics.version>4.1.18</dropwizard-metrics.version>
     <fasterxml.jackson.version>2.13.2</fasterxml.jackson.version>
     <fasterxml.jackson.databind.version>2.13.2.1</fasterxml.jackson.databind.version>
@@ -461,6 +463,14 @@ limitations under the License.
 
     <pluginManagement>
       <plugins>
+
+        <!-- Fake entry to be upgraded by Dependabot -->
+        <plugin>
+          <groupId>com.gradle</groupId>
+          <artifactId>develocity-maven-extension</artifactId>
+          <version>${develocity-maven-plugin.version}</version>
+        </plugin>
+
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-antrun-plugin</artifactId>
@@ -815,6 +825,13 @@ limitations under the License.
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-text</artifactId>
         <version>${commons-text.version}</version>
+      </dependency>
+
+      <!-- Fake entry to be upgraded by Dependabot -->
+      <dependency>
+        <groupId>com.gradle</groupId>
+        <artifactId>common-custom-user-data-maven-extension</artifactId>
+        <version>${develocity-user-data-extension.version}</version>
       </dependency>
 
       <dependency>
