@@ -62,11 +62,11 @@ limitations under the License.
     <dependencies>
 
       <!-- Fake entry to be upgraded by Dependabot -->
-      <plugin>
+      <dependency>
         <groupId>com.gradle</groupId>
         <artifactId>develocity-maven-extension</artifactId>
-        <version>${develocity-maven-plugin.version}</version>
-      </plugin>
+        <version>${develocity-maven-dependency.version}</version>
+      </dependency>
 
       <!-- Fake entry to be upgraded by Dependabot -->
       <dependency>
