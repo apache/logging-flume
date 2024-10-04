@@ -170,7 +170,12 @@ public class JMSSource extends AbstractPollableSource implements BatchSizeSuppor
     String passwordFile = context.getString(JMSSourceConfiguration.PASSWORD_FILE, "").trim();
 
     if (passwordFile.isEmpty()) {
-      password = Optional.absent();
+      if (userName.isPresent()){
+        logger.warn("passwordFile property is not set but userName property is set. Setting password to default value");
+        password = Optional.of("");
+      }else{
+        password = Optional.absent();
+      }
     } else {
       try {
         password = Optional.of(Files.toString(new File(passwordFile),
