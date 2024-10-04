@@ -73,7 +73,7 @@ limitations under the License.
     <guava.version>29.0-jre</guava.version>
     <guava-old.version>11.0.2</guava-old.version>
     <hadoop3.version>3.2.2</hadoop3.version>
-    <hadoop.version>${hadoop3.version}</hadoop.version>
+    <hadoop.version>3.2.4</hadoop.version>
     <hbase2.version>2.5.3-hadoop3</hbase2.version>
     <hbase.version>${hbase2.version}</hbase.version>
     <hive.version>3.1.2</hive.version>
