@@ -17,6 +17,14 @@ specific language governing permissions and limitations
 under the License.
 -->
 
+# Project status
+
+> [!WARNING]
+> **This project is not maintained anymore!**
+> [It has been marked as dormant by Apache Logging Services consensus on 2024-10-10.](https://lists.apache.org/thread/dg9wro6dp7w95o1x911lbyqxzl808b3l)
+> Users are advised to migrate to alternatives.
+> For other inquiries, see [the support policy](https://logging.apache.org/support.html).
+
 # Welcome to Apache Flume!
 
 Apache Flume is a distributed, reliable, and available service for efficiently
