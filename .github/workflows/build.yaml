@@ -1,0 +1,69 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to you under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+name: build
+
+on:
+  push:
+    branches:
+    - "trunk"
+    - "release/*"
+  pull_request:
+
+permissions: read-all
+
+jobs:
+
+  build:
+    if: github.actor != 'dependabot[bot]'
+    uses: apache/logging-parent/.github/workflows/build-reusable.yaml@rel/11.3.0
+    secrets:
+      DV_ACCESS_TOKEN: ${{ startsWith(github.ref_name, 'release/') && '' || secrets.GE_ACCESS_TOKEN }}
+    with:
+      java-version: 11
+      site-enabled: true
+      reproducibility-check-enabled: true
+      develocity-enabled: ${{ ! startsWith(github.ref_name, 'release/') }}
+
+  deploy-snapshot:
+    needs: build
+    if: github.repository == 'apache/flume' && github.ref == 'refs/heads/trunk'
+    uses: apache/logging-parent/.github/workflows/deploy-snapshot-reusable.yaml@rel/11.3.0
+    # Secrets for deployments
+    secrets:
+      NEXUS_USERNAME: ${{ secrets.NEXUS_USER }}
+      NEXUS_PASSWORD: ${{ secrets.NEXUS_PW }}
+    with:
+      java-version: 11
+
+  deploy-release:
+    needs: build
+    if: github.repository == 'apache/flume' && startsWith(github.ref_name, 'release/')
+    uses: apache/logging-parent/.github/workflows/deploy-release-reusable.yaml@rel/11.3.0
+    # Secrets for deployments
+    secrets:
+      GPG_SECRET_KEY: ${{ secrets.LOGGING_GPG_SECRET_KEY }}
+      NEXUS_USERNAME: ${{ secrets.LOGGING_STAGE_DEPLOYER_USER }}
+      NEXUS_PASSWORD: ${{ secrets.LOGGING_STAGE_DEPLOYER_PW }}
+      SVN_USERNAME: ${{ secrets.LOGGING_SVN_DEV_USERNAME }}
+      SVN_PASSWORD: ${{ secrets.LOGGING_SVN_DEV_PASSWORD }}
+    # Write permissions to allow the Maven `revision` property update, changelog release, etc.
+    permissions:
+      contents: write
+    with:
+      java-version: 11
+      project-id: flume

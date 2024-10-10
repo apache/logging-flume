@@ -38,6 +38,15 @@ limitations under the License.
   </properties>
 
   <build>
+
+    <!-- Enable filtering on the main resources directory -->
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+
     <pluginManagement>
       <plugins>
         <plugin>
@@ -139,29 +148,6 @@ limitations under the License.
       </activation>
       <build>
         <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <version>${mvn-antrun-plugin.version}</version>
-            <executions>
-              <execution>
-                <id>generate-version</id>
-                <phase>generate-sources</phase>
-                <configuration>
-                  <target>
-                    <mkdir dir="${project.build.directory}/generated-sources/java"/>
-                    <exec executable="sh">
-                      <arg
-                        line = "${basedir}/scripts/saveVersion.sh ${project.version} ${project.build.directory}" />
-                    </exec>
-                  </target>
-                </configuration>
-                <goals>
-                  <goal>run</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
 
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
@@ -196,29 +182,6 @@ limitations under the License.
       </activation>
       <build>
         <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <version>${mvn-antrun-plugin.version}</version>
-            <executions>
-              <execution>
-                <id>generate-version</id>
-                <phase>generate-sources</phase>
-                <configuration>
-                  <target>
-                    <mkdir dir="${project.build.directory}/generated-sources/java/org/apache/flume"/>
-                    <exec executable="powershell">
-                      <arg
-                              line = "-executionpolicy unrestricted -file ${basedir}\scripts\saveVersion.ps1  ${project.version} ${project.build.directory}" />
-                    </exec>
-                  </target>
-                </configuration>
-                <goals>
-                  <goal>run</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
 
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
