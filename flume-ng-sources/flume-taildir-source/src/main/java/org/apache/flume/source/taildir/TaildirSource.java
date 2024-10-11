@@ -88,6 +88,7 @@ public class TaildirSource extends AbstractSource implements
   private boolean fileHeader;
   private String fileHeaderKey;
   private Long maxBatchCount;
+  private boolean inodeOnly;
 
   @Override
   public synchronized void start() {
@@ -102,6 +103,7 @@ public class TaildirSource extends AbstractSource implements
           .cachePatternMatching(cachePatternMatching)
           .annotateFileName(fileHeader)
           .fileNameHeader(fileHeaderKey)
+          .inodeOnly(inodeOnly)
           .build();
     } catch (IOException e) {
       throw new FlumeException("Error instantiating ReliableTaildirEventReader", e);
@@ -187,6 +189,7 @@ public class TaildirSource extends AbstractSource implements
     fileHeaderKey = context.getString(FILENAME_HEADER_KEY,
             DEFAULT_FILENAME_HEADER_KEY);
     maxBatchCount = context.getLong(MAX_BATCH_COUNT, DEFAULT_MAX_BATCH_COUNT);
+    inodeOnly = context.getBoolean(INODE_ONLY, DEFAULT_INODE_ONLY);
     if (maxBatchCount <= 0) {
       maxBatchCount = DEFAULT_MAX_BATCH_COUNT;
       logger.warn("Invalid maxBatchCount specified, initializing source "

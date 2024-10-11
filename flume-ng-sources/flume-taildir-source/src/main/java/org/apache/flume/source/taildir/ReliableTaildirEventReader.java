@@ -60,6 +60,7 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
   private boolean committed = true;
   private final boolean annotateFileName;
   private final String fileNameHeader;
+  private boolean inodeOnly = false;
 
   /**
    * Create a ReliableTaildirEventReader to watch the given directory.
@@ -67,7 +68,9 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
   private ReliableTaildirEventReader(Map<String, String> filePaths,
       Table<String, String, String> headerTable, String positionFilePath,
       boolean skipToEnd, boolean addByteOffset, boolean cachePatternMatching,
-      boolean annotateFileName, String fileNameHeader) throws IOException {
+      boolean annotateFileName, String fileNameHeader, boolean inodeOnly)
+      throws IOException {
+    this.inodeOnly = inodeOnly;
     // Sanity checks
     Preconditions.checkNotNull(filePaths);
     Preconditions.checkNotNull(positionFilePath);
@@ -134,7 +137,13 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
               + "inode: " + inode + ", pos: " + pos + ", path: " + path);
         }
         TailFile tf = tailFiles.get(inode);
-        if (tf != null && tf.updatePos(path, inode, pos)) {
+        boolean isLoaded = false;
+        if (inodeOnly) {
+          isLoaded = tf != null && tf.updatePosAndPath(path, inode, pos);
+        } else {
+          isLoaded = tf != null && tf.updatePos(path, inode, pos);
+        }
+        if (isLoaded) {
           tailFiles.put(inode, tf);
         } else {
           logger.info("Missing file: " + path + ", inode: " + inode + ", pos: " + pos);
@@ -251,7 +260,14 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
           continue;
         }
         TailFile tf = tailFiles.get(inode);
-        if (tf == null || !tf.getPath().equals(f.getAbsolutePath())) {
+
+        boolean isNewFile = false;
+        if (inodeOnly) {
+          isNewFile = tf == null;
+        } else {
+          isNewFile = tf == null || !tf.getPath().equals(f.getAbsolutePath());
+        }
+        if (isNewFile) {
           long startPos = skipToEnd ? f.length() : 0;
           tf = openFile(f, headers, inode, startPos);
         } else {
@@ -267,6 +283,7 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
             }
           }
           tf.setNeedTail(updated);
+          tf.setPath(f.getAbsolutePath());
         }
         tailFiles.put(inode, tf);
         updatedInodes.add(inode);
@@ -308,6 +325,8 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
             TaildirSourceConfigurationConstants.DEFAULT_FILE_HEADER;
     private String fileNameHeader =
             TaildirSourceConfigurationConstants.DEFAULT_FILENAME_HEADER_KEY;
+    private Boolean inodeOnly =
+            TaildirSourceConfigurationConstants.DEFAULT_INODE_ONLY;
 
     public Builder filePaths(Map<String, String> filePaths) {
       this.filePaths = filePaths;
@@ -349,10 +368,15 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
       return this;
     }
 
+    public Builder inodeOnly(boolean inodeOnly) {
+      this.inodeOnly = inodeOnly;
+      return this;
+    }
+
     public ReliableTaildirEventReader build() throws IOException {
       return new ReliableTaildirEventReader(filePaths, headerTable, positionFilePath, skipToEnd,
                                             addByteOffset, cachePatternMatching,
-                                            annotateFileName, fileNameHeader);
+                                            annotateFileName, fileNameHeader, inodeOnly);
     }
   }
 
