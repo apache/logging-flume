@@ -316,7 +316,7 @@ public class TestTaildirEventReader {
       out.addAll(bodiesAsStrings(reader.readEvents(tf, 5)));
       reader.commit();
     }
-    assertEquals(1, out.size());
+    assertEquals(2, out.size());
     assertTrue(out.contains("file1line1"));
 
     Files.append("line2\nfile1line3\nfile1line4", f1, Charsets.UTF_8);
@@ -325,14 +325,14 @@ public class TestTaildirEventReader {
       out.addAll(bodiesAsStrings(reader.readEvents(tf, 5)));
       reader.commit();
     }
-    assertEquals(3, out.size());
-    assertTrue(out.contains("file1line2"));
+    assertEquals(5, out.size());
+    assertTrue(out.contains("line2"));
     assertTrue(out.contains("file1line3"));
 
     // Should read the last line if it finally has no newline
     out.addAll(bodiesAsStrings(reader.readEvents(5, false)));
     reader.commit();
-    assertEquals(4, out.size());
+    assertEquals(5, out.size());
     assertTrue(out.contains("file1line4"));
   }
 

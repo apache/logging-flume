@@ -201,29 +201,7 @@ public class TailFile {
           break;
         }
       }
-      for (int i = bufferPos; i < buffer.length; i++) {
-        if (buffer[i] == BYTE_NL) {
-          int oldLen = oldBuffer.length;
-          // Don't copy last byte(NEW_LINE)
-          int lineLen = i - bufferPos;
-          // For windows, check for CR
-          if (i > 0 && buffer[i - 1] == BYTE_CR) {
-            lineLen -= 1;
-          } else if (oldBuffer.length > 0 && oldBuffer[oldBuffer.length - 1] == BYTE_CR) {
-            oldLen -= 1;
-          }
-          lineResult = new LineResult(true,
-              concatByteArrays(oldBuffer, 0, oldLen, buffer, bufferPos, lineLen));
-          setLineReadPos(lineReadPos + (oldBuffer.length + (i - bufferPos + 1)));
-          oldBuffer = new byte[0];
-          if (i + 1 < buffer.length) {
-            bufferPos = i + 1;
-          } else {
-            bufferPos = NEED_READING;
-          }
-          break;
-        }
-      }
+      lineResult = getLineResult(lineResult);
       if (lineResult != null) {
         break;
       }
@@ -233,6 +211,48 @@ public class TailFile {
       bufferPos = NEED_READING;
     }
     return lineResult;
+  }
+  
+  private LineResult getLineResult(LineResult lineResult) throws IOException {
+    for (int i = bufferPos; i < buffer.length; i++) {
+      boolean nonEOF = nonEOF(i);
+      if (buffer[i] == BYTE_NL || nonEOF) {           
+        int oldLen = oldBuffer.length;
+        int lineLen;
+        if (buffer[i] == BYTE_NL) {
+          lineLen = i - bufferPos;
+        } else if (buffer[i] == BYTE_NL && nonEOF) {
+          lineLen = i - bufferPos;
+        } else {
+          lineLen = i - bufferPos + 1;
+        }
+          // For windows, check for CR
+        if (i > 0 && buffer[i - 1] == BYTE_CR) {
+          lineLen -= 1;
+        } else if (oldBuffer.length > 0 && oldBuffer[oldBuffer.length - 1] == BYTE_CR) {
+          oldLen -= 1;
+        }
+        lineResult = new LineResult(true,
+              concatByteArrays(oldBuffer, 0, oldLen, buffer, bufferPos, lineLen));
+        setLineReadPos(lineReadPos + (oldBuffer.length + (i - bufferPos + 1)));
+            
+        oldBuffer = new byte[0];
+        if (i + 1 < buffer.length) {
+          bufferPos = i + 1;
+        } else {
+          bufferPos = NEED_READING;
+        }
+        break;
+      }
+    }
+    return lineResult;
+  }
+  
+  private boolean nonEOF(int i) throws IOException {
+    if (i == buffer.length - 1 && raf.getFilePointer() == raf.length()) {
+      return Boolean.TRUE;
+    }
+    return Boolean.FALSE;
   }
 
   public void close() {
