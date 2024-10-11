@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 
@@ -69,6 +70,12 @@ public class TailFile {
     this.headers = headers;
     this.oldBuffer = new byte[0];
     this.bufferPos = NEED_READING;
+
+    long newInode = (long) Files.getAttribute(file.toPath(), "unix:ino");
+    if (inode != newInode) {
+      logger.info("Detected the inode change. The New inode file is tailed next time. " +
+          "file: " + path + ", inode: " + newInode);
+    }
   }
 
   public RandomAccessFile getRaf() {
