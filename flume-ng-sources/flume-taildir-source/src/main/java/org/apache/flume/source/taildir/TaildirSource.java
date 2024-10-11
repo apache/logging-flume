@@ -322,12 +322,21 @@ public class TaildirSource extends AbstractSource implements
           if (tf.getLastUpdated() + idleTimeout < now && tf.getRaf() != null) {
             idleInodes.add(tf.getInode());
           }
+          File file = new File(tf.getPath());
+          if (getInode(file) != tf.getInode() && !idleInodes.contains(tf.getInode())) {
+            idleInodes.add(tf.getInode());
+          }
         }
       } catch (Throwable t) {
         logger.error("Uncaught exception in IdleFileChecker thread", t);
         sourceCounter.incrementGenericProcessingFail();
       }
     }
+  }
+
+  private long getInode(File file) throws IOException {
+    long inode = (long) Files.getAttribute(file.toPath(), "unix:ino");
+    return inode;
   }
 
   /**
