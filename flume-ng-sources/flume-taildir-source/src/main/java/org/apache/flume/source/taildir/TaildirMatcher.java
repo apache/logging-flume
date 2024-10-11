@@ -65,7 +65,7 @@ import java.util.concurrent.TimeUnit;
  */
 @InterfaceAudience.Private
 @InterfaceStability.Evolving
-public class TaildirMatcher {
+public class TaildirMatcher implements TailMatcher {
   private static final Logger logger = LoggerFactory.getLogger(TaildirMatcher.class);
   private static final FileSystem FS = FileSystems.getDefault();
 
@@ -180,11 +180,11 @@ public class TaildirMatcher {
    *
    * @see #getMatchingFilesNoCache()
    */
-  List<File> getMatchingFiles() {
+  @Override
+  public List<File> getMatchingFiles() {
     long now = TimeUnit.SECONDS.toMillis(
         TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()));
     long currentParentDirMTime = parentDir.lastModified();
-    List<File> result;
 
     // calculate matched files if
     // - we don't want to use cache (recalculate every time) OR
@@ -279,8 +279,17 @@ public class TaildirMatcher {
     return fileGroup.hashCode();
   }
 
+  @Override
   public String getFileGroup() {
     return fileGroup;
+  }
+
+  // This method is used to delete the cache of nonexistent files.
+  // This matcher object is updated all caches will be automatically refreshed,
+  // so there is no need to delete them
+  @Override
+  public void deleteFileCache(File file) {
+
   }
 
 }

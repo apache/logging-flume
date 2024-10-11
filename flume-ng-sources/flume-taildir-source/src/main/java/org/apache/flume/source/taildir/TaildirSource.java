@@ -63,6 +63,7 @@ public class TaildirSource extends AbstractSource implements
   private static final Logger logger = LoggerFactory.getLogger(TaildirSource.class);
 
   private Map<String, String> filePaths;
+  private Map<String, String> filePathsIncludeChild;
   private Table<String, String, String> headerTable;
   private int batchSize;
   private String positionFilePath;
@@ -95,6 +96,7 @@ public class TaildirSource extends AbstractSource implements
     try {
       reader = new ReliableTaildirEventReader.Builder()
           .filePaths(filePaths)
+          .filePathsIncludeChild(filePathsIncludeChild)
           .headerTable(headerTable)
           .positionFilePath(positionFilePath)
           .skipToEnd(skipToEnd)
@@ -154,12 +156,27 @@ public class TaildirSource extends AbstractSource implements
   @Override
   public synchronized void configure(Context context) {
     String fileGroups = context.getString(FILE_GROUPS);
-    Preconditions.checkState(fileGroups != null, "Missing param: " + FILE_GROUPS);
+    String fileGroupsIncludeChild = context.getString(FILE_GROUPS_INCLUDE_CHILD);
+    Preconditions.checkState(fileGroups != null ||
+            fileGroupsIncludeChild != null, "Missing param: " + FILE_GROUPS);
 
-    filePaths = selectByKeys(context.getSubProperties(FILE_GROUPS_PREFIX),
-                             fileGroups.split("\\s+"));
-    Preconditions.checkState(!filePaths.isEmpty(),
-        "Mapping for tailing files is empty or invalid: '" + FILE_GROUPS_PREFIX + "'");
+    Map<String, String> filePathsMap = context.getSubProperties(FILE_GROUPS_PREFIX);
+    if (!filePathsMap.isEmpty()) {
+      filePaths = selectByKeys(filePathsMap,
+              fileGroups.split("\\s+"));
+      Preconditions.checkState(!filePaths.isEmpty(),
+              "Mapping for tailing files is empty or invalid: '" + FILE_GROUPS_PREFIX + "'");
+    }
+
+    Map<String, String> filePathsIncludeChildMap =
+            context.getSubProperties(FILE_GROUPS_INCLUDE_CHILD_PREFIX);
+    if (!filePathsIncludeChildMap.isEmpty()) {
+      filePathsIncludeChild = selectByKeys(filePathsIncludeChildMap,
+              fileGroupsIncludeChild.split("\\s+"));
+      Preconditions.checkState(!filePathsIncludeChild.isEmpty(),
+              "Mapping for tailing files is empty or invalid: '" +
+                      FILE_GROUPS_INCLUDE_CHILD_PREFIX + "'");
+    }
 
     String homePath = System.getProperty("user.home").replace('\\', '/');
     positionFilePath = context.getString(POSITION_FILE, homePath + DEFAULT_POSITION_FILE);
