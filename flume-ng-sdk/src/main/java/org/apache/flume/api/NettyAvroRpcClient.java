@@ -629,7 +629,84 @@ public class NettyAvroRpcClient extends SSLContextAwareAbstractRpcClient {
   }
 
   /**
-   * Permissive trust manager accepting any certificate
+   * Permissive trust manager accepting any certificate,
+   * it is not secure
+   * new X509TrustManager() {
+   *
+   * @Override public void checkClientTrusted(
+   * X509Certificate[] chain,
+   * String authType)
+   * throws CertificateException {
+   * KeyStore ts = KeyStore.getInstance("JKS");
+   * // load your local cert path and specify your password
+   * ts.load(new FileInputStream(path), password);
+   * // choose the algrithm to match your cert
+   * TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+   * tmf.init(ts);
+   * // refer to https://lightbend.github.io/ssl-config/WSQuickStart.html
+   * // for detailed steps
+   * TrustManager[] trustManagers = tmf.getTrustManagers();
+   * for (final X509TrustManager trustManager : trustManagers) {
+   * try {
+   * trustManager.checkClientTrusted(chain, authType);
+   * return;
+   * } catch (final CertificateException e) {
+   * //LOGGER.debug(e.getMessage(), e);
+   * }
+   * }
+   * throw new CertificateException(
+   * "None of the TrustManagers trust this certificate chain"
+   * );
+   * <p>
+   * }
+   * @Override public X509Certificate[] getAcceptedIssuers() {
+   * return new X509Certificate[0];
+   * }
+   * @Override public void checkServerTrusted(
+   * X509Certificate[] chain, String authType
+   * ) throws CertificateException{
+   * if (chain == null) {
+   * throw new IllegalArgumentException("
+   * checkServerTrusted:x509Certificate array is null
+   * ");
+   * }
+   * <p>
+   * if (!(chain.length > 0)) {
+   * throw new IllegalArgumentException(
+   * "checkServerTrusted: X509Certificate is empty"
+   * );
+   * }
+   * <p>
+   * if (!(null != authType && authType.equalsIgnoreCase("RSA"))) {
+   * throw new CertificateException("
+   * checkServerTrusted: AuthType is not RSA
+   * ");
+   * }
+   * <p>
+   * <p>
+   * try {
+   * // choose algorithm to match your code
+   * TrustManagerFactory tmf = TrustManagerFactory.getInstance("X509");
+   * tmf.init((KeyStore) null);
+   * for (TrustManager trustManager : tmf.getTrustManagers()) {
+   * ((X509TrustManager) trustManager).checkServerTrusted(chain, authType);
+   * }
+   * } catch (Exception e) {
+   * throw new CertificateException(e);
+   * }
+   * <p>
+   * <p>
+   * RSAPublicKey pubkey = (RSAPublicKey) chain[0].getPublicKey();
+   * String encoded = new BigInteger(1 , pubkey.getEncoded()).toString(16);
+   * final boolean expected = PUB_KEY.equalsIgnoreCase(encoded);
+   * <p>
+   * if (!expected) {
+   * throw new CertificateException("checkServerTrusted: Expected public key: "
+   * + PUB_KEY + ", got public key:" + encoded);
+   * }
+   * }
+   * <p>
+   * };
    */
   private static class PermissiveTrustManager implements X509TrustManager {
     @Override
