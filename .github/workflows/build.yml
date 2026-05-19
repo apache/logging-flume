@@ -29,13 +29,19 @@ jobs:
     name: build (${{ matrix.os }})
 
     strategy:
+      # Don't cancel the remaining OS builds when one fails
+      fail-fast: false
       matrix:
         os: [ ubuntu-latest, windows-latest ]
         java-distribution: [ temurin ]
-        include:
-          # There is no Temurin JDK 8 for ARM
-          - os: macos-latest
-            java-distribution: zulu
+        #
+        # There is no protobuf 2.x version for `aarch64`.
+        # Reenable the macOS build after the dependency has been upgraded.
+        #
+        #include:
+        #  # There is no Temurin JDK 8 for ARM
+        #  - os: macos-latest
+        #    java-distribution: zulu
 
     steps:
 
