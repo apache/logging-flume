@@ -149,8 +149,8 @@
       <artifactId>flume-http-sink</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume.flume-ng-sinks</groupId>
-      <artifactId>flume-ng-morphline-solr-sink</artifactId>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-morphline-solr-sink</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flume</groupId>

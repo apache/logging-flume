@@ -37,7 +37,6 @@ limitations under the License.
 
   <modules>
     <module>flume-irc-sink</module>
-    <module>flume-ng-morphline-solr-sink</module>
     <module>flume-http-sink</module>
   </modules>
 
