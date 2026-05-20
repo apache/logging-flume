@@ -42,7 +42,7 @@ limitations under the License.
     <flume-spring-boot.version>2.0.0-SNAPSHOT</flume-spring-boot.version>
     <flume-taildir.version>2.0.0-SNAPSHOT</flume-taildir.version>
     <flume-tools.version>2.0.0-SNAPSHOT</flume-tools.version>
-    <!-- <flume-twitter.version>2.0.0-SNAPSHOT</flume-twitter.version>
+    <!-- <flume-twitter.version>2.0.0-SNAPSHOT</flume-twitter.version> -->
     <flume-legacy.version>2.0.0-SNAPSHOT</flume-legacy.version>
     <flume-morphline.version>2.0.0-SNAPSHOT</flume-morphline.version>
   </properties>
