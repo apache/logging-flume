@@ -31,7 +31,6 @@ limitations under the License.
 
     <modules>
         <module>flume-ng-environment-variable-config-filter</module>
-        <module>flume-ng-hadoop-credential-store-config-filter</module>
         <module>flume-ng-config-filter-api</module>
         <module>flume-ng-external-process-config-filter</module>
     </modules>

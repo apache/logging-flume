@@ -133,7 +133,7 @@
       <artifactId>flume-kafka-channel</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume.flume-ng-sinks</groupId>
+      <groupId>org.apache.flume</groupId>
       <artifactId>flume-hdfs-sink</artifactId>
     </dependency>
     <dependency>
@@ -141,8 +141,8 @@
       <artifactId>flume-irc-sink</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume.flume-ng-sinks</groupId>
-      <artifactId>flume-ng-hbase2-sink</artifactId>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-hbase2-sink</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flume.flume-ng-sinks</groupId>
@@ -157,7 +157,7 @@
       <artifactId>flume-kafka-sink</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume.flume-ng-sinks</groupId>
+      <groupId>org.apache.flume</groupId>
       <artifactId>flume-hive-sink</artifactId>
     </dependency>
     <dependency>
@@ -194,7 +194,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-hadoop-credential-store-config-filter</artifactId>
+      <artifactId>flume-hadoop-credential-store-config-filter</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flume</groupId>
