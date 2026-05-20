@@ -25,7 +25,6 @@ limitations under the License.
   </parent>
 
   <modelVersion>4.0.0</modelVersion>
-  <groupId>org.apache.flume</groupId>
   <artifactId>flume-dependencies</artifactId>
   <packaging>pom</packaging>
 
@@ -44,7 +43,7 @@ limitations under the License.
     <flume-tools.version>2.0.0-SNAPSHOT</flume-tools.version>
     <!-- <flume-twitter.version>2.0.0-SNAPSHOT</flume-twitter.version> -->
     <flume-legacy.version>2.0.0-SNAPSHOT</flume-legacy.version>
-    <flume-morphline.version>2.0.0-SNAPSHOT</flume-morphline.version>
+    <flume-morphline.version>2.0.0-SNAPSHOT</flume-morphline.version> -->
   </properties>
 
   <dependencyManagement>
@@ -102,11 +101,6 @@ limitations under the License.
       <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-ng-node</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume</groupId>
-        <artifactId>flume-ng-sdk</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -179,7 +173,7 @@ limitations under the License.
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-hive-sink</artifactId>
         <version>${flume-hadoop.version}</version>
-      </dependency>-->
+      </dependency>
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-http-sink</artifactId>
@@ -190,11 +184,12 @@ limitations under the License.
         <artifactId>flume-irc-sink</artifactId>
         <version>${flume-irc.version}</version>
       </dependency>
-      <!--<dependency>
+      <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-ng-hbase2-sink</artifactId>
         <version>${flume-hadoop.version}</version>
-      </dependency>-->
+      </dependency>
+      -->
       <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-kafka-sink</artifactId>
