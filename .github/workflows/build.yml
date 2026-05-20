@@ -22,45 +22,42 @@ on:
       - build-dev
   pull_request:
 
+# Remove all permissions by default. They will be added at a job level.
+permissions: {}
+
 jobs:
   build:
 
     runs-on: ${{ matrix.os }}
+    name: build (${{ matrix.os }})
 
     strategy:
+      # Don't cancel the remaining OS builds when one fails
+      fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest ]
+        os: [ ubuntu-latest, windows-latest ]
+        java-distribution: [ temurin ]
+        #
+        # There is no protobuf 2.x version for `aarch64`.
+        # Reenable the macOS build after the dependency has been upgraded.
+        #
+        #include:
+        #  # There is no Temurin JDK 8 for ARM
+        #  - os: macos-latest
+        #    java-distribution: zulu
 
     steps:
 
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
 
       # JDK 8 is needed for the build, and it is the primary bytecode target.
       - name: Setup JDK 8
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
-          java-version: '8'
-          distribution: 'temurin'
-
-      - name: Inspect environment (Linux)
-        if: runner.os == 'Linux'
-        run: env | grep '^JAVA'
-
-      - name: Inspect environment (MacOS)
-        if: runner.os == 'macOS'
-        run: env | grep '^JAVA'
-        
-      - name: Show disk usage before
-        run: df -kh
-        
-      - name: Remove unwanted packages
-        run: |
-            sudo rm -rf /usr/share/dotnet
-            sudo rm -rf /usr/local/lib/android
-            
-      - name: Show disk usage before maven
-        run: df -kh
+          distribution: ${{ matrix.java-distribution }}
+          java-version: 8
+          cache: maven
 
       - name: Build with Maven
         timeout-minutes: 120
@@ -70,6 +67,3 @@ jobs:
           --show-version --batch-mode --errors --no-transfer-progress \
           -DtrimStackTrace=false \
           -Dsurefire.rerunFailingTestsCount=2
-          
-      - name: Show disk usage after
-        run: df -kh        
