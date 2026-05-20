@@ -20,6 +20,9 @@ on:
   schedule:
     - cron: '15 0 * * 5'
 
+# Remove all permissions by default. They will be added at a job level.
+permissions: {}
+
 jobs:
   analyze:
     name: Analyze
