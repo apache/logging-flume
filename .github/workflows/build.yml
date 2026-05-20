@@ -22,6 +22,9 @@ on:
       - build-dev
   pull_request:
 
+# Remove all permissions by default. They will be added at a job level.
+permissions: {}
+
 jobs:
   build:
 
