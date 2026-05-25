@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.TreeSet;
 
 import org.apache.flume.Channel;
-import org.apache.flume.ChannelException;
+import org.apache.flume.exception.ChannelException;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;

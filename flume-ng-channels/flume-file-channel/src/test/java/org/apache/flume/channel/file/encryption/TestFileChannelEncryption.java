@@ -22,7 +22,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
-import org.apache.flume.ChannelException;
+import org.apache.flume.exception.ChannelException;
 import org.apache.flume.FlumeException;
 import org.apache.flume.channel.file.FileChannelConfiguration;
 import org.apache.flume.channel.file.TestFileChannelBase;

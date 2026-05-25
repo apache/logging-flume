@@ -25,6 +25,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Locale;
 import java.util.Properties;
 
@@ -33,13 +34,17 @@ import java.util.Properties;
  */
 public class RpcClientFactory {
 
+    private static final String AVRO_CLASS_NAME = "org.apache.flume.rpc.avro.client.NettyAvroRpcClient";
+    private static final String THRIFT_CLASS_NAME = "org.apache.flume.rpc.thrift.client.ThriftRpcClient";
+    private static final String NEW_INSTANCE = "newInstance";
+
   /**
    * Returns an instance of {@link RpcClient}, optionally with failover.
    * To create a failover client, the properties object should have a
    * property <tt>client.type</tt> which has the value "failover". The client
    * connects to hosts specified by <tt>hosts</tt> property in given properties.
    *
-   * @see org.apache.flume.api.FailoverRpcClient
+   * @see FailoverRpcClient
    * <p>
    * If no <tt>client.type</tt> is specified, a default client that connects to
    * single host at a given port is created.(<tt>type</tt> can also simply be
@@ -57,18 +62,22 @@ public class RpcClientFactory {
     type = properties.getProperty(
         RpcClientConfigurationConstants.CONFIG_CLIENT_TYPE);
     if (type == null || type.isEmpty()) {
-      type = ClientType.DEFAULT.getClientClassName();
+      type = ClientType.DEFAULT.name();
+    }
+    ClientType clientType = null;
+    try {
+      clientType = ClientType.valueOf(type.toUpperCase(Locale.ENGLISH));
+    } catch (IllegalArgumentException e) {
+      clientType = ClientType.OTHER;
+    }
+    AbstractRpcClient client;
+    if (clientType.isNewInstance()) {
+      return createClient(clientType.clientClassName, properties);
     }
     Class<? extends AbstractRpcClient> clazz;
-    AbstractRpcClient client;
     try {
       String clientClassType = type;
-      ClientType clientType = null;
-      try {
-        clientType = ClientType.valueOf(type.toUpperCase(Locale.ENGLISH));
-      } catch (IllegalArgumentException e) {
-        clientType = ClientType.OTHER;
-      }
+
       if (!clientType.equals(ClientType.OTHER)) {
         clientClassType = clientType.getClientClassName();
       }
@@ -81,10 +90,10 @@ public class RpcClientFactory {
     try {
       client = clazz.newInstance();
     } catch (InstantiationException e) {
-      throw new FlumeException("Cannot instantiate client. " +
-          "Exception follows:", e);
+      throw new FlumeException("Cannot instantiate client " + clazz.getCanonicalName() +
+          " Exception follows:", e);
     } catch (IllegalAccessException e) {
-      throw new FlumeException("Cannot instantiate client. " +
+      throw new FlumeException("Cannot instantiate client " + clazz.getCanonicalName() +
           "Exception follows:", e);
     }
     client.configure(properties);
@@ -167,9 +176,7 @@ public class RpcClientFactory {
     props.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS_PREFIX + "h1",
         hostname + ":" + port.intValue());
     props.setProperty(RpcClientConfigurationConstants.CONFIG_BATCH_SIZE, batchSize.toString());
-    NettyAvroRpcClient client = new NettyAvroRpcClient();
-    client.configure(props);
-    return client;
+    return createClient(AVRO_CLASS_NAME, props);
   }
 
   /**
@@ -198,9 +205,21 @@ public class RpcClientFactory {
     props.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS_PREFIX + "h1",
         hostname + ":" + port.intValue());
     props.setProperty(RpcClientConfigurationConstants.CONFIG_BATCH_SIZE, batchSize.toString());
-    ThriftRpcClient client = new ThriftRpcClient();
-    client.configure(props);
-    return client;
+    return createClient(THRIFT_CLASS_NAME, props);
+  }
+
+  private static RpcClient createClient(String className, Properties props)
+      throws FlumeException {
+      try {
+          @SuppressWarnings("unchecked")
+          Class<? extends AbstractRpcClient> clazz = (Class<? extends AbstractRpcClient>) Class.forName(className);
+          AbstractRpcClient client = (AbstractRpcClient) clazz.getMethod(NEW_INSTANCE, null).invoke(null, null);
+          client.configure(props);
+          return client;
+      } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException |
+               InvocationTargetException e) {
+          throw  new FlumeException("Cannot instantiate client. Avro implementation failed to load.", e);
+      }
   }
 
   /**
@@ -233,21 +252,38 @@ public class RpcClientFactory {
 
   public static enum ClientType {
     OTHER(null),
-    DEFAULT(NettyAvroRpcClient.class.getCanonicalName()),
+    DEFAULT(AVRO_CLASS_NAME, true),
     DEFAULT_FAILOVER(FailoverRpcClient.class.getCanonicalName()),
     DEFAULT_LOADBALANCE(LoadBalancingRpcClient.class.getCanonicalName()),
-    THRIFT(ThriftRpcClient.class.getCanonicalName());
-
+    THRIFT(THRIFT_CLASS_NAME, true);
 
     private final String clientClassName;
+    private final boolean newInstance;
 
     private ClientType(String className) {
       this.clientClassName = className;
+      this.newInstance = false;
+    }
+
+    private ClientType(String className, boolean newInstance) {
+      this.clientClassName = className;
+      this.newInstance = newInstance;
+    }
+    private static ClientType getClientType(String className) {
+        for (ClientType type : ClientType.values()) {
+            if (type.clientClassName.equals(className)) {
+                return type;
+            }
+        }
+        return OTHER;
     }
 
     protected String getClientClassName() {
       return this.clientClassName;
     }
 
+    protected boolean isNewInstance() {
+      return this.newInstance;
+    }
   }
 }

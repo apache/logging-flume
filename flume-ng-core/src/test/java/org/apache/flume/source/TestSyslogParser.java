@@ -21,8 +21,9 @@ package org.apache.flume.source;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import org.apache.flume.Event;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
+
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -32,23 +33,43 @@ import java.util.List;
 import java.util.Set;
 
 public class TestSyslogParser {
+
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    private static class Entry {
+        private final String formattedDate;
+        private final long millis;
+
+        public Entry(String formattedDate, long millis) {
+            this.formattedDate = formattedDate;
+            this.millis = millis;
+        }
+
+        public String getFormattedDate() {
+            return formattedDate;
+        }
+        public long getMillis() {
+            return millis;
+        }
+    }
+
   @Test
   public void testRfc5424DateParsing() {
-    final String[] examples = {
-      "1985-04-12T23:20:50.52Z", "1985-04-12T19:20:50.52-04:00",
-      "2003-10-11T22:14:15.003Z", "2003-08-24T05:14:15.000003-07:00",
-      "2012-04-13T11:11:11-08:00", "2012-04-13T08:08:08.0001+00:00",
-      "2012-04-13T08:08:08.251+00:00"
-    };
+        final Entry[] examples = {
+                new Entry("1985-04-12T23:20:50.52Z", 482196050520L),
+                new Entry("1985-04-12T19:20:50.52-04:00", 482196050520L),
+                new Entry("2003-10-11T22:14:15.003Z", 1065910455003L),
+                new Entry("2003-08-24T05:14:15.000003-07:00", 1061727255000L),
+                new Entry("2012-04-13T08:08:08.0001+00:00", 1334304488000L),
+                new Entry("2012-04-13T08:08:08.251+00:00", 1334304488251L)
+        };
 
     SyslogParser parser = new SyslogParser();
-    DateTimeFormatter jodaParser = ISODateTimeFormat.dateTimeParser();
+    //DateTimeFormatter timeParser = DateTimeFormatter
 
-    for (String ex : examples) {
-      Assert.assertEquals(
-          "Problem parsing date string: " + ex,
-          jodaParser.parseMillis(ex),
-          parser.parseRfc5424Date(ex));
+    for (Entry entry : examples) {
+        long time = Instant.from(DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(entry.getFormattedDate())).toEpochMilli();
+        Assert.assertEquals(entry.millis + " is not the same as timestamp " + time, entry.getMillis(), time);
     }
   }
 

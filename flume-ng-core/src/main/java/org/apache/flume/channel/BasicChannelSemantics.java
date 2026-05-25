@@ -20,7 +20,7 @@
 package org.apache.flume.channel;
 
 import org.apache.flume.Channel;
-import org.apache.flume.ChannelException;
+import org.apache.flume.exception.ChannelException;
 import org.apache.flume.Event;
 import org.apache.flume.Transaction;
 import org.apache.flume.annotations.InterfaceAudience;

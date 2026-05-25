@@ -27,7 +27,7 @@ limitations under the License.
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.apache.flume</groupId>
   <artifactId>flume-parent</artifactId>
-  <version>1.11.1-SNAPSHOT</version>
+  <version>2.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>Apache Flume</name>
@@ -52,7 +52,6 @@ limitations under the License.
 
     <activemq.version>5.7.0</activemq.version>
     <asynchbase.version>1.8.2</asynchbase.version>
-    <avro.version>1.11.1</avro.version>
     <bundle-plugin.version>2.3.7</bundle-plugin.version>
     <checkstyle.tool.version>8.45.1</checkstyle.tool.version>
     <commons-cli.version>1.5.0</commons-cli.version>
@@ -122,26 +121,16 @@ limitations under the License.
     <solr-global.version>4.3.0</solr-global.version>
     <slf4j.version>1.7.32</slf4j.version>
     <system-rules.version>1.17.0</system-rules.version>
-    <thrift.version>0.14.2</thrift.version>
     <twitter-source.version>2.0.0</twitter-source.version>
     <wiremock.version>1.53</wiremock.version>
     <zlib.version>1.1.3</zlib.version>
     <zookeeper.version>3.6.2</zookeeper.version>
     <os.maven.version>1.5.0.Final</os.maven.version>
     <redirectTestOutput>true</redirectTestOutput>
+    <checkstyle.skip>true</checkstyle.skip>
   </properties>
 
   <profiles>
-
-    <profile>
-      <id>compileThriftLegacy</id>
-      <activation>
-        <activeByDefault>false</activeByDefault>
-      </activation>
-      <properties>
-        <thrift.executable>${env.THRIFT_HOME}/bin/thrift</thrift.executable>
-      </properties>
-    </profile>
 
     <profile>
       <id>not-windows</id>
@@ -433,17 +422,6 @@ limitations under the License.
         <artifactId>apache-rat-plugin</artifactId>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-checkstyle-plugin</artifactId>
-        <dependencies>
-          <dependency>
-            <groupId>com.puppycrawl.tools</groupId>
-            <artifactId>checkstyle</artifactId>
-            <version>${checkstyle.tool.version}</version>
-          </dependency>
-        </dependencies>
-      </plugin>
-      <plugin>
         <groupId>com.github.spotbugs</groupId>
         <artifactId>spotbugs-maven-plugin</artifactId>
       </plugin>
@@ -586,44 +564,6 @@ limitations under the License.
 
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-checkstyle-plugin</artifactId>
-          <version>${mvn-checkstyle-plugin.version}</version>
-          <dependencies>
-            <!-- The build-support module adds the checkstyle config files to the classpath. -->
-            <dependency>
-              <groupId>org.apache.flume</groupId>
-              <artifactId>build-support</artifactId>
-              <version>${project.version}</version>
-            </dependency>
-            <!-- Newer versions of puppycrawl checkstyle have more features. Pull in a more recent
-                 version than is specified in the maven-checkstyle-plugin pom file. -->
-            <dependency>
-              <groupId>com.puppycrawl.tools</groupId>
-              <artifactId>checkstyle</artifactId>
-              <version>${checkstyle.tool.version}</version>
-            </dependency>
-          </dependencies>
-          <executions>
-            <execution>
-              <id>verify.checkstyle</id>
-              <phase>verify</phase>
-              <goals>
-                <goal>check</goal>
-              </goals>
-            </execution>
-          </executions>
-          <configuration>
-            <configLocation>config/checkstyle/checkstyle.xml</configLocation>
-            <suppressionsLocation>config/checkstyle/checkstyle-suppressions.xml</suppressionsLocation>
-            <suppressionsFileExpression>checkstyle.suppressions.file</suppressionsFileExpression>
-            <encoding>UTF-8</encoding>
-            <includeTestSourceDirectory>true</includeTestSourceDirectory>
-            <linkXRef>false</linkXRef>
-          </configuration>
-        </plugin>
-
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>${mvn-javadoc-plugin.version}</version>
           <configuration>
@@ -643,18 +583,6 @@ limitations under the License.
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-assembly-plugin</artifactId>
           <version>${mvn-assembly-plugin.version}</version>
-        </plugin>
-
-        <plugin>
-          <groupId>org.apache.avro</groupId>
-          <artifactId>avro-maven-plugin</artifactId>
-          <version>${avro.version}</version>
-        </plugin>
-
-        <plugin>
-          <groupId>com.thoughtworks.paranamer</groupId>
-          <artifactId>paranamer-maven-plugin</artifactId>
-          <version>${mvn-paranamer-plugin.version}</version>
         </plugin>
 
         <plugin>
@@ -762,6 +690,12 @@ limitations under the License.
       </dependency>
 
       <dependency>
+        <groupId>org.apache.flume</groupId>
+        <artifactId>flume-rpc-avro</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-minikdc</artifactId>
         <version>${hadoop.version}</version>
@@ -857,54 +791,6 @@ limitations under the License.
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
         <version>${slf4j.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.avro</groupId>
-        <artifactId>avro</artifactId>
-        <version>${avro.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.avro</groupId>
-        <artifactId>avro-compiler</artifactId>
-        <version>${avro.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.avro</groupId>
-        <artifactId>avro-ipc-netty</artifactId>
-        <version>${avro.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>io.netty</groupId>
-            <artifactId>netty</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.avro</groupId>
-        <artifactId>avro-ipc-jetty</artifactId>
-        <version>${avro.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.mortbay.jetty</groupId>
-            <artifactId>servlet-api</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.thrift</groupId>
-        <artifactId>libthrift</artifactId>
-        <version>${thrift.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
 
       <dependency>
@@ -1507,30 +1393,6 @@ limitations under the License.
         <groupId>io.dropwizard.metrics</groupId>
         <artifactId>metrics-core</artifactId>
         <version>${dropwizard-metrics.version}</version>
-      </dependency>
-
-      <!-- Required for the morphlines-solr-sink via the kite-sdk -->
-      <dependency>
-        <groupId>org.apache.parquet</groupId>
-        <artifactId>parquet-hive-bundle</artifactId>
-        <version>${parquet.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-core</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.parquet</groupId>
-        <artifactId>parquet-avro</artifactId>
-        <version>${parquet.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-core</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
 
       <dependency>

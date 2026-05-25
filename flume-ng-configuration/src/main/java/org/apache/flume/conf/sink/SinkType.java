@@ -54,7 +54,7 @@ public enum SinkType implements ComponentWithClassName {
   /**
    * HDFS Sink provided by org.apache.flume.sink.hdfs.HDFSEventSink
    */
-  HDFS("org.apache.flume.sink.hdfs.HDFSEventSink"),
+  //HDFS("org.apache.flume.sink.hdfs.HDFSEventSink"),
 
   /**
    * IRC Sink provided by org.apache.flume.sink.irc.IRCSink
@@ -66,28 +66,28 @@ public enum SinkType implements ComponentWithClassName {
    *
    * @see AvroSink
    */
-  AVRO("org.apache.flume.sink.AvroSink"),
+  AVRO("org.apache.flume.rpc.avro.sink.AvroSink"),
 
   /**
    * Thrift sink
    *
    * @see ThriftSink
    */
-  THRIFT("org.apache.flume.sink.ThriftSink"),
+  THRIFT("org.apache.flume.rpc.thrift.sink.ThriftSink"),
 
   /**
    * ElasticSearch sink
    *
    * @see org.apache.flume.sink.elasticsearch.ElasticSearchSink
    */
-  ELASTICSEARCH("org.apache.flume.sink.elasticsearch.ElasticSearchSink"),
+  //ELASTICSEARCH("org.apache.flume.sink.elasticsearch.ElasticSearchSink"),
 
   /**
    * HBase sink
    *
    * @see org.apache.flume.sink.hbase.HBaseSink
    */
-  HBASE("org.apache.flume.sink.hbase.HBaseSink"),
+  //HBASE("org.apache.flume.sink.hbase.HBaseSink"),
 
   /**
    * AsyncHBase sink
@@ -101,20 +101,13 @@ public enum SinkType implements ComponentWithClassName {
    *
    * @see org.apache.flume.sink.hbase2.HBase2Sink
    */
-  HBASE2("org.apache.flume.sink.hbase2.HBase2Sink"),
-
-  /**
-   * MorphlineSolr sink
-   *
-   * @see org.apache.flume.sink.solr.morphline.MorphlineSolrSink
-   */
-  MORPHLINE_SOLR("org.apache.flume.sink.solr.morphline.MorphlineSolrSink"),
+  //HBASE2("org.apache.flume.sink.hbase2.HBase2Sink"),
 
   /**
    * Hive Sink
    * @see org.apache.flume.sink.hive.HiveSink
    */
-  HIVE("org.apache.flume.sink.hive.HiveSink"),
+  //HIVE("org.apache.flume.sink.hive.HiveSink"),
 
   /**
    * HTTP Sink

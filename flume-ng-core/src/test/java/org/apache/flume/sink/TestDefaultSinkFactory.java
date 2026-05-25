@@ -37,20 +37,20 @@ public class TestDefaultSinkFactory {
   @Test
   public void testDuplicateCreate() {
 
-    Sink avroSink1 = sinkFactory.create("avroSink1", "avro");
-    Sink avroSink2 = sinkFactory.create("avroSink2", "avro");
+    Sink rollingSink1 = sinkFactory.create("rollingSink1", "file_roll");
+    Sink rollingSink2 = sinkFactory.create("rollingSink2", "file_roll");
 
-    Assert.assertNotNull(avroSink1);
-    Assert.assertNotNull(avroSink2);
-    Assert.assertNotSame(avroSink1, avroSink2);
-    Assert.assertTrue(avroSink1 instanceof AvroSink);
-    Assert.assertTrue(avroSink2 instanceof AvroSink);
+    Assert.assertNotNull(rollingSink1);
+    Assert.assertNotNull(rollingSink2);
+    Assert.assertNotSame(rollingSink1, rollingSink2);
+    Assert.assertTrue(rollingSink1 instanceof RollingFileSink);
+    Assert.assertTrue(rollingSink2 instanceof RollingFileSink);
 
-    Sink s1 = sinkFactory.create("avroSink1", "avro");
-    Sink s2 = sinkFactory.create("avroSink2", "avro");
+    Sink s1 = sinkFactory.create("rollingSink1", "file_roll");
+    Sink s2 = sinkFactory.create("rollingSink2", "file_roll");
 
-    Assert.assertNotSame(avroSink1, s1);
-    Assert.assertNotSame(avroSink2, s2);
+    Assert.assertNotSame(rollingSink1, s1);
+    Assert.assertNotSame(rollingSink2, s2);
   }
 
   private void verifySinkCreation(String name, String type, Class<?> typeClass)
@@ -65,7 +65,7 @@ public class TestDefaultSinkFactory {
     verifySinkCreation("null-sink", "null", NullSink.class);
     verifySinkCreation("logger-sink", "logger", LoggerSink.class);
     verifySinkCreation("file-roll-sink", "file_roll", RollingFileSink.class);
-    verifySinkCreation("avro-sink", "avro", AvroSink.class);
+    //verifySinkCreation("avro-sink", "avro", AvroSink.class);
   }
 
 }

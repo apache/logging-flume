@@ -24,7 +24,7 @@
 ################################
 
 FLUME_AGENT_CLASS="org.apache.flume.node.Application"
-FLUME_AVRO_CLIENT_CLASS="org.apache.flume.client.avro.AvroCLIClient"
+FLUME_AVRO_CLIENT_CLASS="org.apache.flume.rpc.avro.client.AvroCLIClient"
 FLUME_VERSION_CLASS="org.apache.flume.tools.VersionInfo"
 FLUME_TOOLS_CLASS="org.apache.flume.tools.FlumeToolsMain"
 

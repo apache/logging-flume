@@ -23,7 +23,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.flume.Channel;
-import org.apache.flume.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
@@ -34,6 +33,7 @@ import org.apache.flume.api.RpcClient;
 import org.apache.flume.api.RpcClientConfigurationConstants;
 import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
+import org.apache.flume.exception.ChannelException;
 import org.apache.flume.instrumentation.SinkCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -405,7 +405,7 @@ public abstract class AbstractRpcSink extends AbstractSink implements Configurab
   }
 
   @VisibleForTesting
-  RpcClient getUnderlyingClient() {
+  public RpcClient getUnderlyingClient() {
     return client;
   }
 

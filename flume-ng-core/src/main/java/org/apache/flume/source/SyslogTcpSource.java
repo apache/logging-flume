@@ -27,7 +27,7 @@ import java.util.Set;
 import javax.net.ssl.SSLEngine;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.flume.ChannelException;
+import org.apache.flume.exception.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;

@@ -19,7 +19,7 @@ package org.apache.flume.sink;
 
 import junit.framework.Assert;
 import org.apache.flume.Channel;
-import org.apache.flume.ChannelException;
+import org.apache.flume.exception.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;

@@ -20,7 +20,7 @@ package org.apache.flume.source;
 
 import com.google.common.base.Charsets;
 import org.apache.flume.Channel;
-import org.apache.flume.ChannelException;
+import org.apache.flume.exception.ChannelException;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -29,10 +29,10 @@ import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
-import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.mockito.cglib.core.Local;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -40,6 +40,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +60,7 @@ public class TestSyslogUdpSource {
   private SyslogUDPSource source;
   private Channel channel;
   private static final int TEST_SYSLOG_PORT = 0;
-  private final DateTime time = new DateTime();
+  private final LocalDateTime time = LocalDateTime.now();
   private final String stamp1 = time.toString();
   private final String host1 = "localhost.localdomain";
   private final String data1 = "test syslog data";

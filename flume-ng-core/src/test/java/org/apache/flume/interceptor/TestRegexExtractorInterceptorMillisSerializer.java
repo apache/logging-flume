@@ -19,9 +19,13 @@ package org.apache.flume.interceptor;
 
 import junit.framework.Assert;
 import org.apache.flume.Context;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
+
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import org.junit.Test;
+
+import static java.time.ZoneOffset.UTC;
 
 public class TestRegexExtractorInterceptorMillisSerializer {
 
@@ -60,9 +64,11 @@ public class TestRegexExtractorInterceptorMillisSerializer {
     context.put("pattern", pattern);
     fixture.configure(context);
 
-    DateTimeFormatter formatter = DateTimeFormat.forPattern(pattern);
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
     long time = (System.currentTimeMillis() / 1000L) * 1000L;
+    LocalDateTime current = Instant.ofEpochMilli(time).atOffset(UTC)
+              .toLocalDateTime();
     Assert.assertEquals(String.valueOf(time),
-        fixture.serialize(formatter.print(time)));
+        fixture.serialize(formatter.format(current)));
   }
 }

@@ -26,14 +26,30 @@ import org.apache.flume.annotations.InterfaceStability;
 public enum EventSerializerType {
   TEXT(BodyTextEventSerializer.Builder.class),
   HEADER_AND_TEXT(HeaderAndBodyTextEventSerializer.Builder.class),
-  AVRO_EVENT(FlumeEventAvroEventSerializer.Builder.class),
-  OTHER(null);
+  AVRO_EVENT("org.apache.flume.roc.avro.serialization.AvroEventSerializer$Builder"),
+  OTHER();
 
   private final Class<? extends EventSerializer.Builder> builderClass;
+
+    EventSerializerType() {
+        this.builderClass = null;
+    }
 
   EventSerializerType(Class<? extends EventSerializer.Builder> builderClass) {
     this.builderClass = builderClass;
   }
+
+    @SuppressWarnings("unchecked")
+    EventSerializerType(String builderClassName) {
+        Class<? extends EventSerializer.Builder> clazz;
+
+        try {
+            clazz = (Class<? extends EventSerializer.Builder>)Class.forName(builderClassName);
+        } catch (ClassNotFoundException ex) {
+            clazz = null;
+        }
+        this.builderClass = clazz;
+    }
 
   public Class<? extends EventSerializer.Builder> getBuilderClass() {
     return builderClass;
