@@ -32,16 +32,19 @@ limitations under the License.
   <name>Apache Flume Artifacts</name>
 
   <properties>
-    <flume-hadoop.version>2.0.0-SNAPSHOT</flume-hadoop.version>
-    <flume-http.version>1.11.1-SNAPSHOT</flume-http.version>
-    <flume-irc.version>1.11.1-SNAPSHOT</flume-irc.version>
+    <!-- <flume-hadoop.version>2.0.0-SNAPSHOT</flume-hadoop.version>-->
+    <flume-http.version>2.0.0-SNAPSHOT</flume-http.version>
+    <flume-irc.version>2.0.0-SNAPSHOT</flume-irc.version>
     <flume-jdbc.version>2.0.0-SNAPSHOT</flume-jdbc.version>
-    <flume-jms.version>1.11.1-SNAPSHOT</flume-jms.version>
+    <flume-jms.version>2.0.0-SNAPSHOT</flume-jms.version>
     <flume-kafka.version>2.0.0-SNAPSHOT</flume-kafka.version>
-    <flume-scribe.version>1.11.1-SNAPSHOT</flume-scribe.version>
+    <flume-scribe.version>2.0.0-SNAPSHOT</flume-scribe.version>
     <flume-spring-boot.version>2.0.0-SNAPSHOT</flume-spring-boot.version>
-    <flume-taildir.version>1.11.1-SNAPSHOT</flume-taildir.version>
-    <flume-tools.version>1.11.1-SNAPSHOT</flume-tools.version>
+    <flume-taildir.version>2.0.0-SNAPSHOT</flume-taildir.version>
+    <flume-tools.version>2.0.0-SNAPSHOT</flume-tools.version>
+    <!-- <flume-twitter.version>2.0.0-SNAPSHOT</flume-twitter.version> -->
+    <flume-legacy.version>2.0.0-SNAPSHOT</flume-legacy.version>
+    <flume-morphline.version>2.0.0-SNAPSHOT</flume-morphline.version>
   </properties>
 
   <dependencyManagement>
@@ -116,11 +119,11 @@ limitations under the License.
         <artifactId>flume-spring-boot</artifactId>
         <version>${flume-spring-boot.version}</version>
       </dependency>
-      <dependency>
+      <!--<dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-twitter-source</artifactId>
         <version>${flume-twitter.version}</version>
-      </dependency>
+      </dependency>-->
       <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-jdbc-channel</artifactId>
@@ -146,7 +149,33 @@ limitations under the License.
         <artifactId>flume-spillable-memory-channel</artifactId>
         <version>${project.version}</version>
       </dependency>
-      <!-- <dependency>
+      <!--<dependency>
+        <groupId>org.apache.flume.flume-ng-clients</groupId>
+        <artifactId>flume-ng-log4jappender</artifactId>
+        <version>${flume-log4jappender.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.flume.flume-ng-clients</groupId>
+        <artifactId>flume-ng-log4jappender</artifactId>
+        <version>${flume-log4jappender.version}</version>
+        <classifier>jar-with-dependencies</classifier>
+      </dependency>-->
+      <dependency>
+        <groupId>org.apache.flume</groupId>
+        <artifactId>flume-legacy-thrift-source</artifactId>
+        <version>${flume-legacy.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.flume</groupId>
+        <artifactId>flume-legacy-avro-source</artifactId>
+        <version>${flume-legacy.version}</version>
+      </dependency>
+      <!--<dependency>
+        <groupId>org.apache.flume</groupId>
+        <artifactId>flume-morphline-solr-sink</artifactId>
+        <version>${flume-morphline.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-hdfs-sink</artifactId>
         <version>${flume-hadoop.version}</version>
@@ -155,7 +184,7 @@ limitations under the License.
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-hive-sink</artifactId>
         <version>${flume-hadoop.version}</version>
-      </dependency>
+      </dependency>-->
       <dependency>
         <groupId>org.apache.flume.flume-ng-sinks</groupId>
         <artifactId>flume-http-sink</artifactId>
@@ -166,9 +195,9 @@ limitations under the License.
         <artifactId>flume-irc-sink</artifactId>
         <version>${flume-irc.version}</version>
       </dependency>
-      <dependency>
+      <!--<dependency>
         <groupId>org.apache.flume</groupId>
-        <artifactId>flume-hbase2-sink</artifactId>
+        <artifactId>flume-ng-hbase2-sink</artifactId>
         <version>${flume-hadoop.version}</version>
       </dependency>-->
       <dependency>
@@ -176,9 +205,9 @@ limitations under the License.
         <artifactId>flume-kafka-sink</artifactId>
         <version>${flume-kafka.version}</version>
       </dependency>
-      <!-- <dependency>
+      <!--<dependency>
         <groupId>org.apache.flume</groupId>
-        <artifactId>flume-kudu-sink</artifactId>
+        <artifactId>flume-ng-kudu-sink</artifactId>
         <version>${flume-hadoop.version}</version>
       </dependency>-->
       <dependency>

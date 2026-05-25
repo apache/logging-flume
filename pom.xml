@@ -39,7 +39,6 @@ limitations under the License.
     <module>flume-ng-configuration</module>
     <module>flume-rpc</module>
     <module>flume-ng-embedded-agent</module>
-    <module>flume-ng-sinks</module>
     <module>flume-ng-sources</module>
     <module>flume-ng-node</module>
     <module>flume-ng-dist</module>
