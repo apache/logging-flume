@@ -132,7 +132,7 @@
       <groupId>org.apache.flume</groupId>
       <artifactId>flume-kafka-channel</artifactId>
     </dependency>
-    <!--<dependency>
+    <dependency>
       <groupId>org.apache.flume</groupId>
       <artifactId>flume-rpc-avro</artifactId>
     </dependency>
@@ -140,7 +140,7 @@
       <groupId>org.apache.flume</groupId>
       <artifactId>flume-rpc-thrift</artifactId>
     </dependency>
-    <!--<dependency>
+    <!-- <dependency>
       <groupId>org.apache.flume</groupId>
       <artifactId>flume-hdfs-sink</artifactId>
     </dependency>
@@ -156,7 +156,7 @@
       <groupId>org.apache.flume.flume-ng-sinks</groupId>
       <artifactId>flume-http-sink</artifactId>
     </dependency>
-    <!--<dependency>
+    <!-- <dependency>
       <groupId>org.apache.flume</groupId>
       <artifactId>flume-morphline-solr-sink</artifactId>
     </dependency>-->
@@ -167,7 +167,7 @@
     <!--<dependency>
       <groupId>org.apache.flume</groupId>
       <artifactId>flume-hive-sink</artifactId>
-    </dependency>-->
+    </dependency>
     <dependency>
       <groupId>org.apache.flume.flume-ng-sources</groupId>
       <artifactId>flume-scribe-source</artifactId>
@@ -176,7 +176,7 @@
       <groupId>org.apache.flume.flume-ng-sources</groupId>
       <artifactId>flume-jms-source</artifactId>
     </dependency>
-    <!--<dependency>
+    <!-- <dependency>
       <groupId>org.apache.flume</groupId>
       <artifactId>flume-twitter-source</artifactId>
     </dependency>-->
@@ -184,7 +184,7 @@
       <groupId>org.apache.flume</groupId>
       <artifactId>flume-kafka-source</artifactId>
     </dependency>
-    <!--<dependency>
+    <!-- <dependency>
       <groupId>org.apache.flume</groupId>
       <artifactId>flume-legacy-avro-source</artifactId>
     </dependency>
@@ -200,7 +200,7 @@
       <groupId>org.apache.flume</groupId>
       <artifactId>flume-ng-environment-variable-config-filter</artifactId>
     </dependency>
-    <!--<dependency>
+    <!-- <dependency>
       <groupId>org.apache.flume</groupId>
       <artifactId>flume-hadoop-credential-store-config-filter</artifactId>
     </dependency>-->
@@ -212,7 +212,7 @@
       <groupId>org.apache.flume</groupId>
       <artifactId>flume-ng-config-filter-api</artifactId>
     </dependency>
-    <!--<dependency>
+    <!-- <dependency>
       <groupId>org.apache.flume.flume-ng-clients</groupId>
       <artifactId>flume-ng-log4jappender</artifactId>
       <exclusions>
