@@ -26,7 +26,7 @@ import org.apache.flume.annotations.InterfaceStability;
 public enum EventSerializerType {
   TEXT(BodyTextEventSerializer.Builder.class),
   HEADER_AND_TEXT(HeaderAndBodyTextEventSerializer.Builder.class),
-  AVRO_EVENT("org.apache.flume.roc.avro.serialization.AvroEventSerializer$Builder"),
+  AVRO_EVENT("org.apache.flume.rpc.avro.FlumeEventAvroEventSerializer$Builder"),
   OTHER();
 
   private final Class<? extends EventSerializer.Builder> builderClass;
