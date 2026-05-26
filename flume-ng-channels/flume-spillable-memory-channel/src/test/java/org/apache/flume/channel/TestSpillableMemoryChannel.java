@@ -30,8 +30,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import org.apache.flume.ChannelException;
-import org.apache.flume.ChannelFullException;
+import org.apache.flume.exception.ChannelException;
+import org.apache.flume.exception.ChannelFullException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.Transaction;

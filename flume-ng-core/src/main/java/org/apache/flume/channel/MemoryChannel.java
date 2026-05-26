@@ -20,8 +20,8 @@ package org.apache.flume.channel;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import org.apache.flume.ChannelException;
-import org.apache.flume.ChannelFullException;
+import org.apache.flume.exception.ChannelException;
+import org.apache.flume.exception.ChannelFullException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.annotations.InterfaceAudience;

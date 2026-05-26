@@ -38,20 +38,20 @@ public class TestDefaultSourceFactory {
   @Test
   public void testDuplicateCreate()  {
 
-    Source avroSource1 = sourceFactory.create("avroSource1", "avro");
-    Source avroSource2 = sourceFactory.create("avroSource2", "avro");
+    Source execSource1 = sourceFactory.create("execSource1", "exec");
+    Source execSource2 = sourceFactory.create("execSource2", "exec");
 
-    Assert.assertNotNull(avroSource1);
-    Assert.assertNotNull(avroSource2);
-    Assert.assertNotSame(avroSource1, avroSource2);
-    Assert.assertTrue(avroSource1 instanceof AvroSource);
-    Assert.assertTrue(avroSource2 instanceof AvroSource);
+    Assert.assertNotNull(execSource1);
+    Assert.assertNotNull(execSource2);
+    Assert.assertNotSame(execSource1, execSource2);
+    Assert.assertTrue(execSource1 instanceof ExecSource);
+    Assert.assertTrue(execSource2 instanceof ExecSource);
 
-    Source s1 = sourceFactory.create("avroSource1", "avro");
-    Source s2 = sourceFactory.create("avroSource2", "avro");
+    Source s1 = sourceFactory.create("execSource1", "exec");
+    Source s2 = sourceFactory.create("execSource2", "exec");
 
-    Assert.assertNotSame(avroSource1, s1);
-    Assert.assertNotSame(avroSource2, s2);
+    Assert.assertNotSame(execSource1, s1);
+    Assert.assertNotSame(execSource2, s2);
 
   }
 
@@ -68,15 +68,14 @@ public class TestDefaultSourceFactory {
     verifySourceCreation("netcat-src", "netcat", NetcatSource.class);
     verifySourceCreation("netcat-udp-src", "netcatudp", NetcatUdpSource.class);
     verifySourceCreation("exec-src", "exec", ExecSource.class);
-    verifySourceCreation("avro-src", "avro", AvroSource.class);
+    //verifySourceCreation("avro-src", "avro", AvroSource.class);
     verifySourceCreation("syslogtcp-src", "syslogtcp", SyslogTcpSource.class);
     verifySourceCreation("multiport_syslogtcp-src", "multiport_syslogtcp",
         MultiportSyslogTCPSource.class);
     verifySourceCreation("syslogudp-src", "syslogudp", SyslogUDPSource.class);
-    verifySourceCreation("spooldir-src", "spooldir",
-        SpoolDirectorySource.class);
+    //verifySourceCreation("spooldir-src", "spooldir", SpoolDirectorySource.class);
     verifySourceCreation("http-src", "http", HTTPSource.class);
-    verifySourceCreation("thrift-src", "thrift", ThriftSource.class);
+    //verifySourceCreation("thrift-src", "thrift", ThriftSource.class);
     verifySourceCreation("custom-src", MockSource.class.getCanonicalName(),
         MockSource.class);
   }

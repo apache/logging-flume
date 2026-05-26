@@ -32,6 +32,8 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.security.cert.X509Certificate;
 import java.text.ParseException;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -41,7 +43,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
 
 import org.apache.flume.Channel;
-import org.apache.flume.ChannelException;
+import org.apache.flume.exception.ChannelException;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -60,13 +62,13 @@ import org.apache.logging.log4j.Logger;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.DefaultIoSessionDataStructureFactory;
 import org.apache.mina.transport.socket.nio.NioSession;
-import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.internal.util.reflection.Whitebox;
 
+import static java.time.ZoneOffset.UTC;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -81,6 +83,7 @@ public class TestMultiportSyslogTCPSource {
   private static final Logger LOGGER = LogManager.getLogger();
   private static final String TEST_CLIENT_IP_HEADER = "testClientIPHeader";
   private static final String TEST_CLIENT_HOSTNAME_HEADER = "testClientHostnameHeader";
+  private static final DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
 
   private static final int getFreePort() throws IOException {
     try (ServerSocket socket = new ServerSocket(0)) {
@@ -88,8 +91,8 @@ public class TestMultiportSyslogTCPSource {
     }
   }
 
-  private final DateTime time = new DateTime();
-  private final String stamp1 = time.toString();
+  private final ZonedDateTime time = ZonedDateTime.now();
+  private final String stamp1 = time.format(formatter);
   private final String host1 = "localhost.localdomain";
   private final String data1 = "proc1 - some msg";
 
@@ -297,7 +300,7 @@ public class TestMultiportSyslogTCPSource {
         iter.remove();
 
         Assert.assertEquals("Timestamps must match",
-            String.valueOf(time.getMillis()), headers.get("timestamp"));
+            String.valueOf(time.toInstant().toEpochMilli()), headers.get("timestamp"));
 
         String host2 = headers.get("host");
         Assert.assertEquals(host1, host2);

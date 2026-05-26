@@ -224,7 +224,7 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
    * to another host. To be used only from the unit tests!
    * @return The last socket address this client connected to
    */
-  protected InetSocketAddress getLastConnectedServerAddress() {
+  public InetSocketAddress getLastConnectedServerAddress() {
     HostInfo hostInfo = hosts.get(lastCheckedhost);
     return new InetSocketAddress(hostInfo.getHostName(),
         hostInfo.getPortNumber());

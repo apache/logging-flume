@@ -20,18 +20,17 @@
 package org.apache.flume.formatter.output;
 
 import org.apache.flume.Context;
-import org.joda.time.LocalDateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 
 import java.io.File;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  *
  */
 public class RollTimePathManager extends DefaultPathManager {
 
-  private final DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyyMMddHHmmss");
+  private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
   private String lastRoll;
 
   public RollTimePathManager(Context context) {
@@ -41,7 +40,7 @@ public class RollTimePathManager extends DefaultPathManager {
   @Override
   public File nextFile() {
     StringBuilder sb = new StringBuilder();
-    String date = formatter.print(LocalDateTime.now());
+    String date = formatter.format(LocalDateTime.now());
     if (!date.equals(lastRoll)) {
       getFileIndex().set(0);
       lastRoll = date;

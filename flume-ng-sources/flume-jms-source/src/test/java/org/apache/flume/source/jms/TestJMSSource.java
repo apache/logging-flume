@@ -33,7 +33,7 @@ import javax.naming.NamingException;
 import junit.framework.Assert;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.flume.ChannelException;
+import org.apache.flume.exception.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;

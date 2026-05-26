@@ -28,17 +28,25 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.collect.Maps;
 import java.nio.charset.Charset;
+import java.time.LocalDateTime;
+import java.time.Year;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoField;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
+
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.apache.flume.Event;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.event.EventBuilder;
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,29 +59,36 @@ public class SyslogParser {
 
   private static final int TS_CACHE_MAX = 1000;  // timestamp cache size limit
   private static final Pattern TWO_SPACES = Pattern.compile("  ");
-  private static final DateTimeFormatter rfc3164Format =
-      DateTimeFormat.forPattern("MMM d HH:mm:ss").withZoneUTC();
+  private static final DateTimeFormatter RFC3164_FORMAT =
+          new DateTimeFormatterBuilder()
+                  .appendPattern("MMM d HH:mm:ss")
+                  .parseDefaulting(ChronoField.YEAR, Year.now().getValue()) // Adds current year
+                  .toFormatter(Locale.ENGLISH); // Always use English month names
+  private static final DateTimeFormatter RFC5424_FORMAT =
+          new DateTimeFormatterBuilder()
+                  .append(DateTimeFormatter.ISO_LOCAL_DATE_TIME) // Parses YYYY-MM-DDTHH:mm:ss.SSSSSS
+                  .optionalStart()                               // Start of optional timezone section
+                  .appendOffset("+HH:MM", "Z") // Handles +00:00, -05:00, or Z
+                  .optionalEnd()                                 // End of optional timezone section
+                  .toFormatter();
 
-  private static final String timePat = "yyyy-MM-dd'T'HH:mm:ss";
   private static final int RFC3164_LEN = 15;
   private static final int RFC5424_PREFIX_LEN = 19;
-  private final DateTimeFormatter timeParser;
 
   private LoadingCache<String, Long> timestampCache;
 
   public SyslogParser() {
-    timeParser = DateTimeFormat.forPattern(timePat).withZoneUTC();
     timestampCache = CacheBuilder.newBuilder().maximumSize(TS_CACHE_MAX).build(
         new CacheLoader<String, Long>() {
 
           @Override
-          public Long load(String key) throws Exception {
-            return timeParser.parseMillis(key);
+          public Long load(String key) {
+              return ZonedDateTime.parse(key, RFC5424_FORMAT.withZone(ZoneOffset.UTC)).toInstant().toEpochMilli();
           }
         });
   }
 
-  /**
+    /**
    * Parses a Flume Event out of a syslog message string.
    * @param msg Syslog message, not including the newline character
    * @return Parsed Flume Event
@@ -196,8 +211,7 @@ public class SyslogParser {
    * @return Typical (for Java) milliseconds since UNIX epoch
    */
   protected long parseRfc5424Date(String msg) {
-
-    Long ts = null;
+    Long ts;
     int curPos = 0;
 
     int msgLen = msg.length();
@@ -207,13 +221,11 @@ public class SyslogParser {
 
     try {
       ts = timestampCache.get(timestampPrefix);
-    } catch (ExecutionException ex) {
-      throw new IllegalArgumentException("bad timestamp format", ex);
+    } catch (ExecutionException | UncheckedExecutionException ex) {
+      throw new IllegalArgumentException("bad timestamp format", ex.getCause());
     }
 
     curPos += RFC5424_PREFIX_LEN;
-
-    Preconditions.checkArgument(ts != null, "Parsing error: timestamp is null");
 
     // look for the optional fractional seconds
     if (msg.charAt(curPos) == '.') {
@@ -291,7 +303,6 @@ public class SyslogParser {
 
     }
 
-
     return ts;
   }
 
@@ -303,15 +314,15 @@ public class SyslogParser {
    * @return Typical (for Java) milliseconds since the UNIX epoch
    */
   protected long parseRfc3164Time(String ts) {
-    DateTime now = DateTime.now();
+    LocalDateTime now = LocalDateTime.now();
     int year = now.getYear();
 
     ts = TWO_SPACES.matcher(ts).replaceFirst(" ");
 
-    DateTime date;
+    LocalDateTime date;
     try {
-      date = rfc3164Format.parseDateTime(ts);
-    } catch (IllegalArgumentException e) {
+      date = LocalDateTime.parse(ts, RFC3164_FORMAT);
+    } catch (DateTimeParseException e) {
       logger.debug("rfc3164 date parse failed on (" + ts + "): invalid format", e);
       return 0;
     }
@@ -327,24 +338,18 @@ public class SyslogParser {
      * timestamps.
      */
 
-    if (date != null) {
-      DateTime fixed = date.withYear(year);
+    LocalDateTime fixed = date.withYear(year);
 
-      // flume clock is ahead or there is some latency, and the year rolled
-      if (fixed.isAfter(now) && fixed.minusMonths(1).isAfter(now)) {
-        fixed = date.minusYears(1);
-      // flume clock is behind and the year rolled
-      } else if (fixed.isBefore(now) && fixed.plusMonths(1).isBefore(now)) {
-        fixed = date.plusYears(1);
-      }
-      date = fixed;
+    // flume clock is ahead or there is some latency, and the year rolled
+    if (fixed.isAfter(now) && fixed.minusMonths(1).isAfter(now)) {
+      fixed = date.minusYears(1);
+    // flume clock is behind and the year rolled
+    } else if (fixed.isBefore(now) && fixed.plusMonths(1).isBefore(now)) {
+      fixed = date.plusYears(1);
     }
+    date = fixed;
 
-    if (date == null) {
-      return 0;
-    }
-
-    return date.getMillis();
+    return date.toInstant(ZoneOffset.UTC).toEpochMilli();
   }
 
 

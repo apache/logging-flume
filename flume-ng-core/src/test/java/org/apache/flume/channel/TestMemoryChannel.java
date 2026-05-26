@@ -21,7 +21,7 @@ package org.apache.flume.channel;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
-import org.apache.flume.ChannelException;
+import org.apache.flume.exception.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
