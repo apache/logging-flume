@@ -25,13 +25,29 @@ import org.apache.flume.annotations.InterfaceStability;
 @InterfaceStability.Unstable
 public enum EventDeserializerType {
   LINE(LineDeserializer.Builder.class),
-  AVRO(AvroEventDeserializer.Builder.class),
-  OTHER(null);
+  AVRO("org.apache.flume.rpc.avro.serialization.AvroDeserializer$Builder"),
+  OTHER();
 
   private final Class<? extends EventDeserializer.Builder> builderClass;
 
+    EventDeserializerType() {
+        this.builderClass = null;
+    }
+
   EventDeserializerType(Class<? extends EventDeserializer.Builder> builderClass) {
     this.builderClass = builderClass;
+  }
+
+  @SuppressWarnings("unchecked")
+  EventDeserializerType(String builderClassName) {
+      Class<? extends EventDeserializer.Builder> clazz;
+
+      try {
+          clazz = (Class<? extends EventDeserializer.Builder>)Class.forName(builderClassName);
+      } catch (ClassNotFoundException ex) {
+          clazz= null;
+      }
+      this.builderClass = clazz;
   }
 
   public Class<? extends EventDeserializer.Builder> getBuilderClass() {

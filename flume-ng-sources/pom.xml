@@ -33,7 +33,6 @@ limitations under the License.
   <packaging>pom</packaging>
 
   <modules>
-    <module>flume-scribe-source</module>
     <module>flume-jms-source</module>
     <module>flume-taildir-source</module>
   </modules>

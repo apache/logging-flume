@@ -19,8 +19,10 @@
 package org.apache.flume.formatter.output;
 
 import org.apache.flume.Clock;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
+
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,6 +38,7 @@ import java.util.Map;
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 
+import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -252,9 +255,8 @@ public class TestBucketPath {
   @Test
   public void testDateRace() {
     Clock mockClock = mock(Clock.class);
-    DateTimeFormatter parser = ISODateTimeFormat.dateTimeParser();
-    long two = parser.parseMillis("2013-04-21T02:59:59-00:00");
-    long three = parser.parseMillis("2013-04-21T03:00:00-00:00");
+    long two = ZonedDateTime.parse("2013-04-21T02:59:59-00:00", ISO_DATE_TIME).toInstant().toEpochMilli();
+    long three = ZonedDateTime.parse("2013-04-21T03:00:00-00:00", ISO_DATE_TIME).toInstant().toEpochMilli();
     when(mockClock.currentTimeMillis()).thenReturn(two, three);
 
     // save & modify static state (yuck)

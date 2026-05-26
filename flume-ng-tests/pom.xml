@@ -46,6 +46,10 @@
       <artifactId>flume-ng-configuration</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-rpc-avro</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <!-- only used for tests -->

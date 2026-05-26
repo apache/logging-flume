@@ -63,6 +63,12 @@ limitations under the License.
     </dependency>
 
     <dependency>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-rpc-avro</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>

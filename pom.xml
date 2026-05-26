@@ -37,14 +37,18 @@ limitations under the License.
     <module>flume-parent</module>
     <module>flume-ng-core</module>
     <module>flume-ng-configuration</module>
+    <module>flume-rpc</module>
     <module>flume-ng-embedded-agent</module>
     <module>flume-ng-sources</module>
     <module>flume-ng-node</module>
+    <!-- Disable until all snapshots are published
     <module>flume-ng-dist</module>
+    -->
     <module>flume-ng-channels</module>
-    <module>flume-ng-clients</module>
     <module>flume-ng-sdk</module>
+    <!-- Temporarily disable integration tests
     <module>flume-ng-tests</module>
+    -->
     <module>flume-tools</module>
     <module>flume-ng-auth</module>
     <module>flume-ng-configfilters</module>

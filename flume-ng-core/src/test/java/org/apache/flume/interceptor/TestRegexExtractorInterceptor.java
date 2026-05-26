@@ -17,18 +17,23 @@
  */
 package org.apache.flume.interceptor;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.interceptor.Interceptor.Builder;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
+
+import static java.time.ZoneOffset.UTC;
 
 public class TestRegexExtractorInterceptor {
 
@@ -163,9 +168,10 @@ public class TestRegexExtractorInterceptor {
       throws Exception {
     long now = (System.currentTimeMillis() / 60000L) * 60000L;
     String pattern = "yyyy-MM-dd HH:mm:ss,SSS";
-    DateTimeFormatter formatter = DateTimeFormat.forPattern(pattern);
-    String body = formatter.print(now);
-    System.out.println(body);
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
+    LocalDateTime current = Instant.ofEpochMilli(now).atOffset(UTC)
+            .toLocalDateTime();
+    String body = formatter.format(current);
     Context context = new Context();
     // Skip the second group
     context.put(RegexExtractorInterceptor.REGEX,

@@ -53,7 +53,7 @@ import java.util.List;
 
 public class TestNetcatSource {
   private static final Logger logger =
-      LoggerFactory.getLogger(TestAvroSource.class);
+      LoggerFactory.getLogger(TestNetcatSource.class);
 
 
   private static int getFreePort() {
