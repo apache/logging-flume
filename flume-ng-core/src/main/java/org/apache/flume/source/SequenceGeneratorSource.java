@@ -20,7 +20,7 @@
 package org.apache.flume.source;
 
 import com.google.common.base.Preconditions;
-import org.apache.flume.ChannelException;
+import org.apache.flume.exception.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;

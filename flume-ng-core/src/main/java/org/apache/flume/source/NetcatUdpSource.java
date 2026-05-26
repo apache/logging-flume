@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.flume.ChannelException;
+import org.apache.flume.exception.ChannelException;
 import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.Event;

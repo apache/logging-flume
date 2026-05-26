@@ -20,7 +20,7 @@ package org.apache.flume.channel.file;
 
 import junit.framework.Assert;
 import org.apache.commons.io.FileUtils;
-import org.apache.flume.ChannelException;
+import org.apache.flume.exception.ChannelException;
 import org.apache.flume.Transaction;
 import org.apache.flume.channel.file.instrumentation.FileChannelCounter;
 import org.apache.flume.event.EventBuilder;

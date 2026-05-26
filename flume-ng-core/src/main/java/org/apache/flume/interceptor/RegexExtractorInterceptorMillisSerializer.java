@@ -20,9 +20,10 @@ package org.apache.flume.interceptor;
 import org.apache.commons.lang.StringUtils;
 import org.apache.flume.Context;
 import org.apache.flume.conf.ComponentConfiguration;
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 
 import com.google.common.base.Preconditions;
 
@@ -40,13 +41,13 @@ public class RegexExtractorInterceptorMillisSerializer implements
     String pattern = context.getString("pattern");
     Preconditions.checkArgument(!StringUtils.isEmpty(pattern),
         "Must configure with a valid pattern");
-    formatter = DateTimeFormat.forPattern(pattern);
+    formatter = DateTimeFormatter.ofPattern(pattern);
   }
 
   @Override
   public String serialize(String value) {
-    DateTime dateTime = formatter.parseDateTime(value);
-    return Long.toString(dateTime.getMillis());
+      LocalDateTime dateTime = LocalDateTime.parse(value, formatter);
+      return Long.toString(dateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
   }
 
   @Override

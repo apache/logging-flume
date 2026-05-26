@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.flume.Channel;
-import org.apache.flume.ChannelException;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -36,6 +35,7 @@ import org.apache.flume.interceptor.Interceptor;
 import org.apache.flume.interceptor.InterceptorChain;
 import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
+import org.apache.flume.exception.ChannelException;
 import org.apache.flume.interceptor.InterceptorBuilderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

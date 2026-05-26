@@ -21,7 +21,7 @@ limitations under the License.
   <parent>
     <artifactId>flume-parent</artifactId>
     <groupId>org.apache.flume</groupId>
-    <version>1.11.1-SNAPSHOT</version>
+    <version>2.0.0-SNAPSHOT</version>
     <relativePath>../flume-parent/pom.xml</relativePath>
   </parent>
 
@@ -60,6 +60,12 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.flume.flume-ng-channels</groupId>
       <artifactId>flume-file-channel</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-rpc-avro</artifactId>
+      <scope>test</scope>
     </dependency>
 
     <dependency>

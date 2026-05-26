@@ -26,7 +26,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 
 import org.apache.flume.Channel;
-import org.apache.flume.ChannelException;
+import org.apache.flume.exception.ChannelException;
 import org.apache.flume.Event;
 import org.apache.flume.Transaction;
 import org.slf4j.Logger;
