@@ -172,7 +172,6 @@ public class TestRegexExtractorInterceptor {
     LocalDateTime current = Instant.ofEpochMilli(now).atOffset(UTC)
             .toLocalDateTime();
     String body = formatter.format(current);
-    System.out.println(body);
     Context context = new Context();
     // Skip the second group
     context.put(RegexExtractorInterceptor.REGEX,
