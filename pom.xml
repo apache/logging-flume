@@ -41,7 +41,9 @@ limitations under the License.
     <module>flume-ng-embedded-agent</module>
     <module>flume-ng-sources</module>
     <module>flume-ng-node</module>
+    <!-- Disable until all snapshots are published
     <module>flume-ng-dist</module>
+    -->
     <module>flume-ng-channels</module>
     <module>flume-ng-sdk</module>
     <module>flume-ng-tests</module>
