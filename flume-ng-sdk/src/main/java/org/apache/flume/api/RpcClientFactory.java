@@ -213,12 +213,13 @@ public class RpcClientFactory {
       try {
           @SuppressWarnings("unchecked")
           Class<? extends AbstractRpcClient> clazz = (Class<? extends AbstractRpcClient>) Class.forName(className);
-          AbstractRpcClient client = (AbstractRpcClient) clazz.getMethod(NEW_INSTANCE, null).invoke(null, null);
+          AbstractRpcClient client = (AbstractRpcClient) clazz.getMethod(NEW_INSTANCE).invoke(null);
           client.configure(props);
           return client;
       } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException |
                InvocationTargetException e) {
-          throw  new FlumeException("Cannot instantiate client. Avro implementation failed to load.", e);
+          throw new FlumeException("Cannot instantiate client. Implementation " + className
+              + " failed to load.", e);
       }
   }
 
