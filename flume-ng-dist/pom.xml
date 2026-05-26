@@ -151,12 +151,12 @@
     <dependency>
       <groupId>org.apache.flume</groupId>
       <artifactId>flume-hbase2-sink</artifactId>
-    </dependency>-->
+    </dependency>
     <dependency>
       <groupId>org.apache.flume.flume-ng-sinks</groupId>
       <artifactId>flume-http-sink</artifactId>
     </dependency>
-    <!-- <dependency>
+    <dependency>
       <groupId>org.apache.flume</groupId>
       <artifactId>flume-morphline-solr-sink</artifactId>
     </dependency>-->
