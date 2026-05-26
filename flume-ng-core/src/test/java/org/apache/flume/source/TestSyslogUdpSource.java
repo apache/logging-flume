@@ -32,7 +32,6 @@ import org.apache.flume.conf.Configurables;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.mockito.cglib.core.Local;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
