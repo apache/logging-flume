@@ -21,6 +21,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.flume.Context;
 import org.apache.flume.conf.ComponentConfiguration;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
@@ -46,7 +47,7 @@ public class RegexExtractorInterceptorMillisSerializer implements
   @Override
   public String serialize(String value) {
       LocalDateTime dateTime = LocalDateTime.parse(value, formatter);
-      return Long.toString(dateTime.toInstant(ZoneOffset.UTC).toEpochMilli());
+      return Long.toString(dateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
   }
 
   @Override
