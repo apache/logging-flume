@@ -20,7 +20,8 @@ under the License.
 # Project status
 
 > [!WARNING]
-> **This project is not maintained anymore!**
+> **As of May 2026 this project is undergoing significant rework! We do not 
+> advise using it until it is restablized and a formal release is announced.**
 > [It has been marked as dormant by Apache Logging Services consensus on 2024-10-10.](https://lists.apache.org/thread/dg9wro6dp7w95o1x911lbyqxzl808b3l)
 > Users are advised to migrate to alternatives.
 > For other inquiries, see [the support policy](https://logging.apache.org/support.html).
