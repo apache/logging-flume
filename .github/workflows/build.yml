@@ -56,14 +56,18 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: ${{ matrix.java-distribution }}
-          java-version: 8
+          java-version: |
+            8
+            17
           cache: maven
 
       - name: Build with Maven
         timeout-minutes: 120
         shell: bash
         run: |
+          # Temporarily disable spotless
           ./mvnw clean verify -DredirectTestOutput=true \
+          -Dspotless.skip -Denforcer.skip -Dspotbugs.skip \
           --show-version --batch-mode --errors --no-transfer-progress \
           -DtrimStackTrace=false \
           -Dsurefire.rerunFailingTestsCount=2

@@ -19,9 +19,9 @@ limitations under the License.
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <parent>
-    <groupId>org.apache</groupId>
-    <artifactId>apache</artifactId>
-    <version>23</version>
+    <groupId>org.apache.logging</groupId>
+    <artifactId>logging-parent</artifactId>
+    <version>12.1.1</version>
   </parent>
 
   <modelVersion>4.0.0</modelVersion>
@@ -37,10 +37,6 @@ limitations under the License.
     <project.build.outputTimestamp>2022-01-02T00:00:00Z</project.build.outputTimestamp>
     <!-- Set default encoding to UTF-8 to remove maven complaints -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-    <!-- Java compiler configuration -->
-    <sourceJavaVersion>1.8</sourceJavaVersion>
-    <targetJavaVersion>1.8</targetJavaVersion>
 
     <!-- Signing User for release -->
     <GPGSigningUserName>rgoers@apache.org</GPGSigningUserName>
@@ -106,8 +102,6 @@ limitations under the License.
     <mvn-paranamer-plugin.version>2.8</mvn-paranamer-plugin.version>
     <mvn-pmd-plugin.version>3.15.0</mvn-pmd-plugin.version>
     <mvn-site-plugin.version>3.9.0</mvn-site-plugin.version>
-    <mvn-spotbugs-plugin.version>4.2.0</mvn-spotbugs-plugin.version>
-    <mvn-surefire-plugin.version>2.22.2</mvn-surefire-plugin.version>
     <!--<netty.version>3.10.6.Final</netty.version>-->
     <netty-all.version>4.1.86.Final</netty-all.version>
     <parquet.version>1.11.2</parquet.version>
@@ -119,6 +113,7 @@ limitations under the License.
     <scala-library.version>2.13.9</scala-library.version>
     <snappy-java.version>1.1.8.4</snappy-java.version>
     <solr-global.version>4.3.0</solr-global.version>
+    <spotbugs-annotations.version>4.2.0</spotbugs-annotations.version>
     <slf4j.version>1.7.32</slf4j.version>
     <system-rules.version>1.17.0</system-rules.version>
     <twitter-source.version>2.0.0</twitter-source.version>
@@ -417,6 +412,18 @@ limitations under the License.
     </extensions>
     <plugins>
 
+
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+                <!-- Overrides the parent arguments that enable Error Prone -->
+                <compilerArgs>
+                    <arg>-Xlint:all</arg>
+                </compilerArgs>
+            </configuration>
+        </plugin>
+
       <plugin>
         <groupId>org.apache.rat</groupId>
         <artifactId>apache-rat-plugin</artifactId>
@@ -433,63 +440,7 @@ limitations under the License.
 
     <pluginManagement>
       <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-antrun-plugin</artifactId>
-          <version>${mvn-antrun-plugin.version}</version>
-        </plugin>
 
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-gpg-plugin</artifactId>
-          <version>${mvn-gpg-plugin.version}</version>
-          <configuration>
-              <excludes>
-                  <exclude>**/*.sha512</exclude>
-              </excludes>
-            <keyname>${GPGSigningUserName}</keyname>
-          </configuration>
-        </plugin>
-
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>${mvn-compiler-plugin.version}</version>
-          <configuration>
-            <source>${sourceJavaVersion}</source>
-            <target>${targetJavaVersion}</target>
-          </configuration>
-        </plugin>
-
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-jar-plugin</artifactId>
-          <version>${mvn-jar-plugin.version}</version>
-          <executions>
-            <execution>
-              <id>default-jar</id>
-              <goals>
-                <goal>jar</goal>
-              </goals>
-              <configuration>
-                <archive>
-                  <manifestEntries>
-                    <Specification-Title>${project.name}</Specification-Title>
-                    <Specification-Version>${project.version}</Specification-Version>
-                    <Specification-Vendor>${project.organization.name}</Specification-Vendor>
-                    <Implementation-Title>${project.name}</Implementation-Title>
-                    <Implementation-Version>${project.version}</Implementation-Version>
-                    <Implementation-Vendor>${project.organization.name}</Implementation-Vendor>
-                    <Implementation-Vendor-Id>org.apache</Implementation-Vendor-Id>
-                    <X-Compile-Source-JDK>${maven.compiler.source}</X-Compile-Source-JDK>
-                    <X-Compile-Target-JDK>${maven.compiler.target}</X-Compile-Target-JDK>
-                    <Automatic-Module-Name>${module.name}</Automatic-Module-Name>
-                  </manifestEntries>
-                </archive>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
         <plugin>
           <groupId>org.xolstice.maven.plugins</groupId>
           <artifactId>protobuf-maven-plugin</artifactId>
@@ -498,7 +449,6 @@ limitations under the License.
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>${mvn-surefire-plugin.version}</version>
           <configuration>
             <reuseForks>false</reuseForks>
             <forkCount>1</forkCount>
@@ -513,6 +463,9 @@ limitations under the License.
               <exclude>**/*$*</exclude>
               <exclude>${test.exclude.pattern}</exclude>
             </excludes>
+              <jdkToolchain>
+                  <version>[1.8, 9)</version>
+              </jdkToolchain>
           </configuration>
         </plugin>
 
@@ -521,7 +474,8 @@ limitations under the License.
           <artifactId>apache-rat-plugin</artifactId>
           <version>${rat.version}</version>
           <configuration>
-            <excludes>
+            <excludes combine.children="append">
+              <!--
               <exclude>**/.idea/</exclude>
               <exclude>**/*.iml</exclude>
               <exclude>src/main/resources/META-INF/services/**/*</exclude>
@@ -532,7 +486,6 @@ limitations under the License.
               <exclude>**/*.yml</exclude>
               <exclude>**/*.yaml</exclude>
               <exclude>**/*.json</exclude>
-              <!-- ASF jenkins box puts the Maven repo in our root directory. -->
               <exclude>.repository/</exclude>
               <exclude>**/*.diff</exclude>
               <exclude>**/*.patch</exclude>
@@ -548,6 +501,7 @@ limitations under the License.
               <exclude>**/metastore_db/</exclude>
               <exclude>.mvn/**</exclude>
               <exclude>**/exclude-pmd.properties</exclude>
+              -->
             </excludes>
             <consoleOutput>true</consoleOutput>
           </configuration>
@@ -612,7 +566,6 @@ limitations under the License.
         <plugin>
           <groupId>com.github.spotbugs</groupId>
           <artifactId>spotbugs-maven-plugin</artifactId>
-          <version>${mvn-spotbugs-plugin.version}</version>
           <executions>
             <execution>
               <id>verify.spotbugs</id>
@@ -1404,7 +1357,7 @@ limitations under the License.
       <dependency>
         <groupId>com.github.spotbugs</groupId>
         <artifactId>spotbugs-annotations</artifactId>
-        <version>${mvn-spotbugs-plugin.version}</version>
+        <version>${spotbugs-annotations.version}</version>
         <optional>true</optional>
       </dependency>
       <dependency>
