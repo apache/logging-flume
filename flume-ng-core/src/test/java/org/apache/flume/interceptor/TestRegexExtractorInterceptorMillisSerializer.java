@@ -22,6 +22,7 @@ import org.apache.flume.Context;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import org.junit.Test;
 
@@ -66,8 +67,7 @@ public class TestRegexExtractorInterceptorMillisSerializer {
 
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
     long time = (System.currentTimeMillis() / 1000L) * 1000L;
-    LocalDateTime current = Instant.ofEpochMilli(time).atOffset(UTC)
-              .toLocalDateTime();
+    LocalDateTime current = LocalDateTime.ofInstant(Instant.ofEpochMilli(time), ZoneId.systemDefault());
     Assert.assertEquals(String.valueOf(time),
         fixture.serialize(formatter.format(current)));
   }
