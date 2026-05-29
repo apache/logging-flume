@@ -35,8 +35,6 @@ public class TestRecursiveLookup {
           .getResource("flume-conf-with-recursiveLookup.properties").getFile());
   private static final String BIND = "192.168.11.101";
 
-  @Rule
-  public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
   private UriConfigurationProvider provider;
 
   @Before

@@ -38,8 +38,6 @@ public class TestOverrideFile {
           .getResource("flume-conf-override.properties").getFile());
   private static final String BIND = "192.168.13.101";
 
-  @Rule
-  public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
   private UriConfigurationProvider provider;
 
   @Before
