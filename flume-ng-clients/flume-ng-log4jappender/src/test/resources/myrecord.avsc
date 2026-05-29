@@ -1,1 +1,0 @@
-{"type":"record","name":"myrecord","fields":[{"name":"message","type":"string"}]}
