@@ -105,7 +105,8 @@ limitations under the License.
     <mvn-paranamer-plugin.version>2.8</mvn-paranamer-plugin.version>
     <mvn-pmd-plugin.version>3.15.0</mvn-pmd-plugin.version>
     <mvn-site-plugin.version>3.9.0</mvn-site-plugin.version>
-    <mvn-spotbugs-plugin.version>4.9.3.0</mvn-spotbugs-plugin.version>
+    <spotbugs.version>4.9.3</spotbugs.version>
+    <mvn-spotbugs-plugin.version>${spotbugs.version}.0</mvn-spotbugs-plugin.version>
     <mvn-surefire-plugin.version>2.22.2</mvn-surefire-plugin.version>
     <!--<netty.version>3.10.6.Final</netty.version>-->
     <netty-all.version>4.1.86.Final</netty-all.version>
@@ -1379,7 +1380,7 @@ limitations under the License.
       <dependency>
         <groupId>com.github.spotbugs</groupId>
         <artifactId>spotbugs-annotations</artifactId>
-        <version>${mvn-spotbugs-plugin.version}</version>
+        <version>${spotbugs.version}</version>
         <optional>true</optional>
       </dependency>
       <dependency>
