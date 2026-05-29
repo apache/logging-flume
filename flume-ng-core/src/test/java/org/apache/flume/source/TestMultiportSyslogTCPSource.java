@@ -61,14 +61,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.DefaultIoSessionDataStructureFactory;
-import org.apache.mina.transport.socket.nio.NioSession;
+import org.apache.mina.core.session.DummySession;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.apache.flume.util.Whitebox;
 
-import static java.time.ZoneOffset.UTC;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -460,17 +459,17 @@ public class TestMultiportSyslogTCPSource {
 
     // one faker on port 10001
     int port1 = 10001;
-    NioSession session1 = mock(NioSession.class);
+    DummySession session1 = new DummySession();
     session1.setAttributeMap(dsFactory.getAttributeMap(session1));
     SocketAddress sockAddr1 = new InetSocketAddress(localAddr, port1);
-    when(session1.getLocalAddress()).thenReturn(sockAddr1);
+    session1.setLocalAddress(sockAddr1);
 
     // another faker on port 10002
     int port2 = 10002;
-    NioSession session2 = mock(NioSession.class);
+    DummySession session2 = new DummySession();
     session2.setAttributeMap(dsFactory.getAttributeMap(session2));
     SocketAddress sockAddr2 = new InetSocketAddress(localAddr, port2);
-    when(session2.getLocalAddress()).thenReturn(sockAddr2);
+    session2.setLocalAddress(sockAddr2);
 
     // set up expected charsets per port
     ConcurrentMap<Integer, ThreadSafeDecoder> portCharsets =
