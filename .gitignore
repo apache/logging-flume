@@ -20,3 +20,7 @@ nb-configuration.xml
 .DS_Store
 /.mvn/wrapper/maven-wrapper.jar
 **/metastore_db
+# Flatten Maven Plugin
+.flattened-pom.xml
+# Maven extensions
+.mvn/extensions.xml
