@@ -56,6 +56,9 @@ final class MapResolver {
 
   public static Map<String, String> resolveProperties(Properties properties) {
     Map<String, String> map = new HashMap<>();
+    // Pre-seed the map, so that evaluation doesn't depend on the order of Properties#stringPropertyNames
+    properties.forEach((key, value) -> map.put(key.toString(), value.toString()));
+
     boolean useEnvVars = ENV_VAR_PROPERTY.equals(System.getProperty(PROPS_IMPL_KEY));
     StringLookup defaultLookup = useEnvVars ? new DefaultLookup(map) :
         StringLookupFactory.INSTANCE.mapStringLookup(map);
@@ -63,6 +66,7 @@ final class MapResolver {
         defaultLookup, false);
     StringSubstitutor substitutor = new StringSubstitutor(lookup);
     substitutor.setEnableSubstitutionInVariables(true);
+
     properties.stringPropertyNames().forEach((k) -> map.put(k,
         substitutor.replace(properties.getProperty(k))));
     return map;
