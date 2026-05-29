@@ -40,7 +40,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
 import java.io.ByteArrayOutputStream;
@@ -524,7 +524,7 @@ public class TestSpoolDirectorySource {
     Mockito.doThrow(new ChannelException("dummy"))
         .doThrow(new ChannelFullException("dummy"))
         .doThrow(new RuntimeException("runtime"))
-        .when(cp).processEventBatch(Matchers.anyListOf(Event.class));
+        .when(cp).processEventBatch(ArgumentMatchers.anyList(Event.class));
     source.setChannelProcessor(cp);
 
     ReliableSpoolingFileEventReader reader = Mockito.mock(ReliableSpoolingFileEventReader.class);

@@ -116,13 +116,26 @@ limitations under the License.
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
-        <artifactId>mockito-all</artifactId>
+        <artifactId>mockito-core</artifactId>
         <version>${mockito.version}</version>
         <scope>test</scope>
       </dependency>
     </dependencies>
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${mvn-compiler-plugin.version}</version>
+        <configuration>
+          <release>${releaseJavaVersion}</release>
+          <compilerArgs>
+            <arg>-parameters</arg>
+            <arg>--add-exports=java.base/sun.nio.ch=ALL-UNNAMED</arg>
+            <arg>--add-exports=java.management/sun.management=ALL-UNNAMED</arg>
+          </compilerArgs>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.apache.rat</groupId>
         <artifactId>apache-rat-plugin</artifactId>
@@ -190,22 +203,6 @@ limitations under the License.
         </executions>
       </plugin>
 
-      <plugin>
-        <groupId>com.thoughtworks.paranamer</groupId>
-        <artifactId>paranamer-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>run</id>
-            <configuration>
-              <sourceDirectory>${project.build.directory}/generated-sources/avro</sourceDirectory>
-              <outputDirectory>${project.build.directory}/classes</outputDirectory>
-            </configuration>
-            <goals>
-              <goal>generate</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>

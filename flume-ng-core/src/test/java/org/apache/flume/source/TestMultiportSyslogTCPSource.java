@@ -66,7 +66,7 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.mockito.internal.util.reflection.Whitebox;
+import org.apache.flume.util.Whitebox;
 
 import static java.time.ZoneOffset.UTC;
 import static org.junit.Assert.assertEquals;
@@ -550,7 +550,7 @@ public class TestMultiportSyslogTCPSource {
     List<Event> channelEvents = new ArrayList<>();
     ChannelProcessor cp = Mockito.mock(ChannelProcessor.class);
     doThrow(new ChannelException("dummy")).doNothing().when(cp)
-        .processEventBatch(anyListOf(Event.class));
+        .processEventBatch(anyList());
     List<Socket> socketList = new ArrayList<>();
     try {
       testNPorts(source, channel, channelEvents, 1, cp,

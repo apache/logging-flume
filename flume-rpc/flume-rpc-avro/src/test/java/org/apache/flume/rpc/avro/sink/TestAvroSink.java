@@ -48,7 +48,7 @@ import org.apache.flume.source.avro.Status;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.mockito.internal.util.reflection.Whitebox;
+import org.apache.flume.util.Whitebox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

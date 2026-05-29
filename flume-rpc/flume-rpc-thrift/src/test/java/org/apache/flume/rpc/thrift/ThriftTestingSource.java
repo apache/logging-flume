@@ -57,7 +57,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.mockito.internal.util.reflection.Whitebox;
+import org.apache.flume.util.Whitebox;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -78,8 +78,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyListOf;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doThrow;
 
 public class ThriftTestingSource {
@@ -591,7 +591,7 @@ public class ThriftTestingSource {
         source.configure(context);
         ChannelProcessor cp = Mockito.mock(ChannelProcessor.class);
         doThrow(new ChannelException("dummy")).when(cp).processEvent(any(Event.class));
-        doThrow(new ChannelException("dummy")).when(cp).processEventBatch(anyListOf(Event.class));
+        doThrow(new ChannelException("dummy")).when(cp).processEventBatch(anyList(Event.class));
         source.setChannelProcessor(cp);
         source.start();
         Event event = EventBuilder.withBody("hello".getBytes());
