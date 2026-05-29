@@ -20,6 +20,7 @@ package org.apache.flume.interceptor;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 import org.apache.flume.Context;
@@ -169,8 +170,7 @@ public class TestRegexExtractorInterceptor {
     long now = (System.currentTimeMillis() / 60000L) * 60000L;
     String pattern = "yyyy-MM-dd HH:mm:ss,SSS";
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
-    LocalDateTime current = Instant.ofEpochMilli(now).atOffset(UTC)
-            .toLocalDateTime();
+    LocalDateTime current = LocalDateTime.ofInstant(Instant.ofEpochMilli(now), ZoneId.systemDefault());
     String body = formatter.format(current);
     Context context = new Context();
     // Skip the second group
