@@ -80,4 +80,44 @@ public class TestMapResolver {
     assertEquals("Test lookup was not resolved", "Value", test);
   }
 
+  @Test
+  public void testOrderOfEvaluation() {
+    // Tests that the evaluation order does not depend
+    // on the order of Properties#propertyNames
+    Properties properties = new Properties();
+    properties.setProperty("a", "${b}");
+    properties.setProperty("b", "OK");
+    Map<String, String> resolveProperties = MapResolver.resolveProperties(properties);
+    assertEquals("Incorrect order of evaluation", "OK", resolveProperties.get("a"));
+
+    properties = new Properties();
+    properties.setProperty("b", "${a}");
+    properties.setProperty("a", "OK");
+    resolveProperties = MapResolver.resolveProperties(properties);
+    assertEquals("Incorrect order of evaluation", "OK", resolveProperties.get("b"));
+  }
+
+  @Test
+  public void testDoesNotResolveRecursiveLookup() {
+    // Commons Text has a self-recursion guard
+    Properties props = new Properties();
+    props.setProperty("a", "${a}");
+    try {
+        // If it does throw, it should return the definition
+        assertEquals("${a}", MapResolver.resolveProperties(props).get("a"));
+    } catch (IllegalStateException ignored) {
+        // or it can throw
+    }
+
+    props = new Properties();
+    props.setProperty("a", "${b}");
+    props.setProperty("b", "${a}");
+      try {
+          // If it does throw, it should return the definition
+          assertEquals("${b}", MapResolver.resolveProperties(props).get("a"));
+      } catch (IllegalStateException ignored) {
+          // or it can throw
+      }
+  }
+
 }
