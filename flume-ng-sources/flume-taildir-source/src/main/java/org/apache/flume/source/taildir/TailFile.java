@@ -43,7 +43,7 @@ public class TailFile {
   private static final int NEED_READING = -1;
 
   private RandomAccessFile raf;
-  private final String path;
+  private String path;
   private final long inode;
   private long pos;
   private long lastUpdated;
@@ -107,6 +107,10 @@ public class TailFile {
     this.pos = pos;
   }
 
+  public void setPath(String path) {
+    this.path = path;
+  }
+
   public void setLastUpdated(long lastUpdated) {
     this.lastUpdated = lastUpdated;
   }
@@ -128,6 +132,19 @@ public class TailFile {
     }
     return false;
   }
+
+  public boolean updatePosAndPath(String path, long inode, long pos) throws IOException {
+    if (this.inode == inode) {
+      setPos(pos);
+      setPath(path);
+      updateFilePos(pos);
+      logger.info("Updated position and path, file: " + path + ", inode: " + inode +
+              ", pos: " + pos);
+      return true;
+    }
+    return false;
+  }
+
   public void updateFilePos(long pos) throws IOException {
     raf.seek(pos);
     lineReadPos = pos;
