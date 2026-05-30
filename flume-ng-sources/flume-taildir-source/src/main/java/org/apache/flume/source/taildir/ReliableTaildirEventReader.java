@@ -92,8 +92,11 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
     this.fileNameHeader = fileNameHeader;
     updateTailFiles(skipToEnd);
 
-    logger.info("Updating position from position file: " + positionFilePath);
-    loadPositionFile(positionFilePath);
+    File positionFile = new File(positionFilePath);
+    if (positionFile.exists() && positionFile.isFile() && positionFile.length() != 0) {
+      logger.info("Updating position from position file: " + positionFilePath);
+      loadPositionFile(positionFilePath);
+    }
   }
 
   /**
