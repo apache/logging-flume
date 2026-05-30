@@ -52,9 +52,9 @@ public class TestBLOBHandler {
   @SuppressWarnings({ "unchecked", "rawtypes" })
   @Test
   public void testCSVData() throws Exception {
-    Map requestParameterMap = new HashMap();
-    requestParameterMap.put("param1", new String[] { "value1" });
-    requestParameterMap.put("param2", new String[] { "value2" });
+    Map requestHeaders = new HashMap();
+    requestHeaders.put("param1", "value1");
+    requestHeaders.put("param2", "value2");
 
     HttpServletRequest req = mock(HttpServletRequest.class);
     final String csvData = "a,b,c";
@@ -63,7 +63,7 @@ public class TestBLOBHandler {
         new ByteArrayInputStream(csvData.getBytes()));
 
     when(req.getInputStream()).thenReturn(servletInputStream);
-    when(req.getParameterMap()).thenReturn(requestParameterMap);
+    when(req.getParameterMap()).thenReturn(requestHeaders);
 
     Context context = mock(Context.class);
     when(
@@ -85,7 +85,7 @@ public class TestBLOBHandler {
   @Test
   public void testTabData() throws Exception {
     Map requestParameterMap = new HashMap();
-    requestParameterMap.put("param1", new String[] { "value1" });
+    requestParameterMap.put("param1", "value1");
 
     HttpServletRequest req = mock(HttpServletRequest.class);
     final String tabData = "a\tb\tc";

@@ -18,10 +18,7 @@
 package org.apache.flume.source.http;
 
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -65,18 +62,13 @@ public class BLOBHandler implements HTTPSourceHandler {
 
     InputStream inputStream = request.getInputStream();
 
-    Map<String, String[]> parameters = request.getParameterMap();
-    for (String parameter : parameters.keySet()) {
-      String value = parameters.get(parameter)[0];
+    Enumeration<String> parameters = request.getHeaderNames();
+    while (parameters.hasMoreElements()){
+      String value = parameters.nextElement();
       if (LOG.isDebugEnabled() && LogPrivacyUtil.allowLogRawData()) {
-        LOG.debug("Setting Header [Key, Value] as [{},{}] ", parameter, value);
+        LOG.debug("Setting Header [Key, Value] as [{},{}] ", request.getHeader(value), value);
       }
-      headers.put(parameter, value);
-    }
-
-    for (String header : mandatoryHeaders) {
-      Preconditions.checkArgument(headers.containsKey(header),
-          "Please specify " + header + " parameter in the request.");
+      headers.put(request.getHeader(value), value);
     }
 
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
