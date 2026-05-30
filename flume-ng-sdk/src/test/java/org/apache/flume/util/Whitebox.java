@@ -29,4 +29,12 @@ public class Whitebox {
             throw new RuntimeException("Unable to access field " + fieldName, ex);
         }
     }
+
+    public static void setInternalState(Object target, String field, Object value) {
+        try {
+            FieldUtils.writeField(target, field, value);
+        } catch (IllegalAccessException ex) {
+            throw new RuntimeException("Unable to access field " + field, ex);
+        }
+    }
 }

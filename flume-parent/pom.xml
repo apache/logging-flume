@@ -81,7 +81,6 @@ limitations under the License.
     <jersey.version>1.8</jersey.version>
     <jetty.version>9.4.51.v20230217</jetty.version>
     <jdom.version>1.1.3</jdom.version>
-    <joda-time.version>2.9.9</joda-time.version>
     <junit.version>4.13.2</junit.version>
     <kite.version>1.1.0</kite.version>
     <kudu.version>1.10.0</kudu.version>
@@ -107,11 +106,11 @@ limitations under the License.
     <mvn-site-plugin.version>3.9.0</mvn-site-plugin.version>
     <spotbugs.version>4.9.3</spotbugs.version>
     <mvn-spotbugs-plugin.version>${spotbugs.version}.0</mvn-spotbugs-plugin.version>
-    <mvn-surefire-plugin.version>2.22.2</mvn-surefire-plugin.version>
+    <mvn-surefire-plugin.version>3.5.5</mvn-surefire-plugin.version>
     <!--<netty.version>3.10.6.Final</netty.version>-->
     <netty-all.version>4.1.86.Final</netty-all.version>
     <parquet.version>1.11.2</parquet.version>
-    <external.protobuf.version>2.5.0</external.protobuf.version>
+    <external.protobuf.version>4.35.0</external.protobuf.version>
     <protobuf.plugin.version>0.6.1</protobuf.plugin.version>
     <prometheus.version>0.15.0</prometheus.version>
     <rat.version>0.12</rat.version>
@@ -729,38 +728,10 @@ limitations under the License.
 
       <dependency>
         <groupId>org.apache.logging.log4j</groupId>
-        <artifactId>log4j-api</artifactId>
+        <artifactId>log4j-bom</artifactId>
         <version>${log4j.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.logging.log4j</groupId>
-        <artifactId>log4j-core</artifactId>
-        <version>${log4j.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.logging.log4j</groupId>
-        <artifactId>log4j-slf4j-impl</artifactId>
-        <version>${log4j.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.logging.log4j</groupId>
-        <artifactId>log4j-1.2-api</artifactId>
-        <version>${log4j.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.logging.log4j</groupId>
-        <artifactId>log4j-jcl</artifactId>
-        <version>${log4j.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.logging.log4j</groupId>
-        <artifactId>log4j-jul</artifactId>
-        <version>${log4j.version}</version>
+        <scope>import</scope>
+        <type>pom</type>
       </dependency>
 
       <dependency>
@@ -871,12 +842,6 @@ limitations under the License.
         <groupId>org.schwering</groupId>
         <artifactId>irclib</artifactId>
         <version>${irclib.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>joda-time</groupId>
-        <artifactId>joda-time</artifactId>
-        <version>${joda-time.version}</version>
       </dependency>
 
       <dependency>

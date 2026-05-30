@@ -17,7 +17,7 @@
 
 package org.apache.flume.source.taildir;
 
-import static org.mockito.Mockito.anyListOf;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
@@ -376,7 +376,7 @@ public class TestTaildirSource {
     ChannelProcessor cp = Mockito.mock(ChannelProcessor.class);
     source.setChannelProcessor(cp);
     doThrow(new ChannelException("dummy")).doNothing().when(cp)
-        .processEventBatch(anyList(Event.class));
+        .processEventBatch(anyList());
     source.start();
     source.process();
     assertEquals(1, source.getSourceCounter().getChannelWriteFail());

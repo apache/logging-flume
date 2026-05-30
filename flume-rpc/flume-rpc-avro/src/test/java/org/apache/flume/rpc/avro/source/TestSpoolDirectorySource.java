@@ -524,7 +524,7 @@ public class TestSpoolDirectorySource {
     Mockito.doThrow(new ChannelException("dummy"))
         .doThrow(new ChannelFullException("dummy"))
         .doThrow(new RuntimeException("runtime"))
-        .when(cp).processEventBatch(ArgumentMatchers.anyList(Event.class));
+        .when(cp).processEventBatch(ArgumentMatchers.anyList());
     source.setChannelProcessor(cp);
 
     ReliableSpoolingFileEventReader reader = Mockito.mock(ReliableSpoolingFileEventReader.class);

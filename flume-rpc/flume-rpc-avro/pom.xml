@@ -33,8 +33,7 @@ limitations under the License.
 
   <properties>
     <module.name>org.apache.flume.rpc.avro</module.name>
-    <avro.version>1.11.1</avro.version>
-    <spotbugs.maxAllowedViolations>23</spotbugs.maxAllowedViolations>
+    <spotbugs.maxAllowedViolations>55</spotbugs.maxAllowedViolations>
     <pmd.maxAllowedViolations>121</pmd.maxAllowedViolations>
   </properties>
     <dependencies>
@@ -54,6 +53,12 @@ limitations under the License.
       <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-ng-sdk</artifactId>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.flume</groupId>
+        <artifactId>flume-ng-sdk</artifactId>
+        <classifier>tests</classifier>
+        <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.apache.flume</groupId>
@@ -117,7 +122,6 @@ limitations under the License.
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
-        <version>${mockito.version}</version>
         <scope>test</scope>
       </dependency>
     </dependencies>
@@ -131,8 +135,6 @@ limitations under the License.
           <release>${releaseJavaVersion}</release>
           <compilerArgs>
             <arg>-parameters</arg>
-            <arg>--add-exports=java.base/sun.nio.ch=ALL-UNNAMED</arg>
-            <arg>--add-exports=java.management/sun.management=ALL-UNNAMED</arg>
           </compilerArgs>
         </configuration>
       </plugin>

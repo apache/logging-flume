@@ -21,6 +21,7 @@ package org.apache.flume.channel.file;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessage;
+import com.google.protobuf.Message;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.channel.file.encryption.CipherProvider;
@@ -142,7 +143,7 @@ public class LogFileV3 extends LogFile {
    * @throws IOException if a write error occurs or the File.renameTo
    *                     method returns false meaning the file could not be overwritten.
    */
-  public static void writeDelimitedTo(GeneratedMessage msg, File file)
+  public static void writeDelimitedTo(Message msg, File file)
       throws IOException {
     File tmp = Serialization.getMetaDataTempFile(file);
     FileOutputStream outputStream = new FileOutputStream(tmp);

@@ -591,7 +591,7 @@ public class ThriftTestingSource {
         source.configure(context);
         ChannelProcessor cp = Mockito.mock(ChannelProcessor.class);
         doThrow(new ChannelException("dummy")).when(cp).processEvent(any(Event.class));
-        doThrow(new ChannelException("dummy")).when(cp).processEventBatch(anyList(Event.class));
+        doThrow(new ChannelException("dummy")).when(cp).processEventBatch(anyList());
         source.setChannelProcessor(cp);
         source.start();
         Event event = EventBuilder.withBody("hello".getBytes());
