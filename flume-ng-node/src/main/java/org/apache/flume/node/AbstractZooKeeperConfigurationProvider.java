@@ -33,6 +33,9 @@ import org.apache.flume.conf.FlumeConfiguration;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * ZooKeeper based configuration implementation provider.
  * 
@@ -70,6 +73,10 @@ public abstract class AbstractZooKeeperConfigurationProvider extends
 
   protected final String zkConnString;
 
+  private static final String DEFAULT_PROPERTIES_IMPLEMENTATION = "java.util.Properties";
+  private static final Logger LOGGER = LoggerFactory.getLogger(
+      AbstractZooKeeperConfigurationProvider.class);
+
   protected AbstractZooKeeperConfigurationProvider(String agentName,
       String zkConnString, String basePath) {
     super(agentName);
@@ -90,14 +97,24 @@ public abstract class AbstractZooKeeperConfigurationProvider extends
 
   protected FlumeConfiguration configFromBytes(byte[] configData)
       throws IOException {
-    Map<String, String> configMap;
-    if (configData == null || configData.length == 0) {
-      configMap = Collections.emptyMap();
-    } else {
-      String fileContent = new String(configData, Charsets.UTF_8);
-      Properties properties = new Properties();
-      properties.load(new StringReader(fileContent));
-      configMap = toMap(properties);
+    Map<String, String> configMap = Collections.emptyMap(); 
+    if (configData != null && configData.length > 0) {
+      try {
+        String fileContent = new String(configData, Charsets.UTF_8);
+        String resolverClassName = System.getProperty("propertiesImplementation",
+            DEFAULT_PROPERTIES_IMPLEMENTATION);
+        Class<? extends Properties> propsclass = Class.forName(resolverClassName)
+            .asSubclass(Properties.class);
+        Properties properties = propsclass.newInstance();
+        properties.load(new StringReader(fileContent));
+        configMap = toMap(properties);
+      } catch (ClassNotFoundException e) {
+        LOGGER.error("Configuartion resolver class not found", e);
+      } catch (InstantiationException e) {
+        LOGGER.error("Instantiation exception", e);
+      } catch (IllegalAccessException e) {
+        LOGGER.error("Illegal access exception", e);
+      }
     }
     return new FlumeConfiguration(configMap);
   }
