@@ -22,7 +22,6 @@ package org.apache.flume.source.taildir;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
 import com.google.gson.stream.JsonReader;
 import org.apache.flume.Event;
@@ -43,6 +42,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 @InterfaceAudience.Private
 @InterfaceStability.Evolving
@@ -53,7 +53,7 @@ public class ReliableTaildirEventReader implements ReliableEventReader {
   private final Table<String, String, String> headerTable;
 
   private TailFile currentFile = null;
-  private Map<Long, TailFile> tailFiles = Maps.newHashMap();
+  private Map<Long, TailFile> tailFiles = new ConcurrentHashMap<>();
   private long updateTime;
   private boolean addByteOffset;
   private boolean cachePatternMatching;
