@@ -29,6 +29,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -228,12 +229,14 @@ public class TestLog {
                            .build();
     log.replay();
     File filler = new File(checkpointDir, "filler");
-    byte[] buffer = new byte[64 * 1024];
     FileOutputStream out = new FileOutputStream(filler);
+    BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(out);
     while (checkpointDir.getUsableSpace() > minimumRequiredSpace) {
-      out.write(buffer);
+      String data = "this is dynamic data byte";
+      byte[] dataBytes = data.getBytes();
+      bufferedOutputStream.write(dataBytes);
     }
-    out.close();
+    bufferedOutputStream.flush();
     try {
       FlumeEvent eventIn = TestUtils.newPersistableEvent();
       long transactionID = ++this.transactionID;
