@@ -38,10 +38,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.BYTE_OFFSET_HEADER_KEY;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants
+        .BYTE_OFFSET_HEADER_KEY;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotSame;
 
 public class TestTaildirEventReader {
   private File tmpDir;
@@ -535,6 +538,34 @@ public class TestTaildirEventReader {
     reader.updateTailFiles();
     for (TailFile tf : reader.getTailFiles().values()) {
       assertEquals(true, tf.needTail());
+    }
+  }
+
+  @Test
+  // when the file is rename, it's pos becomes to 0,and it will be send to channel Repeatedly.
+  // Both when agent is running, or restart.
+  // It is a BUG!
+  public void testReadEventRepeatedlyWhenRenameFile() throws IOException {
+    File file1 = new File(tmpDir, "file1");
+    Files.append("line1\n", file1, Charsets.UTF_8);
+    Files.append("line2\n", file1, Charsets.UTF_8);
+    Files.append("line3\n", file1, Charsets.UTF_8);
+
+    ReliableTaildirEventReader reader = getReader();
+    reader.updateTailFiles();
+    for (TailFile tf : reader.getTailFiles().values()) {
+      reader.readEvents(tf, 10);
+      reader.commit();
+    }
+    reader.updateTailFiles();
+
+    File file2 = new File(tmpDir, "file2");
+    file1.renameTo(file2);
+    reader.updateTailFiles();
+
+    for (TailFile tf : reader.getTailFiles().values()) {
+      assertEquals(false, tf.needTail());
+      assertNotSame(0, tf.getPos());
     }
   }
 }
