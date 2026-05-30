@@ -1,8 +1,0 @@
-{
-  "namespace": "org.apache.flume.serialization",
-  "type": "record",
-  "name": "TransferStateFileMeta",
-  "fields": [
-    {"name": "offset", "type": "long"}
-  ]
-}

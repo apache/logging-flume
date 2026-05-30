@@ -47,7 +47,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.mockito.internal.util.reflection.Whitebox;
+import org.apache.flume.util.Whitebox;
 
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
@@ -82,7 +82,7 @@ import java.util.Random;
 import java.util.Set;
 
 import static org.fest.reflect.core.Reflection.field;
-import static org.mockito.Matchers.anyListOf;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doThrow;
 
 /**
@@ -310,7 +310,7 @@ public class TestHTTPSource {
   @Test
   public void testCounterGenericFail() throws Exception {
     ChannelProcessor cp = Mockito.mock(ChannelProcessor.class);
-    doThrow(new RuntimeException("dummy")).when(cp).processEventBatch(anyListOf(Event.class));
+    doThrow(new RuntimeException("dummy")).when(cp).processEventBatch(anyList());
     ChannelProcessor oldCp = httpSource.getChannelProcessor();
     httpSource.setChannelProcessor(cp);
     testBatchWithVariousEncoding("UTF-8");

@@ -52,11 +52,11 @@ jobs:
         uses: actions/checkout@v6
 
       # JDK 8 is needed for the build, and it is the primary bytecode target.
-      - name: Setup JDK 8
+      - name: Setup JDK 17
         uses: actions/setup-java@v5
         with:
           distribution: ${{ matrix.java-distribution }}
-          java-version: 8
+          java-version: 17
           cache: maven
 
       - name: Build with Maven

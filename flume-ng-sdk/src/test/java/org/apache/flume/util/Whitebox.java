@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -17,21 +17,24 @@
  * under the License.
  */
 
-@namespace("org.apache.flume.source.avro")
+package org.apache.flume.util;
 
-protocol AvroSourceProtocol {
+import org.apache.commons.lang.reflect.FieldUtils;
 
-  enum Status {
-    OK, FAILED, UNKNOWN
-  }
+public class Whitebox {
+    public static <T> T getInternalState(Object target, String fieldName) {
+        try {
+            return (T) FieldUtils.readField(target, fieldName, true);
+        } catch (IllegalAccessException ex) {
+            throw new RuntimeException("Unable to access field " + fieldName, ex);
+        }
+    }
 
-  record AvroFlumeEvent {
-    map<string> headers;
-    bytes body;
-  }
-
-  Status append( AvroFlumeEvent event );
-
-  Status appendBatch( array<AvroFlumeEvent> events );
-
+    public static void setInternalState(Object target, String field, Object value) {
+        try {
+            FieldUtils.writeField(target, field, value, true);
+        } catch (IllegalAccessException ex) {
+            throw new RuntimeException("Unable to access field " + field, ex);
+        }
+    }
 }

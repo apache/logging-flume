@@ -184,6 +184,21 @@ public class TestSyslogUtils {
   }
 
   @Test
+  public void TestHeader12() throws ParseException {
+    // RFC 5424 allows arbitrary precision in the timestamp.
+    // The regex must accept it; SyslogUtils still truncates the fraction to 3 digits.
+    String inputStamp  = "2014-10-03T17:20:01.123456789-07:00";
+    String outputStamp = "2014-10-03T17:20:01.123-07:00";
+
+    String format1 = "yyyy-MM-dd'T'HH:mm:ss.S";
+    String host1 = "ubuntu-11.cloudera.com";
+    String data1 = "some msg";
+
+    String msg1 = "<10>" + inputStamp + " " + host1 + " " + data1 + "\n";
+    checkHeader(msg1, outputStamp, format1, host1, data1);
+  }
+
+  @Test
   public void TestRfc3164HeaderApacheLogWithNulls() throws ParseException {
     SimpleDateFormat sdf = new SimpleDateFormat("MMM  d hh:MM:ss", Locale.ENGLISH);
     Calendar cal = Calendar.getInstance();

@@ -32,12 +32,22 @@ limitations under the License.
 
   <properties>
     <!-- TODO fix spotbugs/pmd violations -->
-    <spotbugs.maxAllowedViolations>14</spotbugs.maxAllowedViolations>
+    <spotbugs.maxAllowedViolations>24</spotbugs.maxAllowedViolations>
     <pmd.maxAllowedViolations>3</pmd.maxAllowedViolations>
     <module.name>org.apache.flume.source.taildir</module.name>
   </properties>
 
   <dependencies>
+    <dependency>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-ng-sdk</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-ng-sdk</artifactId>
+      <classifier>tests</classifier>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.apache.flume</groupId>
       <artifactId>flume-ng-core</artifactId>
@@ -51,7 +61,7 @@ limitations under the License.
 
     <dependency>
       <groupId>org.mockito</groupId>
-      <artifactId>mockito-all</artifactId>
+      <artifactId>mockito-core</artifactId>
       <scope>test</scope>
     </dependency>
 

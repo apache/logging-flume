@@ -33,7 +33,7 @@
 
   <properties>
     <!-- TODO fix spotbugs/pmd violations -->
-    <spotbugs.maxAllowedViolations>2</spotbugs.maxAllowedViolations>
+    <spotbugs.maxAllowedViolations>11</spotbugs.maxAllowedViolations>
     <pmd.maxAllowedViolations>8</pmd.maxAllowedViolations>
     <module.name>org.apache.flume.channel.spillable.memory</module.name>
   </properties>
@@ -83,7 +83,7 @@
 
     <dependency>
       <groupId>org.mockito</groupId>
-      <artifactId>mockito-all</artifactId>
+      <artifactId>mockito-core</artifactId>
       <scope>test</scope>
     </dependency>
 

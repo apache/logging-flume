@@ -64,7 +64,7 @@ public class SyslogUtils {
           /* yyyy-MM-dd'T'HH:mm:ss.SZ or yyyy-MM-dd'T'HH:mm:ss.S+hh:mm or - (null stamp) */
           "(?:" +
           "(\\d{4}[-]\\d{2}[-]\\d{2}[T]\\d{2}[:]\\d{2}[:]\\d{2}" +
-          "(?:\\.\\d{1,6})?(?:[+-]\\d{2}[:]\\d{2}|Z)?)|-)" + // stamp
+          "(?:\\.\\d{1,9})?(?:[+-]\\d{2}[:]\\d{2}|Z)?)|-)" + // stamp
           "\\s" + // separator
           "(?:([\\w][\\w\\d\\.@\\-]*)|-)" + // host name or - (null)
           "\\s" + // separator

@@ -89,7 +89,7 @@ public class TestSequenceGeneratorSource {
 
     ArgumentCaptor<Event> argumentCaptor = ArgumentCaptor.forClass(Event.class);
     Mockito.verify(cp, Mockito.times(6)).processEvent(argumentCaptor.capture());
-    Mockito.verify(cp, Mockito.never()).processEventBatch(Mockito.anyListOf(Event.class));
+    Mockito.verify(cp, Mockito.never()).processEventBatch(Mockito.anyList());
 
     verifyEventSequence(TOTAL_EVENTS, argumentCaptor.getAllValues());
   }
@@ -109,7 +109,7 @@ public class TestSequenceGeneratorSource {
         .doNothing()
         .doThrow(ChannelException.class) //failure injection on the second batch
         .doNothing()
-        .when(cp).processEventBatch(Mockito.anyListOf(Event.class));
+        .when(cp).processEventBatch(Mockito.anyList());
 
     source.setChannelProcessor(cp);
     source.start();
