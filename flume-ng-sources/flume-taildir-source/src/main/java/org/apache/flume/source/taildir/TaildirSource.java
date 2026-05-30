@@ -28,6 +28,8 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -82,7 +84,7 @@ public class TaildirSource extends AbstractSource implements
   private boolean cachePatternMatching;
 
   private List<Long> existingInodes = new CopyOnWriteArrayList<Long>();
-  private List<Long> idleInodes = new CopyOnWriteArrayList<Long>();
+  private Set<Long> idleInodes = new CopyOnWriteArraySet<Long>();
   private Long backoffSleepIncrement;
   private Long maxBackOffSleepInterval;
   private boolean fileHeader;
