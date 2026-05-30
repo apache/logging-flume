@@ -37,7 +37,6 @@ limitations under the License.
     <module>flume-parent</module>
     <module>flume-ng-core</module>
     <module>flume-ng-configuration</module>
-    <module>flume-ng-embedded-agent</module>
     <module>flume-ng-sources</module>
     <module>flume-ng-node</module>
     <!-- Disable until all snapshots are published
