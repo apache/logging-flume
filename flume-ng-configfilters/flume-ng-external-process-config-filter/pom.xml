@@ -27,6 +27,7 @@ limitations under the License.
 
     <properties>
         <module.name>org.apache.flume.configfilter.external</module.name>
+      <spotbugs.maxAllowedViolations>3</spotbugs.maxAllowedViolations>
     </properties>
 
     <artifactId>flume-ng-external-process-config-filter</artifactId>

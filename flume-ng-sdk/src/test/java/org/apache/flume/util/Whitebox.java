@@ -32,7 +32,7 @@ public class Whitebox {
 
     public static void setInternalState(Object target, String field, Object value) {
         try {
-            FieldUtils.writeField(target, field, value);
+            FieldUtils.writeField(target, field, value, true);
         } catch (IllegalAccessException ex) {
             throw new RuntimeException("Unable to access field " + field, ex);
         }
