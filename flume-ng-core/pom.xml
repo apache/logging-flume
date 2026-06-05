@@ -190,6 +190,38 @@
     </dependency>
 
   </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+        <executions>
+          <!-- The vendored Guava sources keep their original third-party header (ASF policy forbids
+               replacing it, see the exclude in `flume-parent`), but are still formatted like the rest
+               of the code base. This execution only checks the formatting; run `mvn spotless:apply@guava`
+               to fix any formatting violations it reports. -->
+          <execution>
+            <id>guava</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <phase>verify</phase>
+            <configuration combine.self="override">
+              <java>
+                <includes>
+                  <include>src/**/source/shaded/guava/**/*.java</include>
+                </includes>
+                <palantirJavaFormat>
+                  <version>${palantir-java-format.version}</version>
+                </palantirJavaFormat>
+              </java>
+              <lineEndings>UNIX</lineEndings>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
   <profiles>
     <profile>
       <id>not-windows</id>

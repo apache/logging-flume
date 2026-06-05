@@ -1284,6 +1284,12 @@
         <artifactId>spotless-maven-plugin</artifactId>
         <configuration>
           <java>
+            <excludes>
+              <!-- Third-party vendored sources: ASF policy forbids adding the ASF header to them.
+                   They keep their original header and are formatted by a dedicated execution
+                   (see the `guava` execution in `flume-ng-core`). -->
+              <exclude>**/source/shaded/guava/**</exclude>
+            </excludes>
             <licenseHeader>
               <!-- https://www.apache.org/legal/src-headers.html#headers -->
               <content>/*
