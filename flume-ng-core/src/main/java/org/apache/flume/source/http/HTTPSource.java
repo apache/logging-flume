@@ -234,14 +234,13 @@ public class HTTPSource extends SslContextAwareAbstractSource implements EventDr
             } catch (HTTPBadRequestException ex) {
                 LOG.warn("Received bad request from client. ", ex);
                 sourceCounter.incrementEventReadFail();
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Bad request from client. " + ex.getMessage());
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Bad request from client.");
                 return;
             } catch (Exception ex) {
                 LOG.warn("Deserializer threw unexpected exception. ", ex);
                 sourceCounter.incrementEventReadFail();
                 response.sendError(
-                        HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                        "Deserializer threw unexpected exception. " + ex.getMessage());
+                        HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Deserializer threw unexpected exception.");
                 return;
             }
             sourceCounter.incrementAppendBatchReceivedCount();
@@ -257,14 +256,14 @@ public class HTTPSource extends SslContextAwareAbstractSource implements EventDr
                 sourceCounter.incrementChannelWriteFail();
                 response.sendError(
                         HttpServletResponse.SC_SERVICE_UNAVAILABLE,
-                        "Error appending event to channel. Channel might be full." + ex.getMessage());
+                        "Error appending event to channel. Channel might be full.");
                 return;
             } catch (Exception ex) {
                 LOG.warn("Unexpected error appending event to channel. ", ex);
                 sourceCounter.incrementGenericProcessingFail();
                 response.sendError(
                         HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                        "Unexpected error while appending event to channel. " + ex.getMessage());
+                        "Unexpected error while appending event to channel.");
                 return;
             }
             response.setCharacterEncoding(request.getCharacterEncoding());
