@@ -1,22 +1,19 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to you under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 package org.apache.flume;
 
 import org.apache.flume.annotations.InterfaceAudience;
@@ -50,30 +47,31 @@ import org.apache.flume.lifecycle.LifecycleAware;
 @InterfaceAudience.Public
 @InterfaceStability.Stable
 public interface Sink extends LifecycleAware, NamedComponent {
-  /**
-   * <p>Sets the channel the sink will consume from</p>
-   * @param channel The channel to be polled
-   */
-  public void setChannel(Channel channel);
+    /**
+     * <p>Sets the channel the sink will consume from</p>
+     * @param channel The channel to be polled
+     */
+    public void setChannel(Channel channel);
 
-  /**
-   * @return the channel associated with this sink
-   */
-  public Channel getChannel();
+    /**
+     * @return the channel associated with this sink
+     */
+    public Channel getChannel();
 
-  /**
-   * <p>Requests the sink to attempt to consume data from attached channel</p>
-   * <p><strong>Note</strong>: This method should be consuming from the channel
-   * within the bounds of a Transaction. On successful delivery, the transaction
-   * should be committed, and on failure it should be rolled back.
-   * @return READY if 1 or more Events were successfully delivered, BACKOFF if
-   * no data could be retrieved from the channel feeding this sink
-   * @throws EventDeliveryException In case of any kind of failure to
-   * deliver data to the next hop destination.
-   */
-  public Status process() throws EventDeliveryException;
+    /**
+     * <p>Requests the sink to attempt to consume data from attached channel</p>
+     * <p><strong>Note</strong>: This method should be consuming from the channel
+     * within the bounds of a Transaction. On successful delivery, the transaction
+     * should be committed, and on failure it should be rolled back.
+     * @return READY if 1 or more Events were successfully delivered, BACKOFF if
+     * no data could be retrieved from the channel feeding this sink
+     * @throws EventDeliveryException In case of any kind of failure to
+     * deliver data to the next hop destination.
+     */
+    public Status process() throws EventDeliveryException;
 
-  public static enum Status {
-    READY, BACKOFF
-  }
+    public static enum Status {
+        READY,
+        BACKOFF
+    }
 }

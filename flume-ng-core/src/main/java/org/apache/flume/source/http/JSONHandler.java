@@ -1,13 +1,12 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to you under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -71,65 +70,64 @@ import org.slf4j.LoggerFactory;
  * Type type = new TypeToken<List<JSONEvent>>() {}.getType();
  * }
  */
-
 public class JSONHandler implements HTTPSourceHandler {
 
-  private static final Logger LOG = LoggerFactory.getLogger(JSONHandler.class);
-  private final Type listType = new TypeToken<List<JSONEvent>>() {}.getType();
-  private final Gson gson;
+    private static final Logger LOG = LoggerFactory.getLogger(JSONHandler.class);
+    private final Type listType = new TypeToken<List<JSONEvent>>() {}.getType();
+    private final Gson gson;
 
-  public JSONHandler() {
-    gson = new GsonBuilder().disableHtmlEscaping().create();
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public List<Event> getEvents(HttpServletRequest request) throws Exception {
-    BufferedReader reader = request.getReader();
-    String charset = request.getCharacterEncoding();
-    //UTF-8 is default for JSON. If no charset is specified, UTF-8 is to
-    //be assumed.
-    if (charset == null) {
-      LOG.debug("Charset is null, default charset of UTF-8 will be used.");
-      charset = "UTF-8";
-    } else if (!(charset.equalsIgnoreCase("utf-8")
-            || charset.equalsIgnoreCase("utf-16")
-            || charset.equalsIgnoreCase("utf-32"))) {
-      LOG.error("Unsupported character set in request {}. "
-              + "JSON handler supports UTF-8, "
-              + "UTF-16 and UTF-32 only.", charset);
-      throw new UnsupportedCharsetException("JSON handler supports UTF-8, "
-              + "UTF-16 and UTF-32 only.");
+    public JSONHandler() {
+        gson = new GsonBuilder().disableHtmlEscaping().create();
     }
 
-    /*
-     * Gson throws Exception if the data is not parseable to JSON.
-     * Need not catch it since the source will catch it and return error.
+    /**
+     * {@inheritDoc}
      */
-    List<Event> eventList = new ArrayList<Event>(0);
-    try {
-      eventList = gson.fromJson(reader, listType);
-    } catch (JsonSyntaxException ex) {
-      throw new HTTPBadRequestException("Request has invalid JSON Syntax.", ex);
+    @Override
+    public List<Event> getEvents(HttpServletRequest request) throws Exception {
+        BufferedReader reader = request.getReader();
+        String charset = request.getCharacterEncoding();
+        // UTF-8 is default for JSON. If no charset is specified, UTF-8 is to
+        // be assumed.
+        if (charset == null) {
+            LOG.debug("Charset is null, default charset of UTF-8 will be used.");
+            charset = "UTF-8";
+        } else if (!(charset.equalsIgnoreCase("utf-8")
+                || charset.equalsIgnoreCase("utf-16")
+                || charset.equalsIgnoreCase("utf-32"))) {
+            LOG.error(
+                    "Unsupported character set in request {}. "
+                            + "JSON handler supports UTF-8, "
+                            + "UTF-16 and UTF-32 only.",
+                    charset);
+            throw new UnsupportedCharsetException("JSON handler supports UTF-8, " + "UTF-16 and UTF-32 only.");
+        }
+
+        /*
+         * Gson throws Exception if the data is not parseable to JSON.
+         * Need not catch it since the source will catch it and return error.
+         */
+        List<Event> eventList = new ArrayList<Event>(0);
+        try {
+            eventList = gson.fromJson(reader, listType);
+        } catch (JsonSyntaxException ex) {
+            throw new HTTPBadRequestException("Request has invalid JSON Syntax.", ex);
+        }
+
+        for (Event e : eventList) {
+            ((JSONEvent) e).setCharset(charset);
+        }
+        return getSimpleEvents(eventList);
     }
 
-    for (Event e : eventList) {
-      ((JSONEvent) e).setCharset(charset);
-    }
-    return getSimpleEvents(eventList);
-  }
+    @Override
+    public void configure(Context context) {}
 
-  @Override
-  public void configure(Context context) {
-  }
-
-  private List<Event> getSimpleEvents(List<Event> events) {
-    List<Event> newEvents = new ArrayList<Event>(events.size());
-    for (Event e:events) {
-      newEvents.add(EventBuilder.withBody(e.getBody(), e.getHeaders()));
+    private List<Event> getSimpleEvents(List<Event> events) {
+        List<Event> newEvents = new ArrayList<Event>(events.size());
+        for (Event e : events) {
+            newEvents.add(EventBuilder.withBody(e.getBody(), e.getHeaders()));
+        }
+        return newEvents;
     }
-    return newEvents;
-  }
 }

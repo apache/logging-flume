@@ -1,20 +1,18 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to you under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.apache.flume.serialization;
 
@@ -79,59 +77,58 @@ import org.apache.flume.annotations.InterfaceStability;
 @InterfaceStability.Stable
 public interface EventSerializer {
 
-  /**
-   * {@link Context} prefix
-   */
-  public static String CTX_PREFIX = "serializer.";
+    /**
+     * {@link Context} prefix
+     */
+    public static String CTX_PREFIX = "serializer.";
 
-  /**
-   * Hook to write a header after file is opened for the first time.
-   */
-  public void afterCreate() throws IOException;
+    /**
+     * Hook to write a header after file is opened for the first time.
+     */
+    public void afterCreate() throws IOException;
 
-  /**
-   * Hook to handle any framing needed when file is re-opened (for write).<br/>
-   * Could have been named {@code afterOpenForAppend()}.
-   */
-  public void afterReopen() throws IOException;
+    /**
+     * Hook to handle any framing needed when file is re-opened (for write).<br/>
+     * Could have been named {@code afterOpenForAppend()}.
+     */
+    public void afterReopen() throws IOException;
 
-  /**
-   * Serialize and write the given event.
-   * @param event Event to write to the underlying stream.
-   * @throws IOException
-   */
-  public void write(Event event) throws IOException;
+    /**
+     * Serialize and write the given event.
+     * @param event Event to write to the underlying stream.
+     * @throws IOException
+     */
+    public void write(Event event) throws IOException;
 
-  /**
-   * Hook to flush any internal write buffers to the underlying stream.
-   * It is NOT necessary for an implementation to then call flush() / sync()
-   * on the underlying stream itself, since those semantics would be provided
-   * by the driver that calls this API.
-   */
-  public void flush() throws IOException;
+    /**
+     * Hook to flush any internal write buffers to the underlying stream.
+     * It is NOT necessary for an implementation to then call flush() / sync()
+     * on the underlying stream itself, since those semantics would be provided
+     * by the driver that calls this API.
+     */
+    public void flush() throws IOException;
 
-  /**
-   * Hook to write a trailer before the stream is closed.
-   * Implementations must not buffer data in this call since
-   * EventSerializer.flush() is not guaranteed to be called after beforeClose().
-   */
-  public void beforeClose() throws IOException;
+    /**
+     * Hook to write a trailer before the stream is closed.
+     * Implementations must not buffer data in this call since
+     * EventSerializer.flush() is not guaranteed to be called after beforeClose().
+     */
+    public void beforeClose() throws IOException;
 
-  /**
-   * Specify whether this output format supports reopening files for append.
-   * For example, this method should return {@code false} if
-   * {@link #beforeClose()} writes a trailer that "finalizes" the file
-   * (this type of behavior is file format-specific).<br/>
-   * Could have been named {@code supportsAppend()}.
-   */
-  public boolean supportsReopen();
+    /**
+     * Specify whether this output format supports reopening files for append.
+     * For example, this method should return {@code false} if
+     * {@link #beforeClose()} writes a trailer that "finalizes" the file
+     * (this type of behavior is file format-specific).<br/>
+     * Could have been named {@code supportsAppend()}.
+     */
+    public boolean supportsReopen();
 
-  /**
-   * Knows how to construct this event serializer.<br/>
-   * <b>Note: Implementations MUST provide a public a no-arg constructor.</b>
-   */
-  public interface Builder {
-    public EventSerializer build(Context context, OutputStream out);
-  }
-
+    /**
+     * Knows how to construct this event serializer.<br/>
+     * <b>Note: Implementations MUST provide a public a no-arg constructor.</b>
+     */
+    public interface Builder {
+        public EventSerializer build(Context context, OutputStream out);
+    }
 }

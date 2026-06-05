@@ -1,20 +1,18 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to you under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.apache.flume.serialization;
 
@@ -34,59 +32,56 @@ import org.junit.Test;
 
 public class TestBodyTextEventSerializer {
 
-  File testFile = new File("src/test/resources/events.txt");
-  File expectedFile = new File("src/test/resources/events.txt");
+    File testFile = new File("src/test/resources/events.txt");
+    File expectedFile = new File("src/test/resources/events.txt");
 
-  @Test
-  public void testWithNewline() throws FileNotFoundException, IOException {
+    @Test
+    public void testWithNewline() throws FileNotFoundException, IOException {
 
-    OutputStream out = new FileOutputStream(testFile);
-    EventSerializer serializer =
-        EventSerializerFactory.getInstance("text", new Context(), out);
-    serializer.afterCreate();
-    serializer.write(EventBuilder.withBody("event 1", Charsets.UTF_8));
-    serializer.write(EventBuilder.withBody("event 2", Charsets.UTF_8));
-    serializer.write(EventBuilder.withBody("event 3", Charsets.UTF_8));
-    serializer.flush();
-    serializer.beforeClose();
-    out.flush();
-    out.close();
+        OutputStream out = new FileOutputStream(testFile);
+        EventSerializer serializer = EventSerializerFactory.getInstance("text", new Context(), out);
+        serializer.afterCreate();
+        serializer.write(EventBuilder.withBody("event 1", Charsets.UTF_8));
+        serializer.write(EventBuilder.withBody("event 2", Charsets.UTF_8));
+        serializer.write(EventBuilder.withBody("event 3", Charsets.UTF_8));
+        serializer.flush();
+        serializer.beforeClose();
+        out.flush();
+        out.close();
 
-    BufferedReader reader = new BufferedReader(new FileReader(testFile));
-    Assert.assertEquals("event 1", reader.readLine());
-    Assert.assertEquals("event 2", reader.readLine());
-    Assert.assertEquals("event 3", reader.readLine());
-    Assert.assertNull(reader.readLine());
-    reader.close();
+        BufferedReader reader = new BufferedReader(new FileReader(testFile));
+        Assert.assertEquals("event 1", reader.readLine());
+        Assert.assertEquals("event 2", reader.readLine());
+        Assert.assertEquals("event 3", reader.readLine());
+        Assert.assertNull(reader.readLine());
+        reader.close();
 
-    FileUtils.forceDelete(testFile);
-  }
+        FileUtils.forceDelete(testFile);
+    }
 
-  @Test
-  public void testNoNewline() throws FileNotFoundException, IOException {
+    @Test
+    public void testNoNewline() throws FileNotFoundException, IOException {
 
-    OutputStream out = new FileOutputStream(testFile);
-    Context context = new Context();
-    context.put("appendNewline", "false");
-    EventSerializer serializer =
-        EventSerializerFactory.getInstance("text", context, out);
-    serializer.afterCreate();
-    serializer.write(EventBuilder.withBody("event 1\n", Charsets.UTF_8));
-    serializer.write(EventBuilder.withBody("event 2\n", Charsets.UTF_8));
-    serializer.write(EventBuilder.withBody("event 3\n", Charsets.UTF_8));
-    serializer.flush();
-    serializer.beforeClose();
-    out.flush();
-    out.close();
+        OutputStream out = new FileOutputStream(testFile);
+        Context context = new Context();
+        context.put("appendNewline", "false");
+        EventSerializer serializer = EventSerializerFactory.getInstance("text", context, out);
+        serializer.afterCreate();
+        serializer.write(EventBuilder.withBody("event 1\n", Charsets.UTF_8));
+        serializer.write(EventBuilder.withBody("event 2\n", Charsets.UTF_8));
+        serializer.write(EventBuilder.withBody("event 3\n", Charsets.UTF_8));
+        serializer.flush();
+        serializer.beforeClose();
+        out.flush();
+        out.close();
 
-    BufferedReader reader = new BufferedReader(new FileReader(testFile));
-    Assert.assertEquals("event 1", reader.readLine());
-    Assert.assertEquals("event 2", reader.readLine());
-    Assert.assertEquals("event 3", reader.readLine());
-    Assert.assertNull(reader.readLine());
-    reader.close();
+        BufferedReader reader = new BufferedReader(new FileReader(testFile));
+        Assert.assertEquals("event 1", reader.readLine());
+        Assert.assertEquals("event 2", reader.readLine());
+        Assert.assertEquals("event 3", reader.readLine());
+        Assert.assertNull(reader.readLine());
+        reader.close();
 
-    FileUtils.forceDelete(testFile);
-  }
-
+        FileUtils.forceDelete(testFile);
+    }
 }

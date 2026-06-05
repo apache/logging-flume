@@ -1,20 +1,18 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to you under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.apache.flume.conf.sink;
 
@@ -25,111 +23,110 @@ import org.apache.flume.conf.ComponentWithClassName;
  */
 public enum SinkType implements ComponentWithClassName {
 
-  /**
-   * Place holder for custom sinks not part of this enumeration.
-   */
-  OTHER(null),
+    /**
+     * Place holder for custom sinks not part of this enumeration.
+     */
+    OTHER(null),
 
-  /**
-   * Null sink
-   *
-   * @see NullSink
-   */
-  NULL("org.apache.flume.sink.NullSink"),
+    /**
+     * Null sink
+     *
+     * @see NullSink
+     */
+    NULL("org.apache.flume.sink.NullSink"),
 
-  /**
-   * Logger sink
-   *
-   * @see LoggerSink
-   */
-  LOGGER("org.apache.flume.sink.LoggerSink"),
+    /**
+     * Logger sink
+     *
+     * @see LoggerSink
+     */
+    LOGGER("org.apache.flume.sink.LoggerSink"),
 
-  /**
-   * Rolling file sink
-   *
-   * @see RollingFileSink
-   */
-  FILE_ROLL("org.apache.flume.sink.RollingFileSink"),
+    /**
+     * Rolling file sink
+     *
+     * @see RollingFileSink
+     */
+    FILE_ROLL("org.apache.flume.sink.RollingFileSink"),
 
-  /**
-   * HDFS Sink provided by org.apache.flume.sink.hdfs.HDFSEventSink
-   */
-  //HDFS("org.apache.flume.sink.hdfs.HDFSEventSink"),
+    /**
+     * HDFS Sink provided by org.apache.flume.sink.hdfs.HDFSEventSink
+     */
+    // HDFS("org.apache.flume.sink.hdfs.HDFSEventSink"),
 
-  /**
-   * IRC Sink provided by org.apache.flume.sink.irc.IRCSink
-   */
-  IRC("org.apache.flume.sink.irc.IRCSink"),
+    /**
+     * IRC Sink provided by org.apache.flume.sink.irc.IRCSink
+     */
+    IRC("org.apache.flume.sink.irc.IRCSink"),
 
-  /**
-   * Avro sink
-   *
-   * @see AvroSink
-   */
-  AVRO("org.apache.flume.rpc.avro.sink.AvroSink"),
+    /**
+     * Avro sink
+     *
+     * @see AvroSink
+     */
+    AVRO("org.apache.flume.rpc.avro.sink.AvroSink"),
 
-  /**
-   * Thrift sink
-   *
-   * @see ThriftSink
-   */
-  THRIFT("org.apache.flume.rpc.thrift.sink.ThriftSink"),
+    /**
+     * Thrift sink
+     *
+     * @see ThriftSink
+     */
+    THRIFT("org.apache.flume.rpc.thrift.sink.ThriftSink"),
 
-  /**
-   * ElasticSearch sink
-   *
-   * @see org.apache.flume.sink.elasticsearch.ElasticSearchSink
-   */
-  //ELASTICSEARCH("org.apache.flume.sink.elasticsearch.ElasticSearchSink"),
+    /**
+     * ElasticSearch sink
+     *
+     * @see org.apache.flume.sink.elasticsearch.ElasticSearchSink
+     */
+    // ELASTICSEARCH("org.apache.flume.sink.elasticsearch.ElasticSearchSink"),
 
-  /**
-   * HBase sink
-   *
-   * @see org.apache.flume.sink.hbase.HBaseSink
-   */
-  //HBASE("org.apache.flume.sink.hbase.HBaseSink"),
+    /**
+     * HBase sink
+     *
+     * @see org.apache.flume.sink.hbase.HBaseSink
+     */
+    // HBASE("org.apache.flume.sink.hbase.HBaseSink"),
 
-  /**
-   * AsyncHBase sink
-   *
-   * @see org.apache.flume.sink.hbase.AsyncHBaseSink
-   */
-  ASYNCHBASE("org.apache.flume.sink.hbase.AsyncHBaseSink"),
+    /**
+     * AsyncHBase sink
+     *
+     * @see org.apache.flume.sink.hbase.AsyncHBaseSink
+     */
+    ASYNCHBASE("org.apache.flume.sink.hbase.AsyncHBaseSink"),
 
-  /**
-   * HBase2 sink
-   *
-   * @see org.apache.flume.sink.hbase2.HBase2Sink
-   */
-  //HBASE2("org.apache.flume.sink.hbase2.HBase2Sink"),
+    /**
+     * HBase2 sink
+     *
+     * @see org.apache.flume.sink.hbase2.HBase2Sink
+     */
+    // HBASE2("org.apache.flume.sink.hbase2.HBase2Sink"),
 
-  /**
-   * Hive Sink
-   * @see org.apache.flume.sink.hive.HiveSink
-   */
-  //HIVE("org.apache.flume.sink.hive.HiveSink"),
+    /**
+     * Hive Sink
+     * @see org.apache.flume.sink.hive.HiveSink
+     */
+    // HIVE("org.apache.flume.sink.hive.HiveSink"),
 
-  /**
-   * HTTP Sink
-   *
-   * @see org.apache.flume.sink.http.HttpSink
-   */
-  HTTP("org.apache.flume.sink.http.HttpSink");
+    /**
+     * HTTP Sink
+     *
+     * @see org.apache.flume.sink.http.HttpSink
+     */
+    HTTP("org.apache.flume.sink.http.HttpSink");
 
-  private final String sinkClassName;
+    private final String sinkClassName;
 
-  private SinkType(String sinkClassName) {
-    this.sinkClassName = sinkClassName;
-  }
+    private SinkType(String sinkClassName) {
+        this.sinkClassName = sinkClassName;
+    }
 
-  @Deprecated
-  public String getSinkClassName() {
-    return sinkClassName;
-  }
+    @Deprecated
+    public String getSinkClassName() {
+        return sinkClassName;
+    }
 
-
-  @Override
-  public String getClassName() {
-    return sinkClassName;
-  }
+    @Override
+    public String getClassName() {
+        return sinkClassName;
+    }
 }

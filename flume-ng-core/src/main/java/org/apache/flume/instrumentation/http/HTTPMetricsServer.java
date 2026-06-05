@@ -1,22 +1,19 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to you under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 package org.apache.flume.instrumentation.http;
 
 import com.google.gson.Gson;
@@ -51,97 +48,91 @@ import org.slf4j.LoggerFactory;
  */
 public class HTTPMetricsServer implements MonitorService {
 
-  private Server jettyServer;
-  private int port;
-  private static Logger LOG = LoggerFactory.getLogger(HTTPMetricsServer.class);
-  private static int DEFAULT_PORT = 41414;
-  public static String CONFIG_PORT = "port";
-
-  @Override
-  public void start() {
-    jettyServer = new Server();
-    //We can use Contexts etc if we have many urls to handle. For one url,
-    //specifying a handler directly is the most efficient.
-    HttpConfiguration httpConfiguration = new HttpConfiguration();
-    ServerConnector connector = new ServerConnector(jettyServer,
-        new HttpConnectionFactory(httpConfiguration));
-    connector.setReuseAddress(true);
-    connector.setPort(port);
-    jettyServer.addConnector(connector);
-    jettyServer.setHandler(new HTTPMetricsHandler());
-    try {
-      jettyServer.start();
-      while (!jettyServer.isStarted()) {
-        Thread.sleep(500);
-      }
-    } catch (Exception ex) {
-      LOG.error("Error starting Jetty. JSON Metrics may not be available.", ex);
-    }
-
-  }
-
-  @Override
-  public void stop() {
-    try {
-      jettyServer.stop();
-      jettyServer.join();
-    } catch (Exception ex) {
-      LOG.error("Error stopping Jetty. JSON Metrics may not be available.", ex);
-    }
-
-  }
-
-  public int getPort() {
-    return port;
-  }
-
-  @Override
-  public void configure(Context context) {
-    port = context.getInteger(CONFIG_PORT, DEFAULT_PORT);
-  }
-
-  private class HTTPMetricsHandler extends AbstractHandler {
-
-    Type mapType = new TypeToken<Map<String, Map<String, String>>>() {}.getType();
-    Gson gson = new Gson();
+    private Server jettyServer;
+    private int port;
+    private static Logger LOG = LoggerFactory.getLogger(HTTPMetricsServer.class);
+    private static int DEFAULT_PORT = 41414;
+    public static String CONFIG_PORT = "port";
 
     @Override
-    public void handle(String target, Request r1,
-            HttpServletRequest request,
-            HttpServletResponse response) throws IOException, ServletException {
-      // /metrics is the only place to pull metrics.
-      //If we want to use any other url for something else, we should make sure
-      //that for metrics only /metrics is used to prevent backward
-      //compatibility issues.
-      if (request.getMethod().equalsIgnoreCase("TRACE") ||
-          request.getMethod().equalsIgnoreCase("OPTIONS")) {
-        response.sendError(HttpServletResponse.SC_FORBIDDEN);
-        response.flushBuffer();
-        ((Request) request).setHandled(true);
-        return;
-      }
-      if (target.equals("/")) {
-        response.setContentType("text/html;charset=utf-8");
-        response.setStatus(HttpServletResponse.SC_OK);
-        response.getWriter().write("For Flume metrics please click"
-                + " <a href = \"./metrics\"> here</a>.");
-        response.flushBuffer();
-        ((Request) request).setHandled(true);
-        return;
-      } else if (target.equalsIgnoreCase("/metrics")) {
-        response.setContentType("application/json;charset=utf-8");
-        response.setStatus(HttpServletResponse.SC_OK);
-        Map<String, Map<String, String>> metricsMap = JMXPollUtil.getAllMBeans();
-        String json = gson.toJson(metricsMap, mapType);
-        response.getWriter().write(json);
-        response.flushBuffer();
-        ((Request) request).setHandled(true);
-        return;
-      }
-      response.sendError(HttpServletResponse.SC_NOT_FOUND);
-      response.flushBuffer();
-      //Not handling the request returns a Not found error page.
+    public void start() {
+        jettyServer = new Server();
+        // We can use Contexts etc if we have many urls to handle. For one url,
+        // specifying a handler directly is the most efficient.
+        HttpConfiguration httpConfiguration = new HttpConfiguration();
+        ServerConnector connector = new ServerConnector(jettyServer, new HttpConnectionFactory(httpConfiguration));
+        connector.setReuseAddress(true);
+        connector.setPort(port);
+        jettyServer.addConnector(connector);
+        jettyServer.setHandler(new HTTPMetricsHandler());
+        try {
+            jettyServer.start();
+            while (!jettyServer.isStarted()) {
+                Thread.sleep(500);
+            }
+        } catch (Exception ex) {
+            LOG.error("Error starting Jetty. JSON Metrics may not be available.", ex);
+        }
     }
 
-  }
+    @Override
+    public void stop() {
+        try {
+            jettyServer.stop();
+            jettyServer.join();
+        } catch (Exception ex) {
+            LOG.error("Error stopping Jetty. JSON Metrics may not be available.", ex);
+        }
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    @Override
+    public void configure(Context context) {
+        port = context.getInteger(CONFIG_PORT, DEFAULT_PORT);
+    }
+
+    private class HTTPMetricsHandler extends AbstractHandler {
+
+        Type mapType = new TypeToken<Map<String, Map<String, String>>>() {}.getType();
+        Gson gson = new Gson();
+
+        @Override
+        public void handle(String target, Request r1, HttpServletRequest request, HttpServletResponse response)
+                throws IOException, ServletException {
+            // /metrics is the only place to pull metrics.
+            // If we want to use any other url for something else, we should make sure
+            // that for metrics only /metrics is used to prevent backward
+            // compatibility issues.
+            if (request.getMethod().equalsIgnoreCase("TRACE")
+                    || request.getMethod().equalsIgnoreCase("OPTIONS")) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                response.flushBuffer();
+                ((Request) request).setHandled(true);
+                return;
+            }
+            if (target.equals("/")) {
+                response.setContentType("text/html;charset=utf-8");
+                response.setStatus(HttpServletResponse.SC_OK);
+                response.getWriter().write("For Flume metrics please click" + " <a href = \"./metrics\"> here</a>.");
+                response.flushBuffer();
+                ((Request) request).setHandled(true);
+                return;
+            } else if (target.equalsIgnoreCase("/metrics")) {
+                response.setContentType("application/json;charset=utf-8");
+                response.setStatus(HttpServletResponse.SC_OK);
+                Map<String, Map<String, String>> metricsMap = JMXPollUtil.getAllMBeans();
+                String json = gson.toJson(metricsMap, mapType);
+                response.getWriter().write(json);
+                response.flushBuffer();
+                ((Request) request).setHandled(true);
+                return;
+            }
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            response.flushBuffer();
+            // Not handling the request returns a Not found error page.
+        }
+    }
 }

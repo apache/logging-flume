@@ -251,7 +251,7 @@ public class SyslogParser {
         // UTC
         if (tzFirst == 'Z') {
             return ts;
-        // numeric timezone
+            // numeric timezone
         } else if (tzFirst == '+' || tzFirst == '-') {
 
             Preconditions.checkArgument(msgLen > curPos + 5, "Bad format: Invalid timezone (%s)", msg);
