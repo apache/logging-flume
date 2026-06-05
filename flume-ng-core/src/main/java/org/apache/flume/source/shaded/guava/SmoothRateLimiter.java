@@ -264,7 +264,7 @@ abstract class SmoothRateLimiter extends RateLimiter {
                 permitsToTake -= permitsAboveHalfToTake;
             }
             // measuring the integral on the left part of the function (the horizontal line)
-            micros += (stableIntervalMicros * permitsToTake);
+            micros = micros + (long) (stableIntervalMicros * permitsToTake);
             return micros;
         }
 
