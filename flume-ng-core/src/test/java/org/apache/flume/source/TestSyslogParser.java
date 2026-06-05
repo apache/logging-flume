@@ -68,12 +68,16 @@ public class TestSyslogParser {
         new Entry("2003-08-24T05:14:15.000003-07:00", "Aug 24 12:14:15", 1061727255000L),
         new Entry("2012-04-13T08:08:08.0001+00:00", "Apr 13 08:08:08", 1334304488000L),
         new Entry("2012-04-13T08:08:08.251+00:00", "Apr 13 08:08:08", 1334304488251L),
+        new Entry("2012-04-13T09:08:08.251+01:00", "Apr 13 08:08:08", 1334304488251L),
+        new Entry("2012-04-13T07:08:08.251-01:00", "Apr 13 08:08:08", 1334304488251L),
         // The same instant with 0, 3, 6 and 9 fractional-second digits:
         // anything finer than a millisecond is truncated.
         new Entry("2003-10-11T22:14:15Z", "Oct 11 22:14:15", 1065910455000L),
         new Entry("2003-10-11T22:14:15.123Z", "Oct 11 22:14:15", 1065910455123L),
         new Entry("2003-10-11T22:14:15.123456Z", "Oct 11 22:14:15", 1065910455123L),
-        new Entry("2003-10-11T22:14:15.123456789Z", "Oct 11 22:14:15", 1065910455123L)
+        new Entry("2003-10-11T22:14:15.123456789Z", "Oct 11 22:14:15", 1065910455123L),
+        // Fractional digits that would overflow a `long`
+        new Entry("2003-10-11T22:14:15.1234567890123456789012345678901234567890Z", "Oct 11 22:14:15", 1065910455123L)
     };
 
     private static final String[] INVALID_RFC3164_TIMESTAMPS = {
@@ -86,9 +90,22 @@ public class TestSyslogParser {
     private static final String[] INVALID_RFC5424_TIMESTAMPS = {
         "", // empty
         "2003-10-11T22:14", // too short to hold a full timestamp
-        "2003-10-11T22:14:15.", // fractional-second marker but no digits or TZ
+        "2003-10-11T22:14:15.", // fractional-second marker but no digits nor TZ
+        "2003-10-11T22:14:15.123456789", // fractional-second marker but no TZ
+        "2003-10-11T22:14:15.Z", // fractional-second marker but no digits
         "2003-10-11T22:14:15+0", // truncated timezone offset
         "xxxx-10-11T22:14:15Z", // prefix is not a valid date-time
+        "2003-10-11T22:14:15+/2:34", // timezone with invalid digits
+        "2003-10-11T22:14:15+@2:34",
+        "2003-10-11T22:14:15+1/:34",
+        "2003-10-11T22:14:15+1@:34",
+        "2003-10-11T22:14:15+12/34",
+        "2003-10-11T22:14:15+12@34",
+        "2003-10-11T22:14:15+12:/4",
+        "2003-10-11T22:14:15+12:@4",
+        "2003-10-11T22:14:15+12:3/",
+        "2003-10-11T22:14:15+12:3@",
+        "2003-10-11T22:14:15A", // invalid timezone letter
     };
 
     @Test

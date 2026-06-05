@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
+import org.apache.commons.lang.StringUtils;
 import org.apache.flume.Event;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
@@ -64,6 +65,8 @@ public class SyslogParser {
 
     private static final int RFC3164_LEN = 15;
     private static final int RFC5424_PREFIX_LEN = 19;
+    // Fractional seconds are kept at millisecond precision (3 digits); any extra digits are discarded.
+    private static final int MILLISECOND_FRACTION_DIGITS = 3;
 
     private LoadingCache<String, Long> timestampCache;
 
@@ -218,34 +221,23 @@ public class SyslogParser {
 
         // look for the optional fractional seconds
         if (msg.charAt(curPos) == '.') {
+            curPos++;
             // figure out how many numeric digits
-            boolean foundEnd = false;
-            int endMillisPos = curPos + 1;
+            int endMillisPos = curPos;
+            while (endMillisPos < msgLen && msg.charAt(endMillisPos) >= '0' && msg.charAt(endMillisPos) <= '9') {
+                endMillisPos++;
+            }
 
-            if (msgLen <= endMillisPos) {
+            // the fractional seconds must be followed by a timezone
+            if (endMillisPos >= msgLen) {
                 throw new IllegalArgumentException("bad timestamp format (no TZ)");
             }
 
-            // FIXME: TODO: ensure we handle all bad formatting cases
-            while (!foundEnd) {
-                char curDigit = msg.charAt(endMillisPos);
-                if (curDigit >= '0' && curDigit <= '9') {
-                    endMillisPos++;
-                } else {
-                    foundEnd = true;
-                }
-            }
-
-            // if they had a valid fractional second, append it rounded to millis
-            final int fractionalPositions = endMillisPos - (curPos + 1);
+            // if they had a valid fractional second, truncate it to millisecond precision and append
+            int fractionalPositions = Math.min(endMillisPos - curPos, MILLISECOND_FRACTION_DIGITS);
             if (fractionalPositions > 0) {
-                long milliseconds = Long.parseLong(msg.substring(curPos + 1, endMillisPos));
-                if (fractionalPositions > 3) {
-                    milliseconds /= Math.pow(10, (fractionalPositions - 3));
-                } else if (fractionalPositions < 3) {
-                    milliseconds *= Math.pow(10, (3 - fractionalPositions));
-                }
-                ts += milliseconds;
+                String fraction = msg.substring(curPos, curPos + fractionalPositions);
+                ts += Integer.parseInt(StringUtils.rightPad(fraction, MILLISECOND_FRACTION_DIGITS, '0'));
             } else {
                 throw new IllegalArgumentException("Bad format: Invalid timestamp (fractional portion): " + msg);
             }
@@ -258,7 +250,8 @@ public class SyslogParser {
 
         // UTC
         if (tzFirst == 'Z') {
-            // no-op
+            return ts;
+            // numeric timezone
         } else if (tzFirst == '+' || tzFirst == '-') {
 
             Preconditions.checkArgument(msgLen > curPos + 5, "Bad format: Invalid timezone (%s)", msg);
@@ -286,13 +279,11 @@ public class SyslogParser {
                     && h[4] <= '9') {
                 int hourOffset = Integer.parseInt(msg.substring(curPos + 1, curPos + 3));
                 int minOffset = Integer.parseInt(msg.substring(curPos + 4, curPos + 6));
-                ts -= polarity * ((hourOffset * 60) + minOffset) * 60000;
-            } else {
-                throw new IllegalArgumentException("Bad format: Invalid timezone: " + msg);
+                return ts - polarity * ((hourOffset * 60L) + minOffset) * 60000;
             }
         }
 
-        return ts;
+        throw new IllegalArgumentException("Bad format: Invalid timezone: " + msg);
     }
 
     /**
