@@ -1,13 +1,12 @@
-/**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to you under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -58,33 +57,33 @@ import org.apache.flume.lifecycle.LifecycleAware;
 @InterfaceStability.Stable
 public interface Channel extends LifecycleAware, NamedComponent {
 
-  /**
-   * <p>Puts the given event into the channel.</p>
-   * <p><strong>Note</strong>: This method must be invoked within an active
-   * {@link Transaction} boundary. Failure to do so can lead to unpredictable
-   * results.</p>
-   * @param event the event to transport.
-   * @throws ChannelException in case this operation fails.
-   * @see org.apache.flume.Transaction#begin()
-   */
-  public void put(Event event) throws ChannelException;
+    /**
+     * <p>Puts the given event into the channel.</p>
+     * <p><strong>Note</strong>: This method must be invoked within an active
+     * {@link Transaction} boundary. Failure to do so can lead to unpredictable
+     * results.</p>
+     * @param event the event to transport.
+     * @throws ChannelException in case this operation fails.
+     * @see org.apache.flume.Transaction#begin()
+     */
+    public void put(Event event) throws ChannelException;
 
-  /**
-   * <p>Returns the next event from the channel if available. If the channel
-   * does not have any events available, this method must return {@code null}.
-   * </p>
-   * <p><strong>Note</strong>: This method must be invoked within an active
-   * {@link Transaction} boundary. Failure to do so can lead to unpredictable
-   * results.</p>
-   * @return the next available event or {@code null} if no events are
-   * available.
-   * @throws ChannelException in case this operation fails.
-   * @see org.apache.flume.Transaction#begin()
-   */
-  public Event take() throws ChannelException;
+    /**
+     * <p>Returns the next event from the channel if available. If the channel
+     * does not have any events available, this method must return {@code null}.
+     * </p>
+     * <p><strong>Note</strong>: This method must be invoked within an active
+     * {@link Transaction} boundary. Failure to do so can lead to unpredictable
+     * results.</p>
+     * @return the next available event or {@code null} if no events are
+     * available.
+     * @throws ChannelException in case this operation fails.
+     * @see org.apache.flume.Transaction#begin()
+     */
+    public Event take() throws ChannelException;
 
-  /**
-   * @return the transaction instance associated with this channel.
-   */
-  public Transaction getTransaction();
+    /**
+     * @return the transaction instance associated with this channel.
+     */
+    public Transaction getTransaction();
 }

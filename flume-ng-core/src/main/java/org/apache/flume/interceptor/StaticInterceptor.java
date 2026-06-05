@@ -1,13 +1,12 @@
-/**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to you under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,12 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.flume.interceptor;
 
 import java.util.List;
 import java.util.Map;
-
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.slf4j.Logger;
@@ -55,94 +52,91 @@ import org.slf4j.LoggerFactory;
  */
 public class StaticInterceptor implements Interceptor {
 
-  private static final Logger logger = LoggerFactory.getLogger(StaticInterceptor.class);
+    private static final Logger logger = LoggerFactory.getLogger(StaticInterceptor.class);
 
-  private final boolean preserveExisting;
-  private final String key;
-  private final String value;
+    private final boolean preserveExisting;
+    private final String key;
+    private final String value;
 
-  /**
-   * Only {@link HostInterceptor.Builder} can build me
-   */
-  private StaticInterceptor(boolean preserveExisting, String key,
-      String value) {
-    this.preserveExisting = preserveExisting;
-    this.key = key;
-    this.value = value;
-  }
-
-  @Override
-  public void initialize() {
-    // no-op
-  }
-
-  /**
-   * Modifies events in-place.
-   */
-  @Override
-  public Event intercept(Event event) {
-    Map<String, String> headers = event.getHeaders();
-
-    if (preserveExisting && headers.containsKey(key)) {
-      return event;
-    }
-
-    headers.put(key, value);
-    return event;
-  }
-
-  /**
-   * Delegates to {@link #intercept(Event)} in a loop.
-   * @param events
-   * @return
-   */
-  @Override
-  public List<Event> intercept(List<Event> events) {
-    for (Event event : events) {
-      intercept(event);
-    }
-    return events;
-  }
-
-  @Override
-  public void close() {
-    // no-op
-  }
-
-  /**
-   * Builder which builds new instance of the StaticInterceptor.
-   */
-  public static class Builder implements Interceptor.Builder {
-
-    private boolean preserveExisting;
-    private String key;
-    private String value;
-
-    @Override
-    public void configure(Context context) {
-      preserveExisting = context.getBoolean(Constants.PRESERVE, Constants.PRESERVE_DEFAULT);
-      key = context.getString(Constants.KEY, Constants.KEY_DEFAULT);
-      value = context.getString(Constants.VALUE, Constants.VALUE_DEFAULT);
+    /**
+     * Only {@link HostInterceptor.Builder} can build me
+     */
+    private StaticInterceptor(boolean preserveExisting, String key, String value) {
+        this.preserveExisting = preserveExisting;
+        this.key = key;
+        this.value = value;
     }
 
     @Override
-    public Interceptor build() {
-      logger.info(String.format(
-          "Creating StaticInterceptor: preserveExisting=%s,key=%s,value=%s",
-          preserveExisting, key, value));
-      return new StaticInterceptor(preserveExisting, key, value);
+    public void initialize() {
+        // no-op
     }
 
-  }
+    /**
+     * Modifies events in-place.
+     */
+    @Override
+    public Event intercept(Event event) {
+        Map<String, String> headers = event.getHeaders();
 
-  public static class Constants {
-    public static final String KEY = "key";
-    public static final String KEY_DEFAULT = "key";
+        if (preserveExisting && headers.containsKey(key)) {
+            return event;
+        }
 
-    public static final String VALUE = "value";
-    public static final String VALUE_DEFAULT = "value";
+        headers.put(key, value);
+        return event;
+    }
 
-    public static final String PRESERVE = "preserveExisting";
-    public static final boolean PRESERVE_DEFAULT = true;
-  }
+    /**
+     * Delegates to {@link #intercept(Event)} in a loop.
+     * @param events
+     * @return
+     */
+    @Override
+    public List<Event> intercept(List<Event> events) {
+        for (Event event : events) {
+            intercept(event);
+        }
+        return events;
+    }
+
+    @Override
+    public void close() {
+        // no-op
+    }
+
+    /**
+     * Builder which builds new instance of the StaticInterceptor.
+     */
+    public static class Builder implements Interceptor.Builder {
+
+        private boolean preserveExisting;
+        private String key;
+        private String value;
+
+        @Override
+        public void configure(Context context) {
+            preserveExisting = context.getBoolean(Constants.PRESERVE, Constants.PRESERVE_DEFAULT);
+            key = context.getString(Constants.KEY, Constants.KEY_DEFAULT);
+            value = context.getString(Constants.VALUE, Constants.VALUE_DEFAULT);
+        }
+
+        @Override
+        public Interceptor build() {
+            logger.info(String.format(
+                    "Creating StaticInterceptor: preserveExisting=%s,key=%s,value=%s", preserveExisting, key, value));
+            return new StaticInterceptor(preserveExisting, key, value);
+        }
+    }
+
+    public static class Constants {
+        public static final String KEY = "key";
+        public static final String KEY_DEFAULT = "key";
+
+        public static final String VALUE = "value";
+        public static final String VALUE_DEFAULT = "value";
+
+        public static final String PRESERVE = "preserveExisting";
+        public static final boolean PRESERVE_DEFAULT = true;
+    }
 }
