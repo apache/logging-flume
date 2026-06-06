@@ -56,199 +56,6 @@ changes to the LICENSE and NOTICE files in the module's directory
 ALv2 license nor the boilerplate module name and copyright statement because
 the build will fill them in.
 
-## flume-ng-log4jappender
-
-This is the list of dependencies w/versions used to create the current
-LICENSE/NOTICE files for the `flume-ng-log4jappender` artifact. Each entry
-notes a brief license and what is in each file. If something here changes it
-will also change in the binary artifact.
-
-```
-   org.apache.avro:avro-ipc-netty:jar:1.11.0:compile
-   org.apache.avro:avro-ipc:jar:1.11.0:compile
-   org.apache.avro:avro:jar:1.11.0:compile
-```
-
-ALv2. Entry in NOTICE. Embedded JS libraries from avro-ipc require entries in
-LICENSE under MIT and 3-Clause BSD.
-
-```
-   commons-codec:commons-codec:jar:1.15:compile
-```
-
-ALv2. Entry in NOTICE. Additional NOTICE for
-org.apache.commons.codec.language.bm
-
-
-```
-   org.apache.commons:commons-compress:jar:1.21:compile
-```
-
-ALv2. Entry in NOTICE. LICENSE entry for LZMA SDK in public domain.
-
-```
-   org.apache.commons:commons-lang3:jar:3.11:compile
-```
-
-ALv2. Entry in NOTICE.
-
-```
-   commons-lang:commons-lang:jar:2.6:compile
-```
-
-ALv2. Entry in NOTICE.
-
-```
-   commons-logging:commons-logging:jar:1.2:compile
-```
-
-ALv2. Entry in NOTICE.
-
-```
-   org.apache.flume:flume-ng-sdk:jar:<project.version>:compile
-```
-
-ALv2.
-
-```
-   org.apache.httpcomponents:httpclient:jar:4.5.13:compile
-```
-
-ALv2. Entry in NOTICE. Additional NOTICE for Public Suffix List and copy of
-MPLv2.0 in LICENSE.
-
-```
-   org.apache.httpcomponents:httpcore:jar:4.4.15:compile
-```
-
-ALv2. Entry in NOTICE.
-
-```
-   com.fasterxml.jackson.core:jackson-annotations:jar:2.13.2:compile
-   com.fasterxml.jackson.core:jackson-core:jar:2.13.2:compile
-   com.fasterxml.jackson.core:jackson-databind:jar:2.13.2.1:compile
-```
-
-ALv2. Entry in NOTICE.
-
-```
-   javax.annotation:javax.annotation-api:jar:1.3.2:compile
-```
-
-CDDLv1.1. Entry in NOTICE and LICENSE.
-
-```
-   com.jcraft:jzlib:jar:1.1.3:compile
-```
-
-3-Clause BSD. Entry in LICENSE.
-
-```
-   org.apache.thrift:libthrift:jar:0.14.1:compile
-```
-
-ALv2. Etnry in NOTICE.
-
-```
-   log4j:log4j:jar:1.2.17:compile
-```
-
-ALv2. Entry in NOTICE.
-
-```
-   io.netty:netty-all:jar:4.1.72.Final:compile
-   io.netty:netty-buffer:jar:4.1.68.Final:compile
-   io.netty:netty-codec-dns:jar:4.1.72.Final:compile
-   io.netty:netty-codec-haproxy:jar:4.1.72.Final:compile
-   io.netty:netty-codec-http2:jar:4.1.72.Final:compile
-   io.netty:netty-codec-http:jar:4.1.72.Final:compile
-   io.netty:netty-codec-memcache:jar:4.1.72.Final:compile
-   io.netty:netty-codec-mqtt:jar:4.1.72.Final:compile
-   io.netty:netty-codec-redis:jar:4.1.72.Final:compile
-   io.netty:netty-codec-smtp:jar:4.1.72.Final:compile
-   io.netty:netty-codec-socks:jar:4.1.72.Final:compile
-   io.netty:netty-codec-stomp:jar:4.1.72.Final:compile
-   io.netty:netty-codec-xml:jar:4.1.72.Final:compile
-   io.netty:netty-codec:jar:4.1.72.Final:compile
-   io.netty:netty-common:jar:4.1.72.Final:compile
-   io.netty:netty-handler-proxy:jar:4.1.72.Final:compile
-   io.netty:netty-handler:jar:4.1.68.Final:compile
-   io.netty:netty-resolver-dns-classes-macos:jar:4.1.72.Final:compile
-   io.netty:netty-resolver-dns-native-macos:jar:osx-aarch_64:4.1.72.Final:runtime
-   io.netty:netty-resolver-dns-native-macos:jar:osx-x86_64:4.1.72.Final:runtime
-   io.netty:netty-resolver-dns:jar:4.1.72.Final:compile
-   io.netty:netty-resolver:jar:4.1.72.Final:compile
-   io.netty:netty-tcnative-classes:jar:2.0.46.Final:compile
-   io.netty:netty-transport-classes-epoll:jar:4.1.72.Final:compile
-   io.netty:netty-transport-classes-kqueue:jar:4.1.72.Final:compile
-   io.netty:netty-transport-native-epoll:jar:linux-aarch_64:4.1.72.Final:runtime
-   io.netty:netty-transport-native-epoll:jar:linux-x86_64:4.1.72.Final:runtime
-   io.netty:netty-transport-native-kqueue:jar:osx-aarch_64:4.1.72.Final:runtime
-   io.netty:netty-transport-native-kqueue:jar:osx-x86_64:4.1.72.Final:runtime
-   io.netty:netty-transport-native-unix-common:jar:4.1.72.Final:compile
-   io.netty:netty-transport-rxtx:jar:4.1.72.Final:compile
-   io.netty:netty-transport-sctp:jar:4.1.72.Final:compile
-   io.netty:netty-transport-udt:jar:4.1.72.Final:compile
-   io.netty:netty-transport:jar:4.1.72.Final:compile
-```
-
-ALv2. Entry in NOTICE.
-Additional entry in NOTICE for:
-* modified Apache Harmony
-* modified portion of JCTools
-* modified Twitter HPACK
-* modified Apache Commons Lang
-LICENSE entries for:
-* JSR-166 Public Domain
-* Robert Harder's Base64 Public Domain
-* modified Webbit 3-Clause BSD
-* modified SLF4j MIT
-* modified jbzip2 MIT
-* modified libdivsufsort MIT
-* modified jfastlz MIT
-* modified protobuf 3-Clause BSD
-* modified hyper hpack MIT
-* modified nghttp2 hpack MIT
-NOTICE and LICENSE entries for dnsinfo.h under Apple Public Source License 2.0.
-
-```
-   org.slf4j:slf4j-api:jar:1.7.32:compile
-```
-
-MIT. Entry in LICENSE
-
-```
-   org.xerial.snappy:snappy-java:jar:1.1.8.4:compile
-```
-
-ALv2. Entry in NOTICE. Additional NOTICE for Apache Hadoop Common.  Additional
-NOTICE and LICENSE entries for statically linked libstdc++.
-
-```
-   org.apache.tomcat.embed:tomcat-embed-core:jar:8.5.46:compile
-   org.apache.tomcat:tomcat-annotations-api:jar:8.5.46:compile
-```
-
-ALv2. Entry in NOTICE. Additional NOTICE and LICENSE for XML Schemas under CDDL
-v1.0
-
-```
-   org.apache.velocity:velocity-engine-core:jar:2.3:compile
-```
-
-ALv2. Entry in NOTICE. Additional entry for Apache Commons IO.
-
-```
-   org.tukaani:xz:jar:1.9:compile
-```
-
-Public Domain. Entry in LICENSE.
-
-```
-   com.github.luben:zstd-jni:jar:1.5.0-4:compile
-```
-
-2-Clause BSD. Entry in LICENSE.
 
 # Binary distro
 
@@ -414,13 +221,6 @@ derby NOTICE is not relevant.
    flume-twitter-source-<version>.jar
 ```
 
-ALv2. Entry in NOTICE for log4j 1.2.17 from log4jappender
-jar-with-dependencies.
-
-```
-   geronimo-jms_1.1_spec-1.1.1.jar
-```
-
 ALv2. Entry in NOTICE.
 
 ```
@@ -459,8 +259,6 @@ ALv2. No NOTICE.
    jackson-databind-2.13.2.1.jar
    jackson-dataformat-csv-2.10.5.jar
    jackson-datatype-jdk8-2.10.5.jar
-   jackson-module-paranamer-2.10.5.jar
-   jackson-module-scala_2.13-2.10.5.jar
 ```
 
 same as jar-with-dependencies
@@ -477,8 +275,7 @@ same as jar-with-dependencies
 
 CDDL v1.0. Entry in LICENSE and NOTICE.
 
-```
-   jdom-1.1.3.jar
+
 ```
 
 BSD-like project specific. Entry in LICENSE and NOTICE.
@@ -496,8 +293,6 @@ BSD-like project specific. Entry in LICENSE and NOTICE.
 
 ALv2. Entry in NOTICE. Additional entry for UnixCrypt.
 
-```
-   joda-time-2.9.9.jar
 ```
 
 ALv2. Entry in NOTICE.
@@ -619,36 +414,10 @@ ALv2. Entry in NOTICE.
 same as jar-with-dependencies, additional copyright year for netty-3.9.4.
 
 ```
-   paranamer-2.8.jar
-```
-
-3-Claiuse BSD. Entry in LICENSE.
-
-```
    protobuf-java-2.5.0.jar
 ```
 
 3-Clause BSD. Entry in LICENSE.
-
-```
-   scala-collection-compat_2.13-2.2.0.jar
-   scala-java8-compat_2.13-0.9.1.jar
-   scala-library-2.13.7.jar
-```
-
-ALv2. Entry in NOTICE.
-
-```
-   scala-logging_2.13-3.9.2.jar
-```
-
-ALv2. Entry in NOTICE.
-
-```
-   scala-reflect-2.13.3.jar
-```
-
-ALv2. Entry in NOTICE (covered by scala-library)
 
 ```
    slf4j-api-1.7.32.jar
@@ -669,14 +438,6 @@ same as jar-with-dependencies
 
 same as jar-with-dependencies
 
-```
-   twitter4j-core-3.0.3.jar
-   twitter4j-media-support-3.0.3.jar
-   twitter4j-stream-3.0.3.jar
-```
-
-ALv2. No NOTICE. LICENSE and NOTICE entries for bundled json library under
-JSON.org license.
 
 ```
    velocity-engine-core-2.3.jar

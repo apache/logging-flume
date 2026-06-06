@@ -232,10 +232,7 @@
     <test.include.pattern>**/Test*.java</test.include.pattern>
     <stagingDirectory>${project.basedir}/target/docs</stagingDirectory>
 
-    <activemq.version>5.7.0</activemq.version>
-    <asynchbase.version>1.8.2</asynchbase.version>
     <bundle-plugin.version>2.3.7</bundle-plugin.version>
-    <checkstyle.tool.version>8.45.1</checkstyle.tool.version>
     <commons-cli.version>1.5.0</commons-cli.version>
     <commons-codec.version>1.15</commons-codec.version>
     <commons-collections.version>3.2.2</commons-collections.version>
@@ -249,26 +246,17 @@
     <fasterxml.jackson.version>2.13.2</fasterxml.jackson.version>
     <fasterxml.jackson.databind.version>2.13.2.1</fasterxml.jackson.databind.version>
     <fest-reflect.version>1.4</fest-reflect.version>
-    <geronimo-jms.version>1.1.1</geronimo-jms.version>
     <gson.version>2.9.1</gson.version>
     <guava.version>29.0-jre</guava.version>
     <guava-old.version>11.0.2</guava-old.version>
     <hadoop3.version>3.2.2</hadoop3.version>
     <hadoop.version>${hadoop3.version}</hadoop.version>
-    <hbase2.version>2.5.3-hadoop3</hbase2.version>
-    <hbase.version>${hbase2.version}</hbase.version>
-    <hive.version>3.1.2</hive.version>
     <httpcore.version>4.4.15</httpcore.version>
     <httpclient.version>4.5.13</httpclient.version>
     <irclib.version>1.10</irclib.version>
-    <jersey.version>1.8</jersey.version>
     <jetty.version>9.4.51.v20230217</jetty.version>
-    <jdom.version>1.1.3</jdom.version>
     <junit.version>4.13.2</junit.version>
-    <kite.version>1.1.0</kite.version>
-    <kudu.version>1.10.0</kudu.version>
-    <lifecycle-mapping.version>1.0.0</lifecycle-mapping.version>
-    <log4j.version>2.18.0</log4j.version>
+    <log4j.version>2.26.0</log4j.version>
     <mapdb.version>0.9.9</mapdb.version>
     <mina.version>2.1.5</mina.version>
     <mockito.version>5.18.0</mockito.version>
@@ -276,7 +264,6 @@
     <!-- Do not upgrade the assumbly plugin version until MASSEMBLY-941 is fixed -->
     <mvn-assembly-plugin.version>3.2.0</mvn-assembly-plugin.version>
     <mvn-build-helper-plugin>3.0.0</mvn-build-helper-plugin>
-    <mvn-checkstyle-plugin.version>3.1.2</mvn-checkstyle-plugin.version>
     <mvn-checksum-plugin.version>1.7</mvn-checksum-plugin.version>
     <mvn-clean-plugin.version>3.1.0</mvn-clean-plugin.version>
     <mvn-compiler-plugin.version>3.8.1</mvn-compiler-plugin.version>
@@ -284,7 +271,6 @@
     <mvn-gpg-plugin.version>1.6</mvn-gpg-plugin.version>
     <mvn-jar-plugin.version>3.2.2</mvn-jar-plugin.version>
     <mvn-javadoc-plugin.version>3.2.0</mvn-javadoc-plugin.version>
-    <mvn-paranamer-plugin.version>2.8</mvn-paranamer-plugin.version>
     <mvn-pmd-plugin.version>3.15.0</mvn-pmd-plugin.version>
     <mvn-site-plugin.version>3.9.0</mvn-site-plugin.version>
     <spotbugs.version>4.9.3</spotbugs.version>
@@ -292,24 +278,18 @@
     <mvn-surefire-plugin.version>3.5.5</mvn-surefire-plugin.version>
     <!--<netty.version>3.10.6.Final</netty.version>-->
     <netty-all.version>4.1.86.Final</netty-all.version>
-    <parquet.version>1.11.2</parquet.version>
     <external.protobuf.version>4.35.0</external.protobuf.version>
     <protobuf.plugin.version>0.6.1</protobuf.plugin.version>
     <prometheus.version>0.15.0</prometheus.version>
     <rat.version>0.12</rat.version>
-    <scala.version>2.13</scala.version>
-    <scala-library.version>2.13.9</scala-library.version>
     <snappy-java.version>1.1.8.4</snappy-java.version>
-    <solr-global.version>4.3.0</solr-global.version>
     <slf4j.version>1.7.32</slf4j.version>
     <system-rules.version>1.19.0</system-rules.version>
-    <twitter-source.version>2.0.0</twitter-source.version>
     <wiremock.version>1.53</wiremock.version>
     <zlib.version>1.1.3</zlib.version>
     <zookeeper.version>3.6.2</zookeeper.version>
     <os.maven.version>1.5.0.Final</os.maven.version>
     <redirectTestOutput>true</redirectTestOutput>
-    <checkstyle.skip>true</checkstyle.skip>
 
     <spotless-maven-plugin.version>3.4.0</spotless-maven-plugin.version>
     <palantir-java-format.version>2.90.0</palantir-java-format.version>
@@ -526,18 +506,6 @@
       </dependency>
 
       <dependency>
-        <groupId>org.apache.geronimo.specs</groupId>
-        <artifactId>geronimo-jms_1.1_spec</artifactId>
-        <version>${geronimo-jms.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.activemq</groupId>
-        <artifactId>activemq-core</artifactId>
-        <version>${activemq.version}</version>
-      </dependency>
-
-      <dependency>
         <groupId>com.jcraft</groupId>
         <artifactId>jzlib</artifactId>
         <version>${zlib.version}</version>
@@ -567,12 +535,6 @@
       </dependency>
 
       <dependency>
-        <groupId>com.sun.jersey</groupId>
-        <artifactId>jersey-core</artifactId>
-        <version>${jersey.version}</version>
-      </dependency>
-
-      <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-compress</artifactId>
         <version>${commons-compress.version}</version>
@@ -583,28 +545,6 @@
         <artifactId>mina-core</artifactId>
         <version>${mina.version}</version>
       </dependency>
-
-      <dependency>
-        <groupId>org.hbase</groupId>
-        <artifactId>asynchbase</artifactId>
-        <version>${asynchbase.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>log4j-over-slf4j</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.jboss.netty</groupId>
-            <artifactId>netty</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <!--<dependency>
-        <groupId>io.netty</groupId>
-        <artifactId>netty</artifactId>
-        <version>${netty.version}</version>
-      </dependency>-->
 
       <dependency>
         <groupId>io.netty</groupId>
@@ -625,63 +565,9 @@
       </dependency>
 
       <dependency>
-        <groupId>org.apache.solr</groupId>
-        <artifactId>solr-cell</artifactId>
-        <version>${solr-global.version}</version>
-      </dependency>
-
-      <dependency>
         <groupId>org.xerial.snappy</groupId>
         <artifactId>snappy-java</artifactId>
         <version>${snappy-java.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.hive.hcatalog</groupId>
-        <artifactId>hive-hcatalog-streaming</artifactId>
-        <version>${hive.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.hive.hcatalog</groupId>
-        <artifactId>hive-hcatalog-core</artifactId>
-        <version>${hive.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.hive</groupId>
-        <artifactId>hive-cli</artifactId>
-        <version>${hive.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
 
       <!-- Dependency for Zk provider -->
@@ -845,150 +731,6 @@
         <version>${hadoop.version}</version>
       </dependency>
 
-      <!-- Ideally this should be optional, but making it optional causes
-      build to fail.
-      -->
-      <dependency>
-        <groupId>org.apache.hbase</groupId>
-        <artifactId>hbase-client</artifactId>
-        <version>${hbase.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.hbase</groupId>
-        <artifactId>hbase-client</artifactId>
-        <version>${hbase.version}</version>
-        <classifier>tests</classifier>
-        <scope>test</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.hbase</groupId>
-        <artifactId>hbase-testing-util</artifactId>
-        <version>${hbase.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <!-- There should be no need for Flume to include the following two
-       artifacts, but HBase pom has a bug which causes these to not get
-       pulled in. So we have to pull it in. Ideally this should be optional,
-       but making it optional causes build to fail.
-      -->
-
-      <dependency>
-        <groupId>org.apache.hbase</groupId>
-        <artifactId>hbase-common</artifactId>
-        <version>${hbase.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.hbase</groupId>
-        <artifactId>hbase-common</artifactId>
-        <version>${hbase.version}</version>
-        <classifier>tests</classifier>
-        <scope>test</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.hbase</groupId>
-        <artifactId>hbase-server</artifactId>
-        <version>${hbase.version}</version>
-        <scope>test</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>tomcat</groupId>
-            <artifactId>jasper-compiler</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>tomcat</groupId>
-            <artifactId>jasper-runtime</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.hbase</groupId>
-        <artifactId>hbase-server</artifactId>
-        <version>${hbase.version}</version>
-        <classifier>tests</classifier>
-        <scope>test</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>tomcat</groupId>
-            <artifactId>jasper-compiler</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>tomcat</groupId>
-            <artifactId>jasper-runtime</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
       <dependency>
         <groupId>org.apache.zookeeper</groupId>
         <artifactId>zookeeper</artifactId>
@@ -1003,12 +745,6 @@
             <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
         </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>org.jdom</groupId>
-        <artifactId>jdom</artifactId>
-        <version>${jdom.version}</version>
       </dependency>
 
       <dependency>
@@ -1491,10 +1227,6 @@
         </reportSets>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-checkstyle-plugin</artifactId>
-      </plugin>
-      <plugin>
         <groupId>com.github.spotbugs</groupId>
         <artifactId>spotbugs-maven-plugin</artifactId>
       </plugin>
@@ -1577,7 +1309,6 @@
     <profile>
       <id>skipChecks</id>
       <properties>
-        <checkstyle.skip>true</checkstyle.skip>
         <spotbugs.skip>true</spotbugs.skip>
         <pmd.skip>true</pmd.skip>
         <rat.skip>true</rat.skip>

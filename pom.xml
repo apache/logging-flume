@@ -49,7 +49,6 @@
     <module>flume-tools</module>
     <module>flume-ng-auth</module>
     <module>flume-ng-configfilters</module>
-    <module>build-support</module>
   </modules>
 
   <properties>
