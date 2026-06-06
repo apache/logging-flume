@@ -117,11 +117,6 @@ This product includes the following works licensed under the CDDL v1.0, see LICE
 
 * javax.servlet API 3.1.0 for source see https://javaee.github.io/servlet-spec/
 
---
-
-This product includes software developed by the JDOM Project (http://www.jdom.org/).
-For licensing details see LICENSE.
-
 ==============================================================
  Jetty Web Container
  Copyright 1995-2018 Mort Bay Consulting Pty Ltd.
@@ -150,9 +145,6 @@ for non-commercial or commercial purposes and without fee is
 granted provided that the copyright notice appears in all copies.
 
 --
-
-This product includes software developed by
-Joda.org (http://www.joda.org/).
 
 Apache Kafka
 Copyright 2021 The Apache Software Foundation.

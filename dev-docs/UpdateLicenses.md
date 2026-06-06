@@ -259,8 +259,6 @@ ALv2. No NOTICE.
    jackson-databind-2.13.2.1.jar
    jackson-dataformat-csv-2.10.5.jar
    jackson-datatype-jdk8-2.10.5.jar
-   jackson-module-paranamer-2.10.5.jar
-   jackson-module-scala_2.13-2.10.5.jar
 ```
 
 same as jar-with-dependencies
@@ -277,8 +275,7 @@ same as jar-with-dependencies
 
 CDDL v1.0. Entry in LICENSE and NOTICE.
 
-```
-   jdom-1.1.3.jar
+
 ```
 
 BSD-like project specific. Entry in LICENSE and NOTICE.
@@ -296,8 +293,6 @@ BSD-like project specific. Entry in LICENSE and NOTICE.
 
 ALv2. Entry in NOTICE. Additional entry for UnixCrypt.
 
-```
-   joda-time-2.9.9.jar
 ```
 
 ALv2. Entry in NOTICE.
@@ -419,36 +414,10 @@ ALv2. Entry in NOTICE.
 same as jar-with-dependencies, additional copyright year for netty-3.9.4.
 
 ```
-   paranamer-2.8.jar
-```
-
-3-Claiuse BSD. Entry in LICENSE.
-
-```
    protobuf-java-2.5.0.jar
 ```
 
 3-Clause BSD. Entry in LICENSE.
-
-```
-   scala-collection-compat_2.13-2.2.0.jar
-   scala-java8-compat_2.13-0.9.1.jar
-   scala-library-2.13.7.jar
-```
-
-ALv2. Entry in NOTICE.
-
-```
-   scala-logging_2.13-3.9.2.jar
-```
-
-ALv2. Entry in NOTICE.
-
-```
-   scala-reflect-2.13.3.jar
-```
-
-ALv2. Entry in NOTICE (covered by scala-library)
 
 ```
    slf4j-api-1.7.32.jar
@@ -469,14 +438,6 @@ same as jar-with-dependencies
 
 same as jar-with-dependencies
 
-```
-   twitter4j-core-3.0.3.jar
-   twitter4j-media-support-3.0.3.jar
-   twitter4j-stream-3.0.3.jar
-```
-
-ALv2. No NOTICE. LICENSE and NOTICE entries for bundled json library under
-JSON.org license.
 
 ```
    velocity-engine-core-2.3.jar
