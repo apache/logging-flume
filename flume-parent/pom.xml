@@ -280,7 +280,7 @@
     <netty-all.version>4.1.86.Final</netty-all.version>
     <external.protobuf.version>4.35.0</external.protobuf.version>
     <protobuf.plugin.version>0.6.1</protobuf.plugin.version>
-    <prometheus.version>0.15.0</prometheus.version>
+    <prometheus.version>1.7.0</prometheus.version>
     <rat.version>0.12</rat.version>
     <snappy-java.version>1.1.8.4</snappy-java.version>
     <slf4j.version>1.7.32</slf4j.version>
@@ -554,13 +554,13 @@
 
       <dependency>
         <groupId>io.prometheus</groupId>
-        <artifactId>simpleclient</artifactId>
+        <artifactId>prometheus-metrics-core</artifactId>
         <version>${prometheus.version}</version>
       </dependency>
 
       <dependency>
         <groupId>io.prometheus</groupId>
-        <artifactId>simpleclient_servlet</artifactId>
+        <artifactId>prometheus-metrics-exporter-servlet</artifactId>
         <version>${prometheus.version}</version>
       </dependency>
 
@@ -998,323 +998,15 @@
 
         <plugin>
           <groupId>net.nicoulaj.maven.plugins</groupId>
-          <artifactId>checksum-maven-plugin</artifactId>
-          <version>${mvn-checksum-plugin.version}</version>
+          <artifactId>maven-checkstyle-plugin</artifactId>
+          <version>1.0</version>
+          <configuration>
+            <configLocation>checkstyle-strict.xml</configLocation>
+            <suppressionsLocation>checkstyle-suppressions.xml</suppressionsLocation>
+          </configuration>
         </plugin>
       </plugins>
     </pluginManagement>
-    <plugins>
-
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>com.github.spotbugs</groupId>
-        <artifactId>spotbugs-maven-plugin</artifactId>
-      </plugin>
-
-      <!-- Configuration here must match the one in `.editorconfig`! -->
-      <plugin>
-        <groupId>com.diffplug.spotless</groupId>
-        <artifactId>spotless-maven-plugin</artifactId>
-        <configuration>
-          <java>
-            <excludes>
-              <!-- Third-party vendored sources: ASF policy forbids adding the ASF header to them.
-                   They keep their original header and are formatted by a dedicated execution
-                   (see the `guava` execution in `flume-ng-core`). -->
-              <exclude>**/source/shaded/guava/**</exclude>
-            </excludes>
-            <licenseHeader>
-              <!-- https://www.apache.org/legal/src-headers.html#headers -->
-              <content>/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to you under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */</content>
-            </licenseHeader>
-            <palantirJavaFormat>
-              <version>${palantir-java-format.version}</version>
-            </palantirJavaFormat>
-          </java>
-          <pom>
-            <licenseHeader>
-              <!-- https://www.apache.org/legal/src-headers.html#headers -->
-              <content>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
-&lt;!--
-  ~ Licensed to the Apache Software Foundation (ASF) under one or more
-  ~ contributor license agreements.  See the NOTICE file distributed with
-  ~ this work for additional information regarding copyright ownership.
-  ~ The ASF licenses this file to you under the Apache License, Version 2.0
-  ~ (the "License"); you may not use this file except in compliance with
-  ~ the License.  You may obtain a copy of the License at
-  ~
-  ~      http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and
-  ~ limitations under the License.
-  --&gt;</content>
-              <delimiter>&lt;project</delimiter>
-            </licenseHeader>
-            <sortPom>
-              <expandEmptyElements>false</expandEmptyElements>
-              <!-- Maven Release plugin uses this style -->
-              <spaceBeforeCloseEmptyElement>true</spaceBeforeCloseEmptyElement>
-            </sortPom>
-          </pom>
-          <formats>
-            <format>
-              <includes>
-                <include>src/**/*.xml</include>
-              </includes>
-              <excludes>
-                <!-- The license header in changelog entry files causing Git to match irrelevant files.
-                     This is eventually causing merge conflicts.
-                     Hence, we avoid enforcing license headers there. -->
-                <exclude>src/changelog/**/*.xml</exclude>
-              </excludes>
-              <licenseHeader>
-                <!-- https://www.apache.org/legal/src-headers.html#headers -->
-                <content>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
-&lt;!--
-  ~ Licensed to the Apache Software Foundation (ASF) under one or more
-  ~ contributor license agreements.  See the NOTICE file distributed with
-  ~ this work for additional information regarding copyright ownership.
-  ~ The ASF licenses this file to you under the Apache License, Version 2.0
-  ~ (the "License"); you may not use this file except in compliance with
-  ~ the License.  You may obtain a copy of the License at
-  ~
-  ~      http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and
-  ~ limitations under the License.
-  --&gt;</content>
-                <delimiter>&lt;(!DOCTYPE|\w)</delimiter>
-              </licenseHeader>
-              <endWithNewline />
-              <trimTrailingWhitespace />
-            </format>
-            <format>
-              <includes>
-                <include>src/**/*.properties</include>
-              </includes>
-              <licenseHeader>
-                <!-- https://www.apache.org/legal/src-headers.html#headers -->
-                <content>#
-# Licensed to the Apache Software Foundation (ASF) under one or more
-# contributor license agreements.  See the NOTICE file distributed with
-# this work for additional information regarding copyright ownership.
-# The ASF licenses this file to you under the Apache License, Version 2.0
-# (the "License"); you may not use this file except in compliance with
-# the License.  You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#</content>
-                <delimiter>(##|[^#])</delimiter>
-              </licenseHeader>
-              <endWithNewline />
-            </format>
-          </formats>
-          <yaml>
-            <includes>
-              <include>.asf.yaml</include>
-              <include>.github/**/*.yaml</include>
-              <include>.github/**/*.yml</include>
-              <include>src/**/*.yaml</include>
-              <include>src/**/*.yml</include>
-            </includes>
-            <licenseHeader>
-              <!-- https://www.apache.org/legal/src-headers.html#headers -->
-              <content>#
-# Licensed to the Apache Software Foundation (ASF) under one or more
-# contributor license agreements.  See the NOTICE file distributed with
-# this work for additional information regarding copyright ownership.
-# The ASF licenses this file to you under the Apache License, Version 2.0
-# (the "License"); you may not use this file except in compliance with
-# the License.  You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#</content>
-              <delimiter>(##|[^#])</delimiter>
-            </licenseHeader>
-            <endWithNewline />
-            <trimTrailingWhitespace />
-          </yaml>
-          <lineEndings>UNIX</lineEndings>
-        </configuration>
-        <dependencies>
-          <!-- `com.palantir.javaformat:palantir-java-format` is a fake dependency to receive updates from `dependabot`, `maven-versions-plugin`, etc.
-               This dependency is not needed to be defined here, it is implied by `<palantirJavaFormat>` element above. -->
-          <dependency>
-            <groupId>com.palantir.javaformat</groupId>
-            <artifactId>palantir-java-format</artifactId>
-            <version>${palantir-java-format.version}</version>
-          </dependency>
-        </dependencies>
-        <executions>
-          <execution>
-            <id>default-spotless</id>
-            <goals>
-              <goal>check</goal>
-            </goals>
-            <phase>verify</phase>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-pmd-plugin</artifactId>
-      </plugin>
-    </plugins>
-    <extensions>
-      <extension>
-        <groupId>kr.motd.maven</groupId>
-        <artifactId>os-maven-plugin</artifactId>
-        <version>${os.maven.version}</version>
-      </extension>
-    </extensions>
-
   </build>
-
-  <reporting>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-project-info-reports-plugin</artifactId>
-        <reportSets>
-          <reportSet>
-            <reports>
-              <report>ci-management</report>
-              <report>distribution-management</report>
-              <report>team</report>
-              <report>mailing-lists</report>
-              <report>issue-management</report>
-              <report>licenses</report>
-              <report>scm</report>
-            </reports>
-          </reportSet>
-        </reportSets>
-      </plugin>
-      <plugin>
-        <groupId>com.github.spotbugs</groupId>
-        <artifactId>spotbugs-maven-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-pmd-plugin</artifactId>
-      </plugin>
-
-    </plugins>
-  </reporting>
-
-  <profiles>
-
-    <profile>
-      <id>not-windows</id>
-      <activation>
-        <os>
-          <family>!Windows</family>
-        </os>
-      </activation>
-    </profile>
-
-    <profile>
-      <id>windows</id>
-      <activation>
-        <os>
-          <family>Windows</family>
-        </os>
-      </activation>
-    </profile>
-
-    <profile>
-      <id>sign</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-gpg-plugin</artifactId>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>sign</goal>
-                </goals>
-                <phase>verify</phase>
-                <configuration>
-                  <keyname>${GPGSigningUserName}</keyname>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-
-    <profile>
-      <id>site</id>
-
-      <build>
-        <plugins>
-          <plugin>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <configuration>
-              <additionalparam>-Xdoclint:none</additionalparam>
-            </configuration>
-            <executions>
-              <execution>
-                <id>javadoc-jar</id>
-                <goals>
-                  <goal>aggregate-jar</goal>
-                </goals>
-                <phase>package</phase>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-
-    </profile>
-
-    <profile>
-      <id>skipChecks</id>
-      <properties>
-        <spotbugs.skip>true</spotbugs.skip>
-        <pmd.skip>true</pmd.skip>
-        <rat.skip>true</rat.skip>
-      </properties>
-
-    </profile>
-  </profiles>
 
 </project>
