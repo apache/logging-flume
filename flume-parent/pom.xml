@@ -254,7 +254,8 @@
     <httpcore.version>4.4.15</httpcore.version>
     <httpclient.version>4.5.13</httpclient.version>
     <irclib.version>1.10</irclib.version>
-    <jetty.version>9.4.51.v20230217</jetty.version>
+    <jakarta-servlet.version>6.1.0</jakarta-servlet.version>
+    <jetty.version>12.1.9</jetty.version>
     <junit.version>4.13.2</junit.version>
     <log4j.version>2.26.0</log4j.version>
     <mapdb.version>0.9.9</mapdb.version>
@@ -280,7 +281,7 @@
     <netty-all.version>4.1.86.Final</netty-all.version>
     <external.protobuf.version>4.35.0</external.protobuf.version>
     <protobuf.plugin.version>0.6.1</protobuf.plugin.version>
-    <prometheus.version>0.15.0</prometheus.version>
+    <prometheus.version>1.7.0</prometheus.version>
     <rat.version>0.12</rat.version>
     <snappy-java.version>1.1.8.4</snappy-java.version>
     <slf4j.version>1.7.32</slf4j.version>
@@ -409,8 +410,16 @@
       </dependency>
 
       <dependency>
-        <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-servlet</artifactId>
+        <groupId>jakarta.servlet</groupId>
+        <artifactId>jakarta.servlet-api</artifactId>
+        <!-- Use 5.0.0 for Jetty 11 / EE9. Use 6.0.0 or 6.1.0 for Jetty 12 (EE10) -->
+        <version>${jakarta-servlet.version}</version>
+        <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.eclipse.jetty.ee11</groupId>
+        <artifactId>jetty-ee11-servlet</artifactId>
         <version>${jetty.version}</version>
       </dependency>
 
@@ -560,13 +569,13 @@
 
       <dependency>
         <groupId>io.prometheus</groupId>
-        <artifactId>simpleclient</artifactId>
+        <artifactId>prometheus-metrics-core</artifactId>
         <version>${prometheus.version}</version>
       </dependency>
 
       <dependency>
         <groupId>io.prometheus</groupId>
-        <artifactId>simpleclient_servlet</artifactId>
+        <artifactId>prometheus-metrics-exporter-servlet-jakarta</artifactId>
         <version>${prometheus.version}</version>
       </dependency>
 
