@@ -18,21 +18,21 @@ package org.apache.flume.instrumentation.http;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import java.io.IOException;
-import java.lang.reflect.Type;
+import jakarta.servlet.http.HttpServletResponse;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import org.apache.flume.Context;
 import org.apache.flume.instrumentation.MonitorService;
 import org.apache.flume.instrumentation.util.JMXPollUtil;
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.handler.AbstractHandler;
+import org.eclipse.jetty.util.Callback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,45 +94,44 @@ public class HTTPMetricsServer implements MonitorService {
         port = context.getInteger(CONFIG_PORT, DEFAULT_PORT);
     }
 
-    private class HTTPMetricsHandler extends AbstractHandler {
+    private class HTTPMetricsHandler extends Handler.Abstract {
 
-        Type mapType = new TypeToken<Map<String, Map<String, String>>>() {}.getType();
+        java.lang.reflect.Type mapType = new TypeToken<Map<String, Map<String, String>>>() {}.getType();
         Gson gson = new Gson();
 
         @Override
-        public void handle(String target, Request r1, HttpServletRequest request, HttpServletResponse response)
-                throws IOException, ServletException {
-            // /metrics is the only place to pull metrics.
-            // If we want to use any other url for something else, we should make sure
-            // that for metrics only /metrics is used to prevent backward
-            // compatibility issues.
-            if (request.getMethod().equalsIgnoreCase("TRACE")
-                    || request.getMethod().equalsIgnoreCase("OPTIONS")) {
-                response.sendError(HttpServletResponse.SC_FORBIDDEN);
-                response.flushBuffer();
-                ((Request) request).setHandled(true);
-                return;
+        public boolean handle(Request request, Response response, Callback callback) throws Exception {
+            String method = request.getMethod();
+            String path = Request.getPathInContext(request);
+
+            if (method.equalsIgnoreCase("TRACE") || method.equalsIgnoreCase("OPTIONS")) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                callback.succeeded();
+                return true;
             }
-            if (target.equals("/")) {
-                response.setContentType("text/html;charset=utf-8");
+
+            if ("/".equals(path)) {
                 response.setStatus(HttpServletResponse.SC_OK);
-                response.getWriter().write("For Flume metrics please click" + " <a href = \"./metrics\"> here</a>.");
-                response.flushBuffer();
-                ((Request) request).setHandled(true);
-                return;
-            } else if (target.equalsIgnoreCase("/metrics")) {
-                response.setContentType("application/json;charset=utf-8");
+                response.getHeaders().put("Content-Type", "text/html;charset=utf-8");
+                String html = "For Flume metrics please click <a href=\"./metrics\"> here</a>.";
+                response.write(true, ByteBuffer.wrap(html.getBytes(StandardCharsets.UTF_8)), callback);
+                return true;
+            }
+
+            if ("/metrics".equalsIgnoreCase(path)) {
                 response.setStatus(HttpServletResponse.SC_OK);
+                response.getHeaders().put("Content-Type", "application/json;charset=utf-8");
+
                 Map<String, Map<String, String>> metricsMap = JMXPollUtil.getAllMBeans();
                 String json = gson.toJson(metricsMap, mapType);
-                response.getWriter().write(json);
-                response.flushBuffer();
-                ((Request) request).setHandled(true);
-                return;
+
+                response.write(true, ByteBuffer.wrap(json.getBytes(StandardCharsets.UTF_8)), callback);
+                return true;
             }
-            response.sendError(HttpServletResponse.SC_NOT_FOUND);
-            response.flushBuffer();
-            // Not handling the request returns a Not found error page.
+
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            callback.succeeded();
+            return true;
         }
     }
 }
