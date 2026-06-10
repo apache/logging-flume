@@ -34,7 +34,6 @@ import org.apache.flume.exception.ChannelException;
 import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.source.SslContextAwareAbstractSource;
 import org.apache.flume.tools.FlumeBeanConfigurator;
-import org.apache.flume.tools.HTTPServerConstraintUtil;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.jmx.MBeanContainer;
 import org.eclipse.jetty.server.HttpConfiguration;

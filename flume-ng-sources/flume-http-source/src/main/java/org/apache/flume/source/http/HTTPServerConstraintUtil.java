@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume.tools;
+package org.apache.flume.source.http;
 
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
@@ -25,7 +25,7 @@ import org.eclipse.jetty.util.security.Constraint;
 /**
  * Utility class to define constraints on Jetty HTTP servers
  */
-public class HTTPServerConstraintUtil {
+class HTTPServerConstraintUtil {
 
     private HTTPServerConstraintUtil() {}
 
@@ -33,7 +33,7 @@ public class HTTPServerConstraintUtil {
      * Generate constraints for the Flume HTTP Source
      * @return ConstraintSecurityHandler for use with Jetty servlet
      */
-    public static ConstraintSecurityHandler enforceConstraints() {
+    static ConstraintSecurityHandler enforceConstraints() {
         Constraint c = new Constraint();
         c.setAuthenticate(true);
 
