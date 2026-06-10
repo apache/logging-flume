@@ -55,6 +55,11 @@ public class HTTPMetricsServer implements MonitorService {
     public static String CONFIG_PORT = "port";
 
     @Override
+    public String getType() {
+        return "http";
+    }
+
+    @Override
     public void start() {
         jettyServer = new Server();
         // We can use Contexts etc if we have many urls to handle. For one url,

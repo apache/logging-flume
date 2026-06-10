@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume.instrumentation.http;
+package org.apache.flume.instrumentation.prometheus;
 
 import com.google.common.base.Throwables;
 import io.prometheus.client.Collector;
@@ -39,7 +39,7 @@ import javax.management.MBeanServer;
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
-import org.apache.flume.instrumentation.MonitorService;
+import org.apache.flume.instrumentation.http.HTTPMetricsServer;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
@@ -59,7 +59,7 @@ import org.slf4j.LoggerFactory;
  * <p> "componentName1":{"metric3" : "metricValue3","metric4":"metricValue4"}
  * <p> }
  */
-public class PrometheusHTTPMetricsServer extends HTTPMetricsServer implements MonitorService {
+public class PrometheusHTTPMetricsServer extends HTTPMetricsServer {
 
     private static final String PROM_DEFAULT_PREFIX = "Flume_";
     private Server jettyServer;
@@ -67,6 +67,11 @@ public class PrometheusHTTPMetricsServer extends HTTPMetricsServer implements Mo
     private static MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
 
     private FlumePrometheusCollector requests;
+
+    @Override
+    public String getType() {
+        return "prometheus";
+    }
 
     @Override
     public void start() {

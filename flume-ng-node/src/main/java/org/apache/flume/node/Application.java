@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 import org.apache.commons.cli.CommandLine;
@@ -49,7 +50,6 @@ import org.apache.flume.SinkRunner;
 import org.apache.flume.Source;
 import org.apache.flume.SourceRunner;
 import org.apache.flume.instrumentation.MonitorService;
-import org.apache.flume.instrumentation.MonitoringType;
 import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.lifecycle.LifecycleSupervisor;
@@ -253,23 +253,13 @@ public class Application {
         this.loadMonitoring();
     }
 
-    @SuppressWarnings("unchecked")
     private void loadMonitoring() {
         Properties systemProps = System.getProperties();
         Set<String> keys = systemProps.stringPropertyNames();
         try {
             if (keys.contains(CONF_MONITOR_CLASS)) {
                 String monitorType = systemProps.getProperty(CONF_MONITOR_CLASS);
-                Class<? extends MonitorService> klass;
-                try {
-                    // Is it a known type?
-                    klass = MonitoringType.valueOf(monitorType.toUpperCase(Locale.ENGLISH))
-                            .getMonitorClass();
-                } catch (Exception e) {
-                    // Not a known type, use FQCN
-                    klass = (Class<? extends MonitorService>) Class.forName(monitorType);
-                }
-                this.monitorServer = klass.getConstructor().newInstance();
+                this.monitorServer = createMonitorService(monitorType);
                 Context context = new Context();
                 for (String key : keys) {
                     if (key.startsWith(CONF_MONITOR_PREFIX)) {
@@ -282,6 +272,23 @@ public class Application {
         } catch (ReflectiveOperationException e) {
             logger.warn("Error starting monitoring. " + "Monitoring might not be available.", e);
         }
+    }
+
+    /**
+     * Resolves the configured monitoring type to a {@link MonitorService}.
+     *
+     * <p>The type is first matched (case-insensitively) against the {@link MonitorService#getType()} of the providers
+     * registered through the {@link ServiceLoader}; if none matches, it is treated as a fully qualified class name.</p>
+     */
+    private MonitorService createMonitorService(String monitorType) throws ReflectiveOperationException {
+        for (MonitorService service : ServiceLoader.load(MonitorService.class, Application.class.getClassLoader())) {
+            if (monitorType.equalsIgnoreCase(service.getType())) {
+                return service;
+            }
+        }
+        // Not a known type, use the fully qualified class name.
+        Class<? extends MonitorService> klass = Class.forName(monitorType).asSubclass(MonitorService.class);
+        return klass.getConstructor().newInstance();
     }
 
     public static void main(String[] args) {

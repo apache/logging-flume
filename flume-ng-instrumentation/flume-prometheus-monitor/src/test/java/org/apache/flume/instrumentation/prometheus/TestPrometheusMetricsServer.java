@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume.instrumentation.http;
+package org.apache.flume.instrumentation.prometheus;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;

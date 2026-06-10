@@ -127,6 +127,18 @@
       <artifactId>flume-legacy-thrift-source</artifactId>
     </dependency>-->
     <dependency>
+      <groupId>org.apache.flume.flume-ng-instrumentation</groupId>
+      <artifactId>flume-ganglia-monitor</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flume.flume-ng-instrumentation</groupId>
+      <artifactId>flume-http-monitor</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flume.flume-ng-instrumentation</groupId>
+      <artifactId>flume-prometheus-monitor</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.apache.flume.flume-ng-sources</groupId>
       <artifactId>flume-http-source</artifactId>
     </dependency>
