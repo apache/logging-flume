@@ -32,6 +32,7 @@
   <name>Flume Sources</name>
 
   <modules>
+    <module>flume-http-source</module>
     <module>flume-taildir-source</module>
   </modules>
 

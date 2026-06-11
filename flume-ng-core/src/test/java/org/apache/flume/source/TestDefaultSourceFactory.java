@@ -18,7 +18,6 @@ package org.apache.flume.source;
 
 import org.apache.flume.Source;
 import org.apache.flume.SourceFactory;
-import org.apache.flume.source.http.HTTPSource;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -68,7 +67,6 @@ public class TestDefaultSourceFactory {
         verifySourceCreation("multiport_syslogtcp-src", "multiport_syslogtcp", MultiportSyslogTCPSource.class);
         verifySourceCreation("syslogudp-src", "syslogudp", SyslogUDPSource.class);
         // verifySourceCreation("spooldir-src", "spooldir", SpoolDirectorySource.class);
-        verifySourceCreation("http-src", "http", HTTPSource.class);
         // verifySourceCreation("thrift-src", "thrift", ThriftSource.class);
         verifySourceCreation("custom-src", MockSource.class.getCanonicalName(), MockSource.class);
     }
