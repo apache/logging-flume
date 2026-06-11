@@ -23,6 +23,9 @@ import static org.mockito.Mockito.doThrow;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Type;
@@ -32,8 +35,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.security.SecureRandom;
-import java.security.cert.CertificateException;
+import java.security.KeyPair;
+import java.security.KeyStore;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -46,14 +50,10 @@ import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.management.Query;
 import javax.management.QueryExp;
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-import javax.servlet.http.HttpServletResponse;
+import javax.net.ssl.TrustManagerFactory;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
@@ -72,7 +72,6 @@ import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.HttpTrace;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.junit.After;
@@ -80,7 +79,9 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 
 /**
@@ -120,14 +121,14 @@ public class TestHTTPSource {
         Context sslContext = new Context();
         sslContext.put(HTTPSourceConfigurationConstants.CONFIG_PORT, String.valueOf(port));
         sslContext.put(HTTPSourceConfigurationConstants.SSL_ENABLED, "true");
-        sslContext.put(HTTPSourceConfigurationConstants.SSL_KEYSTORE_PASSWORD, "password");
-        sslContext.put(HTTPSourceConfigurationConstants.SSL_KEYSTORE, "src/test/resources/jettykeystore");
+        sslContext.put(HTTPSourceConfigurationConstants.SSL_KEYSTORE_PASSWORD, KEYSTORE_PASSWORD);
+        sslContext.put(HTTPSourceConfigurationConstants.SSL_KEYSTORE, serverKeystorePath);
         return sslContext;
     }
 
     private static Context getDefaultSecureContextGlobalKeystore(int port) throws IOException {
-        System.setProperty("javax.net.ssl.keyStore", "src/test/resources/jettykeystore");
-        System.setProperty("javax.net.ssl.keyStorePassword", "password");
+        System.setProperty("javax.net.ssl.keyStore", serverKeystorePath);
+        System.setProperty("javax.net.ssl.keyStorePassword", KEYSTORE_PASSWORD);
 
         Context sslContext = new Context();
         sslContext.put(HTTPSourceConfigurationConstants.CONFIG_PORT, String.valueOf(port));
@@ -135,8 +136,40 @@ public class TestHTTPSource {
         return sslContext;
     }
 
+    private static final String KEYSTORE_PASSWORD = "password";
+
+    @ClassRule
+    public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
+    // HTTPSource loads its keystore from a file, so the server material is written to disk; the
+    // client truststore below is kept in memory.
+    private static String serverKeystorePath;
+    private static KeyStore trustStore;
+
+    private static void generateSslStores() throws Exception {
+        KeyPair keyPair = X509Certificates.generateKeyPair();
+        X509Certificate certificate = X509Certificates.generateSelfSignedCertificate(keyPair, "CN=localhost");
+
+        KeyStore keyStore = KeyStore.getInstance("JKS");
+        keyStore.load(null, null);
+        keyStore.setKeyEntry(
+                "jetty", keyPair.getPrivate(), KEYSTORE_PASSWORD.toCharArray(), new X509Certificate[] {certificate});
+        File keystoreFile = TEMP_FOLDER.newFile("keystore.jks");
+        try (FileOutputStream out = new FileOutputStream(keystoreFile)) {
+            keyStore.store(out, KEYSTORE_PASSWORD.toCharArray());
+        }
+        serverKeystorePath = keystoreFile.getAbsolutePath();
+
+        // The test client only needs to trust the self-signed server certificate.
+        trustStore = KeyStore.getInstance("JKS");
+        trustStore.load(null, null);
+        trustStore.setCertificateEntry("server", certificate);
+    }
+
     @BeforeClass
     public static void setUpClass() throws Exception {
+        generateSslStores();
+
         httpSource = new HTTPSource();
         httpChannel = new MemoryChannel();
         httpPort = findFreePort();
@@ -526,26 +559,6 @@ public class TestHTTPSource {
         HttpsURLConnection httpsURLConnection = null;
         Transaction transaction = null;
         try {
-            TrustManager[] trustAllCerts = {
-                new X509TrustManager() {
-                    @Override
-                    public void checkClientTrusted(java.security.cert.X509Certificate[] x509Certificates, String s)
-                            throws CertificateException {
-                        // noop
-                    }
-
-                    @Override
-                    public void checkServerTrusted(java.security.cert.X509Certificate[] x509Certificates, String s)
-                            throws CertificateException {
-                        // noop
-                    }
-
-                    public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                        return null;
-                    }
-                }
-            };
-
             SSLContext sc = null;
             javax.net.ssl.SSLSocketFactory factory = null;
             if (System.getProperty("java.vendor").contains("IBM")) {
@@ -554,12 +567,9 @@ public class TestHTTPSource {
                 sc = SSLContext.getInstance("SSL");
             }
 
-            HostnameVerifier hv = new HostnameVerifier() {
-                public boolean verify(String arg0, SSLSession arg1) {
-                    return true;
-                }
-            };
-            sc.init(null, trustAllCerts, new SecureRandom());
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init(trustStore);
+            sc.init(null, tmf.getTrustManagers(), null);
 
             if (protocol != null) {
                 factory = new DisabledProtocolsSocketFactory(sc.getSocketFactory(), protocol);
@@ -567,8 +577,7 @@ public class TestHTTPSource {
                 factory = sc.getSocketFactory();
             }
             HttpsURLConnection.setDefaultSSLSocketFactory(factory);
-            HttpsURLConnection.setDefaultHostnameVerifier(NoopHostnameVerifier.INSTANCE);
-            URL sslUrl = new URL("https://0.0.0.0:" + port);
+            URL sslUrl = new URL("https://localhost:" + port);
             httpsURLConnection = (HttpsURLConnection) sslUrl.openConnection();
             httpsURLConnection.setDoInput(true);
             httpsURLConnection.setDoOutput(true);

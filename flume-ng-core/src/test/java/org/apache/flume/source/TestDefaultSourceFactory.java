@@ -62,7 +62,6 @@ public class TestDefaultSourceFactory {
         verifySourceCreation("netcat-src", "netcat", NetcatSource.class);
         verifySourceCreation("netcat-udp-src", "netcatudp", NetcatUdpSource.class);
         verifySourceCreation("exec-src", "exec", ExecSource.class);
-        // verifySourceCreation("avro-src", "avro", AvroSource.class);
         verifySourceCreation("syslogtcp-src", "syslogtcp", SyslogTcpSource.class);
         verifySourceCreation("multiport_syslogtcp-src", "multiport_syslogtcp", MultiportSyslogTCPSource.class);
         verifySourceCreation("syslogudp-src", "syslogudp", SyslogUDPSource.class);

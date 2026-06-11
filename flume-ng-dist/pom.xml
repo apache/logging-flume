@@ -144,6 +144,10 @@
     </dependency>
     <dependency>
       <groupId>org.apache.flume.flume-ng-sources</groupId>
+      <artifactId>flume-http-source</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flume.flume-ng-sources</groupId>
       <artifactId>flume-taildir-source</artifactId>
     </dependency>
     <dependency>

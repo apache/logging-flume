@@ -17,12 +17,12 @@
 package org.apache.flume.source.http;
 
 import com.google.common.base.Preconditions;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.flume.Context;
