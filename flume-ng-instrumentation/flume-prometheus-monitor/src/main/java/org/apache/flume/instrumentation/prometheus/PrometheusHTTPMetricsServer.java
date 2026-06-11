@@ -247,7 +247,11 @@ public class PrometheusHTTPMetricsServer extends HTTPMetricsServer {
 
         private void createGaugeIfNotExists(String gaugeName) {
             if (!gauges.containsKey(gaugeName)) {
-                Gauge gauge = Gauge.builder().name(gaugeName).help(gaugeName).register();
+                Gauge gauge = Gauge.builder()
+                        .name(gaugeName)
+                        .help(gaugeName)
+                        .labelNames("component")
+                        .register();
                 gauges.put(gaugeName, gauge);
             }
         }
