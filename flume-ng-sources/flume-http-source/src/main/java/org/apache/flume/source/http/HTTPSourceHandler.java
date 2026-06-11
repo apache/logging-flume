@@ -16,8 +16,8 @@
  */
 package org.apache.flume.source.http;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
-import javax.servlet.http.HttpServletRequest;
 import org.apache.flume.Event;
 import org.apache.flume.conf.Configurable;
 

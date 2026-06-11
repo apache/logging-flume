@@ -26,7 +26,19 @@ import org.apache.flume.conf.Configurable;
  */
 public interface MonitorService extends Configurable {
 
-    public void start();
+    void start();
 
-    public void stop();
+    void stop();
+
+    /**
+     * The configuration type name used to select this monitoring service.
+     *
+     * <p>>(Implementations discovered through the {@link java.util.ServiceLoader} are matched against the
+     * {@code flume.monitoring.type} value using this method.</p>
+     *
+     * @return the type name, or {@code null} if this service is not selectable by type.
+     */
+    default String getType() {
+        return null;
+    }
 }

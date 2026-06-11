@@ -16,11 +16,9 @@
  */
 package org.apache.flume.source.http;
 
-import org.eclipse.jetty.security.ConstraintMapping;
-import org.eclipse.jetty.security.ConstraintSecurityHandler;
-import org.eclipse.jetty.util.security.Constraint;
-
-// Most of the code in this class is copied from HBASE-10473
+import org.eclipse.jetty.ee11.servlet.security.ConstraintMapping;
+import org.eclipse.jetty.ee11.servlet.security.ConstraintSecurityHandler;
+import org.eclipse.jetty.security.Constraint;
 
 /**
  * Utility class to define constraints on Jetty HTTP servers
@@ -34,22 +32,24 @@ class HTTPServerConstraintUtil {
      * @return ConstraintSecurityHandler for use with Jetty servlet
      */
     static ConstraintSecurityHandler enforceConstraints() {
-        Constraint c = new Constraint();
-        c.setAuthenticate(true);
+        // 1. Create a constraint that denies TRACE and OPTIONS access
+        Constraint constraint = Constraint.from("Deny Methods", Constraint.Authorization.FORBIDDEN);
 
-        ConstraintMapping cmt = new ConstraintMapping();
-        cmt.setConstraint(c);
-        cmt.setMethod("TRACE");
-        cmt.setPathSpec("/*");
+        // 2. Map the constraint to methods TRACE and OPTIONS on all paths
+        ConstraintMapping traceMapping = new ConstraintMapping();
+        traceMapping.setPathSpec("/*");
+        traceMapping.setMethod("TRACE");
+        traceMapping.setConstraint(constraint);
 
-        ConstraintMapping cmo = new ConstraintMapping();
-        cmo.setConstraint(c);
-        cmo.setMethod("OPTIONS");
-        cmo.setPathSpec("/*");
+        ConstraintMapping optionsMapping = new ConstraintMapping();
+        optionsMapping.setPathSpec("/*");
+        optionsMapping.setMethod("OPTIONS");
+        optionsMapping.setConstraint(constraint);
 
-        ConstraintSecurityHandler sh = new ConstraintSecurityHandler();
-        sh.setConstraintMappings(new ConstraintMapping[] {cmt, cmo});
+        // 3. Configure the ConstraintSecurityHandler
+        ConstraintSecurityHandler securityHandler = new ConstraintSecurityHandler();
+        securityHandler.setConstraintMappings(new ConstraintMapping[] {traceMapping, optionsMapping});
 
-        return sh;
+        return securityHandler;
     }
 }

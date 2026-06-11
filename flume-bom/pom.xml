@@ -188,6 +188,26 @@
         <version>${flume-scribe.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.apache.flume.flume-ng-instrumentation</groupId>
+        <artifactId>flume-ganglia-monitor</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.flume.flume-ng-instrumentation</groupId>
+        <artifactId>flume-http-monitor</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.flume.flume-ng-instrumentation</groupId>
+        <artifactId>flume-prometheus-monitor</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.flume.flume-ng-sources</groupId>
+        <artifactId>flume-http-source</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.apache.flume.flume-ng-sources</groupId>
         <artifactId>flume-http-source</artifactId>
         <version>${project.version}</version>

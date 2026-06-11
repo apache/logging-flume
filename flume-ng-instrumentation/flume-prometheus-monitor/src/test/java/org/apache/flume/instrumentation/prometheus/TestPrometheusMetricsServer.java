@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume.instrumentation.http;
+package org.apache.flume.instrumentation.prometheus;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -54,18 +54,18 @@ public class TestPrometheusMetricsServer extends BaseHTTPMetricsTest {
         }
         reader.close();
         String[] targetOutputs = {
-            "ChannelSize{component=\"pmemChannel\",} 1.0\n",
-            "Flume_ChannelSize{component=\"memChannel\",} 1.0\n",
-            "Flume_ChannelCapacity{component=\"pmemChannel\",} 0.0\n",
-            "Flume_ChannelCapacity{component=\"memChannel\",} 100.0\n",
-            "Flume_EventPutAttemptCount_total{component=\"pmemChannel\",} 2.0\n",
-            "Flume_EventPutAttemptCount_total{component=\"memChannel\",} 2.0\n",
-            "Flume_EventTakeAttemptCount_total{component=\"pmemChannel\",} 1.0\n",
-            "Flume_EventTakeAttemptCount_total{component=\"memChannel\",} 1.0\n",
-            "Flume_EventPutSuccessCount_total{component=\"pmemChannel\",} 2.0\n",
-            "Flume_EventPutSuccessCount_total{component=\"memChannel\",} 2.0\n",
-            "Flume_EventTakeSuccessCount_total{component=\"pmemChannel\",} 1.0\n",
-            "Flume_EventTakeSuccessCount_total{component=\"memChannel\",} 1.0\n"
+            "Flume_ChannelSize{component=\"pmemChannel\"} 1.0\n",
+            "Flume_ChannelSize{component=\"memChannel\"} 1.0\n",
+            "Flume_ChannelCapacity{component=\"pmemChannel\"} 0.0\n",
+            "Flume_ChannelCapacity{component=\"memChannel\"} 100.0\n",
+            "Flume_EventPutAttemptCount_total{component=\"pmemChannel\"} 2.0\n",
+            "Flume_EventPutAttemptCount_total{component=\"memChannel\"} 2.0\n",
+            "Flume_EventTakeAttemptCount_total{component=\"pmemChannel\"} 1.0\n",
+            "Flume_EventTakeAttemptCount_total{component=\"memChannel\"} 1.0\n",
+            "Flume_EventPutSuccessCount_total{component=\"pmemChannel\"} 2.0\n",
+            "Flume_EventPutSuccessCount_total{component=\"memChannel\"} 2.0\n",
+            "Flume_EventTakeSuccessCount_total{component=\"pmemChannel\"} 1.0\n",
+            "Flume_EventTakeSuccessCount_total{component=\"memChannel\"} 1.0\n"
         };
 
         for (String target : targetOutputs) {

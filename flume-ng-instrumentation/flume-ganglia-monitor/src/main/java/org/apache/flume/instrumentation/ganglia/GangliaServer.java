@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume.instrumentation;
+package org.apache.flume.instrumentation.ganglia;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -32,6 +32,7 @@ import org.apache.flume.Context;
 import org.apache.flume.FlumeException;
 import org.apache.flume.api.HostInfo;
 import org.apache.flume.conf.ConfigurationException;
+import org.apache.flume.instrumentation.MonitorService;
 import org.apache.flume.instrumentation.util.JMXPollUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -132,6 +133,11 @@ public class GangliaServer implements MonitorService {
             }
         }
         offset = 0;
+    }
+
+    @Override
+    public String getType() {
+        return "ganglia";
     }
 
     /**

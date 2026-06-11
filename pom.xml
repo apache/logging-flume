@@ -37,6 +37,7 @@
     <module>flume-ng-core</module>
     <module>flume-ng-configuration</module>
     <module>flume-ng-sources</module>
+    <module>flume-ng-instrumentation</module>
     <module>flume-ng-node</module>
     <!-- Disable until all snapshots are published
     <module>flume-ng-dist</module>
