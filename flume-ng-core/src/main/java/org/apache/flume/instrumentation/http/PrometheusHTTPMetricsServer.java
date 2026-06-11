@@ -19,8 +19,8 @@ package org.apache.flume.instrumentation.http;
 import com.google.common.base.Throwables;
 import io.prometheus.metrics.core.metrics.Counter;
 import io.prometheus.metrics.core.metrics.Gauge;
-import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import io.prometheus.metrics.exporter.servlet.jakarta.PrometheusMetricsServlet;
+import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -38,12 +38,12 @@ import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import org.apache.flume.instrumentation.MonitorService;
+import org.eclipse.jetty.ee11.servlet.ServletContextHandler;
+import org.eclipse.jetty.ee11.servlet.ServletHolder;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.ee11.servlet.ServletContextHandler;
-import org.eclipse.jetty.ee11.servlet.ServletHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -109,7 +109,7 @@ public class PrometheusHTTPMetricsServer extends HTTPMetricsServer implements Mo
                         if (obj.getObjectName().toString().startsWith("org.apache.flume")) {
                             processFlumeMetric(obj);
                         } else if ((obj.getObjectName().toString().startsWith("kafka.consumer")
-                                || obj.getObjectName().toString().startsWith("kafka.producer"))
+                                        || obj.getObjectName().toString().startsWith("kafka.producer"))
                                 && obj.getObjectName().toString().contains("metrics")) {
                             processKafkaMetric(obj);
                         }
@@ -185,7 +185,8 @@ public class PrometheusHTTPMetricsServer extends HTTPMetricsServer implements Mo
 
             TreeMap<String, String> properties = new TreeMap<>();
             for (String key : objectName.getKeyPropertyList().keySet()) {
-                properties.put(makeStringPromSafe(key), objectName.getKeyPropertyList().get(key));
+                properties.put(
+                        makeStringPromSafe(key), objectName.getKeyPropertyList().get(key));
             }
 
             String metricKey = qualifiedType + "_" + String.join("_", properties.keySet()) + "_";
@@ -244,6 +245,7 @@ public class PrometheusHTTPMetricsServer extends HTTPMetricsServer implements Mo
                 Gauge gauge = Gauge.builder()
                         .name(gaugeName)
                         .help(gaugeName)
+                        .labelNames("component")
                         .register();
                 gauges.put(gaugeName, gauge);
             }

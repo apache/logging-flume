@@ -48,7 +48,7 @@ public class HTTPServerConstraintUtil {
 
         // 3. Configure the ConstraintSecurityHandler
         ConstraintSecurityHandler securityHandler = new ConstraintSecurityHandler();
-        securityHandler.setConstraintMappings(new ConstraintMapping[]{traceMapping, optionsMapping});
+        securityHandler.setConstraintMappings(new ConstraintMapping[] {traceMapping, optionsMapping});
 
         return securityHandler;
     }
