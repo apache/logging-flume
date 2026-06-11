@@ -252,6 +252,7 @@
     <hadoop3.version>3.2.2</hadoop3.version>
     <hadoop.version>${hadoop3.version}</hadoop.version>
     <httpcore.version>4.4.15</httpcore.version>
+    <bouncycastle.version>1.84</bouncycastle.version>
     <httpclient.version>4.5.13</httpclient.version>
     <irclib.version>1.10</irclib.version>
     <jakarta-servlet.version>6.1.0</jakarta-servlet.version>
@@ -299,6 +300,14 @@
   <dependencyManagement>
     <dependencies>
       <!-- Dependencies: build -->
+      <dependency>
+        <groupId>org.bouncycastle</groupId>
+        <artifactId>bc-jdk18on-bom</artifactId>
+        <version>${bouncycastle.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
       <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>

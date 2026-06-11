@@ -18,14 +18,14 @@ package org.apache.flume.source.http;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
@@ -34,6 +34,8 @@ import org.apache.flume.exception.ChannelException;
 import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.source.SslContextAwareAbstractSource;
 import org.apache.flume.tools.FlumeBeanConfigurator;
+import org.eclipse.jetty.ee11.servlet.ServletContextHandler;
+import org.eclipse.jetty.ee11.servlet.ServletHolder;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.jmx.MBeanContainer;
 import org.eclipse.jetty.server.HttpConfiguration;
@@ -42,8 +44,6 @@ import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.slf4j.Logger;
@@ -162,7 +162,7 @@ public class HTTPSource extends SslContextAwareAbstractSource implements EventDr
         ServerConnector connector = getSslContextSupplier()
                 .get()
                 .map(sslContext -> {
-                    SslContextFactory sslCtxFactory = new SslContextFactory();
+                    SslContextFactory.Server sslCtxFactory = new SslContextFactory.Server();
                     sslCtxFactory.setSslContext(sslContext);
                     sslCtxFactory.setExcludeProtocols(getExcludeProtocols().toArray(new String[] {}));
                     sslCtxFactory.setIncludeProtocols(getIncludeProtocols().toArray(new String[] {}));

@@ -53,12 +53,12 @@
 
     <dependency>
       <groupId>io.prometheus</groupId>
-      <artifactId>simpleclient</artifactId>
+      <artifactId>prometheus-metrics-core</artifactId>
     </dependency>
 
     <dependency>
       <groupId>io.prometheus</groupId>
-      <artifactId>simpleclient_servlet</artifactId>
+      <artifactId>prometheus-metrics-exporter-servlet-jakarta</artifactId>
     </dependency>
 
     <dependency>
@@ -67,8 +67,8 @@
     </dependency>
 
     <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-servlet</artifactId>
+      <groupId>org.eclipse.jetty.ee11</groupId>
+      <artifactId>jetty-ee11-servlet</artifactId>
     </dependency>
 
     <dependency>
