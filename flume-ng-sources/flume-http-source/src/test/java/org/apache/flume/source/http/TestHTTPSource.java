@@ -24,8 +24,6 @@ import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Type;
@@ -35,9 +33,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.security.KeyPair;
 import java.security.KeyStore;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -65,6 +61,7 @@ import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.JSONEvent;
 import org.apache.flume.instrumentation.SourceCounter;
+import org.apache.flume.util.TestKeyStores;
 import org.apache.flume.util.Whitebox;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -147,23 +144,12 @@ public class TestHTTPSource {
     private static KeyStore trustStore;
 
     private static void generateSslStores() throws Exception {
-        KeyPair keyPair = X509Certificates.generateKeyPair();
-        X509Certificate certificate = X509Certificates.generateSelfSignedCertificate(keyPair, "CN=localhost");
-
-        KeyStore keyStore = KeyStore.getInstance("JKS");
-        keyStore.load(null, null);
-        keyStore.setKeyEntry(
-                "jetty", keyPair.getPrivate(), KEYSTORE_PASSWORD.toCharArray(), new X509Certificate[] {certificate});
-        File keystoreFile = TEMP_FOLDER.newFile("keystore.jks");
-        try (FileOutputStream out = new FileOutputStream(keystoreFile)) {
-            keyStore.store(out, KEYSTORE_PASSWORD.toCharArray());
-        }
-        serverKeystorePath = keystoreFile.getAbsolutePath();
-
+        TestKeyStores credentials = TestKeyStores.selfSigned("CN=localhost");
+        serverKeystorePath = credentials
+                .writeKeyStore(TEMP_FOLDER.newFile("keystore.jks").toPath(), "JKS", KEYSTORE_PASSWORD)
+                .toString();
         // The test client only needs to trust the self-signed server certificate.
-        trustStore = KeyStore.getInstance("JKS");
-        trustStore.load(null, null);
-        trustStore.setCertificateEntry("server", certificate);
+        trustStore = credentials.trustStore("JKS");
     }
 
     @BeforeClass

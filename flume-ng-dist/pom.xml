@@ -151,6 +151,14 @@
       <artifactId>flume-taildir-source</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.flume.flume-ng-sources</groupId>
+      <artifactId>flume-syslog-source</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flume.flume-ng-sources</groupId>
+      <artifactId>flume-netcat-source</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.apache.flume</groupId>
       <artifactId>flume-ng-environment-variable-config-filter</artifactId>
     </dependency>

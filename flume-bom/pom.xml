@@ -218,6 +218,16 @@
         <version>${flume-taildir.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.apache.flume.flume-ng-sources</groupId>
+        <artifactId>flume-syslog-source</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.flume.flume-ng-sources</groupId>
+        <artifactId>flume-netcat-source</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-shared-kafka</artifactId>
         <version>${flume-kafka.version}</version>

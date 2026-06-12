@@ -60,11 +60,7 @@ public class TestDefaultSourceFactory {
     public void testSourceCreation() throws Exception {
         verifySourceCreation("seq-src", "seq", SequenceGeneratorSource.class);
         verifySourceCreation("netcat-src", "netcat", NetcatSource.class);
-        verifySourceCreation("netcat-udp-src", "netcatudp", NetcatUdpSource.class);
         verifySourceCreation("exec-src", "exec", ExecSource.class);
-        verifySourceCreation("syslogtcp-src", "syslogtcp", SyslogTcpSource.class);
-        verifySourceCreation("multiport_syslogtcp-src", "multiport_syslogtcp", MultiportSyslogTCPSource.class);
-        verifySourceCreation("syslogudp-src", "syslogudp", SyslogUDPSource.class);
         // verifySourceCreation("spooldir-src", "spooldir", SpoolDirectorySource.class);
         // verifySourceCreation("thrift-src", "thrift", ThriftSource.class);
         verifySourceCreation("custom-src", MockSource.class.getCanonicalName(), MockSource.class);
