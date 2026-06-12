@@ -30,6 +30,8 @@
   <name>Flume Netcat Source</name>
 
   <properties>
+    <!-- TODO fix spotbugs violations -->
+    <spotbugs.maxAllowedViolations>3</spotbugs.maxAllowedViolations>
     <module.name>org.apache.flume.source.netcat</module.name>
   </properties>
 

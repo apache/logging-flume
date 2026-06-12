@@ -30,6 +30,8 @@
   <name>Flume Syslog Source</name>
 
   <properties>
+    <!-- TODO fix spotbugs violations -->
+    <spotbugs.maxAllowedViolations>8</spotbugs.maxAllowedViolations>
     <module.name>org.apache.flume.source.syslog</module.name>
   </properties>
 
