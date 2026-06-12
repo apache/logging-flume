@@ -253,7 +253,7 @@
     <jsr305.version>3.0.2</jsr305.version>
     <log4j.version>2.26.0</log4j.version>
     <mapdb.version>0.9.9</mapdb.version>
-    <mina.version>2.1.5</mina.version>
+    <mina.version>2.1.12</mina.version>
     <mockito.version>5.18.0</mockito.version>
     <mvn-antrun-plugin.version>1.8</mvn-antrun-plugin.version>
     <!-- Do not upgrade the assumbly plugin version until MASSEMBLY-941 is fixed -->
