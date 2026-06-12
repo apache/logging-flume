@@ -72,6 +72,13 @@
       <artifactId>commons-lang</artifactId>
     </dependency>
 
+    <!-- For GuardedBy annotations -->
+    <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
+      <optional>true</optional>
+    </dependency>
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
