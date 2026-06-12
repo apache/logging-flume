@@ -21,21 +21,40 @@
 
   <parent>
     <groupId>org.apache.flume</groupId>
-    <artifactId>flume-parent</artifactId>
+    <artifactId>flume-ng-sources</artifactId>
     <version>2.0.0-SNAPSHOT</version>
-    <relativePath>../flume-parent/pom.xml</relativePath>
   </parent>
 
-  <groupId>org.apache.flume</groupId>
-  <artifactId>flume-ng-sources</artifactId>
-  <packaging>pom</packaging>
-  <name>Flume Sources</name>
+  <groupId>org.apache.flume.flume-ng-sources</groupId>
+  <artifactId>flume-netcat-source</artifactId>
+  <name>Flume Netcat Source</name>
 
-  <modules>
-    <module>flume-http-source</module>
-    <module>flume-taildir-source</module>
-    <module>flume-syslog-source</module>
-    <module>flume-netcat-source</module>
-  </modules>
+  <properties>
+    <!-- TODO fix spotbugs violations -->
+    <spotbugs.maxAllowedViolations>3</spotbugs.maxAllowedViolations>
+    <module.name>org.apache.flume.source.netcat</module.name>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-ng-sdk</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-ng-core</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-all</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 
 </project>

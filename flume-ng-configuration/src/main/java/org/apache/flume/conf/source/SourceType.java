@@ -61,21 +61,21 @@ public enum SourceType implements ComponentWithClassName {
      *
      * @see org.apache.flume.source.SyslogTcpSource
      */
-    SYSLOGTCP("org.apache.flume.source.SyslogTcpSource"),
+    SYSLOGTCP("org.apache.flume.source.syslog.SyslogTcpSource"),
 
     /**
      * MultiportSyslogTCPSource
      *
      * @see org.apache.flume.source.MultiportSyslogTCPSource
      */
-    MULTIPORT_SYSLOGTCP("org.apache.flume.source.MultiportSyslogTCPSource"),
+    MULTIPORT_SYSLOGTCP("org.apache.flume.source.syslog.MultiportSyslogTCPSource"),
 
     /**
      * SyslogUDPSource
      *
      * @see org.apache.flume.source.SyslogUDPSource
      */
-    SYSLOGUDP("org.apache.flume.source.SyslogUDPSource"),
+    SYSLOGUDP("org.apache.flume.source.syslog.SyslogUDPSource"),
 
     /**
      * Spool directory source
@@ -117,7 +117,7 @@ public enum SourceType implements ComponentWithClassName {
      *
      * @see org.apache.flume.source.NetcatUdpSource
      */
-    NETCATUDP("org.apache.flume.source.NetcatUdpSource");
+    NETCATUDP("org.apache.flume.source.netcat.NetcatUdpSource");
 
     private final String sourceClassName;
 

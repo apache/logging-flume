@@ -44,6 +44,19 @@
       <scope>test</scope>
     </dependency>
 
+    <!-- Used by the shared X509Certificates test helper (packaged in the test-jar). -->
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcpkix-jdk18on</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcprov-jdk18on</artifactId>
+      <scope>test</scope>
+    </dependency>
+
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
@@ -91,6 +104,18 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <!-- AbstractSSLUtilTest injects environment variables by reflecting into JDK internals,
+               which requires these opens on Java 16+. -->
+          <argLine>-Djava.net.preferIPv4Stack=true
+            --add-opens java.base/java.lang=ALL-UNNAMED
+            --add-opens java.base/java.util=ALL-UNNAMED</argLine>
+        </configuration>
       </plugin>
 
     </plugins>
