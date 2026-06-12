@@ -277,7 +277,7 @@
     <protobuf.plugin.version>0.6.1</protobuf.plugin.version>
     <prometheus.version>1.7.0</prometheus.version>
     <rat.version>0.12</rat.version>
-    <snappy-java.version>1.1.8.4</snappy-java.version>
+    <snappy-java.version>1.1.10.4</snappy-java.version>
     <slf4j.version>1.7.32</slf4j.version>
     <spotbugs-annotations.version>4.9.3</spotbugs-annotations.version>
     <system-rules.version>1.19.0</system-rules.version>
