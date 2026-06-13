@@ -271,19 +271,19 @@
     <spotbugs.version>4.9.3</spotbugs.version>
     <mvn-spotbugs-plugin.version>${spotbugs.version}.0</mvn-spotbugs-plugin.version>
     <mvn-surefire-plugin.version>3.5.5</mvn-surefire-plugin.version>
-    <netty-all.version>4.1.121.Final</netty-all.version>
+    <netty-all.version>4.2.15.Final</netty-all.version>
     <external.protobuf.version>4.35.0</external.protobuf.version>
     <protobuf.plugin.version>0.6.1</protobuf.plugin.version>
     <prometheus.version>1.7.0</prometheus.version>
     <rat.version>0.12</rat.version>
-    <snappy-java.version>1.1.8.4</snappy-java.version>
+    <snappy-java.version>1.1.10.8</snappy-java.version>
     <slf4j.version>1.7.32</slf4j.version>
     <spotbugs-annotations.version>4.9.3</spotbugs-annotations.version>
     <system-rules.version>1.19.0</system-rules.version>
     <wiremock.version>1.53</wiremock.version>
     <zlib.version>1.1.3</zlib.version>
-    <zookeeper.version>3.6.2</zookeeper.version>
-    <os.maven.version>1.5.0.Final</os.maven.version>
+    <zookeeper.version>3.8.6</zookeeper.version>
+    <os.maven.version>1.7.1</os.maven.version>
     <redirectTestOutput>true</redirectTestOutput>
     <spotless-maven-plugin.version>3.4.0</spotless-maven-plugin.version>
     <palantir-java-format.version>2.90.0</palantir-java-format.version>
