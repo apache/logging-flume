@@ -209,11 +209,6 @@
       </dependency>
       <dependency>
         <groupId>org.apache.flume.flume-ng-sources</groupId>
-        <artifactId>flume-http-source</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume.flume-ng-sources</groupId>
         <artifactId>flume-taildir-source</artifactId>
         <version>${flume-taildir.version}</version>
       </dependency>
