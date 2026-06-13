@@ -253,7 +253,7 @@
     <jsr305.version>3.0.2</jsr305.version>
     <log4j.version>2.26.0</log4j.version>
     <mapdb.version>0.9.9</mapdb.version>
-    <mina.version>2.1.12</mina.version>
+    <mina.version>2.2.8</mina.version>
     <mockito.version>5.18.0</mockito.version>
     <mvn-antrun-plugin.version>1.8</mvn-antrun-plugin.version>
     <!-- Do not upgrade the assumbly plugin version until MASSEMBLY-941 is fixed -->
@@ -271,8 +271,7 @@
     <spotbugs.version>4.9.3</spotbugs.version>
     <mvn-spotbugs-plugin.version>${spotbugs.version}.0</mvn-spotbugs-plugin.version>
     <mvn-surefire-plugin.version>3.5.5</mvn-surefire-plugin.version>
-    <!--<netty.version>3.10.6.Final</netty.version>-->
-    <netty-all.version>4.1.86.Final</netty-all.version>
+    <netty-all.version>4.1.121.Final</netty-all.version>
     <external.protobuf.version>4.35.0</external.protobuf.version>
     <protobuf.plugin.version>0.6.1</protobuf.plugin.version>
     <prometheus.version>1.7.0</prometheus.version>
