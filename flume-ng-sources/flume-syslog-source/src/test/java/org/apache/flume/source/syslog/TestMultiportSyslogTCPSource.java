@@ -212,6 +212,7 @@ public class TestMultiportSyslogTCPSource {
         SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(
                 null,
+                // lgtm [java/insecure-trustmanager]
                 new TrustManager[] {
                     new X509TrustManager() {
                         @Override
