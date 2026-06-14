@@ -18,7 +18,7 @@ package org.apache.flume.node;
 
 import java.io.InputStream;
 import java.net.URI;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.flume.conf.ConfigurationException;
 
 public class ClasspathConfigurationSource implements ConfigurationSource {
