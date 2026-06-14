@@ -991,7 +991,7 @@
           <artifactId>maven-pmd-plugin</artifactId>
           <version>${mvn-pmd-plugin.version}</version>
           <configuration>
-            <targetJdk>${targetJavaVersion}</targetJdk>
+            <targetJdk>${releaseJavaVersion}</targetJdk>
             <excludeRoots>
               <excludeRoot>${project.build.directory}/generated-sources</excludeRoot>
             </excludeRoots>
@@ -1206,6 +1206,38 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-pmd-plugin</artifactId>
+      </plugin>
+      <!-- Enable Parent POM flattening -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>flatten-maven-plugin</artifactId>
+        <version>1.7.3</version>
+        <executions>
+          <execution>
+            <id>flatten-bom</id>
+            <goals>
+              <goal>flatten</goal>
+            </goals>
+            <phase>process-resources</phase>
+            <inherited>false</inherited>
+            <configuration>
+              <updatePomFile>true</updatePomFile>
+              <flattenMode>bom</flattenMode>
+              <pomElements>
+                <dependencyManagement>resolve</dependencyManagement>
+                <pluginManagement>resolve</pluginManagement>
+                <properties>flatten</properties>
+              </pomElements>
+            </configuration>
+          </execution>
+          <!-- ensure proper cleanup -->
+          <execution>
+            <id>flatten.clean</id>
+            <goals>
+              <goal>clean</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
     <extensions>
