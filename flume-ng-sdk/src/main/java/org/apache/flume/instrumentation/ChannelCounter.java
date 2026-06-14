@@ -16,7 +16,7 @@
  */
 package org.apache.flume.instrumentation;
 
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 
 public class ChannelCounter extends MonitoredCounterGroup implements ChannelCounterMBean {
 

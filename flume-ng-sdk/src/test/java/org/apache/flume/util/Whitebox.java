@@ -16,7 +16,7 @@
  */
 package org.apache.flume.util;
 
-import org.apache.commons.lang.reflect.FieldUtils;
+import org.apache.commons.lang3.reflect.FieldUtils;
 
 public class Whitebox {
     public static <T> T getInternalState(Object target, String fieldName) {
