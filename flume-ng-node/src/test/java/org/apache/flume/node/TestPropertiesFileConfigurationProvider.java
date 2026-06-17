@@ -26,15 +26,15 @@ import junit.framework.Assert;
 import org.apache.flume.conf.FlumeConfiguration;
 import org.apache.flume.conf.FlumeConfiguration.AgentConfiguration;
 import org.apache.flume.conf.FlumeConfigurationError;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class TestPropertiesFileConfigurationProvider {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestPropertiesFileConfigurationProvider.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private static final File TESTFILE = new File(TestPropertiesFileConfigurationProvider.class
             .getClassLoader()
@@ -90,8 +90,8 @@ public class TestPropertiesFileConfigurationProvider {
         AgentConfiguration agentConfiguration = configuration.getConfigurationFor("host1");
         Assert.assertNotNull(agentConfiguration);
 
-        LOGGER.info(agentConfiguration.getPrevalidationConfig());
-        LOGGER.info(agentConfiguration.getPostvalidationConfig());
+        logger.info(agentConfiguration.getPrevalidationConfig());
+        logger.info(agentConfiguration.getPostvalidationConfig());
 
         Set<String> sources = Sets.newHashSet("source1");
         Set<String> sinks = Sets.newHashSet("sink1");

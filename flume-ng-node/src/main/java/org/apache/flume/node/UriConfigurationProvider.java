@@ -36,8 +36,8 @@ import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.conf.FlumeConfiguration;
 import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleState;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -179,7 +179,7 @@ import org.slf4j.LoggerFactory;
  */
 public class UriConfigurationProvider extends AbstractConfigurationProvider implements LifecycleAware {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(UriConfigurationProvider.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private final List<ConfigurationSource> configurationSources;
     private final File backupDirectory;
@@ -223,14 +223,14 @@ public class UriConfigurationProvider extends AbstractConfigurationProvider impl
             executorService.shutdown();
             try {
                 if (!executorService.awaitTermination(500, TimeUnit.MILLISECONDS)) {
-                    LOGGER.debug("File watcher has not terminated. Forcing shutdown of executor.");
+                    logger.debug("File watcher has not terminated. Forcing shutdown of executor.");
                     executorService.shutdownNow();
                     while (!executorService.awaitTermination(500, TimeUnit.MILLISECONDS)) {
-                        LOGGER.debug("Waiting for file watcher to terminate");
+                        logger.debug("Waiting for file watcher to terminate");
                     }
                 }
             } catch (InterruptedException e) {
-                LOGGER.debug("Interrupted while waiting for file watcher to terminate");
+                logger.debug("Interrupted while waiting for file watcher to terminate");
                 Thread.currentThread().interrupt();
             }
         }
@@ -257,7 +257,7 @@ public class UriConfigurationProvider extends AbstractConfigurationProvider impl
                         case ConfigurationSource.JSON:
                         case ConfigurationSource.YAML:
                         case ConfigurationSource.XML: {
-                            LOGGER.warn("File extension type {} is unsupported", configurationSource.getExtension());
+                            logger.warn("File extension type {} is unsupported", configurationSource.getExtension());
                             break;
                         }
                         default: {
@@ -267,7 +267,7 @@ public class UriConfigurationProvider extends AbstractConfigurationProvider impl
                     }
                 }
             } catch (IOException ioe) {
-                LOGGER.warn("Unable to load properties from {}: {}", configurationSource.getUri(), ioe.getMessage());
+                logger.warn("Unable to load properties from {}: {}", configurationSource.getUri(), ioe.getMessage());
             }
             if (properties.size() > 0) {
                 configMap = MapResolver.resolveProperties(properties);
@@ -279,13 +279,13 @@ public class UriConfigurationProvider extends AbstractConfigurationProvider impl
             if (backupDirectory != null) {
                 if (backupDirectory.mkdirs()) {
                     // This is only being logged to keep Spotbugs happy. We can't ignore the result of mkdirs.
-                    LOGGER.debug("Created directories for {}", backupDirectory.toString());
+                    logger.debug("Created directories for {}", backupDirectory.toString());
                 }
                 File backupFile = getBackupFile(backupDirectory, getAgentName());
                 try (OutputStream os = new FileOutputStream(backupFile)) {
                     props.store(os, "Backup created at " + LocalDateTime.now().toString());
                 } catch (IOException ioe) {
-                    LOGGER.warn("Unable to create backup properties file: {}" + ioe.getMessage());
+                    logger.warn("Unable to create backup properties file: {}" + ioe.getMessage());
                 }
             }
         } else {
@@ -294,11 +294,11 @@ public class UriConfigurationProvider extends AbstractConfigurationProvider impl
                 if (backup.exists()) {
                     Properties props = new Properties();
                     try (InputStream is = new FileInputStream(backup)) {
-                        LOGGER.warn("Unable to access primary configuration. Trying backup");
+                        logger.warn("Unable to access primary configuration. Trying backup");
                         props.load(is);
                         configMap = MapResolver.resolveProperties(props);
                     } catch (IOException ex) {
-                        LOGGER.warn("Error reading backup file: {}", ex.getMessage());
+                        logger.warn("Error reading backup file: {}", ex.getMessage());
                     }
                 }
             }
@@ -306,7 +306,7 @@ public class UriConfigurationProvider extends AbstractConfigurationProvider impl
         if (configMap != null) {
             return new FlumeConfiguration(configMap);
         } else {
-            LOGGER.error("No configuration could be found");
+            logger.error("No configuration could be found");
             return null;
         }
     }
@@ -332,7 +332,7 @@ public class UriConfigurationProvider extends AbstractConfigurationProvider impl
 
         @Override
         public void run() {
-            LOGGER.debug("Checking for changes to sources");
+            logger.debug("Checking for changes to sources");
 
             counterGroup.incrementAndGet("uri.checks");
             try {
@@ -346,7 +346,7 @@ public class UriConfigurationProvider extends AbstractConfigurationProvider impl
                     eventBus.post(getConfiguration());
                 }
             } catch (ConfigurationException ex) {
-                LOGGER.warn("Unable to update configuration: {}", ex.getMessage());
+                logger.warn("Unable to update configuration: {}", ex.getMessage());
             }
         }
     }

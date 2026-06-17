@@ -29,8 +29,8 @@ import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.util.OrderSelector;
 import org.apache.flume.util.RandomOrderSelector;
 import org.apache.flume.util.RoundRobinOrderSelector;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>Provides the ability to load-balance flow over multiple sinks.</p>
@@ -85,7 +85,7 @@ public class LoadBalancingSinkProcessor extends AbstractSinkProcessor {
     public static final String SELECTOR_NAME_ROUND_ROBIN_BACKOFF = "ROUND_ROBIN_BACKOFF";
     public static final String SELECTOR_NAME_RANDOM_BACKOFF = "RANDOM_BACKOFF";
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(LoadBalancingSinkProcessor.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private SinkSelector selector;
 
@@ -120,7 +120,7 @@ public class LoadBalancingSinkProcessor extends AbstractSinkProcessor {
         selector.setSinks(getSinks());
         selector.configure(new Context(context.getSubProperties(CONFIG_SELECTOR_PREFIX)));
 
-        LOGGER.debug("Sink selector: " + selector + " initialized");
+        logger.debug("Sink selector: " + selector + " initialized");
     }
 
     @Override
@@ -149,7 +149,7 @@ public class LoadBalancingSinkProcessor extends AbstractSinkProcessor {
                 break;
             } catch (Exception ex) {
                 selector.informSinkFailed(sink);
-                LOGGER.warn("Sink failed to consume event. " + "Attempting next sink if available.", ex);
+                logger.warn("Sink failed to consume event. " + "Attempting next sink if available.", ex);
             }
         }
 

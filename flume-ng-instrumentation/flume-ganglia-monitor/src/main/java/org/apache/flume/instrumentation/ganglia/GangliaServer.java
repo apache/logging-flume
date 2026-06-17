@@ -34,8 +34,8 @@ import org.apache.flume.api.HostInfo;
 import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.instrumentation.MonitorService;
 import org.apache.flume.instrumentation.util.JMXPollUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * A Ganglia server that polls JMX based at a configured frequency (defaults to
@@ -59,7 +59,7 @@ public class GangliaServer implements MonitorService {
      * from Hadoop. All hail the yellow elephant!
      */
 
-    private static final Logger logger = LoggerFactory.getLogger(GangliaServer.class);
+    private static final Logger logger = LogManager.getLogger();
     public static final int BUFFER_SIZE = 1500; // as per libgmond.c
     protected byte[] buffer = new byte[BUFFER_SIZE];
     protected int offset;

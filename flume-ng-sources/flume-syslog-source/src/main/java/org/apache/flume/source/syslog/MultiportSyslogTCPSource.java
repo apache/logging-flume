@@ -39,14 +39,14 @@ import org.apache.flume.conf.LogPrivacyUtil;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.source.SslContextAwareAbstractSource;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.ssl.SslFilter;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -54,7 +54,7 @@ import org.slf4j.LoggerFactory;
 public class MultiportSyslogTCPSource extends SslContextAwareAbstractSource
         implements EventDrivenSource, Configurable, BatchSizeSupported {
 
-    public static final Logger logger = LoggerFactory.getLogger(MultiportSyslogTCPSource.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private final ConcurrentMap<Integer, ThreadSafeDecoder> portCharsets;
 

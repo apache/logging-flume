@@ -34,6 +34,8 @@ import org.apache.flume.exception.ChannelException;
 import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.source.SslContextAwareAbstractSource;
 import org.apache.flume.tools.FlumeBeanConfigurator;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.ee11.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee11.servlet.ServletHolder;
 import org.eclipse.jetty.http.HttpVersion;
@@ -46,8 +48,6 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A source which accepts Flume Events by HTTP POST and GET. GET should be used
@@ -87,7 +87,7 @@ public class HTTPSource extends SslContextAwareAbstractSource implements EventDr
      *
      */
 
-    private static final Logger LOG = LoggerFactory.getLogger(HTTPSource.class);
+    private static final Logger logger = LogManager.getLogger();
     private volatile Integer port;
     private volatile Server srv;
     private volatile String host;
@@ -122,14 +122,14 @@ public class HTTPSource extends SslContextAwareAbstractSource implements EventDr
                     context.getSubProperties(HTTPSourceConfigurationConstants.CONFIG_HANDLER_PREFIX);
             handler.configure(new Context(subProps));
         } catch (ClassNotFoundException ex) {
-            LOG.error("Error while configuring HTTPSource. Exception follows.", ex);
+            logger.error("Error while configuring HTTPSource. Exception follows.", ex);
             Throwables.propagate(ex);
         } catch (ClassCastException ex) {
-            LOG.error("Deserializer is not an instance of HTTPSourceHandler."
+            logger.error("Deserializer is not an instance of HTTPSourceHandler."
                     + "Deserializer must implement HTTPSourceHandler.");
             Throwables.propagate(ex);
         } catch (Exception ex) {
-            LOG.error("Error configuring HTTPSource!", ex);
+            logger.error("Error configuring HTTPSource!", ex);
             Throwables.propagate(ex);
         }
         if (sourceCounter == null) {
@@ -200,7 +200,7 @@ public class HTTPSource extends SslContextAwareAbstractSource implements EventDr
             context.setSecurityHandler(HTTPServerConstraintUtil.enforceConstraints());
             srv.start();
         } catch (Exception ex) {
-            LOG.error("Error while starting HTTPSource. Exception follows.", ex);
+            logger.error("Error while starting HTTPSource. Exception follows.", ex);
             Throwables.propagate(ex);
         }
         Preconditions.checkArgument(srv.isRunning());
@@ -215,10 +215,10 @@ public class HTTPSource extends SslContextAwareAbstractSource implements EventDr
             srv.join();
             srv = null;
         } catch (Exception ex) {
-            LOG.error("Error while stopping HTTPSource. Exception follows.", ex);
+            logger.error("Error while stopping HTTPSource. Exception follows.", ex);
         }
         sourceCounter.stop();
-        LOG.info("Http source {} stopped. Metrics: {}", getName(), sourceCounter);
+        logger.info("Http source {} stopped. Metrics: {}", getName(), sourceCounter);
     }
 
     private class FlumeHTTPServlet extends HttpServlet {
@@ -231,12 +231,12 @@ public class HTTPSource extends SslContextAwareAbstractSource implements EventDr
             try {
                 events = handler.getEvents(request);
             } catch (HTTPBadRequestException ex) {
-                LOG.warn("Received bad request from client. ", ex);
+                logger.warn("Received bad request from client. ", ex);
                 sourceCounter.incrementEventReadFail();
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Bad request from client.");
                 return;
             } catch (Exception ex) {
-                LOG.warn("Deserializer threw unexpected exception. ", ex);
+                logger.warn("Deserializer threw unexpected exception. ", ex);
                 sourceCounter.incrementEventReadFail();
                 response.sendError(
                         HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Deserializer threw unexpected exception.");
@@ -247,7 +247,7 @@ public class HTTPSource extends SslContextAwareAbstractSource implements EventDr
             try {
                 getChannelProcessor().processEventBatch(events);
             } catch (ChannelException ex) {
-                LOG.warn(
+                logger.warn(
                         "Error appending event to channel. "
                                 + "Channel might be full. Consider increasing the channel "
                                 + "capacity or make sure the sinks perform faster.",
@@ -258,7 +258,7 @@ public class HTTPSource extends SslContextAwareAbstractSource implements EventDr
                         "Error appending event to channel. Channel might be full.");
                 return;
             } catch (Exception ex) {
-                LOG.warn("Unexpected error appending event to channel. ", ex);
+                logger.warn("Unexpected error appending event to channel. ", ex);
                 sourceCounter.incrementGenericProcessingFail();
                 response.sendError(
                         HttpServletResponse.SC_INTERNAL_SERVER_ERROR,

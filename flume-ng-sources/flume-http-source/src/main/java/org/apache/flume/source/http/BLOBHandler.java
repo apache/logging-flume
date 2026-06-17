@@ -29,8 +29,8 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.conf.LogPrivacyUtil;
 import org.apache.flume.event.EventBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
  */
 public class BLOBHandler implements HTTPSourceHandler {
 
-    private static final Logger LOG = LoggerFactory.getLogger(BLOBHandler.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private String commaSeparatedHeaders;
 
@@ -64,8 +64,8 @@ public class BLOBHandler implements HTTPSourceHandler {
         Map<String, String[]> parameters = request.getParameterMap();
         for (String parameter : parameters.keySet()) {
             String value = parameters.get(parameter)[0];
-            if (LOG.isDebugEnabled() && LogPrivacyUtil.allowLogRawData()) {
-                LOG.debug("Setting Header [Key, Value] as [{},{}] ", parameter, value);
+            if (logger.isDebugEnabled() && LogPrivacyUtil.allowLogRawData()) {
+                logger.debug("Setting Header [Key, Value] as [{},{}] ", parameter, value);
             }
             headers.put(parameter, value);
         }
@@ -78,7 +78,7 @@ public class BLOBHandler implements HTTPSourceHandler {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try {
             IOUtils.copy(inputStream, outputStream);
-            LOG.debug("Building an Event with stream of size -- {}", outputStream.size());
+            logger.debug("Building an Event with stream of size -- {}", outputStream.size());
             Event event = EventBuilder.withBody(outputStream.toByteArray(), headers);
             event.setHeaders(headers);
             List<Event> eventList = new ArrayList<Event>();

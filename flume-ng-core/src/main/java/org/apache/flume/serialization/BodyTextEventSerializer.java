@@ -20,16 +20,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This class simply writes the body of the event to the output stream
  * and appends a newline after each event.
  */
 public class BodyTextEventSerializer implements EventSerializer {
-
-    private static final Logger logger = LoggerFactory.getLogger(BodyTextEventSerializer.class);
 
     // for legacy reasons, by default, append a newline to each event written out
     private final String APPEND_NEWLINE = "appendNewline";

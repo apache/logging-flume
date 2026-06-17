@@ -25,12 +25,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.conf.ConfigurationException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class FileConfigurationSource implements ConfigurationSource {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FileConfigurationSource.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private final Path path;
     private final URI uri;
@@ -46,7 +46,7 @@ public class FileConfigurationSource implements ConfigurationSource {
             this.lastChange = path.toFile().lastModified();
             data = Files.readAllBytes(this.path);
         } catch (IOException ioe) {
-            LOGGER.error("Unable to read {}: {}", path.toString(), ioe.getMessage());
+            logger.error("Unable to read {}: {}", path.toString(), ioe.getMessage());
             throw new ConfigurationException("Unable to read file " + path.toString(), ioe);
         }
     }
@@ -72,14 +72,14 @@ public class FileConfigurationSource implements ConfigurationSource {
 
     @Override
     public boolean isModified() {
-        LOGGER.debug("Checking file:{} for changes", path.toString());
+        logger.debug("Checking file:{} for changes", path.toString());
 
         counterGroup.incrementAndGet("file.checks");
 
         long lastModified = path.toFile().lastModified();
 
         if (lastModified > lastChange) {
-            LOGGER.info("Reloading configuration file:{}", path.toString());
+            logger.info("Reloading configuration file:{}", path.toString());
 
             counterGroup.incrementAndGet("file.loads");
 
@@ -89,14 +89,14 @@ public class FileConfigurationSource implements ConfigurationSource {
                 data = Files.readAllBytes(path);
                 return true;
             } catch (Exception e) {
-                LOGGER.error("Failed to load configuration data. Exception follows.", e);
+                logger.error("Failed to load configuration data. Exception follows.", e);
             } catch (NoClassDefFoundError e) {
-                LOGGER.error(
+                logger.error(
                         "Failed to start agent because dependencies were not found in classpath." + "Error follows.",
                         e);
             } catch (Throwable t) {
                 // caught because the caller does not handle or log Throwables
-                LOGGER.error("Unhandled error", t);
+                logger.error("Unhandled error", t);
             }
         }
         return false;

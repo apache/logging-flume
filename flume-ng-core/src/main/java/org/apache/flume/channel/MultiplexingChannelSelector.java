@@ -24,8 +24,6 @@ import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.FlumeException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class MultiplexingChannelSelector extends AbstractChannelSelector {
 
@@ -34,9 +32,6 @@ public class MultiplexingChannelSelector extends AbstractChannelSelector {
     public static final String CONFIG_PREFIX_MAPPING = "mapping.";
     public static final String CONFIG_DEFAULT_CHANNEL = "default";
     public static final String CONFIG_PREFIX_OPTIONAL = "optional";
-
-    @SuppressWarnings("unused")
-    private static final Logger LOG = LoggerFactory.getLogger(MultiplexingChannelSelector.class);
 
     private static final List<Channel> EMPTY_LIST = Collections.emptyList();
 

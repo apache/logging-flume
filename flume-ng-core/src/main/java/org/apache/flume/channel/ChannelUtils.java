@@ -25,8 +25,8 @@ import org.apache.flume.Channel;
 import org.apache.flume.Event;
 import org.apache.flume.Transaction;
 import org.apache.flume.exception.ChannelException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -48,7 +48,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ChannelUtils {
 
-    private static final Logger logger = LoggerFactory.getLogger(ChannelUtils.class);
+    private static final Logger logger = LogManager.getLogger();
 
     /**
      * <p>

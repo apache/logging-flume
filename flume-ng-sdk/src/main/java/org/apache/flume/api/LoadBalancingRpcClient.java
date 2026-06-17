@@ -27,8 +27,8 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.util.OrderSelector;
 import org.apache.flume.util.RandomOrderSelector;
 import org.apache.flume.util.RoundRobinOrderSelector;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>An implementation of RpcClient interface that uses NettyAvroRpcClient
@@ -47,7 +47,7 @@ import org.slf4j.LoggerFactory;
  */
 public class LoadBalancingRpcClient extends AbstractRpcClient {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(LoadBalancingRpcClient.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private List<HostInfo> hosts;
     private HostSelector selector;
@@ -70,7 +70,7 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
                 break;
             } catch (Exception ex) {
                 selector.informFailure(host);
-                LOGGER.warn("Failed to send event to host " + host, ex);
+                logger.warn("Failed to send event to host " + host, ex);
             }
         }
 
@@ -94,7 +94,7 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
                 break;
             } catch (Exception ex) {
                 selector.informFailure(host);
-                LOGGER.warn("Failed to send batch to host " + host, ex);
+                logger.warn("Failed to send batch to host " + host, ex);
             }
         }
 
@@ -126,7 +126,7 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
                     try {
                         client.close();
                     } catch (Exception ex) {
-                        LOGGER.warn("Failed to close client: " + name, ex);
+                        logger.warn("Failed to close client: " + name, ex);
                     }
                 }
                 it.remove();
@@ -189,7 +189,7 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
             try {
                 client.close();
             } catch (Exception ex) {
-                LOGGER.warn("Failed to close client for " + info, ex);
+                logger.warn("Failed to close client for " + info, ex);
             }
             client = createClient(name);
             clientMap.put(name, client);

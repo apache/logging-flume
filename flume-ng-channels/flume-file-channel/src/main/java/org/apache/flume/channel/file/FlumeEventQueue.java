@@ -26,6 +26,7 @@ import java.io.RandomAccessFile;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
+import java.nio.channels.FileChannel;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Collection;
@@ -34,10 +35,10 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Queue of events in the channel. This queue stores only
@@ -49,7 +50,7 @@ import org.slf4j.LoggerFactory;
  * the head position.
  */
 final class FlumeEventQueue {
-    private static final Logger LOG = LoggerFactory.getLogger(FlumeEventQueue.class);
+    private static final Logger logger = LogManager.getLogger();
     private static final int EMPTY = 0;
     private final EventQueueBackingStore backingStore;
     private final String channelNameDescriptor;
@@ -80,7 +81,7 @@ final class FlumeEventQueue {
             inflightPuts = new InflightEventWrapper(inflightPutsFile);
             inflightTakes = new InflightEventWrapper(inflightTakesFile);
         } catch (Exception e) {
-            LOG.error("Could not read checkpoint.", e);
+            logger.error("Could not read checkpoint.", e);
             throw e;
         }
         if (queueSetDBDir.isDirectory()) {
@@ -106,7 +107,7 @@ final class FlumeEventQueue {
         for (int i = 0; i < backingStore.getSize(); i++) {
             queueSet.add(get(i));
         }
-        LOG.info("QueueSet population inserting " + backingStore.getSize() + " took "
+        logger.info("QueueSet population inserting " + backingStore.getSize() + " took "
                 + (System.currentTimeMillis() - start));
     }
 
@@ -127,7 +128,7 @@ final class FlumeEventQueue {
                 && !inflightTakes.syncRequired()
                 && !force) { // No need to check inflight puts, since that would
             // cause elements.syncRequired() to return true.
-            LOG.debug("Checkpoint not required");
+            logger.debug("Checkpoint not required");
             return false;
         }
         backingStore.beginCheckpoint();
@@ -170,7 +171,7 @@ final class FlumeEventQueue {
         // in such a way that these takes cannot go back in. If this if returns true,
         // there is a buuuuuuuug!
         if (backingStore.getSize() == backingStore.getCapacity()) {
-            LOG.error("Could not reinsert to queue, events which were taken but "
+            logger.error("Could not reinsert to queue, events which were taken but "
                     + "not committed. Please report this issue.");
             return false;
         }
@@ -381,14 +382,14 @@ final class FlumeEventQueue {
                 db.close();
             }
         } catch (Exception ex) {
-            LOG.warn("Error closing db", ex);
+            logger.warn("Error closing db", ex);
         }
         try {
             backingStore.close();
             inflightPuts.close();
             inflightTakes.close();
         } catch (IOException e) {
-            LOG.warn("Error closing backing store", e);
+            logger.warn("Error closing backing store", e);
         }
     }
 
@@ -399,7 +400,7 @@ final class FlumeEventQueue {
     synchronized void replayComplete() {
         String msg = "Search Count = " + searchCount + ", Search Time = " + searchTime + ", Copy Count = " + copyCount
                 + ", Copy Time = " + copyTime;
-        LOG.info(msg);
+        logger.info(msg);
         if (db != null) {
             db.close();
         }
@@ -427,7 +428,7 @@ final class FlumeEventQueue {
         // Both these are volatile for safe publication, they are never accessed by
         // more than 1 thread at a time.
         private volatile RandomAccessFile file;
-        private volatile java.nio.channels.FileChannel fileChannel;
+        private volatile FileChannel fileChannel;
         private final MessageDigest digest;
         private final File inflightEventsFile;
         private volatile boolean syncRequired = false;
@@ -513,7 +514,7 @@ final class FlumeEventQueue {
                     Set<Long> pointers = inflightEvents.get(txnID);
                     longBuffer.put(txnID);
                     longBuffer.put((long) pointers.size());
-                    LOG.debug("Number of events inserted into "
+                    logger.debug("Number of events inserted into "
                             + "inflights file: " + String.valueOf(pointers.size())
                             + " file: " + inflightEventsFile.getCanonicalPath());
                     long[] written = ArrayUtils.toPrimitive(pointers.toArray(new Long[0]));
@@ -526,7 +527,7 @@ final class FlumeEventQueue {
                 fileChannel.force(true);
                 syncRequired = false;
             } catch (IOException ex) {
-                LOG.error("Error while writing checkpoint to disk.", ex);
+                logger.error("Error while writing checkpoint to disk.", ex);
                 throw ex;
             }
         }
@@ -568,7 +569,7 @@ final class FlumeEventQueue {
                     }
                 }
             } catch (BufferUnderflowException ex) {
-                LOG.debug("Reached end of inflights buffer. Long buffer position ="
+                logger.debug("Reached end of inflights buffer. Long buffer position ="
                         + String.valueOf(longBuffer.position()));
             }
             return inflights;

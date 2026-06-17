@@ -42,11 +42,11 @@ import org.apache.flume.channel.file.LogFileV3;
 import org.apache.flume.channel.file.LogRecord;
 import org.apache.flume.channel.file.Serialization;
 import org.apache.flume.channel.file.TransactionEventRecord;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class FileChannelIntegrityTool implements FlumeTool {
-    public static final Logger LOG = LoggerFactory.getLogger(FileChannelIntegrityTool.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private final List<File> dataDirs = new ArrayList<File>();
 
@@ -63,7 +63,7 @@ public class FileChannelIntegrityTool implements FlumeTool {
     public void run(String[] args) throws IOException, ParseException {
         boolean shouldContinue = parseCommandLineOpts(args);
         if (!shouldContinue) {
-            LOG.error("Could not parse command line options. Exiting ...");
+            logger.error("Could not parse command line options. Exiting ...");
             System.exit(1);
         }
         for (File dataDir : dataDirs) {
@@ -81,7 +81,7 @@ public class FileChannelIntegrityTool implements FlumeTool {
             });
             if (dataFiles != null && dataFiles.length > 0) {
                 for (File dataFile : dataFiles) {
-                    LOG.info("Checking for corruption in " + dataFile.toString());
+                    logger.info("Checking for corruption in " + dataFile.toString());
                     LogFile.SequentialReader reader = new LogFileV3.SequentialReader(dataFile, null, true);
                     LogFile.OperationRecordUpdater updater = new LogFile.OperationRecordUpdater(dataFile);
                     boolean fileDone = false;
@@ -131,7 +131,7 @@ public class FileChannelIntegrityTool implements FlumeTool {
                         } catch (CorruptEventException e) {
                             corruptEvents++;
                             totalChannelEvents++;
-                            LOG.warn("Corruption found in " + dataFile.toString() + " at " + eventPosition);
+                            logger.warn("Corruption found in " + dataFile.toString() + " at " + eventPosition);
                             if (!fileBackedup) {
                                 Serialization.copyFile(
                                         dataFile, new File(dataFile.getParent(), dataFile.getName() + ".bak"));

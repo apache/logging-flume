@@ -40,14 +40,14 @@ import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.channel.file.encryption.CipherProvider;
 import org.apache.flume.channel.file.encryption.KeyProvider;
 import org.apache.flume.tools.DirectMemoryUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 @InterfaceAudience.Private
 @InterfaceStability.Unstable
 public abstract class LogFile {
 
-    private static final Logger LOG = LoggerFactory.getLogger(LogFile.class);
+    private static final Logger logger = LogManager.getLogger();
 
     /**
      * This class preallocates the data files 1MB at time to avoid
@@ -126,7 +126,7 @@ public abstract class LogFile {
             try {
                 writeFileHandle.close();
             } catch (IOException e) {
-                LOG.warn("Unable to close " + file, e);
+                logger.warn("Unable to close " + file, e);
             }
         }
     }
@@ -198,7 +198,7 @@ public abstract class LogFile {
             this.fsyncPerTransaction = fsyncPerTransaction;
             this.fsyncInterval = fsyncInterval;
             if (!fsyncPerTransaction) {
-                LOG.info("Sync interval = " + fsyncInterval);
+                logger.info("Sync interval = " + fsyncInterval);
                 syncExecutor = Executors.newSingleThreadScheduledExecutor();
                 syncExecutor.scheduleWithFixedDelay(
                         new Runnable() {
@@ -207,7 +207,7 @@ public abstract class LogFile {
                                 try {
                                     sync();
                                 } catch (Throwable ex) {
-                                    LOG.error(
+                                    logger.error(
                                             "Data file, " + getFile().toString() + " could not "
                                                     + "be synced to disk due to an error.",
                                             ex);
@@ -221,7 +221,7 @@ public abstract class LogFile {
                 syncExecutor = null;
             }
             usableSpace = new CachedFSUsableSpace(file, usableSpaceRefreshInterval);
-            LOG.info("Opened " + file);
+            logger.info("Opened " + file);
             open = true;
         }
 
@@ -342,8 +342,8 @@ public abstract class LogFile {
          */
         synchronized void sync() throws IOException {
             if (!fsyncPerTransaction && !dirty) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("No events written to file, " + getFile().toString() + " in last " + fsyncInterval
+                if (logger.isDebugEnabled()) {
+                    logger.debug("No events written to file, " + getFile().toString() + " in last " + fsyncInterval
                             + " or since last commit.");
                 }
                 return;
@@ -382,16 +382,16 @@ public abstract class LogFile {
                     }
                 }
                 if (writeFileChannel.isOpen()) {
-                    LOG.info("Closing " + file);
+                    logger.info("Closing " + file);
                     try {
                         writeFileChannel.force(true);
                     } catch (IOException e) {
-                        LOG.warn("Unable to flush to disk " + file, e);
+                        logger.warn("Unable to flush to disk " + file, e);
                     }
                     try {
                         writeFileHandle.close();
                     } catch (IOException e) {
-                        LOG.warn("Unable to close " + file, e);
+                        logger.warn("Unable to close " + file, e);
                     }
                 }
             }
@@ -400,7 +400,7 @@ public abstract class LogFile {
         protected void preallocate(int size) throws IOException {
             long position = position();
             if (position + size > getFileChannel().size()) {
-                LOG.debug("Preallocating at position " + position);
+                logger.debug("Preallocating at position " + position);
                 synchronized (FILL) {
                     FILL.position(0);
                     getFileChannel().write(FILL, position);
@@ -435,7 +435,7 @@ public abstract class LogFile {
                     byteRead == OP_RECORD || byteRead == OP_NOOP,
                     "Expected to read a record but the byte read indicates EOF");
             fileHandle.seek(offset);
-            LOG.info("Marking event as " + OP_NOOP + " at " + offset + " for file " + file.toString());
+            logger.info("Marking event as " + OP_NOOP + " at " + offset + " for file " + file.toString());
             fileHandle.writeByte(OP_NOOP);
         }
 
@@ -444,7 +444,7 @@ public abstract class LogFile {
                 fileHandle.getFD().sync();
                 fileHandle.close();
             } catch (IOException e) {
-                LOG.error("Could not close file handle to file " + fileHandle.toString(), e);
+                logger.error("Could not close file handle to file " + fileHandle.toString(), e);
             }
         }
     }
@@ -514,7 +514,7 @@ public abstract class LogFile {
         synchronized void close() {
             if (open) {
                 open = false;
-                LOG.info("Closing RandomReader " + file);
+                logger.info("Closing RandomReader " + file);
                 List<RandomAccessFile> fileHandles = Lists.newArrayList();
                 while (readFileHandles.drainTo(fileHandles) > 0) {
                     for (RandomAccessFile fileHandle : fileHandles) {
@@ -522,7 +522,7 @@ public abstract class LogFile {
                             try {
                                 fileHandle.close();
                             } catch (IOException e) {
-                                LOG.warn("Unable to close fileHandle for " + file, e);
+                                logger.warn("Unable to close fileHandle for " + file, e);
                             }
                         }
                     }
@@ -553,7 +553,7 @@ public abstract class LogFile {
             }
             int remaining = readFileHandles.remainingCapacity();
             if (remaining > 0) {
-                LOG.info("Opening " + file + " for read, remaining number of file "
+                logger.info("Opening " + file + " for read, remaining number of file "
                         + "handles available for reads of this file is " + remaining);
                 return open();
             }
@@ -565,7 +565,7 @@ public abstract class LogFile {
                 try {
                     fileHandle.close();
                 } catch (IOException e) {
-                    LOG.warn("Unable to close " + file, e);
+                    logger.warn("Unable to close " + file, e);
                 }
             }
         }
@@ -644,9 +644,9 @@ public abstract class LogFile {
                     position = backupCheckpointPosition;
                 }
                 fileChannel.position(position);
-                LOG.info("fast-forward to checkpoint position: " + position);
+                logger.info("fast-forward to checkpoint position: " + position);
             } else {
-                LOG.info("Checkpoint for file(" + file.getAbsolutePath() + ") "
+                logger.info("Checkpoint for file(" + file.getAbsolutePath() + ") "
                         + "is: " + lastCheckpointWriteOrderID + ", which is beyond the "
                         + "requested checkpoint time: " + checkpointWriteOrderID
                         + " and position " + lastCheckpointPosition);
@@ -658,7 +658,7 @@ public abstract class LogFile {
             try {
                 long position = fileChannel.position();
                 if (position > FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE) {
-                    LOG.info("File position exceeds the threshold: "
+                    logger.info("File position exceeds the threshold: "
                             + FileChannelConfiguration.DEFAULT_MAX_FILE_SIZE
                             + ", position: " + position);
                 }
@@ -669,16 +669,16 @@ public abstract class LogFile {
                     if (operation == OP_RECORD) {
                         break;
                     } else if (operation == OP_EOF) {
-                        LOG.info("Encountered EOF at " + offset + " in " + file);
+                        logger.info("Encountered EOF at " + offset + " in " + file);
                         return null;
                     } else if (operation == OP_NOOP) {
-                        LOG.info("No op event found in file: " + file.toString() + " at " + offset
+                        logger.info("No op event found in file: " + file.toString() + " at " + offset
                                 + ". Skipping event.");
                         skipRecord(fileHandle, offset + 1);
                         offset = (int) fileHandle.getFilePointer();
                         continue;
                     } else {
-                        LOG.error("Encountered non op-record at " + offset + " " + Integer.toHexString(operation)
+                        logger.error("Encountered non op-record at " + offset + " " + Integer.toHexString(operation)
                                 + " in " + file);
                         return null;
                     }

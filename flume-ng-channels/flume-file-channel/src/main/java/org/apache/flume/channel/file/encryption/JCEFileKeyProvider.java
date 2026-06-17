@@ -29,11 +29,11 @@ import java.security.Key;
 import java.security.KeyStore;
 import java.util.Map;
 import org.apache.flume.Context;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class JCEFileKeyProvider extends KeyProvider {
-    private static final Logger logger = LoggerFactory.getLogger(JCEFileKeyProvider.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private Map<String, File> aliasPasswordFileMap;
     private KeyStore ks;

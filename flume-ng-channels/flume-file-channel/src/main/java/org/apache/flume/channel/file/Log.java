@@ -54,8 +54,8 @@ import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.channel.file.encryption.KeyProvider;
 import org.apache.flume.channel.file.instrumentation.FileChannelCounter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Stores FlumeEvents on disk and pointers to the events in a in memory queue.
@@ -72,7 +72,7 @@ import org.slf4j.LoggerFactory;
 @InterfaceStability.Unstable
 public class Log {
     public static final String PREFIX = "log-";
-    private static final Logger LOGGER = LoggerFactory.getLogger(Log.class);
+    private static final Logger logger = LogManager.getLogger();
     private static final int MIN_NUM_LOGS = 2;
     public static final String FILE_LOCK = "in_use.lock";
     public static final String QUEUE_SET = "queueset";
@@ -361,7 +361,7 @@ public class Log {
             throw e;
         }
         if (encryptionKeyProvider != null && encryptionKeyAlias != null && encryptionCipherProvider != null) {
-            LOGGER.info("Encryption is enabled with encryptionKeyProvider = " + encryptionKeyProvider
+            logger.info("Encryption is enabled with encryptionKeyProvider = " + encryptionKeyProvider
                     + ", encryptionKeyAlias = " + encryptionKeyAlias
                     + ", encryptionCipherProvider = " + encryptionCipherProvider);
             this.encryptionKeyProvider = encryptionKeyProvider;
@@ -369,7 +369,7 @@ public class Log {
             this.encryptionCipherProvider = encryptionCipherProvider;
             this.encryptionKey = encryptionKeyProvider.getKey(encryptionKeyAlias);
         } else if (encryptionKeyProvider == null && encryptionKeyAlias == null && encryptionCipherProvider == null) {
-            LOGGER.info("Encryption is not enabled");
+            logger.info("Encryption is not enabled");
         } else {
             throw new IllegalArgumentException(
                     "Encryption configuration must all " + "null or all not null: encryptionKeyProvider = "
@@ -418,7 +418,7 @@ public class Log {
              *
              * Also store up the list of files so we can replay them later.
              */
-            LOGGER.info("Replay started");
+            logger.info("Replay started");
             nextFileID.set(0);
             List<File> dataFiles = Lists.newArrayList();
             for (File logDir : logDirs) {
@@ -432,7 +432,7 @@ public class Log {
                                     new File(logDir, PREFIX + id), encryptionKeyProvider, fsyncPerTransaction));
                 }
             }
-            LOGGER.info("Found NextFileID " + nextFileID + ", from " + dataFiles);
+            logger.info("Found NextFileID " + nextFileID + ", from " + dataFiles);
 
             /*
              * sort the data files by file id so we can replay them by file id
@@ -448,10 +448,10 @@ public class Log {
             File checkpointFile = new File(checkpointDir, "checkpoint");
             if (shouldFastReplay) {
                 if (checkpointFile.exists()) {
-                    LOGGER.debug("Disabling fast full replay because checkpoint " + "exists: " + checkpointFile);
+                    logger.debug("Disabling fast full replay because checkpoint " + "exists: " + checkpointFile);
                     shouldFastReplay = false;
                 } else {
-                    LOGGER.debug("Not disabling fast full replay because checkpoint " + " does not exist: "
+                    logger.debug("Not disabling fast full replay because checkpoint " + " does not exist: "
                             + checkpointFile);
                 }
             }
@@ -471,7 +471,7 @@ public class Log {
                         this.useDualCheckpoints,
                         this.compressBackupCheckpoint);
                 queue = new FlumeEventQueue(backingStore, inflightTakesFile, inflightPutsFile, queueSetDir);
-                LOGGER.info("Last Checkpoint " + new Date(checkpointFile.lastModified()) + ", queue depth = "
+                logger.info("Last Checkpoint " + new Date(checkpointFile.lastModified()) + ", queue depth = "
                         + queue.getSize());
 
                 /*
@@ -487,7 +487,7 @@ public class Log {
             } catch (BadCheckpointException ex) {
                 backupRestored = false;
                 if (useDualCheckpoints) {
-                    LOGGER.warn(
+                    logger.warn(
                             "Checkpoint may not have completed successfully. "
                                     + "Restoring checkpoint and starting up.",
                             ex);
@@ -496,7 +496,7 @@ public class Log {
                     }
                 }
                 if (!backupRestored) {
-                    LOGGER.warn(
+                    logger.warn(
                             "Checkpoint may not have completed successfully. "
                                     + "Forcing full replay, this may take a while.",
                             ex);
@@ -525,7 +525,7 @@ public class Log {
             }
 
             for (int index = 0; index < logDirs.length; index++) {
-                LOGGER.info("Rolling " + logDirs[index]);
+                logger.info("Rolling " + logDirs[index]);
                 roll(index);
             }
 
@@ -536,7 +536,7 @@ public class Log {
 
             open = true;
         } catch (Exception ex) {
-            LOGGER.error("Failed to initialize Log on " + channelNameDescriptor, ex);
+            logger.error("Failed to initialize Log on " + channelNameDescriptor, ex);
             if (ex instanceof IOException) {
                 throw (IOException) ex;
             }
@@ -553,14 +553,14 @@ public class Log {
         CheckpointRebuilder rebuilder = new CheckpointRebuilder(dataFiles, queue, fsyncPerTransaction);
         if (useFastReplay && rebuilder.rebuild()) {
             didFastReplay = true;
-            LOGGER.info("Fast replay successful.");
+            logger.info("Fast replay successful.");
         } else {
             ReplayHandler replayHandler = new ReplayHandler(queue, encryptionKeyProvider, fsyncPerTransaction);
             if (useLogReplayV1) {
-                LOGGER.info("Replaying logs with v1 replay logic");
+                logger.info("Replaying logs with v1 replay logic");
                 replayHandler.replayLogv1(dataFiles);
             } else {
-                LOGGER.info("Replaying logs with v2 replay logic");
+                logger.info("Replaying logs with v2 replay logic");
                 replayHandler.replayLog(dataFiles);
             }
             readCount = replayHandler.getReadCount();
@@ -748,8 +748,8 @@ public class Log {
     void rollback(long transactionID) throws IOException {
         Preconditions.checkState(open, "Log is closed");
 
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Rolling back " + transactionID);
+        if (logger.isDebugEnabled()) {
+            logger.debug("Rolling back " + transactionID);
         }
         Rollback rollback = new Rollback(transactionID, WriteOrderOracle.next());
         ByteBuffer buffer = TransactionEventRecord.toByteBuffer(rollback);
@@ -843,7 +843,7 @@ public class Log {
                     writeCheckpoint(true); // do this before acquiring exclusive lock
                 }
             } catch (Exception err) {
-                LOGGER.warn(
+                logger.warn(
                         "Failed creating checkpoint on close of channel " + channelNameDescriptor
                                 + "Replay will take longer next time channel is started.",
                         err);
@@ -869,20 +869,20 @@ public class Log {
             try {
                 unlock(checkpointDir);
             } catch (IOException ex) {
-                LOGGER.warn("Error unlocking " + checkpointDir, ex);
+                logger.warn("Error unlocking " + checkpointDir, ex);
             }
             if (useDualCheckpoints) {
                 try {
                     unlock(backupCheckpointDir);
                 } catch (IOException ex) {
-                    LOGGER.warn("Error unlocking " + checkpointDir, ex);
+                    logger.warn("Error unlocking " + checkpointDir, ex);
                 }
             }
             for (File logDir : logDirs) {
                 try {
                     unlock(logDir);
                 } catch (IOException ex) {
-                    LOGGER.warn("Error unlocking " + logDir, ex);
+                    logger.warn("Error unlocking " + logDir, ex);
                 }
             }
         } finally {
@@ -893,12 +893,12 @@ public class Log {
     void shutdownWorker() {
         String msg = "Attempting to shutdown background worker.";
         System.out.println(msg);
-        LOGGER.info(msg);
+        logger.info(msg);
         workerExecutor.shutdown();
         try {
             workerExecutor.awaitTermination(10, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-            LOGGER.error("Interrupted while waiting for worker to die.");
+            logger.error("Interrupted while waiting for worker to die.");
         }
     }
 
@@ -999,7 +999,7 @@ public class Log {
             // the possibility of multiple writes waiting on lock
             if (oldLogFile == null || buffer == null || oldLogFile.isRollRequired(buffer)) {
                 try {
-                    LOGGER.info("Roll start " + logDirs[index]);
+                    logger.info("Roll start " + logDirs[index]);
                     int fileID = nextFileID.incrementAndGet();
                     File file = new File(logDirs[index], PREFIX + fileID);
                     LogFile.Writer writer = LogFileFactory.getWriter(
@@ -1021,7 +1021,7 @@ public class Log {
                         oldLogFile.close();
                     }
                 } finally {
-                    LOGGER.info("Roll end");
+                    logger.info("Roll end");
                 }
             }
         } finally {
@@ -1079,7 +1079,7 @@ public class Log {
                         writer.close();
                     }
                     logFileRefCountsAll.remove(logFileID);
-                    LOGGER.info("Updated checkpoint for file: " + logFile + " position: " + logWriter.position()
+                    logger.info("Updated checkpoint for file: " + logFile + " position: " + logWriter.position()
                             + " logWriteOrderID: " + logWriteOrderID);
                 }
 
@@ -1099,7 +1099,7 @@ public class Log {
                         writer.close();
                     }
 
-                    LOGGER.debug("Updated checkpoint for file: " + file + "logWriteOrderID " + logWriteOrderID);
+                    logger.debug("Updated checkpoint for file: " + file + "logWriteOrderID " + logWriteOrderID);
                     idIterator.remove();
                 }
                 Preconditions.checkState(
@@ -1133,14 +1133,14 @@ public class Log {
         // checkpoint will become the backup at that time,
         // and thus these files are no longer needed).
         for (File fileToDelete : pendingDeletes) {
-            LOGGER.info("Removing old file: " + fileToDelete);
+            logger.info("Removing old file: " + fileToDelete);
             FileUtils.deleteQuietly(fileToDelete);
         }
         pendingDeletes.clear();
         // we will find the smallest fileID currently in use and
         // won't delete any files with an id larger than the min
         int minFileID = fileIDs.first();
-        LOGGER.debug("Files currently in use: " + fileIDs);
+        logger.debug("Files currently in use: " + fileIDs);
         for (File logDir : logDirs) {
             List<File> logs = LogUtils.getLogs(logDir);
             // sort oldset to newest
@@ -1178,12 +1178,12 @@ public class Log {
         FileLock lock = tryLock(dir);
         if (lock == null) {
             String msg = "Cannot lock " + dir + ". The directory is already locked. " + channelNameDescriptor;
-            LOGGER.info(msg);
+            logger.info(msg);
             throw new IOException(msg);
         }
         FileLock secondLock = tryLock(dir);
         if (secondLock != null) {
-            LOGGER.warn("Directory " + dir + " does not support locking");
+            logger.warn("Directory " + dir + " does not support locking");
             secondLock.release();
             secondLock.channel().close();
         }
@@ -1209,7 +1209,7 @@ public class Log {
             file.close();
             return null;
         } catch (IOException e) {
-            LOGGER.error("Cannot create lock on " + lockF, e);
+            logger.error("Cannot create lock on " + lockF, e);
             file.close();
             throw e;
         }
@@ -1232,7 +1232,7 @@ public class Log {
     }
 
     static class BackgroundWorker implements Runnable {
-        private static final Logger LOG = LoggerFactory.getLogger(BackgroundWorker.class);
+        private static final Logger logger = LogManager.getLogger();
         private final Log log;
 
         public BackgroundWorker(Log log) {
@@ -1247,10 +1247,10 @@ public class Log {
                 }
             } catch (IOException e) {
                 log.channelCounter.incrementCheckpointWriteErrorCount();
-                LOG.error("Error doing checkpoint", e);
+                logger.error("Error doing checkpoint", e);
             } catch (Throwable e) {
                 log.channelCounter.incrementCheckpointWriteErrorCount();
-                LOG.error("General error in checkpoint worker", e);
+                logger.error("General error in checkpoint worker", e);
             }
         }
     }

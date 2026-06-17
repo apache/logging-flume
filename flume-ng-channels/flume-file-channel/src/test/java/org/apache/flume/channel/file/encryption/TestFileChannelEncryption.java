@@ -40,15 +40,15 @@ import org.apache.flume.channel.file.FileChannelConfiguration;
 import org.apache.flume.channel.file.TestFileChannelBase;
 import org.apache.flume.channel.file.TestUtils;
 import org.apache.flume.exception.ChannelException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class TestFileChannelEncryption extends TestFileChannelBase {
-    protected static final Logger LOGGER = LoggerFactory.getLogger(TestFileChannelEncryption.class);
+    private static final Logger logger = LogManager.getLogger();
     private File keyStoreFile;
     private File keyStorePasswordFile;
     private Map<String, File> keyAliasPassword;
@@ -117,7 +117,7 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
                         out.addAll(takeEvents(channel, 10));
                     } catch (Throwable t) {
                         error.set(true);
-                        LOGGER.error("Error in take thread", t);
+                        logger.error("Error in take thread", t);
                     } finally {
                         stopLatch.countDown();
                     }
@@ -153,7 +153,7 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
                         in.addAll(putEvents(channel, "thread-produce", 10, 10000, true));
                     } catch (Throwable t) {
                         error.set(true);
-                        LOGGER.error("Error in put thread", t);
+                        logger.error("Error in put thread", t);
                     } finally {
                         stopLatch.countDown();
                     }

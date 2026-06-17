@@ -27,8 +27,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.management.ObjectName;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Used for keeping track of internal metrics using atomic integers</p>
@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class MonitoredCounterGroup {
 
-    private static final Logger logger = LoggerFactory.getLogger(MonitoredCounterGroup.class);
+    private static final Logger logger = LogManager.getLogger();
 
     // Key for component's start time in MonitoredCounterGroup.counterMap
     private static final String COUNTER_GROUP_START_TIME = "start.time";

@@ -29,8 +29,8 @@ import org.apache.flume.Transaction;
 import org.apache.flume.node.Initializable;
 import org.apache.flume.node.MaterializedConfiguration;
 import org.apache.flume.source.EventProcessor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -52,7 +52,7 @@ import org.slf4j.LoggerFactory;
  */
 public class NullInitSink extends NullSink implements Initializable {
 
-    private static final Logger logger = LoggerFactory.getLogger(NullInitSink.class);
+    private static final Logger logger = LogManager.getLogger();
     private String sourceName = null;
     private EventProcessor eventProcessor = null;
     private long total = 0;

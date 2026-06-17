@@ -19,8 +19,8 @@ package org.apache.flume;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleState;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
  */
 public class SinkRunner implements LifecycleAware {
 
-    private static final Logger logger = LoggerFactory.getLogger(SinkRunner.class);
+    private static final Logger logger = LogManager.getLogger();
     private static final long backoffSleepIncrement = 1000;
     private static final long maxBackoffSleep = 5000;
 

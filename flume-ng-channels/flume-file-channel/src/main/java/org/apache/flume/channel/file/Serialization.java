@@ -30,8 +30,8 @@ import javax.annotation.Nullable;
 import org.apache.commons.io.FileUtils;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.xerial.snappy.SnappyInputStream;
 import org.xerial.snappy.SnappyOutputStream;
 
@@ -53,7 +53,7 @@ public class Serialization {
     // 64 K buffer to copy and compress files.
     private static final int FILE_BUFFER_SIZE = 64 * 1024;
 
-    public static final Logger LOG = LoggerFactory.getLogger(Serialization.class);
+    private static final Logger logger = LogManager.getLogger();
 
     static File getMetaDataTempFile(File metaDataFile) {
         String metaDataFileName = metaDataFile.getName() + METADATA_TMP_FILENAME;
@@ -99,18 +99,18 @@ public class Serialization {
         }
         for (File file : files) {
             if (excludes.contains(file.getName())) {
-                LOG.info("Skipping " + file.getName() + " because it is in excludes " + "set");
+                logger.info("Skipping " + file.getName() + " because it is in excludes " + "set");
                 continue;
             }
             if (!FileUtils.deleteQuietly(file)) {
-                LOG.info(builder.toString());
-                LOG.error("Error while attempting to delete: " + file.getAbsolutePath());
+                logger.info(builder.toString());
+                logger.error("Error while attempting to delete: " + file.getAbsolutePath());
                 return false;
             }
             builder.append(", ").append(file.getName());
         }
         builder.append(".");
-        LOG.info(builder.toString());
+        logger.info(builder.toString());
         return true;
     }
 
@@ -148,7 +148,7 @@ public class Serialization {
                     total == from.length(), "The size of the origin file and destination file are not equal.");
             return true;
         } catch (Exception ex) {
-            LOG.error("Error while attempting to copy " + from.toString() + " to " + to.toString() + ".", ex);
+            logger.error("Error while attempting to copy " + from.toString() + " to " + to.toString() + ".", ex);
             Throwables.propagate(ex);
         } finally {
             Throwable th = null;
@@ -157,7 +157,7 @@ public class Serialization {
                     in.close();
                 }
             } catch (Throwable ex) {
-                LOG.error("Error while closing input file.", ex);
+                logger.error("Error while closing input file.", ex);
                 th = ex;
             }
             try {
@@ -165,7 +165,7 @@ public class Serialization {
                     out.close();
                 }
             } catch (IOException ex) {
-                LOG.error("Error while closing output file.", ex);
+                logger.error("Error while closing output file.", ex);
                 Throwables.propagate(ex);
             }
             if (th != null) {
@@ -209,7 +209,7 @@ public class Serialization {
             out.getFD().sync();
             return true;
         } catch (Exception ex) {
-            LOG.error(
+            logger.error(
                     "Error while attempting to compress " + uncompressed.toString() + " to " + compressed.toString()
                             + ".",
                     ex);
@@ -221,7 +221,7 @@ public class Serialization {
                     in.close();
                 }
             } catch (Throwable ex) {
-                LOG.error("Error while closing input file.", ex);
+                logger.error("Error while closing input file.", ex);
                 th = ex;
             }
             try {
@@ -229,7 +229,7 @@ public class Serialization {
                     snappyOut.close();
                 }
             } catch (IOException ex) {
-                LOG.error("Error while closing output file.", ex);
+                logger.error("Error while closing output file.", ex);
                 Throwables.propagate(ex);
             }
             if (th != null) {
@@ -274,7 +274,7 @@ public class Serialization {
             out.getFD().sync();
             return true;
         } catch (Exception ex) {
-            LOG.error(
+            logger.error(
                     "Error while attempting to compress " + compressed.toString() + " to " + decompressed.toString()
                             + ".",
                     ex);
@@ -286,7 +286,7 @@ public class Serialization {
                     in.close();
                 }
             } catch (Throwable ex) {
-                LOG.error("Error while closing input file.", ex);
+                logger.error("Error while closing input file.", ex);
                 th = ex;
             }
             try {
@@ -294,7 +294,7 @@ public class Serialization {
                     snappyIn.close();
                 }
             } catch (IOException ex) {
-                LOG.error("Error while closing output file.", ex);
+                logger.error("Error while closing output file.", ex);
                 Throwables.propagate(ex);
             }
             if (th != null) {

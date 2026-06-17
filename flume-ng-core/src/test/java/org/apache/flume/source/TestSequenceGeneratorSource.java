@@ -45,7 +45,7 @@ public class TestSequenceGeneratorSource {
     }
 
     @Test
-    public void testLifecycle() throws org.apache.flume.EventDeliveryException {
+    public void testLifecycle() throws EventDeliveryException {
         final int DOPROCESS_LOOPS = 5;
         Context context = new Context();
         Configurables.configure(source, context);

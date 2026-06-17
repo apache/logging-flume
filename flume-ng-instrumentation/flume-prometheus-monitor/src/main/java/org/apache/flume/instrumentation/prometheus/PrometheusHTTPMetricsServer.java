@@ -38,14 +38,14 @@ import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import org.apache.flume.instrumentation.http.HTTPMetricsServer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.ee11.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee11.servlet.ServletHolder;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A Monitor service implementation that runs a web server on a configurable
@@ -57,7 +57,7 @@ public class PrometheusHTTPMetricsServer extends HTTPMetricsServer {
 
     private static final String PROM_DEFAULT_PREFIX = "Flume_";
     private Server jettyServer;
-    private static Logger LOG = LoggerFactory.getLogger(PrometheusHTTPMetricsServer.class);
+    private static final Logger logger = LogManager.getLogger();
     private static MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
 
     private FlumePrometheusCollector metricsCollector;
@@ -91,7 +91,7 @@ public class PrometheusHTTPMetricsServer extends HTTPMetricsServer {
                 Thread.sleep(500);
             }
         } catch (Exception ex) {
-            LOG.error("Error starting Jetty. Prometheus Metrics may not be available.", ex);
+            logger.error("Error starting Jetty. Prometheus Metrics may not be available.", ex);
         }
     }
 
@@ -120,12 +120,12 @@ public class PrometheusHTTPMetricsServer extends HTTPMetricsServer {
                         }
 
                     } catch (Exception e) {
-                        LOG.error("Unable to poll JMX for metrics.", e);
+                        logger.error("Unable to poll JMX for metrics.", e);
                     }
                 }
 
             } catch (Exception ex) {
-                LOG.error("Could not get Mbeans for monitoring", ex);
+                logger.error("Could not get Mbeans for monitoring", ex);
                 Throwables.propagate(ex);
             }
         }
@@ -224,7 +224,7 @@ public class PrometheusHTTPMetricsServer extends HTTPMetricsServer {
                                 .set(value);
                     }
                 } catch (Exception e) {
-                    LOG.warn("Metric {} could not be monitored", metricKey, e);
+                    logger.warn("Metric {} could not be monitored", metricKey, e);
                 }
             }
         }
@@ -263,7 +263,7 @@ public class PrometheusHTTPMetricsServer extends HTTPMetricsServer {
             jettyServer.stop();
             jettyServer.join();
         } catch (Exception ex) {
-            LOG.error("Error stopping Jetty. Prometheus Metrics may not be available.", ex);
+            logger.error("Error stopping Jetty. Prometheus Metrics may not be available.", ex);
         }
     }
 }

@@ -24,8 +24,8 @@ import org.apache.flume.Source;
 import org.apache.flume.SourceRunner;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.lifecycle.LifecycleState;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
  */
 public class PollableSourceRunner extends SourceRunner {
 
-    private static final Logger logger = LoggerFactory.getLogger(PollableSourceRunner.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private AtomicBoolean shouldStop;
 

@@ -16,8 +16,8 @@
  */
 package org.apache.flume.conf;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Utility class to help any Flume component determine whether logging potentially sensitive
@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
  * InterfaceStability.Evolving
  */
 public class LogPrivacyUtil {
-    private static final Logger logger = LoggerFactory.getLogger(LogPrivacyUtil.class);
+    private static final Logger logger = LogManager.getLogger();
     /**
      * system property name to enable logging of potentially sensitive user data
      */

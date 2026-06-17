@@ -25,6 +25,8 @@ import java.util.Map;
 import org.apache.flume.Context;
 import org.apache.flume.instrumentation.MonitorService;
 import org.apache.flume.instrumentation.util.JMXPollUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -33,8 +35,6 @@ import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.util.Callback;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A Monitor service implementation that runs a web server on a configurable
@@ -50,7 +50,7 @@ public class HTTPMetricsServer implements MonitorService {
 
     private Server jettyServer;
     private int port;
-    private static Logger LOG = LoggerFactory.getLogger(HTTPMetricsServer.class);
+    private static final Logger logger = LogManager.getLogger();
     private static int DEFAULT_PORT = 41414;
     public static String CONFIG_PORT = "port";
 
@@ -76,7 +76,7 @@ public class HTTPMetricsServer implements MonitorService {
                 Thread.sleep(500);
             }
         } catch (Exception ex) {
-            LOG.error("Error starting Jetty. JSON Metrics may not be available.", ex);
+            logger.error("Error starting Jetty. JSON Metrics may not be available.", ex);
         }
     }
 
@@ -86,7 +86,7 @@ public class HTTPMetricsServer implements MonitorService {
             jettyServer.stop();
             jettyServer.join();
         } catch (Exception ex) {
-            LOG.error("Error stopping Jetty. JSON Metrics may not be available.", ex);
+            logger.error("Error stopping Jetty. JSON Metrics may not be available.", ex);
         }
     }
 

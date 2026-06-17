@@ -26,15 +26,15 @@ import java.util.Set;
 import org.apache.flume.Transaction;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.sink.LoggerSink;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class TestFileChannelRollback extends TestFileChannelBase {
-    protected static final Logger LOG = LoggerFactory.getLogger(TestFileChannelRollback.class);
+    private static final Logger logger = LogManager.getLogger();
 
     @Before
     public void setup() throws Exception {
@@ -121,7 +121,7 @@ public class TestFileChannelRollback extends TestFileChannelBase {
         }
         Assert.assertEquals(numEvents - 1, runner.getCount());
         for (Exception ex : runner.getErrors()) {
-            LOG.warn("Sink had error", ex);
+            logger.warn("Sink had error", ex);
         }
         Assert.assertEquals(Collections.EMPTY_LIST, runner.getErrors());
 

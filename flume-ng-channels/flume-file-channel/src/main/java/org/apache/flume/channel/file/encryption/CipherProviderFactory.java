@@ -20,11 +20,11 @@ import com.google.common.base.Preconditions;
 import java.security.Key;
 import java.util.Locale;
 import org.apache.flume.FlumeException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class CipherProviderFactory {
-    private static final Logger logger = LoggerFactory.getLogger(CipherProviderFactory.class);
+    private static final Logger logger = LogManager.getLogger();
 
     public static CipherProvider.Encryptor getEncrypter(String cipherProviderType, Key key) {
         if (cipherProviderType == null) {

@@ -27,11 +27,11 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.flume.channel.file.instrumentation.FileChannelCounter;
 import org.apache.flume.channel.file.proto.ProtosFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 final class EventQueueBackingStoreFileV3 extends EventQueueBackingStoreFile {
-    private static final Logger LOG = LoggerFactory.getLogger(EventQueueBackingStoreFileV3.class);
+    private static final Logger logger = LogManager.getLogger();
     private final File metaDataFile;
 
     EventQueueBackingStoreFileV3(File checkpointFile, int capacity, String name, FileChannelCounter counter)
@@ -51,11 +51,11 @@ final class EventQueueBackingStoreFileV3 extends EventQueueBackingStoreFile {
         super(capacity, name, counter, checkpointFile, checkpointBackupDir, backupCheckpoint, compressBackup);
         Preconditions.checkArgument(capacity > 0, "capacity must be greater than 0 " + capacity);
         metaDataFile = Serialization.getMetaDataFile(checkpointFile);
-        LOG.info("Starting up with " + checkpointFile + " and " + metaDataFile);
+        logger.info("Starting up with " + checkpointFile + " and " + metaDataFile);
         if (metaDataFile.exists()) {
             FileInputStream inputStream = new FileInputStream(metaDataFile);
             try {
-                LOG.info("Reading checkpoint metadata from " + metaDataFile);
+                logger.info("Reading checkpoint metadata from " + metaDataFile);
                 ProtosFactory.Checkpoint checkpoint = ProtosFactory.Checkpoint.parseDelimitedFrom(inputStream);
                 if (checkpoint == null) {
                     throw new BadCheckpointException(
@@ -71,7 +71,7 @@ final class EventQueueBackingStoreFileV3 extends EventQueueBackingStoreFile {
                     String msg = "Checkpoint and Meta files have differing " + "logWriteOrderIDs "
                             + getCheckpointLogWriteOrderID() + ", and "
                             + logWriteOrderID;
-                    LOG.warn(msg);
+                    logger.warn(msg);
                     throw new BadCheckpointException(msg);
                 }
                 WriteOrderOracle.setSeed(logWriteOrderID);
@@ -93,7 +93,7 @@ final class EventQueueBackingStoreFileV3 extends EventQueueBackingStoreFile {
                 try {
                     inputStream.close();
                 } catch (IOException e) {
-                    LOG.warn("Unable to close " + metaDataFile, e);
+                    logger.warn("Unable to close " + metaDataFile, e);
                 }
             }
         } else {
@@ -115,7 +115,7 @@ final class EventQueueBackingStoreFileV3 extends EventQueueBackingStoreFile {
                 try {
                     outputStream.close();
                 } catch (IOException e) {
-                    LOG.warn("Unable to close " + metaDataFile, e);
+                    logger.warn("Unable to close " + metaDataFile, e);
                 }
             }
         }
@@ -154,7 +154,7 @@ final class EventQueueBackingStoreFileV3 extends EventQueueBackingStoreFile {
             try {
                 outputStream.close();
             } catch (IOException e) {
-                LOG.warn("Unable to close " + metaDataFile, e);
+                logger.warn("Unable to close " + metaDataFile, e);
             }
         }
     }
@@ -189,7 +189,7 @@ final class EventQueueBackingStoreFileV3 extends EventQueueBackingStoreFile {
             try {
                 outputStream.close();
             } catch (IOException e) {
-                LOG.warn("Unable to close " + metaDataFile, e);
+                logger.warn("Unable to close " + metaDataFile, e);
             }
         }
         RandomAccessFile checkpointFileHandle = new RandomAccessFile(checkpointFile, "rw");
@@ -201,7 +201,7 @@ final class EventQueueBackingStoreFileV3 extends EventQueueBackingStoreFile {
             try {
                 checkpointFileHandle.close();
             } catch (IOException e) {
-                LOG.warn("Unable to close " + checkpointFile, e);
+                logger.warn("Unable to close " + checkpointFile, e);
             }
         }
     }

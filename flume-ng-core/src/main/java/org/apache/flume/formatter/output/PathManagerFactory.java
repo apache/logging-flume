@@ -20,14 +20,14 @@ import com.google.common.base.Preconditions;
 import java.util.Locale;
 import org.apache.flume.Context;
 import org.apache.flume.FlumeException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Create PathManager instances.
  */
 public class PathManagerFactory {
-    private static final Logger logger = LoggerFactory.getLogger(PathManagerFactory.class);
+    private static final Logger logger = LogManager.getLogger();
 
     public static PathManager getInstance(String managerType, Context context) {
 

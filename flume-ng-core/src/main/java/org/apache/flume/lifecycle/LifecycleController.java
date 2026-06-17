@@ -17,12 +17,12 @@
 package org.apache.flume.lifecycle;
 
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class LifecycleController {
 
-    private static final Logger logger = LoggerFactory.getLogger(LifecycleController.class);
+    private static final Logger logger = LogManager.getLogger();
     private static final long shortestSleepDuration = 50;
     private static final int maxNumberOfChecks = 5;
 

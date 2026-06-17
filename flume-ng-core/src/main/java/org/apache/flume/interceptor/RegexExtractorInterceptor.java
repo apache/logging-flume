@@ -27,8 +27,8 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Interceptor that extracts matches using a specified regular expression and
@@ -99,7 +99,7 @@ public class RegexExtractorInterceptor implements Interceptor {
     static final String REGEX = "regex";
     static final String SERIALIZERS = "serializers";
 
-    private static final Logger logger = LoggerFactory.getLogger(RegexExtractorInterceptor.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private final Pattern regex;
     private final List<NameAndSerializer> serializers;

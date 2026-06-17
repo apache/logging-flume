@@ -18,13 +18,13 @@ package org.apache.flume.tools;
 
 import static org.junit.Assert.*;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class TestVersionInfo {
 
-    private static final Logger logger = LoggerFactory.getLogger(TestVersionInfo.class);
+    private static final Logger logger = LogManager.getLogger();
 
     /**
      *  Make sure that Unknown is expected when no version info

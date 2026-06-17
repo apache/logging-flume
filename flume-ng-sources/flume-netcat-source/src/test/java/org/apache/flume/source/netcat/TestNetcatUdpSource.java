@@ -32,12 +32,13 @@ import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Test;
-import org.slf4j.LoggerFactory;
 
 public class TestNetcatUdpSource {
-    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(TestNetcatUdpSource.class);
+    private static final Logger logger = LogManager.getLogger();
     private NetcatUdpSource source;
     private Channel channel;
     private static final int TEST_NETCAT_PORT = 0;

@@ -19,12 +19,12 @@ package org.apache.flume.node;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.flume.FlumeException;
 import org.apache.flume.conf.FlumeConfiguration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class StaticZooKeeperConfigurationProvider extends AbstractZooKeeperConfigurationProvider {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(StaticZooKeeperConfigurationProvider.class);
+    private static final Logger logger = LogManager.getLogger();
 
     public StaticZooKeeperConfigurationProvider(String agentName, String zkConnString, String basePath) {
         super(agentName, zkConnString, basePath);
@@ -42,7 +42,7 @@ public class StaticZooKeeperConfigurationProvider extends AbstractZooKeeperConfi
                 cf.close();
             }
         } catch (Exception e) {
-            LOGGER.error("Error getting configuration info from Zookeeper", e);
+            logger.error("Error getting configuration info from Zookeeper", e);
             throw new FlumeException(e);
         }
     }

@@ -27,15 +27,15 @@ import java.io.IOException;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.flume.channel.file.instrumentation.FileChannelCounter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class TestLog {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestLog.class);
+    private static final Logger logger = LogManager.getLogger();
     private static final long MAX_FILE_SIZE = 1000;
     private static final int CAPACITY = 10000;
     private Log log;
@@ -199,10 +199,10 @@ public class TestLog {
         try {
             doTestMinimumRequiredSpaceTooSmallForPut();
         } catch (IOException e) {
-            LOGGER.info("Error during test, retrying", e);
+            logger.info("Error during test, retrying", e);
             doTestMinimumRequiredSpaceTooSmallForPut();
         } catch (AssertionError e) {
-            LOGGER.info("Test failed, let's be sure it failed for good reason", e);
+            logger.info("Test failed, let's be sure it failed for good reason", e);
             doTestMinimumRequiredSpaceTooSmallForPut();
         }
     }

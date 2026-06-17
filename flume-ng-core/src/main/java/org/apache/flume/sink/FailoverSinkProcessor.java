@@ -28,8 +28,8 @@ import org.apache.flume.Context;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Sink;
 import org.apache.flume.Sink.Status;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * FailoverSinkProcessor maintains a prioritized list of sinks,
@@ -106,7 +106,7 @@ public class FailoverSinkProcessor extends AbstractSinkProcessor {
         }
     }
 
-    private static final Logger logger = LoggerFactory.getLogger(FailoverSinkProcessor.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private static final String PRIORITY_PREFIX = "priority.";
     private static final String MAX_PENALTY_PREFIX = "maxpenalty";

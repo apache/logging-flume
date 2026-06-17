@@ -30,6 +30,8 @@ import java.util.Properties;
 import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.node.net.AuthorizationProvider;
 import org.apache.flume.node.net.BasicAuthorizationProvider;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.ee11.servlet.DefaultServlet;
 import org.eclipse.jetty.ee11.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee11.servlet.ServletHolder;
@@ -40,14 +42,12 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Tests that files can be loaded via http.
  */
 public class TestHttpConfigurationSource {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestHttpConfigurationSource.class);
+    private static final Logger logger = LogManager.getLogger();
     private static final String BASIC = "Basic ";
     private static final String expectedCreds = "flume:flume";
     private static Server server;
@@ -130,7 +130,7 @@ public class TestHttpConfigurationSource {
                 File file = new File("target/test-classes/flume-conf.properties");
                 long modifiedSince = request.getDateHeader(HttpHeader.IF_MODIFIED_SINCE.toString());
                 long lastModified = (file.lastModified() / 1000) * 1000;
-                LOGGER.debug("LastModified: {}, modifiedSince: {}", lastModified, modifiedSince);
+                logger.debug("LastModified: {}, modifiedSince: {}", lastModified, modifiedSince);
                 if (modifiedSince > 0 && lastModified <= modifiedSince) {
                     response.setStatus(304);
                     return;

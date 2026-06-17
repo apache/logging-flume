@@ -44,8 +44,8 @@ import org.apache.flume.channel.file.instrumentation.FileChannelCounter;
 import org.apache.flume.conf.TransactionCapacitySupported;
 import org.apache.flume.exception.ChannelException;
 import org.apache.flume.exception.ChannelFullException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -72,7 +72,7 @@ import org.slf4j.LoggerFactory;
 @Disposable
 public class FileChannel extends BasicChannelSemantics implements TransactionCapacitySupported {
 
-    private static final Logger LOG = LoggerFactory.getLogger(FileChannel.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private Integer capacity = 0;
     private int keepAlive;
@@ -162,7 +162,7 @@ public class FileChannel extends BasicChannelSemantics implements TransactionCap
         capacity = context.getInteger(FileChannelConfiguration.CAPACITY, FileChannelConfiguration.DEFAULT_CAPACITY);
         if (capacity <= 0) {
             capacity = FileChannelConfiguration.DEFAULT_CAPACITY;
-            LOG.warn("Invalid capacity specified, initializing channel to " + "default capacity of {}", capacity);
+            logger.warn("Invalid capacity specified, initializing channel to " + "default capacity of {}", capacity);
         }
 
         keepAlive =
@@ -172,7 +172,7 @@ public class FileChannel extends BasicChannelSemantics implements TransactionCap
 
         if (transactionCapacity <= 0) {
             transactionCapacity = FileChannelConfiguration.DEFAULT_TRANSACTION_CAPACITY;
-            LOG.warn(
+            logger.warn(
                     "Invalid transaction capacity specified, " + "initializing channel to default " + "capacity of {}",
                     transactionCapacity);
         }
@@ -184,7 +184,7 @@ public class FileChannel extends BasicChannelSemantics implements TransactionCap
         checkpointInterval = context.getLong(
                 FileChannelConfiguration.CHECKPOINT_INTERVAL, FileChannelConfiguration.DEFAULT_CHECKPOINT_INTERVAL);
         if (checkpointInterval <= 0) {
-            LOG.warn("Checkpoint interval is invalid: " + checkpointInterval
+            logger.warn("Checkpoint interval is invalid: " + checkpointInterval
                     + ", using default: "
                     + FileChannelConfiguration.DEFAULT_CHECKPOINT_INTERVAL);
 
@@ -259,7 +259,7 @@ public class FileChannel extends BasicChannelSemantics implements TransactionCap
 
     @Override
     public synchronized void start() {
-        LOG.info("Starting {}...", this);
+        logger.info("Starting {}...", this);
         channelCounter.start();
         try {
             Builder builder = createLogBuilder();
@@ -271,12 +271,12 @@ public class FileChannel extends BasicChannelSemantics implements TransactionCap
             Preconditions.checkState(
                     queueRemaining.tryAcquire(depth),
                     "Unable to acquire " + depth + " permits " + channelNameDescriptor);
-            LOG.info("Queue Size after replay: " + depth + " " + channelNameDescriptor);
+            logger.info("Queue Size after replay: " + depth + " " + channelNameDescriptor);
         } catch (Throwable t) {
             setOpen(false);
             channelCounter.setUnhealthy(1);
             startupError = t;
-            LOG.error("Failed to start the file channel " + channelNameDescriptor, t);
+            logger.error("Failed to start the file channel " + channelNameDescriptor, t);
             if (t instanceof Error) {
                 throw (Error) t;
             }
@@ -315,7 +315,7 @@ public class FileChannel extends BasicChannelSemantics implements TransactionCap
 
     @Override
     public synchronized void stop() {
-        LOG.info("Stopping {}...", this);
+        logger.info("Stopping {}...", this);
         startupError = null;
         int size = getDepth();
         close();
@@ -375,7 +375,7 @@ public class FileChannel extends BasicChannelSemantics implements TransactionCap
             try {
                 log.close();
             } catch (Exception e) {
-                LOG.error("Error while trying to close the log.", e);
+                logger.error("Error while trying to close the log.", e);
                 Throwables.propagate(e);
             }
             log = null;
@@ -556,7 +556,7 @@ public class FileChannel extends BasicChannelSemantics implements TransactionCap
                             channelCounter.incrementEventTakeErrorCount();
                             throw new ChannelException("Take failed due to IO error " + channelNameDescriptor, e);
                         } catch (NoopRecordException e) {
-                            LOG.warn(
+                            logger.warn(
                                     "Corrupt record replaced by File Channel Integrity "
                                             + "tool found. Will retrieve next event",
                                     e);
@@ -566,7 +566,7 @@ public class FileChannel extends BasicChannelSemantics implements TransactionCap
                             if (fsyncPerTransaction) {
                                 throw new ChannelException(ex);
                             }
-                            LOG.warn(
+                            logger.warn(
                                     "Corrupt record found. Event will be " + "skipped, and next event will be read.",
                                     ex);
                             takeList.remove(ptr);
@@ -598,7 +598,7 @@ public class FileChannel extends BasicChannelSemantics implements TransactionCap
                                 msg.append("cannot be added. Those messages will be consumed ");
                                 msg.append("despite this transaction failing. Please report.");
                                 msg.append(channelNameDescriptor);
-                                LOG.error(msg.toString());
+                                logger.error(msg.toString());
                                 Preconditions.checkState(false, msg.toString());
                             }
                         }

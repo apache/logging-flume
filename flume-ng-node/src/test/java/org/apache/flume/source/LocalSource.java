@@ -21,15 +21,15 @@ import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.instrumentation.SourceCounter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Accepts an event from a local component and publishes it to a channel.
  */
 public class LocalSource extends AbstractSource implements Configurable, EventDrivenSource, EventProcessor {
 
-    private static final Logger logger = LoggerFactory.getLogger(LocalSource.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private SourceCounter sourceCounter;
 

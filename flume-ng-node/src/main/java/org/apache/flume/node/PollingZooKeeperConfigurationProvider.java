@@ -26,13 +26,13 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.conf.FlumeConfiguration;
 import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleState;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class PollingZooKeeperConfigurationProvider extends AbstractZooKeeperConfigurationProvider
         implements LifecycleAware {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PollingZooKeeperConfigurationProvider.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private final EventBus eventBus;
 
@@ -61,7 +61,7 @@ public class PollingZooKeeperConfigurationProvider extends AbstractZooKeeperConf
 
     @Override
     public void start() {
-        LOGGER.debug("Starting...");
+        logger.debug("Starting...");
         try {
             client.start();
             try {
@@ -89,7 +89,7 @@ public class PollingZooKeeperConfigurationProvider extends AbstractZooKeeperConf
     }
 
     private void refreshConfiguration() throws IOException {
-        LOGGER.info("Refreshing configuration from ZooKeeper");
+        logger.info("Refreshing configuration from ZooKeeper");
         byte[] data = null;
         ChildData childData = agentNodeCache.getCurrentData();
         if (childData != null) {
@@ -101,12 +101,12 @@ public class PollingZooKeeperConfigurationProvider extends AbstractZooKeeperConf
 
     @Override
     public void stop() {
-        LOGGER.debug("Stopping...");
+        logger.debug("Stopping...");
         if (agentNodeCache != null) {
             try {
                 agentNodeCache.close();
             } catch (IOException e) {
-                LOGGER.warn("Encountered exception while stopping", e);
+                logger.warn("Encountered exception while stopping", e);
                 lifecycleState = LifecycleState.ERROR;
             }
         }
@@ -114,7 +114,7 @@ public class PollingZooKeeperConfigurationProvider extends AbstractZooKeeperConf
         try {
             client.close();
         } catch (Exception e) {
-            LOGGER.warn("Error stopping Curator client", e);
+            logger.warn("Error stopping Curator client", e);
             lifecycleState = LifecycleState.ERROR;
         }
 

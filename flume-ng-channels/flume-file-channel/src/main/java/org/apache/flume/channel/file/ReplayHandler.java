@@ -35,14 +35,14 @@ import javax.annotation.Nullable;
 import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.flume.channel.file.encryption.KeyProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Processes a set of data logs, replaying said logs into the queue.
  */
 class ReplayHandler {
-    private static final Logger LOG = LoggerFactory.getLogger(ReplayHandler.class);
+    private static final Logger logger = LogManager.getLogger();
     private final FlumeEventQueue queue;
     private final long lastCheckpoint;
     private final Map<Integer, LogFile.SequentialReader> readers;
@@ -127,9 +127,9 @@ class ReplayHandler {
         }
 
         SetMultimap<Long, Long> inflightTakes = queue.deserializeInflightTakes();
-        LOG.info("Starting replay of " + logs);
+        logger.info("Starting replay of " + logs);
         for (File log : logs) {
-            LOG.info("Replaying " + log);
+            logger.info("Replaying " + log);
             LogFile.SequentialReader reader = null;
             try {
                 reader = LogFileFactory.getSequentialReader(log, encryptionKeyProvider, fsyncPerTransaction);
@@ -189,14 +189,14 @@ class ReplayHandler {
                         skipCount++;
                     }
                 }
-                LOG.info("Replayed " + count + " from " + log);
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("read: " + readCount + ", put: " + putCount + ", take: "
+                logger.info("Replayed " + count + " from " + log);
+                if (logger.isDebugEnabled()) {
+                    logger.debug("read: " + readCount + ", put: " + putCount + ", take: "
                             + takeCount + ", rollback: " + rollbackCount + ", commit: "
                             + commitCount + ", skipp: " + skipCount);
                 }
             } catch (EOFException e) {
-                LOG.warn("Hit EOF on " + log);
+                logger.warn("Hit EOF on " + log);
             } finally {
                 total += count;
                 count = 0;
@@ -220,15 +220,15 @@ class ReplayHandler {
         int pendingTakesSize = pendingTakes.size();
         if (pendingTakesSize > 0) {
             String msg = "Pending takes " + pendingTakesSize + " exist after the end of replay";
-            if (LOG.isDebugEnabled()) {
+            if (logger.isDebugEnabled()) {
                 for (Long pointer : pendingTakes) {
-                    LOG.debug("Pending take " + FlumeEventPointer.fromLong(pointer));
+                    logger.debug("Pending take " + FlumeEventPointer.fromLong(pointer));
                 }
             } else {
-                LOG.error(msg + ". Duplicate messages will exist in destination.");
+                logger.error(msg + ". Duplicate messages will exist in destination.");
             }
         }
-        LOG.info("Replayed " + total);
+        logger.info("Replayed " + total);
     }
     /**
      * Replay logs in order records were written
@@ -240,7 +240,7 @@ class ReplayHandler {
         MultiMap transactionMap = new MultiValueMap();
         // seed both with the highest known sequence of either the tnxid or woid
         long transactionIDSeed = lastCheckpoint, writeOrderIDSeed = lastCheckpoint;
-        LOG.info("Starting replay of " + logs);
+        logger.info("Starting replay of " + logs);
         // Load the inflight puts into the transaction map to see if they were
         // committed in one of the logs.
         SetMultimap<Long, Long> inflightPuts = queue.deserializeInflightPuts();
@@ -253,7 +253,7 @@ class ReplayHandler {
         SetMultimap<Long, Long> inflightTakes = queue.deserializeInflightTakes();
         try {
             for (File log : logs) {
-                LOG.info("Replaying " + log);
+                logger.info("Replaying " + log);
                 try {
                     LogFile.SequentialReader reader =
                             LogFileFactory.getSequentialReader(log, encryptionKeyProvider, fsyncPerTransaction);
@@ -270,7 +270,7 @@ class ReplayHandler {
                         logRecordBuffer.add(logRecord);
                     }
                 } catch (EOFException e) {
-                    LOG.warn("Ignoring " + log + " due to EOF", e);
+                    logger.warn("Ignoring " + log + " due to EOF", e);
                 }
             }
             LogRecord entry = null;
@@ -287,7 +287,7 @@ class ReplayHandler {
                 writeOrderIDSeed = Math.max(writeOrderIDSeed, record.getLogWriteOrderID());
                 readCount++;
                 if (readCount % 10000 == 0 && readCount > 0) {
-                    LOG.info("read: " + readCount + ", put: " + putCount + ", take: "
+                    logger.info("read: " + readCount + ", put: " + putCount + ", take: "
                             + takeCount + ", rollback: " + rollbackCount + ", commit: "
                             + commitCount + ", skip: " + skipCount + ", eventCount:" + count);
                 }
@@ -333,7 +333,7 @@ class ReplayHandler {
                     skipCount++;
                 }
             }
-            LOG.info("read: " + readCount + ", put: " + putCount + ", take: "
+            logger.info("read: " + readCount + ", put: " + putCount + ", take: "
                     + takeCount + ", rollback: " + rollbackCount + ", commit: "
                     + commitCount + ", skip: " + skipCount + ", eventCount:" + count);
             queue.replayComplete();
@@ -360,7 +360,7 @@ class ReplayHandler {
         count += uncommittedTakes;
         int pendingTakesSize = pendingTakes.size();
         if (pendingTakesSize > 0) {
-            LOG.info("Pending takes " + pendingTakesSize + " exist after the"
+            logger.info("Pending takes " + pendingTakesSize + " exist after the"
                     + " end of replay. Duplicate messages will exist in"
                     + " destination.");
         }

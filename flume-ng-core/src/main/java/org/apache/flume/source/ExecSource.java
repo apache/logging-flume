@@ -41,8 +41,8 @@ import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.instrumentation.SourceCounter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -143,7 +143,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ExecSource extends AbstractSource implements EventDrivenSource, Configurable, BatchSizeSupported {
 
-    private static final Logger logger = LoggerFactory.getLogger(ExecSource.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private String shell;
     private String command;

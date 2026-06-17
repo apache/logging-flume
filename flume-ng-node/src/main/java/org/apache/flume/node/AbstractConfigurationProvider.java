@@ -64,13 +64,13 @@ import org.apache.flume.sink.DefaultSinkFactory;
 import org.apache.flume.sink.DefaultSinkProcessor;
 import org.apache.flume.sink.SinkGroup;
 import org.apache.flume.source.DefaultSourceFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 @SuppressFBWarnings("REC_CATCH_EXCEPTION")
 public abstract class AbstractConfigurationProvider implements ConfigurationProvider {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractConfigurationProvider.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private final String agentName;
     private final SourceFactory sourceFactory;
@@ -107,7 +107,7 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
                 for (String channelName : channelNames) {
                     ChannelComponent channelComponent = channelComponentMap.get(channelName);
                     if (channelComponent.components.isEmpty()) {
-                        LOGGER.warn(String.format(
+                        logger.warn(String.format(
                                 "Channel %s has no components connected" + " and has been removed.", channelName));
                         channelComponentMap.remove(channelName);
                         Map<String, Channel> nameChannelMap = channelCache.get(channelComponent.channel.getClass());
@@ -115,7 +115,7 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
                             nameChannelMap.remove(channelName);
                         }
                     } else {
-                        LOGGER.info(String.format(
+                        logger.info(String.format(
                                 "Channel %s connected to %s", channelName, channelComponent.components.toString()));
                         conf.addChannel(channelName, channelComponent.channel);
                     }
@@ -127,14 +127,14 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
                     conf.addSinkRunner(entry.getKey(), entry.getValue());
                 }
             } catch (InstantiationException ex) {
-                LOGGER.error("Failed to instantiate component", ex);
+                logger.error("Failed to instantiate component", ex);
             } finally {
                 channelComponentMap.clear();
                 sourceRunnerMap.clear();
                 sinkRunnerMap.clear();
             }
         } else {
-            LOGGER.warn("No configuration found for this host:{}", getAgentName());
+            logger.warn("No configuration found for this host:{}", getAgentName());
         }
         return conf;
     }
@@ -145,7 +145,7 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
 
     private void loadChannels(AgentConfiguration agentConf, Map<String, ChannelComponent> channelComponentMap)
             throws InstantiationException {
-        LOGGER.info("Creating channels");
+        logger.info("Creating channels");
 
         /*
          * Some channels will be reused across re-configurations. To handle this,
@@ -175,11 +175,11 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
                 try {
                     Configurables.configure(channel, comp);
                     channelComponentMap.put(comp.getComponentName(), new ChannelComponent(channel));
-                    LOGGER.info("Created channel " + chName);
+                    logger.info("Created channel " + chName);
                 } catch (Exception e) {
                     String msg = String.format(
                             "Channel %s has been removed due to an " + "error during configuration", chName);
-                    LOGGER.error(msg, e);
+                    logger.error(msg, e);
                 }
             }
         }
@@ -195,11 +195,11 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
                 try {
                     Configurables.configure(channel, context);
                     channelComponentMap.put(chName, new ChannelComponent(channel));
-                    LOGGER.info("Created channel " + chName);
+                    logger.info("Created channel " + chName);
                 } catch (Exception e) {
                     String msg = String.format(
                             "Channel %s has been removed due to an " + "error during configuration", chName);
-                    LOGGER.error(msg, e);
+                    logger.error(msg, e);
                 }
             }
         }
@@ -211,7 +211,7 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
             if (channelMap != null) {
                 for (String channelName : channelsNotReused.get(channelKlass)) {
                     if (channelMap.remove(channelName) != null) {
-                        LOGGER.info("Removed {} of type {}", channelName, channelKlass);
+                        logger.info("Removed {} of type {}", channelName, channelKlass);
                     }
                 }
                 if (channelMap.isEmpty()) {
@@ -292,7 +292,7 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
                 } catch (Exception e) {
                     String msg = String.format(
                             "Source %s has been removed due to an " + "error during configuration", sourceName);
-                    LOGGER.error(msg, e);
+                    logger.error(msg, e);
                 }
             }
         }
@@ -334,7 +334,7 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
                 } catch (Exception e) {
                     String msg = String.format(
                             "Source %s has been removed due to an " + "error during configuration", sourceName);
-                    LOGGER.error(msg, e);
+                    logger.error(msg, e);
                 }
             }
         }
@@ -414,7 +414,7 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
                 } catch (Exception e) {
                     String msg = String.format(
                             "Sink %s has been removed due to an " + "error during configuration", sinkName);
-                    LOGGER.error(msg, e);
+                    logger.error(msg, e);
                 }
             }
         }
@@ -442,7 +442,7 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
                 } catch (Exception e) {
                     String msg = String.format(
                             "Sink %s has been removed due to an " + "error during configuration", sinkName);
-                    LOGGER.error(msg, e);
+                    logger.error(msg, e);
                 }
             }
         }
@@ -484,7 +484,7 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
                 } catch (Exception e) {
                     String msg = String.format(
                             "SinkGroup %s has been removed due to " + "an error during configuration", groupName);
-                    LOGGER.error(msg, e);
+                    logger.error(msg, e);
                 }
             }
         }
@@ -501,7 +501,7 @@ public abstract class AbstractConfigurationProvider implements ConfigurationProv
                 } catch (Exception e) {
                     String msg = String.format(
                             "SinkGroup %s has been removed due to " + "an error during configuration", entry.getKey());
-                    LOGGER.error(msg, e);
+                    logger.error(msg, e);
                 }
             }
         }

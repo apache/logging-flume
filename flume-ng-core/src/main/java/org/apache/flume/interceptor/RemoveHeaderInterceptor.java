@@ -28,8 +28,8 @@ import java.util.regex.Pattern;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.conf.LogPrivacyUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * This interceptor manipulates Flume event headers, by removing one or many
@@ -54,7 +54,7 @@ public class RemoveHeaderInterceptor implements Interceptor {
     static final String LIST_SEPARATOR = "fromListSeparator";
     static final String LIST_SEPARATOR_DEFAULT = "\\s*,\\s*";
     static final String MATCH_REGEX = "matching";
-    private static final Logger LOG = LoggerFactory.getLogger(RemoveHeaderInterceptor.class);
+    private static final Logger logger = LogManager.getLogger();
     private final String withName;
     private final Set<String> fromList;
     private final Pattern matchRegex;
@@ -107,7 +107,7 @@ public class RemoveHeaderInterceptor implements Interceptor {
             final Map<String, String> headers = event.getHeaders();
             // If withName matches, removing it directly
             if (withName != null && headers.remove(withName) != null) {
-                LOG.trace("Removed header \"{}\" for event: {}", withName, event);
+                logger.trace("Removed header \"{}\" for event: {}", withName, event);
             }
             // Also, we need to go through the list
             if (fromList != null || matchRegex != null) {
@@ -127,11 +127,11 @@ public class RemoveHeaderInterceptor implements Interceptor {
                     }
                 }
                 if (!removedHeaders.isEmpty() && LogPrivacyUtil.allowLogRawData()) {
-                    LOG.trace("Removed headers \"{}\" for event: {}", removedHeaders, event);
+                    logger.trace("Removed headers \"{}\" for event: {}", removedHeaders, event);
                 }
             }
         } catch (final Exception e) {
-            LOG.error("Failed to process event " + event, e);
+            logger.error("Failed to process event " + event, e);
         }
         return event;
     }
@@ -150,8 +150,8 @@ public class RemoveHeaderInterceptor implements Interceptor {
          */
         @Override
         public Interceptor build() {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug(
+            if (logger.isDebugEnabled()) {
+                logger.debug(
                         "Creating RemoveHeaderInterceptor with: withName={}, fromList={}, "
                                 + "listSeparator={}, matchRegex={}",
                         new String[] {withName, fromList, listSeparator, String.valueOf(matchRegex)});

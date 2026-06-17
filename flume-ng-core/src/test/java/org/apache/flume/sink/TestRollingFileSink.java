@@ -33,17 +33,17 @@ import org.apache.flume.event.SimpleEvent;
 import org.apache.flume.exception.ChannelException;
 import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.util.Whitebox;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class TestRollingFileSink {
 
-    private static final Logger logger = LoggerFactory.getLogger(TestRollingFileSink.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private File tmpDir;
     private RollingFileSink sink;

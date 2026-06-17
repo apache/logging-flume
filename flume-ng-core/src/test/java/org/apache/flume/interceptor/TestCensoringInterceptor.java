@@ -31,12 +31,8 @@ import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.event.EventBuilder;
 import org.junit.Assert;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class TestCensoringInterceptor {
-
-    Logger logger = LoggerFactory.getLogger(TestCensoringInterceptor.class);
 
     @Test
     public void testCensor() {

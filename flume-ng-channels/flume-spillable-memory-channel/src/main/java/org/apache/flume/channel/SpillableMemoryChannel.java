@@ -33,8 +33,8 @@ import org.apache.flume.exception.ChannelException;
 import org.apache.flume.exception.ChannelFullException;
 import org.apache.flume.instrumentation.ChannelCounter;
 import org.apache.flume.lifecycle.LifecycleState;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -86,7 +86,7 @@ public class SpillableMemoryChannel extends FileChannel {
      */
     public static final String AVG_EVENT_SIZE = "avgEventSize";
 
-    private static Logger LOGGER = LoggerFactory.getLogger(SpillableMemoryChannel.class);
+    private static final Logger logger = LogManager.getLogger();
     public static final int defaultMemoryCapacity = 10000;
     public static final int defaultOverflowCapacity = 100000000;
 
@@ -345,7 +345,7 @@ public class SpillableMemoryChannel extends FileChannel {
         protected Event doTake() throws InterruptedException {
             channelCounter.incrementEventTakeAttemptCount();
             if (!totalStored.tryAcquire(overflowTimeout, TimeUnit.SECONDS)) {
-                LOGGER.debug("Take is backing off as channel is empty.");
+                logger.debug("Take is backing off as channel is empty.");
                 return null;
             }
             boolean takeSuceeded = false;
@@ -365,7 +365,7 @@ public class SpillableMemoryChannel extends FileChannel {
 
                     if (useOverflow) {
                         if (drainOrderTop > 0) {
-                            LOGGER.debug("Take is switching to primary");
+                            logger.debug("Take is switching to primary");
                             return null; // takes should now occur from primary channel
                         }
 
@@ -374,7 +374,7 @@ public class SpillableMemoryChannel extends FileChannel {
                         drainOrder.takeOverflow(1);
                     } else {
                         if (drainOrderTop < 0) {
-                            LOGGER.debug("Take is switching to overflow");
+                            logger.debug("Take is switching to overflow");
                             return null; // takes should now occur from overflow channel
                         }
 
@@ -406,13 +406,13 @@ public class SpillableMemoryChannel extends FileChannel {
         protected void doCommit() throws InterruptedException {
             if (putCalled) {
                 putCommit();
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Put Committed. Drain Order Queue state : " + drainOrder.dump());
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Put Committed. Drain Order Queue state : " + drainOrder.dump());
                 }
             } else if (takeCalled) {
                 takeCommit();
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Take Committed. Drain Order Queue state : " + drainOrder.dump());
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Take Committed. Drain Order Queue state : " + drainOrder.dump());
                 }
             }
         }
@@ -432,7 +432,7 @@ public class SpillableMemoryChannel extends FileChannel {
 
                 if (overflowActivated && memoryPercentFree >= overflowDeactivationThreshold) {
                     overflowActivated = false;
-                    LOGGER.info("Overflow Deactivated");
+                    logger.info("Overflow Deactivated");
                 }
                 channelCounter.setChannelSize(getTotalStored());
             }
@@ -537,7 +537,7 @@ public class SpillableMemoryChannel extends FileChannel {
 
         @Override
         protected void doRollback() {
-            LOGGER.debug("Rollback() of " + (takeCalled ? " Take Tx" : (putCalled ? " Put Tx" : "Empty Tx")));
+            logger.debug("Rollback() of " + (takeCalled ? " Take Tx" : (putCalled ? " Put Tx" : "Empty Tx")));
 
             if (putCalled) {
                 if (overflowPutTx != null) {
@@ -615,7 +615,7 @@ public class SpillableMemoryChannel extends FileChannel {
 
         } catch (NumberFormatException e) {
             newMemoryCapacity = defaultMemoryCapacity;
-            LOGGER.warn(
+            logger.warn(
                     "Invalid " + MEMORY_CAPACITY + " specified, initializing " + getName()
                             + " channel to default value of {}",
                     defaultMemoryCapacity);
@@ -631,7 +631,7 @@ public class SpillableMemoryChannel extends FileChannel {
             Integer newOverflowTimeout = context.getInteger(OVERFLOW_TIMEOUT, defaultOverflowTimeout);
             overflowTimeout = (newOverflowTimeout != null) ? newOverflowTimeout : defaultOverflowTimeout;
         } catch (NumberFormatException e) {
-            LOGGER.warn(
+            logger.warn(
                     "Incorrect value for " + getName() + "'s " + OVERFLOW_TIMEOUT + " setting. Using default value {}",
                     defaultOverflowTimeout);
             overflowTimeout = defaultOverflowTimeout;
@@ -642,7 +642,7 @@ public class SpillableMemoryChannel extends FileChannel {
             overflowDeactivationThreshold =
                     (newThreshold != null) ? newThreshold / 100.0 : defaultOverflowDeactivationThreshold / 100.0;
         } catch (NumberFormatException e) {
-            LOGGER.warn(
+            logger.warn(
                     "Incorrect value for " + getName() + "'s " + OVERFLOW_DEACTIVATION_THRESHOLD
                             + ". Using default value {} %",
                     defaultOverflowDeactivationThreshold);
@@ -654,7 +654,7 @@ public class SpillableMemoryChannel extends FileChannel {
             byteCapacityBufferPercentage =
                     context.getInteger(BYTE_CAPACITY_BUFFER_PERCENTAGE, defaultByteCapacityBufferPercentage);
         } catch (NumberFormatException e) {
-            LOGGER.warn("Error parsing " + BYTE_CAPACITY_BUFFER_PERCENTAGE + " for "
+            logger.warn("Error parsing " + BYTE_CAPACITY_BUFFER_PERCENTAGE + " for "
                     + getName() + ". Using default="
                     + defaultByteCapacityBufferPercentage + ". " + e.getMessage());
             byteCapacityBufferPercentage = defaultByteCapacityBufferPercentage;
@@ -663,7 +663,7 @@ public class SpillableMemoryChannel extends FileChannel {
         try {
             avgEventSize = context.getInteger(AVG_EVENT_SIZE, defaultAvgEventSize);
         } catch (NumberFormatException e) {
-            LOGGER.warn("Error parsing " + AVG_EVENT_SIZE + " for " + getName()
+            logger.warn("Error parsing " + AVG_EVENT_SIZE + " for " + getName()
                     + ". Using default = " + defaultAvgEventSize + ". "
                     + e.getMessage());
             avgEventSize = defaultAvgEventSize;
@@ -677,7 +677,7 @@ public class SpillableMemoryChannel extends FileChannel {
                 byteCapacity = Integer.MAX_VALUE;
             }
         } catch (NumberFormatException e) {
-            LOGGER.warn("Error parsing " + BYTE_CAPACITY + " setting for " + getName()
+            logger.warn("Error parsing " + BYTE_CAPACITY + " setting for " + getName()
                     + ". Using default = " + defaultByteCapacity + ". "
                     + e.getMessage());
             byteCapacity = (int) ((defaultByteCapacity * (1 - byteCapacityBufferPercentage * .01)) / avgEventSize);
@@ -694,7 +694,7 @@ public class SpillableMemoryChannel extends FileChannel {
                 try {
                     if (!bytesRemaining.tryAcquire(
                             lastByteCapacity - byteCapacity, overflowTimeout, TimeUnit.SECONDS)) {
-                        LOGGER.warn("Couldn't acquire permits to downsize the byte capacity, "
+                        logger.warn("Couldn't acquire permits to downsize the byte capacity, "
                                 + "resizing has been aborted");
                     } else {
                         lastByteCapacity = byteCapacity;
@@ -710,7 +710,7 @@ public class SpillableMemoryChannel extends FileChannel {
             overflowCapacity = context.getInteger(OVERFLOW_CAPACITY, defaultOverflowCapacity);
             // Determine if File channel needs to be disabled
             if (memoryCapacity < 1 && overflowCapacity < 1) {
-                LOGGER.warn("For channel " + getName() + OVERFLOW_CAPACITY + " cannot be set to 0 if "
+                logger.warn("For channel " + getName() + OVERFLOW_CAPACITY + " cannot be set to 0 if "
                         + MEMORY_CAPACITY + " is also 0. " + "Using default value "
                         + OVERFLOW_CAPACITY + " = " + defaultOverflowCapacity);
                 overflowCapacity = defaultOverflowCapacity;
@@ -737,7 +737,7 @@ public class SpillableMemoryChannel extends FileChannel {
         if (memoryCapacity > newMemoryCapacity) {
             int diff = memoryCapacity - newMemoryCapacity;
             if (!memQueRemaining.tryAcquire(diff, overflowTimeout, TimeUnit.SECONDS)) {
-                LOGGER.warn("Memory buffer currently contains more events than the new size. "
+                logger.warn("Memory buffer currently contains more events than the new size. "
                         + "Downsizing has been aborted.");
                 return;
             }

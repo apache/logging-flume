@@ -33,8 +33,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Identifies and caches the files matched by single file pattern for {@code TAILDIR} source.
@@ -62,7 +62,7 @@ import org.slf4j.LoggerFactory;
 @InterfaceAudience.Private
 @InterfaceStability.Evolving
 public class TaildirMatcher {
-    private static final Logger logger = LoggerFactory.getLogger(TaildirMatcher.class);
+    private static final Logger logger = LogManager.getLogger();
     private static final FileSystem FS = FileSystems.getDefault();
 
     // flag from configuration to switch off caching completely

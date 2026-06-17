@@ -21,11 +21,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import org.apache.flume.channel.file.instrumentation.FileChannelCounter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 class EventQueueBackingStoreFactory {
-    private static final Logger LOG = LoggerFactory.getLogger(EventQueueBackingStoreFactory.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private EventQueueBackingStoreFactory() {}
 
@@ -60,7 +60,7 @@ class EventQueueBackingStoreFactory {
                 // delete everything in the checkpoint directory and force
                 // a full replay.
                 if (!checkpointExists || checkpointFile.length() == 0) {
-                    LOG.warn("MetaData file for checkpoint "
+                    logger.warn("MetaData file for checkpoint "
                             + " exists but checkpoint does not. Checkpoint = " + checkpointFile
                             + ", metaDataFile = " + metaDataFile);
                     throw new BadCheckpointException("The last checkpoint was not completed correctly, "
@@ -90,7 +90,7 @@ class EventQueueBackingStoreFactory {
                 }
                 return new EventQueueBackingStoreFileV2(checkpointFile, capacity, name, counter);
             }
-            LOG.error("Found version " + Integer.toHexString(version) + " in " + checkpointFile);
+            logger.error("Found version " + Integer.toHexString(version) + " in " + checkpointFile);
             throw new BadCheckpointException(
                     "Checkpoint file exists with " + Serialization.VERSION_3 + " but no metadata file found.");
         } finally {
@@ -98,7 +98,7 @@ class EventQueueBackingStoreFactory {
                 try {
                     checkpointFileHandle.close();
                 } catch (IOException e) {
-                    LOG.warn("Unable to close " + checkpointFile, e);
+                    logger.warn("Unable to close " + checkpointFile, e);
                 }
             }
         }
@@ -113,7 +113,7 @@ class EventQueueBackingStoreFactory {
             boolean compressBackup,
             FileChannelCounter counter)
             throws Exception {
-        LOG.info("Attempting upgrade of " + checkpointFile + " for " + name);
+        logger.info("Attempting upgrade of " + checkpointFile + " for " + name);
         EventQueueBackingStoreFileV2 backingStoreV2 =
                 new EventQueueBackingStoreFileV2(checkpointFile, capacity, name, counter);
         String backupName = checkpointFile.getName() + "-backup-" + System.currentTimeMillis();

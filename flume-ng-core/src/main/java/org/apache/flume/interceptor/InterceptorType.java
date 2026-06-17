@@ -17,13 +17,13 @@
 package org.apache.flume.interceptor;
 
 public enum InterceptorType {
-    TIMESTAMP(org.apache.flume.interceptor.TimestampInterceptor.Builder.class),
-    HOST(org.apache.flume.interceptor.HostInterceptor.Builder.class),
-    STATIC(org.apache.flume.interceptor.StaticInterceptor.Builder.class),
-    REGEX_FILTER(org.apache.flume.interceptor.RegexFilteringInterceptor.Builder.class),
-    REGEX_EXTRACTOR(org.apache.flume.interceptor.RegexExtractorInterceptor.Builder.class),
-    REMOVE_HEADER(org.apache.flume.interceptor.RemoveHeaderInterceptor.Builder.class),
-    SEARCH_REPLACE(org.apache.flume.interceptor.SearchAndReplaceInterceptor.Builder.class);
+    TIMESTAMP(TimestampInterceptor.Builder.class),
+    HOST(HostInterceptor.Builder.class),
+    STATIC(StaticInterceptor.Builder.class),
+    REGEX_FILTER(RegexFilteringInterceptor.Builder.class),
+    REGEX_EXTRACTOR(RegexExtractorInterceptor.Builder.class),
+    REMOVE_HEADER(RemoveHeaderInterceptor.Builder.class),
+    SEARCH_REPLACE(SearchAndReplaceInterceptor.Builder.class);
 
     private final Class<? extends Interceptor.Builder> builderClass;
 

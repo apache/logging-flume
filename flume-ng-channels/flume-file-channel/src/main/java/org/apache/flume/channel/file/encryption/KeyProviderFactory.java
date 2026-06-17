@@ -20,11 +20,11 @@ import com.google.common.base.Preconditions;
 import java.util.Locale;
 import org.apache.flume.Context;
 import org.apache.flume.FlumeException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class KeyProviderFactory {
-    private static final Logger logger = LoggerFactory.getLogger(KeyProviderFactory.class);
+    private static final Logger logger = LogManager.getLogger();
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static KeyProvider getInstance(String keyProviderType, Context context) {

@@ -41,8 +41,8 @@ import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.exception.ChannelException;
 import org.apache.flume.source.AbstractSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class NetcatUdpSource extends AbstractSource implements EventDrivenSource, Configurable {
 
@@ -52,7 +52,7 @@ public class NetcatUdpSource extends AbstractSource implements EventDrivenSource
     private String remoteHostHeader = "REMOTE_ADDRESS";
     private EventLoopGroup group;
 
-    private static final Logger logger = LoggerFactory.getLogger(NetcatUdpSource.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private CounterGroup counterGroup = new CounterGroup();
 

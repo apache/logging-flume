@@ -37,13 +37,13 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.event.ReliableEventReader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 @InterfaceAudience.Private
 @InterfaceStability.Evolving
 public class ReliableTaildirEventReader implements ReliableEventReader {
-    private static final Logger logger = LoggerFactory.getLogger(ReliableTaildirEventReader.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private final List<TaildirMatcher> taildirCache;
     private final Table<String, String, String> headerTable;

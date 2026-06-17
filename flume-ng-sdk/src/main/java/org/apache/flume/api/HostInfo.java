@@ -20,8 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import org.apache.flume.FlumeException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * A convenience class that holds the property reference name along with the
@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
  */
 public class HostInfo {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(HostInfo.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private final String referenceName;
     private final String hostName;
@@ -73,14 +73,14 @@ public class HostInfo {
                 if (hostAndPortStr != null) {
                     String[] hostAndPort = hostAndPortStr.split(":");
                     if (hostAndPort.length != 2) {
-                        LOGGER.error("Invalid host address" + hostAndPortStr);
+                        logger.error("Invalid host address" + hostAndPortStr);
                         throw new FlumeException("Invalid host address" + hostAndPortStr);
                     }
                     Integer port = null;
                     try {
                         port = Integer.parseInt(hostAndPort[1]);
                     } catch (NumberFormatException e) {
-                        LOGGER.error("Invalid port number" + hostAndPortStr, e);
+                        logger.error("Invalid port number" + hostAndPortStr, e);
                         throw new FlumeException("Invalid port number" + hostAndPortStr);
                     }
                     HostInfo info = new HostInfo(hostList[i], hostAndPort[0].trim(), port);

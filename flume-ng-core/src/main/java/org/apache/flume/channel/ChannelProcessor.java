@@ -33,8 +33,8 @@ import org.apache.flume.exception.ChannelException;
 import org.apache.flume.interceptor.Interceptor;
 import org.apache.flume.interceptor.InterceptorBuilderFactory;
 import org.apache.flume.interceptor.InterceptorChain;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * A channel processor exposes operations to put {@link Event}s into
@@ -49,7 +49,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ChannelProcessor implements Configurable {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ChannelProcessor.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private final ChannelSelector selector;
     private final InterceptorChain interceptorChain;
@@ -96,7 +96,7 @@ public class ChannelProcessor implements Configurable {
             Context interceptorContext = new Context(interceptorContexts.getSubProperties(interceptorName + "."));
             String type = interceptorContext.getString("type");
             if (type == null) {
-                LOG.error("Type not specified for interceptor " + interceptorName);
+                logger.error("Type not specified for interceptor " + interceptorName);
                 throw new FlumeException("Interceptor.Type not specified for " + interceptorName);
             }
             try {
@@ -104,13 +104,13 @@ public class ChannelProcessor implements Configurable {
                 builder.configure(interceptorContext);
                 interceptors.add(builder.build());
             } catch (ClassNotFoundException e) {
-                LOG.error("Builder class not found. Exception follows.", e);
+                logger.error("Builder class not found. Exception follows.", e);
                 throw new FlumeException("Interceptor.Builder not found.", e);
             } catch (InstantiationException e) {
-                LOG.error("Could not instantiate Builder. Exception follows.", e);
+                logger.error("Could not instantiate Builder. Exception follows.", e);
                 throw new FlumeException("Interceptor.Builder not constructable.", e);
             } catch (IllegalAccessException e) {
-                LOG.error("Unable to access Builder. Exception follows.", e);
+                logger.error("Unable to access Builder. Exception follows.", e);
                 throw new FlumeException("Unable to access Interceptor.Builder.", e);
             }
         }
@@ -185,7 +185,7 @@ public class ChannelProcessor implements Configurable {
             } catch (Throwable t) {
                 tx.rollback();
                 if (t instanceof Error) {
-                    LOG.error("Error while writing to required channel: " + reqChannel, t);
+                    logger.error("Error while writing to required channel: " + reqChannel, t);
                     throw (Error) t;
                 } else if (t instanceof ChannelException) {
                     throw (ChannelException) t;
@@ -215,7 +215,7 @@ public class ChannelProcessor implements Configurable {
                 tx.commit();
             } catch (Throwable t) {
                 tx.rollback();
-                LOG.error("Unable to put batch on optional channel: " + optChannel, t);
+                logger.error("Unable to put batch on optional channel: " + optChannel, t);
                 if (t instanceof Error) {
                     throw (Error) t;
                 }
@@ -260,7 +260,7 @@ public class ChannelProcessor implements Configurable {
             } catch (Throwable t) {
                 tx.rollback();
                 if (t instanceof Error) {
-                    LOG.error("Error while writing to required channel: " + reqChannel, t);
+                    logger.error("Error while writing to required channel: " + reqChannel, t);
                     throw (Error) t;
                 } else if (t instanceof ChannelException) {
                     throw (ChannelException) t;
@@ -287,7 +287,7 @@ public class ChannelProcessor implements Configurable {
                 tx.commit();
             } catch (Throwable t) {
                 tx.rollback();
-                LOG.error("Unable to put event on optional channel: " + optChannel, t);
+                logger.error("Unable to put event on optional channel: " + optChannel, t);
                 if (t instanceof Error) {
                     throw (Error) t;
                 }

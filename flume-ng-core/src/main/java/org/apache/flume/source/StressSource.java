@@ -29,8 +29,8 @@ import org.apache.flume.conf.Configurable;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.exception.ChannelException;
 import org.apache.flume.source.shaded.guava.RateLimiter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * StressSource is an internal load-generating source implementation
@@ -53,7 +53,7 @@ import org.slf4j.LoggerFactory;
  */
 public class StressSource extends AbstractPollableSource implements Configurable, BatchSizeSupported {
 
-    private static final Logger logger = LoggerFactory.getLogger(StressSource.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private CounterGroup counterGroup;
     private byte[] buffer;

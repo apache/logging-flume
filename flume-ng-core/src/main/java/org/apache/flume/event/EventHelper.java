@@ -20,8 +20,8 @@ import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import org.apache.commons.io.HexDump;
 import org.apache.flume.Event;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class EventHelper {
 
@@ -29,7 +29,7 @@ public class EventHelper {
     private static final String EOL = System.getProperty("line.separator", "\n");
     private static final int DEFAULT_MAX_BYTES = 16;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(EventHelper.class);
+    private static final Logger logger = LogManager.getLogger();
 
     public static String dumpEvent(Event event) {
         return dumpEvent(event, DEFAULT_MAX_BYTES);
@@ -54,8 +54,8 @@ public class EventHelper {
                 }
                 buffer.append(hexDump);
             } catch (Exception e) {
-                if (LOGGER.isInfoEnabled()) {
-                    LOGGER.info("Exception while dumping event", e);
+                if (logger.isInfoEnabled()) {
+                    logger.info("Exception while dumping event", e);
                 }
                 buffer.append("...Exception while dumping: ").append(e.getMessage());
             }
