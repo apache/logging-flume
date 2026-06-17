@@ -38,15 +38,15 @@ import org.apache.flume.conf.Configurables;
 import org.apache.flume.exception.ChannelException;
 import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.source.AbstractSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class SyslogUDPSource extends AbstractSource implements EventDrivenSource, Configurable {
 
     // Default Min size
     public static final int DEFAULT_MIN_SIZE = 2048;
     public static final int DEFAULT_INITIAL_SIZE = DEFAULT_MIN_SIZE;
-    private static final Logger logger = LoggerFactory.getLogger(SyslogUDPSource.class);
+    private static final Logger logger = LogManager.getLogger();
     private final int maxsize = 1 << 16; // 64k is max allowable in RFC 5426
     private int port;
     private String host = null;

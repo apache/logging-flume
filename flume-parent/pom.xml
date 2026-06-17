@@ -233,6 +233,7 @@
     <commons-compress.version>1.28.0</commons-compress.version>
     <commons-io.version>2.22.0</commons-io.version>
     <commons-lang.version>3.20.0</commons-lang.version>
+    <commons-logging.version>1.4.0</commons-logging.version>
     <commons-text.version>1.15.0</commons-text.version>
     <curator.version>5.9.0</curator.version>
     <derby.version>10.17.1.0</derby.version>
@@ -276,8 +277,8 @@
     <protobuf.plugin.version>0.6.1</protobuf.plugin.version>
     <prometheus.version>1.7.0</prometheus.version>
     <rat.version>0.12</rat.version>
+    <slf4j.version>2.0.17</slf4j.version>
     <snappy-java.version>1.1.10.8</snappy-java.version>
-    <slf4j.version>1.7.32</slf4j.version>
     <spotbugs-annotations.version>4.9.3</spotbugs-annotations.version>
     <system-rules.version>1.19.0</system-rules.version>
     <wiremock.version>1.53</wiremock.version>
@@ -340,12 +341,12 @@
         <scope>test</scope>
         <exclusions>
           <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
+            <groupId>ch.qos.reload4j</groupId>
+            <artifactId>reload4j</artifactId>
           </exclusion>
           <exclusion>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
+            <artifactId>slf4j-reload4j</artifactId>
           </exclusion>
           <exclusion>
             <!-- exclude this from hadoop minikdc as the minikdc depends on
@@ -369,6 +370,13 @@
         <groupId>commons-cli</groupId>
         <artifactId>commons-cli</artifactId>
         <version>${commons-cli.version}</version>
+      </dependency>
+
+      <!-- Pin commons-logging to a version with native Log4j API support -->
+      <dependency>
+        <groupId>commons-logging</groupId>
+        <artifactId>commons-logging</artifactId>
+        <version>${commons-logging.version}</version>
       </dependency>
 
       <dependency>
@@ -397,10 +405,13 @@
         <scope>import</scope>
       </dependency>
 
+      <!-- Pin SLF4J to 2.x so transitive deps cannot downgrade it to 1.x -->
       <dependency>
         <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-api</artifactId>
+        <artifactId>slf4j-bom</artifactId>
         <version>${slf4j.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
 
       <dependency>
@@ -621,12 +632,12 @@
             <artifactId>jasper-runtime</artifactId>
           </exclusion>
           <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
+            <groupId>ch.qos.reload4j</groupId>
+            <artifactId>reload4j</artifactId>
           </exclusion>
           <exclusion>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
+            <artifactId>slf4j-reload4j</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -644,12 +655,8 @@
             <artifactId>jasper-runtime</artifactId>
           </exclusion>
           <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
+            <groupId>ch.qos.reload4j</groupId>
+            <artifactId>reload4j</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -665,14 +672,6 @@
           <exclusion>
             <groupId>tomcat</groupId>
             <artifactId>jasper-runtime</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -691,12 +690,12 @@
             <artifactId>jasper-runtime</artifactId>
           </exclusion>
           <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
+            <groupId>ch.qos.reload4j</groupId>
+            <artifactId>reload4j</artifactId>
           </exclusion>
           <exclusion>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
+            <artifactId>slf4j-reload4j</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -716,12 +715,12 @@
         <version>${hadoop.version}</version>
         <exclusions>
           <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
+            <groupId>ch.qos.reload4j</groupId>
+            <artifactId>reload4j</artifactId>
           </exclusion>
           <exclusion>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
+            <artifactId>slf4j-reload4j</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -732,12 +731,12 @@
         <scope>test</scope>
         <exclusions>
           <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
+            <groupId>ch.qos.reload4j</groupId>
+            <artifactId>reload4j</artifactId>
           </exclusion>
           <exclusion>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
+            <artifactId>slf4j-reload4j</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -753,12 +752,8 @@
         <version>${zookeeper.version}</version>
         <exclusions>
           <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>*</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -1236,6 +1231,50 @@
             <goals>
               <goal>clean</goal>
             </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Ban logging implementations (not logging APIs) that dependencies
+           incorrectly add as compile dependencies -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>ban-logging-dependencies</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <bannedDependencies>
+                  <excludes>
+                    <!-- JCL replacement -->
+                    <exclude>org.springframework:spring-jcl</exclude>
+                    <!-- Log4j 1.x -->
+                    <exclude>log4j:log4j</exclude>
+                    <!-- Groups with logging dependencies -->
+                    <exclude>ch.qos.logback:*</exclude>
+                    <exclude>ch.qos.reload4j:*</exclude>
+                    <exclude>org.apache.logging.log4j:*</exclude>
+                    <exclude>org.jboss.logging:*</exclude>
+                    <exclude>org.slf4j:*</exclude>
+                    <exclude>org.ops4j.pax.logging:*</exclude>
+                  </excludes>
+                  <includes>
+                    <!-- As compile dependencies (including transitive): only real logging APIs -->
+                    <include>commons-logging:commons-logging</include>
+                    <include>org.apache.logging.log4j:log4j-api</include>
+                    <include>org.jboss.logging:jboss-logging</include>
+                    <include>org.slf4j:slf4j-api</include>
+                    <!-- As a test dependency -->
+                    <include>org.apache.logging.log4j:log4j-core:*:jar:test</include>
+                    <include>org.apache.logging.log4j:log4j-slf4j2-impl:*:jar:test</include>
+                  </includes>
+                </bannedDependencies>
+              </rules>
+            </configuration>
           </execution>
         </executions>
       </plugin>

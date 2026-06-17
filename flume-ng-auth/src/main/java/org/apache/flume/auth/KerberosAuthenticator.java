@@ -33,8 +33,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.SecurityUtil;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.UserGroupInformation.AuthenticationMethod;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * A kerberos authenticator, which authenticates using the supplied principal
@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
  */
 class KerberosAuthenticator implements FlumeAuthenticator {
 
-    private static final Logger LOG = LoggerFactory.getLogger(KerberosAuthenticator.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private volatile UserGroupInformation ugi;
     private volatile KerberosUser prevUser;
@@ -146,7 +146,7 @@ class KerberosAuthenticator implements FlumeAuthenticator {
                 curUser = null;
             }
         } catch (IOException e) {
-            LOG.warn("User unexpectedly had no active login. Continuing with " + "authentication", e);
+            logger.warn("User unexpectedly had no active login. Continuing with " + "authentication", e);
         }
 
         /*
@@ -158,13 +158,13 @@ class KerberosAuthenticator implements FlumeAuthenticator {
         try {
             if (ugi != null) {
                 if (curUser != null && curUser.getUserName().equals(ugi.getUserName())) {
-                    LOG.debug("Using existing principal login: {}", ugi);
+                    logger.debug("Using existing principal login: {}", ugi);
                 } else {
-                    LOG.info("Attempting kerberos Re-login as principal ({}) ", new Object[] {ugi.getUserName()});
+                    logger.info("Attempting kerberos Re-login as principal ({}) ", new Object[] {ugi.getUserName()});
                     ugi.reloginFromKeytab();
                 }
             } else {
-                LOG.info(
+                logger.info(
                         "Attempting kerberos login as principal ({}) from keytab " + "file ({})",
                         new Object[] {resolvedPrincipal, keytab});
                 UserGroupInformation.loginUserFromKeytab(resolvedPrincipal, keytab);
@@ -187,7 +187,7 @@ class KerberosAuthenticator implements FlumeAuthenticator {
         if (ugi != null) {
             // dump login information
             AuthenticationMethod authMethod = ugi.getAuthenticationMethod();
-            LOG.info("\n{} \nUser: {} \nAuth method: {} \nKeytab: {} \n", new Object[] {
+            logger.info("\n{} \nUser: {} \nAuth method: {} \nKeytab: {} \n", new Object[] {
                 authMethod.equals(AuthenticationMethod.PROXY) ? "Proxy as: " : "Logged as: ",
                 ugi.getUserName(),
                 authMethod,
@@ -213,7 +213,7 @@ class KerberosAuthenticator implements FlumeAuthenticator {
                         try {
                             ugi.checkTGTAndReloginFromKeytab();
                         } catch (IOException e) {
-                            LOG.warn(
+                            logger.warn(
                                     "Error occured during checkTGTAndReloginFromKeytab() for user " + ugi.getUserName(),
                                     e);
                         }

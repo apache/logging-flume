@@ -25,12 +25,12 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class DirectMemoryUtils {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DirectMemoryUtils.class);
+    private static final Logger logger = LogManager.getLogger();
     private static final String MAX_DIRECT_MEMORY_PARAM = "-XX:MaxDirectMemorySize=";
     private static final long DEFAULT_SIZE = getDefaultDirectMemorySize();
     private static final AtomicInteger allocated = new AtomicInteger(0);
@@ -39,7 +39,7 @@ public class DirectMemoryUtils {
         Preconditions.checkArgument(size > 0, "Size must be greater than zero");
         long maxDirectMemory = getDirectMemorySize();
         long allocatedCurrently = allocated.get();
-        LOG.info("Direct Memory Allocation: " + " Allocation = "
+        logger.info("Direct Memory Allocation: " + " Allocation = "
                 + size + ", Allocated = "
                 + allocatedCurrently + ", MaxDirectMemorySize = "
                 + maxDirectMemory + ", Remaining = "
@@ -49,7 +49,7 @@ public class DirectMemoryUtils {
             allocated.addAndGet(size);
             return result;
         } catch (OutOfMemoryError error) {
-            LOG.error(
+            logger.error(
                     "Error allocating " + size + ", you likely want" + " to increase " + MAX_DIRECT_MEMORY_PARAM,
                     error);
             throw error;
@@ -66,7 +66,7 @@ public class DirectMemoryUtils {
         cleanMethod.invoke(cleaner);
         allocated.getAndAdd(-buffer.capacity());
         long maxDirectMemory = getDirectMemorySize();
-        LOG.info("Direct Memory Deallocation: " + ", Allocated = "
+        logger.info("Direct Memory Deallocation: " + ", Allocated = "
                 + allocated.get() + ", MaxDirectMemorySize = "
                 + maxDirectMemory + ", Remaining = "
                 + Math.max(0, (maxDirectMemory - allocated.get())));
@@ -106,7 +106,8 @@ public class DirectMemoryUtils {
                 return (Long) result;
             }
         } catch (Exception e) {
-            LOG.info("Unable to get maxDirectMemory from VM: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+            logger.info(
+                    "Unable to get maxDirectMemory from VM: " + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
         // default according to VM.maxDirectMemory()
         return Runtime.getRuntime().maxMemory();

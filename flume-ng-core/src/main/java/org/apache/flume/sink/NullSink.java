@@ -26,8 +26,8 @@ import org.apache.flume.Sink;
 import org.apache.flume.Transaction;
 import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -49,7 +49,7 @@ import org.slf4j.LoggerFactory;
  */
 public class NullSink extends AbstractSink implements Configurable, BatchSizeSupported {
 
-    private static final Logger logger = LoggerFactory.getLogger(NullSink.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private static final int DFLT_BATCH_SIZE = 100;
     private static final int DFLT_LOG_EVERY_N_EVENTS = 10000;

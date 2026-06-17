@@ -38,11 +38,11 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.flume.channel.file.instrumentation.FileChannelCounter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
-    private static final Logger LOG = LoggerFactory.getLogger(EventQueueBackingStoreFile.class);
+    private static final Logger logger = LogManager.getLogger();
     private static final int MAX_ALLOC_BUFFER_SIZE = 2 * 1024 * 1024; // 2MB
     protected static final int HEADER_SIZE = 1029;
     protected static final int INDEX_VERSION = 0;
@@ -94,7 +94,7 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
             checkpointFileHandle.seek(INDEX_VERSION * Serialization.SIZE_OF_LONG);
             checkpointFileHandle.writeLong(getVersion());
             checkpointFileHandle.getChannel().force(true);
-            LOG.info("Preallocated " + checkpointFile + " to " + checkpointFileHandle.length() + " for capacity "
+            logger.info("Preallocated " + checkpointFile + " to " + checkpointFileHandle.length() + " for capacity "
                     + capacity);
         }
         if (checkpointFile.length() != totalBytes) {
@@ -187,7 +187,7 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
                         + "this directory: "
                         + backupDirectory.toString() + " as backup?");
         if (!backupFile.createNewFile()) {
-            LOG.error("Could not create backup file. Backup of checkpoint will "
+            logger.error("Could not create backup file. Backup of checkpoint will "
                     + "not be used during replay even if checkpoint is bad.");
         }
     }
@@ -225,7 +225,7 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
 
     @Override
     void beginCheckpoint() throws IOException {
-        LOG.info("Start checkpoint for " + checkpointFile + ", elements to sync = " + overwriteMap.size());
+        logger.info("Start checkpoint for " + checkpointFile + ", elements to sync = " + overwriteMap.size());
 
         if (shouldBackup) {
             int permits = backupCompletedSema.drainPermits();
@@ -250,7 +250,7 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
     void checkpoint() throws IOException {
 
         setLogWriteOrderID(WriteOrderOracle.next());
-        LOG.info("Updating checkpoint metadata: logWriteOrderID: "
+        logger.info("Updating checkpoint metadata: logWriteOrderID: "
                 + getLogWriteOrderID() + ", queueSize: " + getSize() + ", queueHead: "
                 + getHead());
         elementsBuffer.put(INDEX_WRITE_ORDER_ID, getLogWriteOrderID());
@@ -286,7 +286,7 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
                 checkpointBackUpExecutor,
                 "Expected the checkpoint backup exector to be non-null, "
                         + "but it is null. Checkpoint will not be backed up.");
-        LOG.info("Attempting to back up checkpoint.");
+        logger.info("Attempting to back up checkpoint.");
         checkpointBackUpExecutor.submit(new Runnable() {
 
             @Override
@@ -297,12 +297,12 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
                 } catch (Throwable throwable) {
                     fileChannelCounter.incrementCheckpointBackupWriteErrorCount();
                     error = true;
-                    LOG.error("Backing up of checkpoint directory failed.", throwable);
+                    logger.error("Backing up of checkpoint directory failed.", throwable);
                 } finally {
                     backupCompletedSema.release();
                 }
                 if (!error) {
-                    LOG.info("Checkpoint backup completed.");
+                    logger.info("Checkpoint backup completed.");
                 }
             }
         });
@@ -314,7 +314,7 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
         try {
             checkpointFileHandle.close();
         } catch (IOException e) {
-            LOG.info("Error closing " + checkpointFile, e);
+            logger.info("Error closing " + checkpointFile, e);
         }
         if (checkpointBackUpExecutor != null && !checkpointBackUpExecutor.isShutdown()) {
             checkpointBackUpExecutor.shutdown();
@@ -322,7 +322,7 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
                 // Wait till the executor dies.
                 while (!checkpointBackUpExecutor.awaitTermination(1, TimeUnit.SECONDS)) {}
             } catch (InterruptedException ex) {
-                LOG.warn("Interrupted while waiting for checkpoint backup to " + "complete");
+                logger.warn("Interrupted while waiting for checkpoint backup to " + "complete");
             }
         }
     }

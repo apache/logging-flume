@@ -24,12 +24,12 @@ import java.io.RandomAccessFile;
 import java.security.Key;
 import javax.annotation.Nullable;
 import org.apache.flume.channel.file.encryption.KeyProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 @SuppressWarnings("deprecation")
 class LogFileFactory {
-    private static final Logger LOGGER = LoggerFactory.getLogger(LogFileFactory.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private LogFileFactory() {}
 
@@ -51,7 +51,7 @@ class LogFileFactory {
                 try {
                     logFile.close();
                 } catch (IOException e) {
-                    LOGGER.warn("Unable to close " + file, e);
+                    logger.warn("Unable to close " + file, e);
                 }
             }
         }
@@ -102,7 +102,7 @@ class LogFileFactory {
                 try {
                     logFile.close();
                 } catch (IOException e) {
-                    LOGGER.warn("Unable to close " + file, e);
+                    logger.warn("Unable to close " + file, e);
                 }
             }
         }
@@ -174,7 +174,7 @@ class LogFileFactory {
                 try {
                     logFile.close();
                 } catch (IOException e) {
-                    LOGGER.warn("Unable to close " + file, e);
+                    logger.warn("Unable to close " + file, e);
                 }
             }
         }

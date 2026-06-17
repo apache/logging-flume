@@ -48,7 +48,9 @@ import javax.management.Query;
 import javax.management.QueryExp;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
@@ -515,7 +517,7 @@ public class TestHTTPSource {
         doTestHttps(null, httpsPort, httpsChannel);
     }
 
-    @Test(expected = javax.net.ssl.SSLHandshakeException.class)
+    @Test(expected = SSLHandshakeException.class)
     public void testHttpsSSLv3() throws Exception {
         doTestHttps("SSLv3", httpsPort, httpsChannel);
     }
@@ -546,7 +548,7 @@ public class TestHTTPSource {
         Transaction transaction = null;
         try {
             SSLContext sc = null;
-            javax.net.ssl.SSLSocketFactory factory = null;
+            SSLSocketFactory factory = null;
             if (System.getProperty("java.vendor").contains("IBM")) {
                 sc = SSLContext.getInstance("SSL_TLS");
             } else {
@@ -664,12 +666,12 @@ public class TestHTTPSource {
         }
     }
 
-    private class DisabledProtocolsSocketFactory extends javax.net.ssl.SSLSocketFactory {
+    private class DisabledProtocolsSocketFactory extends SSLSocketFactory {
 
-        private final javax.net.ssl.SSLSocketFactory socketFactory;
+        private final SSLSocketFactory socketFactory;
         private final String[] protocols;
 
-        DisabledProtocolsSocketFactory(javax.net.ssl.SSLSocketFactory factory, String protocol) {
+        DisabledProtocolsSocketFactory(SSLSocketFactory factory, String protocol) {
             this.socketFactory = factory;
             protocols = new String[1];
             protocols[0] = protocol;

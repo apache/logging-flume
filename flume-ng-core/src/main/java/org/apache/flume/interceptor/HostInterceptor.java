@@ -24,8 +24,8 @@ import java.util.List;
 import java.util.Map;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Simple Interceptor class that sets the host name or IP on all events
@@ -60,7 +60,7 @@ import org.slf4j.LoggerFactory;
  */
 public class HostInterceptor implements Interceptor {
 
-    private static final Logger logger = LoggerFactory.getLogger(HostInterceptor.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private final boolean preserveExisting;
     private final String header;

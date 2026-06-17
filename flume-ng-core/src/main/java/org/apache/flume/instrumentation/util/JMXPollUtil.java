@@ -26,15 +26,15 @@ import javax.management.AttributeList;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanServer;
 import javax.management.ObjectInstance;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
  */
 public class JMXPollUtil {
 
-    private static Logger LOG = LoggerFactory.getLogger(JMXPollUtil.class);
+    private static final Logger logger = LogManager.getLogger();
     private static MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
 
     public static Map<String, Map<String, String>> getAllMBeans() {
@@ -43,7 +43,7 @@ public class JMXPollUtil {
         try {
             queryMBeans = mbeanServer.queryMBeans(null, null);
         } catch (Exception ex) {
-            LOG.error("Could not get Mbeans for monitoring", ex);
+            logger.error("Could not get Mbeans for monitoring", ex);
             Throwables.propagate(ex);
         }
         for (ObjectInstance obj : queryMBeans) {
@@ -72,7 +72,7 @@ public class JMXPollUtil {
                 }
                 mbeanMap.put(component, attrMap);
             } catch (Exception e) {
-                LOG.error("Unable to poll JMX for metrics.", e);
+                logger.error("Unable to poll JMX for metrics.", e);
             }
         }
         return mbeanMap;

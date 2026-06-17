@@ -25,8 +25,6 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * <p>
@@ -45,8 +43,6 @@ import org.slf4j.LoggerFactory;
  * including backtracking and grouping.
  */
 public class SearchAndReplaceInterceptor implements Interceptor {
-
-    private static final Logger logger = LoggerFactory.getLogger(SearchAndReplaceInterceptor.class);
 
     private final Pattern searchPattern;
     private final String replaceString;

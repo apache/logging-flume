@@ -21,17 +21,17 @@ import java.util.Locale;
 import org.apache.flume.FlumeException;
 import org.apache.flume.conf.configfilter.ConfigFilterType;
 import org.apache.flume.configfilter.ConfigFilter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ConfigFilterFactory {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigFilterFactory.class);
+    private static final Logger logger = LogManager.getLogger();
 
     public static ConfigFilter create(String name, String type) throws FlumeException {
         Preconditions.checkNotNull(name, "name");
         Preconditions.checkNotNull(type, "type");
-        LOGGER.info("Creating instance of configfilter {}, type {}", name, type);
+        logger.info("Creating instance of configfilter {}, type {}", name, type);
         Class<? extends ConfigFilter> aClass = getClass(type);
         try {
             ConfigFilter configFilter = aClass.newInstance();
@@ -49,7 +49,7 @@ public class ConfigFilterFactory {
         try {
             srcType = ConfigFilterType.valueOf(type.toUpperCase(Locale.ENGLISH));
         } catch (IllegalArgumentException ex) {
-            LOGGER.debug("Configfilter type {} is a custom type", type);
+            logger.debug("Configfilter type {} is a custom type", type);
         }
         if (srcType != ConfigFilterType.OTHER) {
             classname = srcType.getClassName();

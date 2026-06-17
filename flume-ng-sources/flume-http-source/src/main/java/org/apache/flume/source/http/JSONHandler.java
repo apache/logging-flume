@@ -30,8 +30,8 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.event.JSONEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * JSONHandler for HTTPSource that accepts an array of events.
@@ -72,7 +72,7 @@ import org.slf4j.LoggerFactory;
  */
 public class JSONHandler implements HTTPSourceHandler {
 
-    private static final Logger LOG = LoggerFactory.getLogger(JSONHandler.class);
+    private static final Logger logger = LogManager.getLogger();
     private final Type listType = new TypeToken<List<JSONEvent>>() {}.getType();
     private final Gson gson;
 
@@ -90,12 +90,12 @@ public class JSONHandler implements HTTPSourceHandler {
         // UTF-8 is default for JSON. If no charset is specified, UTF-8 is to
         // be assumed.
         if (charset == null) {
-            LOG.debug("Charset is null, default charset of UTF-8 will be used.");
+            logger.debug("Charset is null, default charset of UTF-8 will be used.");
             charset = "UTF-8";
         } else if (!(charset.equalsIgnoreCase("utf-8")
                 || charset.equalsIgnoreCase("utf-16")
                 || charset.equalsIgnoreCase("utf-32"))) {
-            LOG.error(
+            logger.error(
                     "Unsupported character set in request {}. "
                             + "JSON handler supports UTF-8, "
                             + "UTF-16 and UTF-32 only.",

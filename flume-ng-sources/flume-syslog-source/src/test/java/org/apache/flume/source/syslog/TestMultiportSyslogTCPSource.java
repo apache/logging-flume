@@ -78,7 +78,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 public class TestMultiportSyslogTCPSource {
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger logger = LogManager.getLogger();
     private static final String TEST_CLIENT_IP_HEADER = "testClientIPHeader";
     private static final String TEST_CLIENT_HOSTNAME_HEADER = "testClientHostnameHeader";
     private static final DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
@@ -114,7 +114,7 @@ public class TestMultiportSyslogTCPSource {
             BiConsumer<Integer, byte[]> eventSenderFuncton,
             Context additionalContext)
             throws IOException {
-        LOGGER.info("source: {}, channel: {}, numPorts: {}", source.toString(), channel.getName(), numPorts);
+        logger.info("source: {}, channel: {}, numPorts: {}", source.toString(), channel.getName(), numPorts);
         Context channelContext = new Context();
         channelContext.put("capacity", String.valueOf(2000));
         channelContext.put("transactionCapacity", String.valueOf(2000));
@@ -144,7 +144,7 @@ public class TestMultiportSyslogTCPSource {
         for (int i = 0; i < numPorts; i++) {
             ports.append(String.valueOf(portList.get(i))).append(" ");
         }
-        LOGGER.info("ports: {}", ports.toString());
+        logger.info("ports: {}", ports.toString());
         Context context = new Context();
         context.put(
                 SyslogSourceConfigurationConstants.CONFIG_PORTS,
@@ -157,7 +157,7 @@ public class TestMultiportSyslogTCPSource {
         for (int i = 0; i < numPorts; i++) {
             byte[] data = getEvent(i);
             eventSenderFuncton.accept(portList.get(i), data);
-            LOGGER.info("Sent {} to port {}", new String(data), portList.get(i));
+            logger.info("Sent {} to port {}", new String(data), portList.get(i));
         }
 
         Transaction txn = channel.getTransaction();
@@ -165,7 +165,7 @@ public class TestMultiportSyslogTCPSource {
         for (int i = 0; i < numPorts; i++) {
             Event e = channel.take();
             if (e == null) {
-                LOGGER.error("Got a null event for port number: {}", i);
+                logger.error("Got a null event for port number: {}", i);
                 throw new NullPointerException("Event is null");
             }
             channelEvents.add(e);
@@ -265,7 +265,7 @@ public class TestMultiportSyslogTCPSource {
             try {
                 socket.close();
             } catch (IOException ioe) {
-                LOGGER.warn("Error closing socket: {}", ioe.getMessage());
+                logger.warn("Error closing socket: {}", ioe.getMessage());
             }
         });
     }

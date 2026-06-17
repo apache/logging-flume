@@ -30,8 +30,8 @@ import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>This class makes the following assumptions:</p>
@@ -83,7 +83,7 @@ import org.slf4j.LoggerFactory;
 @InterfaceStability.Evolving
 public class ResettableFileInputStream extends ResettableInputStream implements RemoteMarkable, LengthMeasurable {
 
-    Logger logger = LoggerFactory.getLogger(ResettableFileInputStream.class);
+    private static final Logger logger = LogManager.getLogger();
 
     public static final int DEFAULT_BUF_SIZE = 16384;
 

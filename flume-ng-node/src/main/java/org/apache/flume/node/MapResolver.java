@@ -29,8 +29,8 @@ import org.apache.commons.text.StringSubstitutor;
 import org.apache.commons.text.lookup.DefaultStringLookup;
 import org.apache.commons.text.lookup.StringLookup;
 import org.apache.commons.text.lookup.StringLookupFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Resolves replaceable tokens to create a Map.
@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
  */
 final class MapResolver {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MapResolver.class);
+    private static final Logger logger = LogManager.getLogger();
     private static final String DEFAULT_LOOKUPS = "lookups.properties";
     private static final String CUSTOM_LOOKUPS_KEY = "lookups";
     private static final String PROPS_IMPL_KEY = "propertiesImplementation";
@@ -87,7 +87,7 @@ final class MapResolver {
                                 DefaultStringLookup.valueOf(lookupEnum).getStringLookup();
                         map.put(key.toLowerCase(Locale.ROOT), stringLookup);
                     } catch (IllegalArgumentException ex) {
-                        LOGGER.warn("{} is not a DefaultStringLookup enum value, ignoring", key);
+                        logger.warn("{} is not a DefaultStringLookup enum value, ignoring", key);
                     }
                 } else {
                     try {
@@ -96,10 +96,10 @@ final class MapResolver {
                             StringLookup stringLookup = (StringLookup) clazz.newInstance();
                             map.put(k.toString().toLowerCase(Locale.ROOT), stringLookup);
                         } else {
-                            LOGGER.warn("{} is not a StringLookup, ignoring", v);
+                            logger.warn("{} is not a StringLookup, ignoring", v);
                         }
                     } catch (Exception ex) {
-                        LOGGER.warn("Unable to load {} due to {}, ignoring", v, ex.getMessage());
+                        logger.warn("Unable to load {} due to {}, ignoring", v, ex.getMessage());
                     }
                 }
             });
@@ -146,7 +146,7 @@ final class MapResolver {
                 try (InputStream inputStream = ClassLoader.getSystemResourceAsStream(fileName)) {
                     properties.load(inputStream);
                 } catch (final IOException ex) {
-                    LOGGER.warn("Unable to load {} due to {}", fileName, ex.getMessage());
+                    logger.warn("Unable to load {} due to {}", fileName, ex.getMessage());
                 }
             }
         }

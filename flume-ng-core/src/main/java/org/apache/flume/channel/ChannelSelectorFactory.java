@@ -27,12 +27,12 @@ import org.apache.flume.conf.BasicConfigurationConstants;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.conf.channel.ChannelSelectorConfiguration;
 import org.apache.flume.conf.channel.ChannelSelectorType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ChannelSelectorFactory {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ChannelSelectorFactory.class);
+    private static final Logger logger = LogManager.getLogger();
 
     public static ChannelSelector create(List<Channel> channels, Map<String, String> config) {
 
@@ -69,7 +69,7 @@ public class ChannelSelectorFactory {
         try {
             selectorType = ChannelSelectorType.valueOf(type.toUpperCase(Locale.ENGLISH));
         } catch (IllegalArgumentException ex) {
-            LOGGER.debug("Selector type {} is a custom type", type);
+            logger.debug("Selector type {} is a custom type", type);
         }
 
         if (!selectorType.equals(ChannelSelectorType.OTHER)) {

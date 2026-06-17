@@ -31,14 +31,14 @@ import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.lifecycle.LifecycleState;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class TestPollableSourceRunner {
 
-    private static final Logger logger = LoggerFactory.getLogger(TestPollableSourceRunner.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private PollableSourceRunner sourceRunner;
 

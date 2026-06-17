@@ -32,8 +32,8 @@ import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.flume.channel.file.instrumentation.FileChannelCounter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class CheckpointRebuilder {
 
@@ -45,7 +45,7 @@ public class CheckpointRebuilder {
     private final SetMultimap<Long, ComparableFlumeEventPointer> uncommittedTakes = HashMultimap.create();
     private final boolean fsyncPerTransaction;
 
-    private static Logger LOG = LoggerFactory.getLogger(CheckpointRebuilder.class);
+    private static final Logger logger = LogManager.getLogger();
 
     public CheckpointRebuilder(List<File> logFiles, FlumeEventQueue queue, boolean fsyncPerTransaction)
             throws IOException {
@@ -55,13 +55,13 @@ public class CheckpointRebuilder {
     }
 
     public boolean rebuild() throws IOException, Exception {
-        LOG.info("Attempting to fast replay the log files.");
+        logger.info("Attempting to fast replay the log files.");
         List<LogFile.SequentialReader> logReaders = Lists.newArrayList();
         for (File logFile : logFiles) {
             try {
                 logReaders.add(LogFileFactory.getSequentialReader(logFile, null, fsyncPerTransaction));
             } catch (EOFException e) {
-                LOG.warn("Ignoring " + logFile + " due to EOF", e);
+                logger.warn("Ignoring " + logFile + " due to EOF", e);
             }
         }
         long transactionIDSeed = 0;
@@ -120,7 +120,7 @@ public class CheckpointRebuilder {
                 }
             }
         } catch (Exception e) {
-            LOG.warn("Error while generating checkpoint using fast generation logic", e);
+            logger.warn("Error while generating checkpoint using fast generation logic", e);
             return false;
         } finally {
             TransactionIDOracle.setSeed(transactionIDSeed);
@@ -135,7 +135,7 @@ public class CheckpointRebuilder {
             queue.addTail(put.pointer);
             count++;
         }
-        LOG.info("Replayed {} events using fast replay logic.", count);
+        logger.info("Replayed {} events using fast replay logic.", count);
         return true;
     }
 
@@ -155,7 +155,7 @@ public class CheckpointRebuilder {
                 }
             }
         } catch (Exception e) {
-            LOG.warn("Error while generating checkpoint using fast generation logic", e);
+            logger.warn("Error while generating checkpoint using fast generation logic", e);
         } finally {
             for (LogFile.MetaDataWriter metaDataWriter : metaDataWriters) {
                 metaDataWriter.close();
@@ -228,7 +228,7 @@ public class CheckpointRebuilder {
         int capacity = Integer.parseInt(cli.getOptionValue("t"));
         File checkpointFile = new File(checkpointDir, "checkpoint");
         if (checkpointFile.exists()) {
-            LOG.error("Cannot execute fast replay", new IllegalStateException("Checkpoint exists" + checkpointFile));
+            logger.error("Cannot execute fast replay", new IllegalStateException("Checkpoint exists" + checkpointFile));
         } else {
             EventQueueBackingStore backingStore = EventQueueBackingStoreFactory.get(
                     checkpointFile, capacity, "channel", new FileChannelCounter("Main"));
@@ -241,7 +241,7 @@ public class CheckpointRebuilder {
             if (rebuilder.rebuild()) {
                 rebuilder.writeCheckpoint();
             } else {
-                LOG.error("Could not rebuild the checkpoint due to errors.");
+                logger.error("Could not rebuild the checkpoint due to errors.");
             }
         }
     }

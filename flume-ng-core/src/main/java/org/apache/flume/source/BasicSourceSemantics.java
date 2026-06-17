@@ -26,8 +26,8 @@ import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.lifecycle.LifecycleState;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Alternative to AbstractSource, which:
@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
 @InterfaceAudience.Public
 @InterfaceStability.Evolving
 public abstract class BasicSourceSemantics implements Source, Configurable {
-    private static final Logger logger = LoggerFactory.getLogger(BasicSourceSemantics.class);
+    private static final Logger logger = LogManager.getLogger();
     private Exception exception;
     private ChannelProcessor channelProcessor;
     private String name;

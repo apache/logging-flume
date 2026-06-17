@@ -43,8 +43,8 @@ import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.exception.ChannelException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -100,7 +100,7 @@ import org.slf4j.LoggerFactory;
  */
 public class NetcatSource extends AbstractSource implements Configurable, EventDrivenSource {
 
-    private static final Logger logger = LoggerFactory.getLogger(NetcatSource.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private String hostName;
     private int port;

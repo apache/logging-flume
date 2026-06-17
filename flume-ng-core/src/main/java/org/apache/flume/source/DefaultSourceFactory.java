@@ -22,12 +22,12 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.Source;
 import org.apache.flume.SourceFactory;
 import org.apache.flume.conf.source.SourceType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class DefaultSourceFactory implements SourceFactory {
 
-    private static final Logger logger = LoggerFactory.getLogger(DefaultSourceFactory.class);
+    private static final Logger logger = LogManager.getLogger();
 
     @Override
     public Source create(String name, String type) throws FlumeException {

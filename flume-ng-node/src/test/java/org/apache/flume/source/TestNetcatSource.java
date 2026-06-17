@@ -42,14 +42,14 @@ import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.lifecycle.LifecycleException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @RunWith(value = Parameterized.class)
 public class TestNetcatSource {
@@ -58,7 +58,7 @@ public class TestNetcatSource {
     private EventDrivenSource source;
     private boolean ackEveryEvent;
 
-    private static final Logger logger = LoggerFactory.getLogger(TestNetcatSource.class);
+    private static final Logger logger = LogManager.getLogger();
 
     public TestNetcatSource(boolean ackForEveryEvent) {
         ackEveryEvent = ackForEveryEvent;

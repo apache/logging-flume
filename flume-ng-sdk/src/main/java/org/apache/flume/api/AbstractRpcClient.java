@@ -21,11 +21,11 @@ import java.util.Properties;
 import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public abstract class AbstractRpcClient implements RpcClient {
-    private static Logger logger = LoggerFactory.getLogger(AbstractRpcClient.class);
+    private static final Logger logger = LogManager.getLogger();
 
     protected int batchSize = RpcClientConfigurationConstants.DEFAULT_BATCH_SIZE;
     protected long connectTimeout = RpcClientConfigurationConstants.DEFAULT_CONNECT_TIMEOUT_MILLIS;

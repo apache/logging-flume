@@ -29,16 +29,16 @@ import org.apache.flume.Context;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.sink.NullSink;
 import org.apache.flume.source.SequenceGeneratorSource;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class TestIntegration {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TestIntegration.class);
+    private static final Logger logger = LogManager.getLogger();
     private FileChannel channel;
     private File baseDir;
     private File checkpointDir;
@@ -116,17 +116,17 @@ public class TestIntegration {
         for (int i = 0; i < dataDirs.length; i++) {
             logs.addAll(LogUtils.getLogs(dataDirs[i]));
         }
-        LOG.info("Total Number of Logs = " + logs.size());
+        logger.info("Total Number of Logs = " + logs.size());
         for (File logFile : logs) {
-            LOG.info("LogFile = " + logFile);
+            logger.info("LogFile = " + logFile);
         }
-        LOG.info("Source processed " + sinkRunner.getCount());
-        LOG.info("Sink processed " + sourceRunner.getCount());
+        logger.info("Source processed " + sinkRunner.getCount());
+        logger.info("Sink processed " + sourceRunner.getCount());
         for (Exception ex : sourceRunner.getErrors()) {
-            LOG.warn("Source had error", ex);
+            logger.warn("Source had error", ex);
         }
         for (Exception ex : sinkRunner.getErrors()) {
-            LOG.warn("Sink had error", ex);
+            logger.warn("Sink had error", ex);
         }
         Assert.assertEquals(sinkRunner.getCount(), sinkRunner.getCount());
         Assert.assertEquals(Collections.EMPTY_LIST, sinkRunner.getErrors());

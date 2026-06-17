@@ -36,8 +36,8 @@ import org.apache.flume.channel.file.encryption.CipherProviderFactory;
 import org.apache.flume.channel.file.encryption.DecryptionFailureException;
 import org.apache.flume.channel.file.encryption.KeyProvider;
 import org.apache.flume.channel.file.proto.ProtosFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Represents a single data file on disk. Has methods to write,
@@ -46,7 +46,7 @@ import org.slf4j.LoggerFactory;
 @InterfaceAudience.Private
 @InterfaceStability.Unstable
 public class LogFileV3 extends LogFile {
-    protected static final Logger LOGGER = LoggerFactory.getLogger(LogFileV3.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private LogFileV3() {}
 
@@ -118,7 +118,7 @@ public class LogFileV3 extends LogFile {
                 try {
                     inputStream.close();
                 } catch (IOException e) {
-                    LOGGER.warn("Unable to close " + metaDataFile, e);
+                    logger.warn("Unable to close " + metaDataFile, e);
                 }
             }
         }
@@ -162,7 +162,7 @@ public class LogFileV3 extends LogFile {
                 try {
                     outputStream.close();
                 } catch (IOException e) {
-                    LOGGER.warn("Unable to close " + tmp, e);
+                    logger.warn("Unable to close " + tmp, e);
                 }
             }
         }
@@ -257,7 +257,7 @@ public class LogFileV3 extends LogFile {
                 try {
                     inputStream.close();
                 } catch (IOException e) {
-                    LOGGER.warn("Unable to close " + metaDataFile, e);
+                    logger.warn("Unable to close " + metaDataFile, e);
                 }
             }
         }
@@ -346,7 +346,7 @@ public class LogFileV3 extends LogFile {
                 try {
                     inputStream.close();
                 } catch (IOException e) {
-                    LOGGER.warn("Unable to close " + metaDataFile, e);
+                    logger.warn("Unable to close " + metaDataFile, e);
                 }
             }
         }
@@ -367,7 +367,7 @@ public class LogFileV3 extends LogFile {
                 }
                 event = TransactionEventRecord.fromByteArray(buffer);
             } catch (CorruptEventException ex) {
-                LOGGER.warn("Corrupt file found. File id: log-" + this.getLogFileID(), ex);
+                logger.warn("Corrupt file found. File id: log-" + this.getLogFileID(), ex);
                 // Return null so that replay handler thinks all events in this file
                 // have been taken.
                 if (!fsyncPerTransaction) {
@@ -376,7 +376,7 @@ public class LogFileV3 extends LogFile {
                 throw ex;
             } catch (DecryptionFailureException ex) {
                 if (!fsyncPerTransaction) {
-                    LOGGER.warn("Could not decrypt even read from channel. Skipping " + "event.", ex);
+                    logger.warn("Could not decrypt even read from channel. Skipping " + "event.", ex);
                     return null;
                 }
                 throw ex;

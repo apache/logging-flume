@@ -22,13 +22,13 @@ import com.google.common.base.Charsets;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class TestSearchAndReplaceInterceptor {
 
-    private static final Logger logger = LoggerFactory.getLogger(TestSearchAndReplaceInterceptor.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private void testSearchReplace(Context context, String input, String output) throws Exception {
         Interceptor.Builder builder = InterceptorBuilderFactory.newInstance(InterceptorType.SEARCH_REPLACE.toString());

@@ -31,8 +31,8 @@ import org.apache.flume.conf.TransactionCapacitySupported;
 import org.apache.flume.exception.ChannelException;
 import org.apache.flume.exception.ChannelFullException;
 import org.apache.flume.instrumentation.ChannelCounter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -49,7 +49,7 @@ import org.slf4j.LoggerFactory;
 @InterfaceStability.Stable
 @Recyclable
 public class MemoryChannel extends BasicChannelSemantics implements TransactionCapacitySupported {
-    private static Logger LOGGER = LoggerFactory.getLogger(MemoryChannel.class);
+    private static final Logger logger = LogManager.getLogger();
     private static final Integer defaultCapacity = 100;
     private static final Integer defaultTransCapacity = 100;
     private static final double byteCapacitySlotSize = 100;
@@ -225,27 +225,27 @@ public class MemoryChannel extends BasicChannelSemantics implements TransactionC
             capacity = context.getInteger("capacity", defaultCapacity);
         } catch (NumberFormatException e) {
             capacity = defaultCapacity;
-            LOGGER.warn(
+            logger.warn(
                     "Invalid capacity specified, initializing channel to " + "default capacity of {}", defaultCapacity);
         }
 
         if (capacity <= 0) {
             capacity = defaultCapacity;
-            LOGGER.warn(
+            logger.warn(
                     "Invalid capacity specified, initializing channel to " + "default capacity of {}", defaultCapacity);
         }
         try {
             transCapacity = context.getInteger("transactionCapacity", defaultTransCapacity);
         } catch (NumberFormatException e) {
             transCapacity = defaultTransCapacity;
-            LOGGER.warn(
+            logger.warn(
                     "Invalid transation capacity specified, initializing channel" + " to default capacity of {}",
                     defaultTransCapacity);
         }
 
         if (transCapacity <= 0) {
             transCapacity = defaultTransCapacity;
-            LOGGER.warn(
+            logger.warn(
                     "Invalid transation capacity specified, initializing channel" + " to default capacity of {}",
                     defaultTransCapacity);
         }
@@ -303,7 +303,7 @@ public class MemoryChannel extends BasicChannelSemantics implements TransactionC
             } else {
                 try {
                     if (!bytesRemaining.tryAcquire(lastByteCapacity - byteCapacity, keepAlive, TimeUnit.SECONDS)) {
-                        LOGGER.warn(
+                        logger.warn(
                                 "Couldn't acquire permits to downsize the byte capacity, resizing has been aborted");
                     } else {
                         lastByteCapacity = byteCapacity;
@@ -329,7 +329,7 @@ public class MemoryChannel extends BasicChannelSemantics implements TransactionC
             return;
         } else if (oldCapacity > capacity) {
             if (!queueRemaining.tryAcquire(oldCapacity - capacity, keepAlive, TimeUnit.SECONDS)) {
-                LOGGER.warn("Couldn't acquire permits to downsize the queue, resizing has been aborted");
+                logger.warn("Couldn't acquire permits to downsize the queue, resizing has been aborted");
             } else {
                 synchronized (queueLock) {
                     LinkedBlockingDeque<Event> newQueue = new LinkedBlockingDeque<Event>(capacity);

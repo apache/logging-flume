@@ -26,8 +26,8 @@ import java.util.List;
 import java.util.regex.Pattern;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Interceptor that filters events selectively based on a configured regular
@@ -67,7 +67,7 @@ import org.slf4j.LoggerFactory;
  */
 public class RegexFilteringInterceptor implements Interceptor {
 
-    private static final Logger logger = LoggerFactory.getLogger(RegexFilteringInterceptor.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private final Pattern regex;
     private final boolean excludeEvents;

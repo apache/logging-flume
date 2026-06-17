@@ -56,16 +56,16 @@ import org.apache.flume.channel.file.instrumentation.FileChannelCounter;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.exception.ChannelException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class TestFileChannel extends TestFileChannelBase {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TestFileChannel.class);
+    private static final Logger logger = LogManager.getLogger();
     public static final String TEST_KEY = "test_key";
 
     @Before
@@ -342,7 +342,7 @@ public class TestFileChannel extends TestFileChannelBase {
         Assert.assertNotNull(putmsg);
         String takemsg = result.iterator().next();
         Assert.assertNotNull(takemsg);
-        LOG.info("Got: put " + putmsg + ", take " + takemsg);
+        logger.info("Got: put " + putmsg + ", take " + takemsg);
         channel.stop();
         channel = createFileChannel(overrides);
         // now when we replay, the transaction the put will be ordered
@@ -372,9 +372,9 @@ public class TestFileChannel extends TestFileChannelBase {
                         } else {
                             expected.addAll(putEvents(channel, Integer.toString(id), 5, 5));
                         }
-                        LOG.info("Completed some puts " + expected.size());
+                        logger.info("Completed some puts " + expected.size());
                     } catch (Exception e) {
-                        LOG.error("Error doing puts", e);
+                        logger.error("Error doing puts", e);
                         errors.add(e);
                     } finally {
                         producerStopLatch.countDown();
@@ -398,12 +398,12 @@ public class TestFileChannel extends TestFileChannelBase {
                             }
                         }
                         if (actual.isEmpty()) {
-                            LOG.error("Found nothing!");
+                            logger.error("Found nothing!");
                         } else {
-                            LOG.info("Completed some takes " + actual.size());
+                            logger.info("Completed some takes " + actual.size());
                         }
                     } catch (Exception e) {
-                        LOG.error("Error doing takes", e);
+                        logger.error("Error doing takes", e);
                         errors.add(e);
                     } finally {
                         consumerStopLatch.countDown();

@@ -24,11 +24,11 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class AESCTRNoPaddingProvider extends CipherProvider {
-    private static final Logger LOG = LoggerFactory.getLogger(AESCTRNoPaddingProvider.class);
+    private static final Logger logger = LogManager.getLogger();
     static final String TYPE = "AES/CTR/NoPadding";
 
     public Encryptor.Builder<AESCTRNoPaddingEncryptor> newEncryptorBuilder() {
@@ -107,7 +107,7 @@ public class AESCTRNoPaddingProvider extends CipherProvider {
             return cipher.doFinal(input);
         } catch (Exception e) {
             String msg = "Unable to encrypt or decrypt data " + TYPE + " input.length " + input.length;
-            LOG.error(msg, e);
+            logger.error(msg, e);
             throw new DecryptionFailureException(msg, e);
         }
     }
@@ -132,7 +132,7 @@ public class AESCTRNoPaddingProvider extends CipherProvider {
                     msg += "; Unable to find specified algorithm?";
                 }
             }
-            LOG.error(msg, e);
+            logger.error(msg, e);
             throw Throwables.propagate(e);
         }
     }

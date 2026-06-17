@@ -67,8 +67,8 @@ import org.apache.flume.conf.sink.SinkType;
 import org.apache.flume.conf.source.SourceConfiguration;
 import org.apache.flume.conf.source.SourceType;
 import org.apache.flume.configfilter.ConfigFilter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -85,7 +85,7 @@ import org.slf4j.LoggerFactory;
  */
 public class FlumeConfiguration {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FlumeConfiguration.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private final Map<String, AgentConfiguration> agentConfigMap;
     private final LinkedList<FlumeConfigurationError> errors;
@@ -103,7 +103,7 @@ public class FlumeConfiguration {
         // Construct the in-memory component hierarchy
         for (Entry entry : properties.entrySet()) {
             if (!addRawProperty(entry.getKey().toString(), entry.getValue().toString())) {
-                LOGGER.warn("Configuration property ignored: {} = {}", entry.getKey(), entry.getValue());
+                logger.warn("Configuration property ignored: {} = {}", entry.getKey(), entry.getValue());
             }
         }
         // Now iterate thru the agentContext and create agent configs and add them
@@ -122,7 +122,7 @@ public class FlumeConfiguration {
         // Construct the in-memory component hierarchy
         for (Entry<String, String> entry : properties.entrySet()) {
             if (!addRawProperty(entry.getKey(), entry.getValue())) {
-                LOGGER.warn("Configuration property ignored: {} = {}", entry.getKey(), entry.getValue());
+                logger.warn("Configuration property ignored: {} = {}", entry.getKey(), entry.getValue());
             }
         }
         // Now iterate thru the agentContext and create agent configs and add them
@@ -150,16 +150,16 @@ public class FlumeConfiguration {
             AgentConfiguration aconf = next.getValue();
 
             if (!aconf.isValid()) {
-                LOGGER.warn("Agent configuration invalid for agent '{}'. It will be removed.", agentName);
+                logger.warn("Agent configuration invalid for agent '{}'. It will be removed.", agentName);
                 addError(agentName, AGENT_CONFIGURATION_INVALID, ERROR);
                 it.remove();
             }
-            LOGGER.debug("Channels:{}\n", aconf.channels);
-            LOGGER.debug("Sinks {}\n", aconf.sinks);
-            LOGGER.debug("Sources {}\n", aconf.sources);
+            logger.debug("Channels:{}\n", aconf.channels);
+            logger.debug("Sinks {}\n", aconf.sinks);
+            logger.debug("Sources {}\n", aconf.sources);
         }
 
-        LOGGER.info(
+        logger.info(
                 "Post-validation flume configuration contains configuration for agents: {}", agentConfigMap.keySet());
     }
 
@@ -340,9 +340,9 @@ public class FlumeConfiguration {
          * @return true if the configuration is valid, false otherwise
          */
         private boolean isValid() {
-            LOGGER.debug("Starting validation of configuration for agent: {}", agentName);
-            if (LOGGER.isDebugEnabled() && LogPrivacyUtil.allowLogPrintConfig()) {
-                LOGGER.debug("Initial configuration: {}", getPrevalidationConfig());
+            logger.debug("Starting validation of configuration for agent: {}", agentName);
+            if (logger.isDebugEnabled() && LogPrivacyUtil.allowLogPrintConfig()) {
+                logger.debug("Initial configuration: {}", getPrevalidationConfig());
             }
 
             configFilterSet = validateConfigFilterSet();
@@ -351,7 +351,7 @@ public class FlumeConfiguration {
 
             // Make sure that at least one channel is specified
             if (channels == null || channels.trim().isEmpty()) {
-                LOGGER.warn(
+                logger.warn(
                         "Agent configuration for '{}' does not contain any channels. Marking it as invalid.",
                         agentName);
                 addError(CONFIG_CHANNELS, PROPERTY_VALUE_NULL, ERROR);
@@ -362,7 +362,7 @@ public class FlumeConfiguration {
 
             channelSet = validateChannels(channelSet);
             if (channelSet.isEmpty()) {
-                LOGGER.warn(
+                logger.warn(
                         "Agent configuration for '{}' does not contain any valid channels. " + "Marking it as invalid.",
                         agentName);
                 addError(CONFIG_CHANNELS, PROPERTY_VALUE_NULL, ERROR);
@@ -375,7 +375,7 @@ public class FlumeConfiguration {
 
             // If no sources or sinks are present, then this is invalid
             if (sourceSet.isEmpty() && sinkSet.isEmpty()) {
-                LOGGER.warn("Agent configuration for '{}' has no sources or sinks. Will be marked invalid.", agentName);
+                logger.warn("Agent configuration for '{}' has no sources or sinks. Will be marked invalid.", agentName);
                 addError(CONFIG_SOURCES, PROPERTY_VALUE_NULL, ERROR);
                 addError(CONFIG_SINKS, PROPERTY_VALUE_NULL, ERROR);
                 return false;
@@ -389,9 +389,9 @@ public class FlumeConfiguration {
             sinks = getSpaceDelimitedList(sinkSet);
             sinkgroups = getSpaceDelimitedList(sinkgroupSet);
 
-            if (LOGGER.isDebugEnabled() && LogPrivacyUtil.allowLogPrintConfig()) {
-                LOGGER.debug("Post validation configuration for {}", agentName);
-                LOGGER.debug(getPostvalidationConfig());
+            if (logger.isDebugEnabled() && LogPrivacyUtil.allowLogPrintConfig()) {
+                logger.debug("Post validation configuration for {}", agentName);
+                logger.debug(getPostvalidationConfig());
             }
 
             return true;
@@ -429,7 +429,7 @@ public class FlumeConfiguration {
                         configFilterPatternCache.put(configFilter.getName(), createConfigFilterPattern(configFilter));
                     }
                 } catch (Exception e) {
-                    LOGGER.error("Error while creating config filter {}", name, e);
+                    logger.error("Error while creating config filter {}", name, e);
                 }
             }
         }
@@ -461,7 +461,7 @@ public class FlumeConfiguration {
                     String filteredValue = currentValue;
                     while (matcher.find()) {
                         String key = matcher.group("key");
-                        LOGGER.debug("Replacing {} from config filter {}", key, configFilter.getName());
+                        logger.debug("Replacing {} from config filter {}", key, configFilter.getName());
                         String filtered = configFilter.filter(key);
                         if (filtered == null) {
                             continue;
@@ -472,7 +472,7 @@ public class FlumeConfiguration {
                     c.put(contextKey, filteredValue);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    LOGGER.error(
+                    logger.error(
                             "Error while matching and filtering configFilter: {} and key: {}",
                             new Object[] {configFilter.getName(), contextKey, e});
                 }
@@ -561,7 +561,7 @@ public class FlumeConfiguration {
                     try {
                         conf = (ChannelConfiguration)
                                 ComponentConfigurationFactory.create(channelName, config, ComponentType.CHANNEL);
-                        LOGGER.debug("Created channel {}", channelName);
+                        logger.debug("Created channel {}", channelName);
                         if (conf != null) {
                             conf.configure(channelContext);
                         }
@@ -579,7 +579,7 @@ public class FlumeConfiguration {
                         // thrown
                         if (conf != null) errorList.addAll(conf.getErrors());
                         iter.remove();
-                        LOGGER.warn(
+                        logger.warn(
                                 "Could not configure channel {} due to: {}",
                                 new Object[] {channelName, e.getMessage(), e});
                     }
@@ -598,7 +598,7 @@ public class FlumeConfiguration {
 
         private Set<String> validateConfigFilterSet() {
             if (configFilters == null || configFilters.isEmpty()) {
-                LOGGER.warn("Agent configuration for '{}' has no configfilters.", agentName);
+                logger.warn("Agent configuration for '{}' has no configfilters.", agentName);
                 return new HashSet<>();
             }
             Set<String> configFilterSet = new HashSet<>(Arrays.asList(configFilters.split("\\s+")));
@@ -632,7 +632,7 @@ public class FlumeConfiguration {
                     try {
                         conf = (ConfigFilterConfiguration) ComponentConfigurationFactory.create(
                                 configFilterName, config, ComponentType.CONFIG_FILTER);
-                        LOGGER.debug("Created configfilter {}", configFilterName);
+                        logger.debug("Created configfilter {}", configFilterName);
                         if (conf != null) {
                             conf.configure(configFilterContext);
                         }
@@ -648,14 +648,14 @@ public class FlumeConfiguration {
                     } catch (ConfigurationException e) {
                         if (conf != null) errorList.addAll(conf.getErrors());
                         iter.remove();
-                        LOGGER.warn(
+                        logger.warn(
                                 "Could not configure configfilter {} due to: {}",
                                 new Object[] {configFilterName, e.getMessage(), e});
                     }
                 } else {
                     iter.remove();
                     addError(configFilterName, CONFIG_ERROR, ERROR);
-                    LOGGER.warn("Configuration empty for: {}. Removed.", configFilterName);
+                    logger.warn("Configuration empty for: {}. Removed.", configFilterName);
                 }
             }
 
@@ -671,7 +671,7 @@ public class FlumeConfiguration {
         private Set<String> validateSources(Set<String> channelSet) {
             // Arrays.split() call will throw NPE if the sources string is empty
             if (sources == null || sources.isEmpty()) {
-                LOGGER.warn("Agent configuration for '{}' has no sources.", agentName);
+                logger.warn("Agent configuration for '{}' has no sources.", agentName);
                 addError(CONFIG_SOURCES, PROPERTY_VALUE_NULL, WARNING);
                 return new HashSet<String>();
             }
@@ -742,14 +742,14 @@ public class FlumeConfiguration {
                     } catch (ConfigurationException e) {
                         if (srcConf != null) errorList.addAll(srcConf.getErrors());
                         iter.remove();
-                        LOGGER.warn(
+                        logger.warn(
                                 "Could not configure source  {} due to: {}",
                                 new Object[] {sourceName, e.getMessage(), e});
                     }
                 } else {
                     iter.remove();
                     addError(sourceName, CONFIG_ERROR, ERROR);
-                    LOGGER.warn("Configuration empty for: {}.Removed.", sourceName);
+                    logger.warn("Configuration empty for: {}.Removed.", sourceName);
                 }
             }
 
@@ -770,7 +770,7 @@ public class FlumeConfiguration {
             Set<String> sinkSet;
             SinkConfiguration sinkConf = null;
             if (sinks == null || sinks.isEmpty()) {
-                LOGGER.warn("Agent configuration for '{}' has no sinks.", agentName);
+                logger.warn("Agent configuration for '{}' has no sinks.", agentName);
                 addError(CONFIG_SINKS, PROPERTY_VALUE_NULL, WARNING);
                 return new HashSet<String>();
             } else {
@@ -801,7 +801,7 @@ public class FlumeConfiguration {
                 Context sinkContext = sinkContextMap.get(sinkName.trim());
                 if (sinkContext == null) {
                     iter.remove();
-                    LOGGER.warn("no context for sink{}", sinkName);
+                    logger.warn("no context for sink{}", sinkName);
                     addError(sinkName, CONFIG_ERROR, ERROR);
                 } else {
                     String config = null;
@@ -819,7 +819,7 @@ public class FlumeConfiguration {
                         configSpecified = true;
                     }
                     try {
-                        LOGGER.debug("Creating sink: {} using {}", sinkName, config);
+                        logger.debug("Creating sink: {} using {}", sinkName, config);
 
                         sinkConf = (SinkConfiguration)
                                 ComponentConfigurationFactory.create(sinkName, config, ComponentType.SINK);
@@ -839,7 +839,7 @@ public class FlumeConfiguration {
                     } catch (ConfigurationException e) {
                         iter.remove();
                         if (sinkConf != null) errorList.addAll(sinkConf.getErrors());
-                        LOGGER.warn(
+                        logger.warn(
                                 "Could not configure sink  {} due to: {}", new Object[] {sinkName, e.getMessage(), e});
                     }
                 }
@@ -897,14 +897,14 @@ public class FlumeConfiguration {
                     } catch (ConfigurationException e) {
                         iter.remove();
                         addError(sinkgroupName, CONFIG_ERROR, ERROR);
-                        LOGGER.warn(
+                        logger.warn(
                                 "Could not configure sink group {} due to: {}",
                                 new Object[] {sinkgroupName, e.getMessage(), e});
                     }
                 } else {
                     iter.remove();
                     addError(sinkgroupName, CONFIG_ERROR, ERROR);
-                    LOGGER.warn("Configuration error for: {}.Removed.", sinkgroupName);
+                    logger.warn("Configuration error for: {}.Removed.", sinkgroupName);
                 }
             }
 
@@ -932,7 +932,7 @@ public class FlumeConfiguration {
             while (sinkIt.hasNext()) {
                 String curSink = sinkIt.next();
                 if (usedSinks.containsKey(curSink)) {
-                    LOGGER.warn(
+                    logger.warn(
                             "Agent configuration for '{}' sinkgroup '{}' sink '{}' in use by another group: "
                                     + "'{}', sink not added",
                             new Object[] {agentName, groupConf.getComponentName(), curSink, usedSinks.get(curSink)});
@@ -940,7 +940,7 @@ public class FlumeConfiguration {
                     sinkIt.remove();
                     continue;
                 } else if (!sinkSet.contains(curSink)) {
-                    LOGGER.warn(
+                    logger.warn(
                             "Agent configuration for '{}' sinkgroup '{}' sink not found: '{}', " + " sink not added",
                             new Object[] {agentName, groupConf.getComponentName(), curSink});
                     addError(curSink, INVALID_PROPERTY, ERROR);
@@ -1036,7 +1036,7 @@ public class FlumeConfiguration {
                     configFilters = value;
                     return true;
                 } else {
-                    LOGGER.warn("Duplicate configfilter list specified for agent: {}", agentName);
+                    logger.warn("Duplicate configfilter list specified for agent: {}", agentName);
                     addError(CONFIG_CONFIGFILTERS, DUPLICATE_PROPERTY, ERROR);
                     return false;
                 }
@@ -1047,7 +1047,7 @@ public class FlumeConfiguration {
                     sources = value;
                     return true;
                 } else {
-                    LOGGER.warn("Duplicate source list specified for agent: {}", agentName);
+                    logger.warn("Duplicate source list specified for agent: {}", agentName);
                     addError(CONFIG_SOURCES, DUPLICATE_PROPERTY, ERROR);
                     return false;
                 }
@@ -1057,10 +1057,10 @@ public class FlumeConfiguration {
             if (CONFIG_SINKS.equals(key)) {
                 if (sinks == null) {
                     sinks = value;
-                    LOGGER.info("Added sinks: {} Agent: {}", sinks, agentName);
+                    logger.info("Added sinks: {} Agent: {}", sinks, agentName);
                     return true;
                 } else {
-                    LOGGER.warn("Duplicate sink list specfied for agent: {}", agentName);
+                    logger.warn("Duplicate sink list specfied for agent: {}", agentName);
                     addError(CONFIG_SINKS, DUPLICATE_PROPERTY, ERROR);
                     return false;
                 }
@@ -1073,7 +1073,7 @@ public class FlumeConfiguration {
 
                     return true;
                 } else {
-                    LOGGER.warn("Duplicate channel list specified for agent: {}", agentName);
+                    logger.warn("Duplicate channel list specified for agent: {}", agentName);
                     addError(CONFIG_CHANNELS, DUPLICATE_PROPERTY, ERROR);
                     return false;
                 }
@@ -1086,7 +1086,7 @@ public class FlumeConfiguration {
 
                     return true;
                 } else {
-                    LOGGER.warn("Duplicate sinkgroup list specfied for agent: {}", agentName);
+                    logger.warn("Duplicate sinkgroup list specfied for agent: {}", agentName);
                     addError(CONFIG_SINKGROUPS, DUPLICATE_PROPERTY, ERROR);
                     return false;
                 }
@@ -1100,7 +1100,7 @@ public class FlumeConfiguration {
                 return true;
             }
 
-            LOGGER.warn("Invalid property specified: {}", key);
+            logger.warn("Invalid property specified: {}", key);
             addError(key, INVALID_PROPERTY, ERROR);
             return false;
         }
@@ -1131,11 +1131,11 @@ public class FlumeConfiguration {
             ComponentNameAndConfigKey parsed = parseConfigKey(key, configPrefix);
             if (parsed != null) {
                 String name = parsed.getComponentName().trim();
-                LOGGER.info("Processing:{}", name);
+                logger.info("Processing:{}", name);
                 Context context = contextMap.get(name);
 
                 if (context == null) {
-                    LOGGER.debug("Created context for {}: {}", name, parsed.getConfigKey());
+                    logger.debug("Created context for {}: {}", name, parsed.getConfigKey());
                     context = new Context();
                     contextMap.put(name, context);
                 }

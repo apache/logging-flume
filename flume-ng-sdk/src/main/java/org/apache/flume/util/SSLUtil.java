@@ -16,12 +16,12 @@
  */
 package org.apache.flume.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class SSLUtil {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SSLUtil.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private static final String SYS_PROP_KEYSTORE_PATH = "javax.net.ssl.keyStore";
     private static final String SYS_PROP_KEYSTORE_PASSWORD = "javax.net.ssl.keyStorePassword";
@@ -71,14 +71,14 @@ public class SSLUtil {
 
     private static void initSysPropFromEnvVar(String sysPropName, String envVarName, String description) {
         if (System.getProperty(sysPropName) != null) {
-            LOGGER.debug("Global SSL " + description + " has been initialized from system property.");
+            logger.debug("Global SSL " + description + " has been initialized from system property.");
         } else {
             String envVarValue = System.getenv(envVarName);
             if (envVarValue != null) {
                 System.setProperty(sysPropName, envVarValue);
-                LOGGER.debug("Global SSL " + description + " has been initialized from environment variable.");
+                logger.debug("Global SSL " + description + " has been initialized from environment variable.");
             } else {
-                LOGGER.debug("No global SSL " + description + " specified.");
+                logger.debug("No global SSL " + description + " specified.");
             }
         }
     }

@@ -27,12 +27,12 @@ import org.apache.flume.CounterGroup;
 import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.node.net.AuthorizationProvider;
 import org.apache.flume.node.net.UrlConnectionFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class HttpConfigurationSource implements ConfigurationSource {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(HttpConfigurationSource.class);
+    private static final Logger logger = LogManager.getLogger();
     private static final int NOT_MODIFIED = 304;
     private static final int NOT_AUTHORIZED = 401;
     private static final int NOT_FOUND = 404;
@@ -75,17 +75,17 @@ public class HttpConfigurationSource implements ConfigurationSource {
 
     @Override
     public boolean isModified() {
-        LOGGER.debug("Checking {} for changes", uri);
+        logger.debug("Checking {} for changes", uri);
 
         counterGroup.incrementAndGet("uri.checks");
         try {
-            LOGGER.info("Reloading configuration from:{}", uri);
+            logger.info("Reloading configuration from:{}", uri);
             if (readInputStream()) {
                 counterGroup.incrementAndGet("uri.loads");
                 return true;
             }
         } catch (ConfigurationException ex) {
-            LOGGER.error("Unable to access configuration due to {}: ", ex.getMessage());
+            logger.error("Unable to access configuration due to {}: ", ex.getMessage());
         }
         return false;
     }
@@ -99,20 +99,20 @@ public class HttpConfigurationSource implements ConfigurationSource {
                 int code = connection.getResponseCode();
                 switch (code) {
                     case NOT_MODIFIED: {
-                        LOGGER.debug("Configuration Not Modified");
+                        logger.debug("Configuration Not Modified");
                         return false;
                     }
                     case OK: {
                         try (InputStream is = connection.getInputStream()) {
                             lastModified = connection.getLastModified();
-                            LOGGER.debug("Content was modified for {}. lastModified: {}", uri.toString(), lastModified);
+                            logger.debug("Content was modified for {}. lastModified: {}", uri.toString(), lastModified);
                             data = IOUtils.toByteArray(is);
                             return true;
                         } catch (final IOException e) {
                             try (InputStream es = connection.getErrorStream()) {
-                                LOGGER.info("Error accessing configuration at {}: {}", uri, readStream(es));
+                                logger.info("Error accessing configuration at {}: {}", uri, readStream(es));
                             } catch (final IOException ioe) {
-                                LOGGER.error("Error accessing configuration at {}: {}", uri, e.getMessage());
+                                logger.error("Error accessing configuration at {}: {}", uri, e.getMessage());
                             }
                             throw new ConfigurationException("Unable to access " + uri.toString(), e);
                         }
@@ -125,9 +125,9 @@ public class HttpConfigurationSource implements ConfigurationSource {
                     }
                     default: {
                         if (code < 0) {
-                            LOGGER.info("Invalid response code returned");
+                            logger.info("Invalid response code returned");
                         } else {
-                            LOGGER.info("Unexpected response code returned {}", code);
+                            logger.info("Unexpected response code returned {}", code);
                         }
                         return false;
                     }
@@ -136,7 +136,7 @@ public class HttpConfigurationSource implements ConfigurationSource {
                 connection.disconnect();
             }
         } catch (IOException e) {
-            LOGGER.warn("Error accessing {}: {}", uri.toString(), e.getMessage());
+            logger.warn("Error accessing {}: {}", uri.toString(), e.getMessage());
             throw new ConfigurationException("Unable to access " + uri.toString(), e);
         }
     }

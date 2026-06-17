@@ -40,8 +40,8 @@ import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.exception.ChannelException;
 import org.apache.flume.instrumentation.SinkCounter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * This sink provides the basic RPC functionality for Flume. This sink takes
@@ -139,7 +139,7 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class AbstractRpcSink extends AbstractSink implements Configurable, BatchSizeSupported {
 
-    private static final Logger logger = LoggerFactory.getLogger(AbstractRpcSink.class);
+    private static final Logger logger = LogManager.getLogger();
     private String hostname;
     private Integer port;
     private RpcClient client;

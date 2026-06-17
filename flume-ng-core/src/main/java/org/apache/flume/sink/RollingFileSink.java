@@ -38,12 +38,12 @@ import org.apache.flume.formatter.output.PathManagerFactory;
 import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.serialization.EventSerializer;
 import org.apache.flume.serialization.EventSerializerFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class RollingFileSink extends AbstractSink implements Configurable, BatchSizeSupported {
 
-    private static final Logger logger = LoggerFactory.getLogger(RollingFileSink.class);
+    private static final Logger logger = LogManager.getLogger();
     private static final long defaultRollInterval = 30;
     private static final int defaultBatchSize = 100;
 

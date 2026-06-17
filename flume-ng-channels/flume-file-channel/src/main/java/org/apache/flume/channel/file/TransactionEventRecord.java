@@ -33,8 +33,8 @@ import java.nio.ByteBuffer;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.channel.file.proto.ProtosFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Base class for records in data file: Put, Take, Rollback, Commit
@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
 @InterfaceAudience.Private
 @InterfaceStability.Unstable
 public abstract class TransactionEventRecord implements Writable {
-    private static final Logger LOG = LoggerFactory.getLogger(TransactionEventRecord.class);
+    private static final Logger logger = LogManager.getLogger();
     private final long transactionID;
     private long logWriteOrderID;
 
@@ -130,7 +130,7 @@ public abstract class TransactionEventRecord implements Writable {
                 try {
                     dataOutput.close();
                 } catch (IOException e) {
-                    LOG.warn("Error closing byte array output stream", e);
+                    logger.warn("Error closing byte array output stream", e);
                 }
             }
         }
@@ -172,7 +172,7 @@ public abstract class TransactionEventRecord implements Writable {
                 try {
                     byteOutput.close();
                 } catch (IOException e) {
-                    LOG.warn("Error closing byte array output stream", e);
+                    logger.warn("Error closing byte array output stream", e);
                 }
             }
         }
@@ -198,7 +198,7 @@ public abstract class TransactionEventRecord implements Writable {
             try {
                 in.close();
             } catch (IOException e) {
-                LOG.warn("Error closing byte array input stream", e);
+                logger.warn("Error closing byte array input stream", e);
             }
         }
     }

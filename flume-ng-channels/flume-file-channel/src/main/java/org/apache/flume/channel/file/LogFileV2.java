@@ -20,8 +20,8 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Represents a single data file on disk. Has methods to write,
@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
  */
 @Deprecated
 class LogFileV2 extends LogFile {
-    protected static final Logger LOGGER = LoggerFactory.getLogger(LogFileV2.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private static final long OFFSET_CHECKPOINT = 2 * Serialization.SIZE_OF_INT;
 
@@ -56,7 +56,7 @@ class LogFileV2 extends LogFile {
                 }
                 setLastCheckpointOffset(writeFileHandle.readLong());
                 setLastCheckpointWriteOrderID(writeFileHandle.readLong());
-                LOGGER.info("File: " + file.getCanonicalPath() + " was last checkpointed "
+                logger.info("File: " + file.getCanonicalPath() + " was last checkpointed "
                         + "at position: " + getLastCheckpointOffset()
                         + ", logWriteOrderID: " + getLastCheckpointWriteOrderID());
                 error = false;
@@ -79,7 +79,7 @@ class LogFileV2 extends LogFile {
             writeFileHandle.writeLong(currentPosition);
             writeFileHandle.writeLong(logWriteOrderID);
             writeFileHandle.getChannel().force(true);
-            LOGGER.info("Noted checkpoint for file: " + getFile() + ", id: "
+            logger.info("Noted checkpoint for file: " + getFile() + ", id: "
                     + getLogFileID() + ", checkpoint position: " + currentPosition
                     + ", logWriteOrderID: " + logWriteOrderID);
         }

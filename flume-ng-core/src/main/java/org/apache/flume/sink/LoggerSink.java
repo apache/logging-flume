@@ -24,8 +24,8 @@ import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.event.EventHelper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -51,7 +51,7 @@ import org.slf4j.LoggerFactory;
  */
 public class LoggerSink extends AbstractSink implements Configurable {
 
-    private static final Logger logger = LoggerFactory.getLogger(LoggerSink.class);
+    private static final Logger logger = LogManager.getLogger();
 
     // Default Max bytes to dump
     public static final int DEFAULT_MAX_BYTE_DUMP = 16;

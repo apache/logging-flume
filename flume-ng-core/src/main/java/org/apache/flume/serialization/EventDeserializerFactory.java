@@ -22,14 +22,14 @@ import org.apache.flume.Context;
 import org.apache.flume.FlumeException;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 @InterfaceAudience.Private
 @InterfaceStability.Stable
 public class EventDeserializerFactory {
 
-    private static final Logger logger = LoggerFactory.getLogger(EventDeserializerFactory.class);
+    private static final Logger logger = LogManager.getLogger();
 
     public static EventDeserializer getInstance(String deserializerType, Context context, ResettableInputStream in) {
 

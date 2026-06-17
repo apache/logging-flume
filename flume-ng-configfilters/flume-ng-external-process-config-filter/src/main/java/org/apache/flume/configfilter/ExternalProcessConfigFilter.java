@@ -23,12 +23,12 @@ import java.nio.charset.UnsupportedCharsetException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Scanner;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ExternalProcessConfigFilter extends AbstractConfigFilter {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ExternalProcessConfigFilter.class);
+    private static final Logger logger = LogManager.getLogger();
 
     private static final String COMMAND_KEY = "command";
     private static final String CHARSET_KEY = "charset";
@@ -42,7 +42,7 @@ public class ExternalProcessConfigFilter extends AbstractConfigFilter {
         try {
             return execCommand(key);
         } catch (InterruptedException | IllegalStateException | IOException ex) {
-            LOGGER.error("Error while reading value for key {}: ", key, ex);
+            logger.error("Error while reading value for key {}: ", key, ex);
         }
         return null;
     }
@@ -90,10 +90,10 @@ public class ExternalProcessConfigFilter extends AbstractConfigFilter {
             if (scanner.hasNextLine()) {
                 result = scanner.nextLine();
                 if (scanner.hasNextLine()) {
-                    LOGGER.warn("External process has more than one line of output. " + "Only the first line is used.");
+                    logger.warn("External process has more than one line of output. " + "Only the first line is used.");
                 }
             } else {
-                LOGGER.warn("External process has not produced any output.");
+                logger.warn("External process has not produced any output.");
             }
 
             return result;
