@@ -106,7 +106,8 @@ public class DirectMemoryUtils {
                 return (Long) result;
             }
         } catch (Exception e) {
-            logger.info("Unable to get maxDirectMemory from VM: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+            logger.info(
+                    "Unable to get maxDirectMemory from VM: " + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
         // default according to VM.maxDirectMemory()
         return Runtime.getRuntime().maxMemory();
