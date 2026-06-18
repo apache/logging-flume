@@ -1,0 +1,103 @@
+////
+    Licensed to the Apache Software Foundation (ASF) under one or more
+    contributor license agreements.  See the NOTICE file distributed with
+    this work for additional information regarding copyright ownership.
+    The ASF licenses this file to You under the Apache License, Version 2.0
+    (the "License"); you may not use this file except in compliance with
+    the License.  You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+////
+
+= Version 1.9.0
+
+*Status of this release*
+
+Apache Flume 1.9.0 is the eleventh release of Flume as an Apache top-level project
+(TLP). Apache Flume 1.9.0 is production-ready software.
+
+*Release Documentation*
+
+* link:content/1.9.0/FlumeUserGuide.html[Flume 1.9.0 User Guide] (also in link:content/1.9.0/FlumeUserGuide.pdf[pdf])
+* link:content/1.9.0/FlumeDeveloperGuide.html[Flume 1.9.0 Developer Guide] (also in link:content/1.9.0/FlumeDeveloperGuide.pdf[pdf])
+* link:content/1.9.0/apidocs/index.html[Flume 1.9.0 API Documentation]
+
+*Changes*
+
+Release Notes - Flume - Version v1.9.0
+
+++**++ New Feature::
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2071[FLUME-2071]++]++ - Flume Context doesn't support float or double configuration values.
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2442[FLUME-2442]++]++ - Need an alternative to providing clear text passwords in flume config
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3142[FLUME-3142]++]++ - Adding HBase2 sink
+++**++ Improvement::
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2653[FLUME-2653]++]++ - Allow inUseSuffix to be null/empty
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2854[FLUME-2854]++]++ - Parameterize jetty version in pom
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2977[FLUME-2977]++]++ - Upgrade RAT to 0.12
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3050[FLUME-3050]++]++ - add counters for error conditions and expose to monitor URL
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3182[FLUME-3182]++]++ - Please add support for SSL/TLS for syslog (tcp) & multi++_++port syslog (tcp) sources
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3186[FLUME-3186]++]++ - Make asyncHbaseClient configuration parameters available from flume config
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3223[FLUME-3223]++]++ - Flume HDFS Sink should retry close prior to performing a recoverLease
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3227[FLUME-3227]++]++ - Add Rate Limiter to StressSource
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3239[FLUME-3239]++]++ - Do not rename files in SpoolDirectorySource
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3246[FLUME-3246]++]++ - Validate flume configuration to prevent larger source batch size than the channel transaction capacity
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3269[FLUME-3269]++]++ - Support JSSE keystore/trustore -D system properties
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3275[FLUME-3275]++]++ - Components supporting SSL/TLS should be able to specify protocol list
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3276[FLUME-3276]++]++ - Components supporting SSL/TLS should be able to specify cipher suite list
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3280[FLUME-3280]++]++ - Improve maven build to help code reviews by adding static code analyzer to it
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3281[FLUME-3281]++]++ - Update to Kafka 2.0 client
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3282[FLUME-3282]++]++ - Use slf4j in every component
+++**++ Bug::
+  * ++[++https://issues.apache.org/jira/browse/FLUME-1282[FLUME-1282]++]++ - Flume 1.x build fails on Maven 2
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2232[FLUME-2232]++]++ - Add findbugs to Flume build
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2436[FLUME-2436]++]++ - Make hadoop-2 the default build profile
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2464[FLUME-2464]++]++ - Remove hadoop-2 profile
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2786[FLUME-2786]++]++ - It will enter a deadlock state when modify the conf file before I stop flume-ng
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2894[FLUME-2894]++]++ - Flume components should stop in the correct order (graceful shutdown)
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2973[FLUME-2973]++]++ - Deadlock in hdfs sink
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2976[FLUME-2976]++]++ - Exception when JMS source tries to connect to a Weblogic server without authentication
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2988[FLUME-2988]++]++ - Kafka Sink metrics missing eventDrainAttemptCount
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2989[FLUME-2989]++]++ - Kafka Channel metrics missing eventTakeAttemptCount and eventPutAttemptCount
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3056[FLUME-3056]++]++ - TestApplication hangs indefinitely
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3101[FLUME-3101]++]++ - taildir source may endless loop when tail a file
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3106[FLUME-3106]++]++ - When batchSize of sink greater than transactionCapacity of Memory Channel, Flume can produce endless data
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3107[FLUME-3107]++]++ - When batchSize of sink greater than transactionCapacity of File Channel, Flume can produce endless data
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3114[FLUME-3114]++]++ - Upgrade commons-httpclient library dependency
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3117[FLUME-3117]++]++ - Application can be dead loop when call System.exit() in methodconfigure
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3133[FLUME-3133]++]++ - Add a ipHeader config in Syslog Sources
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3201[FLUME-3201]++]++ - Fix SyslogUtil to handle RFC3164 format in december correctly
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3218[FLUME-3218]++]++ - Fix external process config filter test
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3222[FLUME-3222]++]++ - java.nio.file.NoSuchFileException thrown when files are being deleted from the TAILDIR source
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3237[FLUME-3237]++]++ - Handling RuntimeExceptions coming from the JMS provider in JMSSource
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3253[FLUME-3253]++]++ - JP Morgan Chase scan shows vulnerabilities for Splunk App using Apache Flume 1.8
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3265[FLUME-3265]++]++ - Cannot set batch-size for LoadBalancingRpcClient
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3270[FLUME-3270]++]++ - Close JMS resources in JMSMessageConsumer constructor in case of failure
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3278[FLUME-3278]++]++ - Handling -D keystore parameters in Kafka components
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3294[FLUME-3294]++]++ - Fix polling logic in TaildirSource
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3298[FLUME-3298]++]++ - Make hadoop-common optional in flume-ng-hadoop-credential-store-config-filter
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3299[FLUME-3299]++]++ - Fix log4j scopes in pom files
+++**++ Sub-task::
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3158[FLUME-3158]++]++ - Upgrade surefire version and config
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3243[FLUME-3243]++]++ - Increase the default of hdfs.callTimeout and document it's deprecation
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3303[FLUME-3303]++]++ - Mention future configuration change in the release notes
+++**++ Test::
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3195[FLUME-3195]++]++ - Split up the TestKafkaChannel class
+++**++ Wish::
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3087[FLUME-3087]++]++ - Change log level from WARN to INFO when using default "maxIOWorkers" value.
+++**++ Task::
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3183[FLUME-3183]++]++ - Maven: generate SHA-512 checksum during deploy
+++**++ Dependency upgrade::
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2698[FLUME-2698]++]++ - Upgrade Jetty Version
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3115[FLUME-3115]++]++ - Upgrade netty library dependency
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3194[FLUME-3194]++]++ - upgrade derby to the latest (1.14.1.0) version
+++**++ Documentation::
+  * ++[++https://issues.apache.org/jira/browse/FLUME-1342[FLUME-1342]++]++ - Document JMX monitoring API
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2723[FLUME-2723]++]++ - Document the requirement that Channel's transactionCapacity ++>++= batchSize of the source/sink
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3051[FLUME-3051]++]++ - Mention the incompatibility of Kafka source with 0.8.x Kafka brokers
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3228[FLUME-3228]++]++ - Incorrect parameter name in timestamp interceptor docs

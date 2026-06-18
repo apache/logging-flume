@@ -1,0 +1,47 @@
+////
+    Licensed to the Apache Software Foundation (ASF) under one or more
+    contributor license agreements.  See the NOTICE file distributed with
+    this work for additional information regarding copyright ownership.
+    The ASF licenses this file to You under the Apache License, Version 2.0
+    (the "License"); you may not use this file except in compliance with
+    the License.  You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+////
+
+= Version 1.5.2
+
+*Status of this release*
+
+Apache Flume 1.5.2 is the eighth release of Flume as an Apache top-level project
+(TLP). Apache Flume 1.5.2 is production-ready software.
+
+Apache Flume 1.5.2 is a maintenance and security release that disables SSLv3 for all security-enabled Flume
+sources and sinks.
+
+*Release Documentation*
+
+* link:content/1.5.2/FlumeUserGuide.html[Flume 1.5.2 User Guide] (also in link:content/1.5.2/FlumeUserGuide.pdf[pdf])
+* link:content/1.5.2/FlumeDeveloperGuide.html[Flume 1.5.2 Developer Guide] (also in link:content/1.5.2/FlumeDeveloperGuide.pdf[pdf])
+* link:content/1.5.2/apidocs/index.html[Flume 1.5.2 API Documentation]
+
+*Changes*
+
+Release Notes - Flume - Version v1.5.2
+
+____
+* ++[++https://issues.apache.org/jira/browse/FLUME-2547[FLUME-2547]++]++ - Removing SSLv2Hello causes Java 6 clients to break
+* ++[++https://issues.apache.org/jira/browse/FLUME-2548[FLUME-2548]++]++ - Enable SSLv2Hello for Avro Source and NettyAvroRpcClient
+* ++[++https://issues.apache.org/jira/browse/FLUME-2549[FLUME-2549]++]++ - Enable SSLv2Hello for HttpSource
+* ++[++https://issues.apache.org/jira/browse/FLUME-2551[FLUME-2551]++]++ - Add dev-support to src tarball
+* ++[++https://issues.apache.org/jira/browse/FLUME-2441[FLUME-2441]++]++ - Unit test TestHTTPSource.java failed with IBM JDK 1.7
+* ++[++https://issues.apache.org/jira/browse/FLUME-2520[FLUME-2520]++]++ - HTTP Source should be able to block a prefixed set of protocols.
+* ++[++https://issues.apache.org/jira/browse/FLUME-2533[FLUME-2533]++]++ - HTTPS tests fail on Java 6
+* ++[++https://issues.apache.org/jira/browse/FLUME-2511[FLUME-2511]++]++ - Allow configuration of enabled protocols in Avro source and Rpc client
+____

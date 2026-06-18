@@ -1,0 +1,161 @@
+////
+    Licensed to the Apache Software Foundation (ASF) under one or more
+    contributor license agreements.  See the NOTICE file distributed with
+    this work for additional information regarding copyright ownership.
+    The ASF licenses this file to You under the Apache License, Version 2.0
+    (the "License"); you may not use this file except in compliance with
+    the License.  You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+////
+
+= Version 1.5.0
+
+*Status of this release*
+
+Apache Flume 1.5.0 is the fifth release of Flume as an Apache top-level project
+(TLP). Apache Flume 1.5.0 is production-ready software.
+
+*Release Documentation*
+
+* link:content/1.5.0/FlumeUserGuide.html[Flume 1.5.0 User Guide] (also in link:content/1.5.0/FlumeUserGuide.pdf[pdf])
+* link:content/1.5.0/FlumeDeveloperGuide.html[Flume 1.5.0 Developer Guide] (also in link:content/1.5.0/FlumeDeveloperGuide.pdf[pdf])
+* link:content/1.5.0/apidocs/index.html[Flume 1.5.0 API Documentation]
+
+*Changes*
+
+Release Notes - Flume - Version v1.5.0
+
+++**++ New Feature::
+  * ++[++https://issues.apache.org/jira/browse/FLUME-1227[FLUME-1227]++]++ - Introduce some sort of SpillableChannel
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2056[FLUME-2056]++]++ - Allow SpoolDir to pass just the filename that is the source of an event
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2071[FLUME-2071]++]++ - Flume Context doesn't support float or double configuration values.
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2185[FLUME-2185]++]++ - Upgrade morphlines to 0.7.0
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2188[FLUME-2188]++]++ - flume-ng-log4jappender Support user supplied headers
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2225[FLUME-2225]++]++ - Elasticsearch Sink for ES HTTP API
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2294[FLUME-2294]++]++ - Add a sink for Kite Datasets
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2309[FLUME-2309]++]++ - Spooling directory should not always consume the oldest file first.
+++**++ Improvement::
+  * ++[++https://issues.apache.org/jira/browse/FLUME-1542[FLUME-1542]++]++ - Flume User Guide sample configurations need fixing
+  * ++[++https://issues.apache.org/jira/browse/FLUME-1899[FLUME-1899]++]++ - Make SpoolDir work with Sub-Directories
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2052[FLUME-2052]++]++ - Spooling directory source should be able to replace or ignore malformed characters
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2130[FLUME-2130]++]++ - Handle larger payloads via SyslogUDPSource
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2139[FLUME-2139]++]++ - upgrade morphline library dependency to a 0.5.0 release
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2154[FLUME-2154]++]++ - Reducing duplicate events caused by reset-connection-interval
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2155[FLUME-2155]++]++ - Improve replay time
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2181[FLUME-2181]++]++ - Optionally disable File Channel fsyncs
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2202[FLUME-2202]++]++ - AsyncHBaseSink should coalesce increments to reduce RPC roundtrips
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2206[FLUME-2206]++]++ - ElasticSearchSink ttl field modification to mimic Elasticsearch way of specifying TTL
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2207[FLUME-2207]++]++ - HDFS file suffix style index suffix in ElasticSearchSink
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2212[FLUME-2212]++]++ - upgrade to Morphlines-0.8.0
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2213[FLUME-2213]++]++ - MorphlineInterceptor should share metric registry across threads for better (aggregate) reporting
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2217[FLUME-2217]++]++ - Preserve priority, timestamp and hostname fields in MultiportSyslogTcp and Udp sources
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2231[FLUME-2231]++]++ - Add details in Flume Ganglia config in User Guide
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2243[FLUME-2243]++]++ - AvroSource to use TransceiverThreadFactory for Thread naming while initializing NioServerSocketChannelFactory
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2267[FLUME-2267]++]++ - Increase default transactionCapacity for FileChannel to 10000 from 1000
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2275[FLUME-2275]++]++ - Improve scalability of MorphlineInterceptor under contention
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2292[FLUME-2292]++]++ - Upgrade mapdb to 0.9.8
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2316[FLUME-2316]++]++ - Upgrade MorphlineSolrSink to kite-0.12.0
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2340[FLUME-2340]++]++ - Refactor to make room for Morphlines Elasticsearch Sink
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2343[FLUME-2343]++]++ - Add user impersonation to DatasetSink
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2351[FLUME-2351]++]++ - Ability to override any parameter from the configuration file
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2352[FLUME-2352]++]++ - HDFSCompressedDataStream should support appendBatch
+++**++ Bug::
+  * ++[++https://issues.apache.org/jira/browse/FLUME-1666[FLUME-1666]++]++ - Syslog source strips timestamp and hostname from log message body
+  * ++[++https://issues.apache.org/jira/browse/FLUME-1679[FLUME-1679]++]++ - Add dependency on Guava to flume-ng-elasticsearch-sink POM
+  * ++[++https://issues.apache.org/jira/browse/FLUME-1892[FLUME-1892]++]++ - IRC Sink NPE
+  * ++[++https://issues.apache.org/jira/browse/FLUME-1951[FLUME-1951]++]++ - Remove unused future from FlumeEventQueue
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2007[FLUME-2007]++]++ - HDFS Sink should check if file is closed and retry if it is not.
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2088[FLUME-2088]++]++ - Minor typo in Flume User Guide JSON Reporting section
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2109[FLUME-2109]++]++ - HTTPS support in HTTP Source
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2110[FLUME-2110]++]++ - Scribe Source must check if category is null before inserting the headers
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2119[FLUME-2119]++]++ - duplicate files cause flume to enter irrecoverable state
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2121[FLUME-2121]++]++ - Upgrade Flume to log4j 1.2.17 to be in sync with HDFS/HBase
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2122[FLUME-2122]++]++ - Minor cleanups of User guide
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2123[FLUME-2123]++]++ - Morphline Solr sink missing short type name
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2124[FLUME-2124]++]++ - Upgrade Morphline Solr Sink to CDK 0.4.1
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2127[FLUME-2127]++]++ - JMX shutdown command for Flume
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2134[FLUME-2134]++]++ - AsyncHbase Sink bugfix plus tests errors on Windows
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2135[FLUME-2135]++]++ - Add zip to the build distribution for Windows support
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2136[FLUME-2136]++]++ - Windows - Fix intermitent test failure in TestMonitoredCounterGroup.java
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2137[FLUME-2137]++]++ - Fix StagedInstall.java to invoke the correct startup script on Windows
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2142[FLUME-2142]++]++ - HTTPS tests for http source
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2145[FLUME-2145]++]++ - TestCheckpointRebuilder.testFastReplay fails on Windows due to checkpoint file being memory mapped
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2151[FLUME-2151]++]++ - Windows: Update TestExecSource to use native commands on Windows
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2152[FLUME-2152]++]++ - Flume user guide says "Ganglia support" where it should say "JSON support"
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2156[FLUME-2156]++]++ - Unregister then re-register MonitoredCounterGroup JMX MBeans on reconfigure
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2157[FLUME-2157]++]++ - Spool directory source does not shut down correctly when Flume is reconfigured
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2159[FLUME-2159]++]++ - Sporadic failures in TestNettyAvroRpcClient.spinThreadsCrazily()
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2161[FLUME-2161]++]++ - Flume does not support spaces in -X java-opt command line args
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2172[FLUME-2172]++]++ - Update protocol buffer from 2.4.1 to 2.5.0
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2176[FLUME-2176]++]++ - SpoolDir Source, get 'File has changed' exception but actually there is no change on the file
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2182[FLUME-2182]++]++ - Spooling Directory Source will not ingest data completely when a wide character appears at the edge of a buffer
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2184[FLUME-2184]++]++ - flume-ng-morphline-solr-sink Build failing due to incorrect hadoop-common dependency declaration
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2191[FLUME-2191]++]++ - HDFS Minicluster tests failing after protobuf upgrade.
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2192[FLUME-2192]++]++ - AbstractSinkProcessor stop incorrectly calls start
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2198[FLUME-2198]++]++ - Avro Source should disable itself if ipFilterRules contains invalid rules
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2199[FLUME-2199]++]++ - Flume builds with new version require mvn install before site can be generated
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2200[FLUME-2200]++]++ - HTTP Source should be able to use "port" parameter if SSL is enabled
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2208[FLUME-2208]++]++ - Jetty's default SocketSelector leaks File descriptors
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2209[FLUME-2209]++]++ - AsyncHBaseSink will never recover if the column family does not exists for the first start
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2210[FLUME-2210]++]++ - UnresolvedAddressException when using multiple hostNames in Elasticsearch sink configuration
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2220[FLUME-2220]++]++ - ElasticSearch sink - duplicate fields in indexed document
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2229[FLUME-2229]++]++ - Backoff period gets reset too often in OrderSelector
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2233[FLUME-2233]++]++ - MemoryChannel lock contention on every put due to bytesRemaining Semaphore
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2235[FLUME-2235]++]++ - idleFuture should be cancelled at the start of append
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2238[FLUME-2238]++]++ - Provide option to configure worker threads in NettyAvroRpcClient
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2239[FLUME-2239]++]++ - Clarify File Channel's dataDirs setting in User Guide
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2252[FLUME-2252]++]++ - Add null check before closing table in HbaseSink
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2253[FLUME-2253]++]++ - Please delete old releases from mirroring system
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2255[FLUME-2255]++]++ - Spooling Directory Source cannot handle channel exceptions
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2259[FLUME-2259]++]++ - transaction closure not happening for all the scenario in hbasesink
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2262[FLUME-2262]++]++ - Log4j Appender should use timeStamp field not getTimestamp
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2263[FLUME-2263]++]++ - Bump Hadoop 2 version to 2.3.0
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2264[FLUME-2264]++]++ - Log4j Appender {plus} Avro Reflection on string results in an invalid avro schema
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2265[FLUME-2265]++]++ - Closed bucket writers should be removed from sfwriters map
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2266[FLUME-2266]++]++ - Update Morphline Sink to kite-0.10.0
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2270[FLUME-2270]++]++ - Twitter Source Documentation Does not load properly
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2272[FLUME-2272]++]++ - Getting start page returning 503 error
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2283[FLUME-2283]++]++ - Spool Dir source must check interrupt flag before writing to channel
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2289[FLUME-2289]++]++ - Disable maxUnderReplication test which is extremely flakey
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2301[FLUME-2301]++]++ - Update HBaseSink tests to reflect sink returning backoff only on empty batches
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2302[FLUME-2302]++]++ - TestHDFS Sink fails with Can't get Kerberos realm
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2303[FLUME-2303]++]++ - HBaseSink tests can fail based on order of execution
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2304[FLUME-2304]++]++ - DatasetSink test fails unexpectedly
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2305[FLUME-2305]++]++ - BucketWriter++#++close must cancel idleFuture
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2307[FLUME-2307]++]++ - Remove Log writetimeout
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2311[FLUME-2311]++]++ - Use standard way of finding queue/topic
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2312[FLUME-2312]++]++ - Add utility for adorning HTTP contexts in Jetty
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2314[FLUME-2314]++]++ - Upgrade to Mapdb 0.9.9
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2320[FLUME-2320]++]++ - Deadlock in DatasetSink
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2323[FLUME-2323]++]++ - Morphline sink must increment eventDrainAttemptCount when it takes event from channel
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2324[FLUME-2324]++]++ - Support writing to multiple HBase clusters using HBaseSink
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2325[FLUME-2325]++]++ - BucketWriter might throw BucketClosedException incorrectly
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2328[FLUME-2328]++]++ - FileChannel Dual Checkpoint Backup Thread not released on Application stop
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2329[FLUME-2329]++]++ - Add an alias for the Morphline Solr Sink
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2330[FLUME-2330]++]++ - Remove the MorphlineHandlerImpl configuration option from MorphlineSink
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2334[FLUME-2334]++]++ - Upgrade Asynchbase to 1.5.0 as this include hbase 0.96.x support
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2335[FLUME-2335]++]++ - TestHBaseSink++#++testWithoutConfigurationObject() must delete the table at the end of the test
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2336[FLUME-2336]++]++ - HBase tests that pass in ZK configs must use a new context object
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2338[FLUME-2338]++]++ - Support coalescing increments in HBaseSink
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2345[FLUME-2345]++]++ - Update to Kite 0.12.0 dependency
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2347[FLUME-2347]++]++ - Add FLUME++_++JAVA++_++OPTS which allows users to inject java properties from cmd line
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2350[FLUME-2350]++]++ - Consume Order tests need to space out file creation
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2357[FLUME-2357]++]++ - HDFS sink should retry closing files that previously had close errors
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2381[FLUME-2381]++]++ - Upgrade Hadoop version in Hadoop 2 profile to 2.4.0
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2379[FLUME-2379]++]++ - Flume's pom files are invalid and not parseable by non-maven build tools
+++**++ Documentation::
+  * ++[++https://issues.apache.org/jira/browse/FLUME-1223[FLUME-1223]++]++ - Userguide improvement rolling file sink
+  * ++[++https://issues.apache.org/jira/browse/FLUME-1678[FLUME-1678]++]++ - Incorrect documentation for HBase sink
+  * ++[++https://issues.apache.org/jira/browse/FLUME-1851[FLUME-1851]++]++ - User Guide grammar mistake
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2064[FLUME-2064]++]++ - Typo/Grammar in flume main user doc under Scribe
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2065[FLUME-2065]++]++ - Regex Extractor Interceptor config agent name inconsistent with rest of docs
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2183[FLUME-2183]++]++ - Add "Other Resources" page to wiki
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2278[FLUME-2278]++]++ - Incorrect documentation for write-timeout of File Channel
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2319[FLUME-2319]++]++ - Incorrect property name of Ganglia Reporting documentation
