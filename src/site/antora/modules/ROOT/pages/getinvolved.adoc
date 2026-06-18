@@ -1,0 +1,31 @@
+////
+    Licensed to the Apache Software Foundation (ASF) under one or more
+    contributor license agreements.  See the NOTICE file distributed with
+    this work for additional information regarding copyright ownership.
+    The ASF licenses this file to You under the Apache License, Version 2.0
+    (the "License"); you may not use this file except in compliance with
+    the License.  You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+////
+
+= How to Get Involved
+
+The Apache Flume project needs and appreciates all contributions,
+including documentation help, source code improvements, problem reports, and
+even general feedback! If you are interested
+in contributing, please visit our Wiki page on how to contribute at:
+https://cwiki.apache.org/confluence/display/FLUME/How+to+Contribute
+
+Also, consider joining the xref:mailinglists.adoc[mailing lists].
+
+*How to Report Issues*
+
+The Apache Flume project uses JIRA for issue tracking. Please report any issues
+you find at: https://issues.apache.org/jira/browse/FLUME

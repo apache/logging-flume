@@ -1,0 +1,14 @@
+{
+  "name": "logging-flume-site",
+  "version": "1.0.0",
+  "description": "Apache Flume website, built with Antora",
+  "private": true,
+  "scripts": {
+    "build": "antora --fetch antora-playbook.yaml"
+  },
+  "dependencies": {
+    "@antora/cli": "^3.1.0",
+    "@antora/site-generator-default": "^3.1.0",
+    "@asciidoctor/tabs": "^1.0.0-beta.6"
+  }
+}

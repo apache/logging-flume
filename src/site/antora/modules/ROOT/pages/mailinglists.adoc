@@ -1,0 +1,29 @@
+////
+    Licensed to the Apache Software Foundation (ASF) under one or more
+    contributor license agreements.  See the NOTICE file distributed with
+    this work for additional information regarding copyright ownership.
+    The ASF licenses this file to You under the Apache License, Version 2.0
+    (the "License"); you may not use this file except in compliance with
+    the License.  You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+////
+
+= Mailing lists
+
+These are the mailing lists that have been established for the Apache Flume project. For each list, there is a subscribe, unsubscribe, and an archive link.
+
+[width="99%",cols="27%,21%,21%,31%",options="header",]
+|===
+|Name |Subscribe |Unsubscribe |List Archive
+|Flume User List |mailto:user-subscribe@flume.apache.org[user subscribe] |mailto:user-unsubscribe@flume.apache.org[user unsubscribe] |https://lists.apache.org/list.html?user@flume.apache.org[Flume User List Archive]
+|Flume Developers List |mailto:dev-subscribe@flume.apache.org[dev subscribe] |mailto:dev-unsubscribe@flume.apache.org[dev unsubscribe] |https://lists.apache.org/list.html?dev@flume.apache.org[Flume Developer List Archive]
+|Flume Commits List |mailto:commits-subscribe@flume.apache.org[commit subscribe] |mailto:commits-unsubscribe@flume.apache.org[commit unsubscribe] |https://lists.apache.org/list.html?commits@flume.apache.org[Flume Commits List Archive]
+|Flume Issues List |mailto:issues-subscribe@flume.apache.org[issues subscribe] |mailto:issues-unsubscribe@flume.apache.org[issues unsubscribe] |https://lists.apache.org/list.html?issues@flume.apache.org[Flume Issues List Archive]
+|===

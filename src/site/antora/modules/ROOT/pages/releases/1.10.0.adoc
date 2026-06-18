@@ -1,0 +1,79 @@
+////
+    Licensed to the Apache Software Foundation (ASF) under one or more
+    contributor license agreements.  See the NOTICE file distributed with
+    this work for additional information regarding copyright ownership.
+    The ASF licenses this file to You under the Apache License, Version 2.0
+    (the "License"); you may not use this file except in compliance with
+    the License.  You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+////
+
+= Version 1.10.0
+
+*Status of this release*
+
+Apache Flume 1.10.0 is the twelfth release of Flume as an Apache top-level project
+(TLP). Apache Flume 1.10.0 is production-ready software.
+
+*Release Documentation*
+
+* link:content/1.10.0/FlumeUserGuide.html[Flume 1.10.0 User Guide] (also in link:content/1.10.0/FlumeUserGuide.pdf[pdf])
+* link:content/1.10.0/FlumeDeveloperGuide.html[Flume 1.10.0 Developer Guide] (also in link:content/1.10.0/FlumeDeveloperGuide.pdf[pdf])
+* link:content/1.10.0/apidocs/index.html[Flume 1.10.0 API Documentation]
+
+*Changes*
+
+Release Notes - Flume - Version v1.10.0
+
+++**++ Bug::
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3151[FLUME-3151]++]++ - Upgrade Hadoop to 2.10.1
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3311[FLUME-3311]++]++ - Update Wrong Use In HDFS Sink
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3316[FLUME-3316]++]++ - Syslog Rfc3164Date test fails when the test date falls on a leap day
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3328[FLUME-3328]++]++ - Fix Deprecated Properties table of HDFS Sink
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3356[FLUME-3356]++]++ - Probable security issue in Flume
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3360[FLUME-3360]++]++ - Maven assemble failed on macOS
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3395[FLUME-3395]++]++ - Fix for CVE-2021-44228
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3407[FLUME-3407]++]++ - workaround for jackson-mapper-asl-1.9.13.jar @ flume-ng
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3409[FLUME-3409]++]++ - upgrade httpclient due to cve
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3416[FLUME-3416]++]++ - Improve input validation
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3421[FLUME-3421]++]++ - Default log4j settings do not log to console after FLUME-2050
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3426[FLUME-3426]++]++ - Unresolved Security Issues
+++**++ New Feature::
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3412[FLUME-3412]++]++ - Add LoadBalancingChannelSelector
+++**++ Improvement::
+  * ++[++https://issues.apache.org/jira/browse/FLUME-199[FLUME-199]++]++ - Unit tests should hunt for available ports if defaults are in use
+  * ++[++https://issues.apache.org/jira/browse/FLUME-2050[FLUME-2050]++]++ - Upgrade to log4j2 (when GA)
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3045[FLUME-3045]++]++ - Document GitHub Pull Requests in How to Contribute Guide
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3335[FLUME-3335]++]++ - Support configuration and reconfiguration via HTTP(S)
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3338[FLUME-3338]++]++ - Doc Flume Recoverability with Kafka
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3363[FLUME-3363]++]++ - CVE-2019-20445
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3368[FLUME-3368]++]++ - Update Jackson to 2.9.10
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3389[FLUME-3389]++]++ - Build and test Apache Flume on ARM64 CPU architecture
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3397[FLUME-3397]++]++ - Upgrade Log4 to 2.17.1 and SLF4J to 1.7.32
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3398[FLUME-3398]++]++ - Upgrade Kafka to a supported version.
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3399[FLUME-3399]++]++ - Update Jackson to 2.13.1
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3403[FLUME-3403]++]++ - The parquet-avro version used by flume is 1.4.1, which is vulnerable.
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3405[FLUME-3405]++]++ - Reopened - The parquet-avro version used by flume is 1.4.1, which is vulnerable.
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3413[FLUME-3413]++]++ - Add "initialization" phase to components.
+++**++ Wish::
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3400[FLUME-3400]++]++ - Upgrade commons-io to 2.11.0
+++**++ Task::
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3401[FLUME-3401]++]++ - Remove Kite Dataset Sink
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3402[FLUME-3402]++]++ - remove org.codehaus.jackson dependencies
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3404[FLUME-3404]++]++ - Update Commons CLI to 1.5.0, Commons Codec to 1.15, Commons Compress to 1.21 and Commons Lang to 2.6
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3410[FLUME-3410]++]++ - upgrade hbase version
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3411[FLUME-3411]++]++ - upgrade hive sink to 1.2.2
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3417[FLUME-3417]++]++ - Remove Elasticsearch sink that requires Elasticsearch 0.90.1
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3419[FLUME-3419]++]++ - Review project LICENSE and NOTICE
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3424[FLUME-3424]++]++ - Upgrade Twitter4j to version 4.0.7{plus}
+++**++ Dependency upgrade::
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3339[FLUME-3339]++]++ - Remove Xerces and Xalan dependencies
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3385[FLUME-3385]++]++ - flume-ng-sdk uses Avro-IPC version with vulnerable version of Jetty
+  * ++[++https://issues.apache.org/jira/browse/FLUME-3386[FLUME-3386]++]++ - flume-ng-sdk uses vulnerable version of netty
