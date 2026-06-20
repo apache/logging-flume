@@ -16,6 +16,7 @@
  */
 package org.apache.flume.sink;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +60,7 @@ import org.apache.logging.log4j.Logger;
  * host1.sinkgroups.group1.processor.maxpenalty = 10000
  *
  */
+@SuppressFBWarnings("UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR")
 public class FailoverSinkProcessor extends AbstractSinkProcessor {
     private static final int FAILURE_PENALTY = 1000;
     private static final int DEFAULT_MAX_PENALTY = 30000;

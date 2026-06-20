@@ -17,6 +17,7 @@
 package org.apache.flume.sink;
 
 import com.google.common.base.Preconditions;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Iterator;
 import java.util.List;
 import org.apache.flume.Context;
@@ -75,6 +76,7 @@ import org.apache.logging.log4j.Logger;
  * @see FailoverSinkProcessor
  * @see LoadBalancingSinkProcessor.SinkSelector
  */
+@SuppressFBWarnings("UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR")
 public class LoadBalancingSinkProcessor extends AbstractSinkProcessor {
     public static final String CONFIG_SELECTOR = "selector";
     public static final String CONFIG_SELECTOR_PREFIX = CONFIG_SELECTOR + ".";

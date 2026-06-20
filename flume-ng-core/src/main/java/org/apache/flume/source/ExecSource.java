@@ -18,6 +18,7 @@ package org.apache.flume.source;
 
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -141,6 +142,7 @@ import org.apache.logging.log4j.Logger;
  * TODO
  * </p>
  */
+@SuppressFBWarnings("UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR")
 public class ExecSource extends AbstractSource implements EventDrivenSource, Configurable, BatchSizeSupported {
 
     private static final Logger logger = LogManager.getLogger();

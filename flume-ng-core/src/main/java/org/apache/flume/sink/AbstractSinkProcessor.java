@@ -16,6 +16,7 @@
  */
 package org.apache.flume.sink;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -26,6 +27,7 @@ import org.apache.flume.lifecycle.LifecycleState;
 /**
  * A convenience base class for sink processors.
  */
+@SuppressFBWarnings("UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR")
 public abstract class AbstractSinkProcessor implements SinkProcessor {
 
     private LifecycleState state;

@@ -41,7 +41,11 @@ public enum ChannelSelectorType implements ComponentWithClassName {
     /**
      * Multiplexing channel selector.
      */
-    MULTIPLEXING("org.apache.flume.channel.MultiplexingChannelSelector");
+    MULTIPLEXING("org.apache.flume.channel.MultiplexingChannelSelector"),
+    /**
+     * Routable proxy channel selector.
+     */
+    ROUTABLE_PROXY("org.apache.flume.channel.RoutableProxyChannelSelector");
 
     private final String channelSelectorClassName;
 

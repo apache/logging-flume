@@ -18,6 +18,7 @@ package org.apache.flume.channel;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -39,6 +40,7 @@ import org.apache.flume.Event;
  * defaults to <tt>ROUND_ROBIN</tt> type, but can be overridden via
  * configuration.</p>
  */
+@SuppressFBWarnings("UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR")
 public class LoadBalancingChannelSelector extends AbstractChannelSelector {
     private final List<Channel> emptyList = Collections.emptyList();
     private ChannelPicker picker;

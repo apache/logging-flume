@@ -55,8 +55,15 @@ public class ChannelProcessor implements Configurable {
     private final InterceptorChain interceptorChain;
 
     public ChannelProcessor(ChannelSelector selector) {
+        this(selector, null);
+    }
+
+    public ChannelProcessor(ChannelSelector selector, List<Interceptor> interceptors) {
         this.selector = selector;
         this.interceptorChain = new InterceptorChain();
+        if (interceptors != null) {
+            interceptorChain.setInterceptors(interceptors);
+        }
     }
 
     public void initialize() {

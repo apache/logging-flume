@@ -16,6 +16,7 @@
  */
 package org.apache.flume.channel;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +26,7 @@ import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.FlumeException;
 
+@SuppressFBWarnings("UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR")
 public class MultiplexingChannelSelector extends AbstractChannelSelector {
 
     public static final String CONFIG_MULTIPLEX_HEADER_NAME = "header";
