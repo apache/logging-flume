@@ -54,22 +54,6 @@
       <artifactId>flume-ng-core</artifactId>
     </dependency>
 
-    <!--
-    <dependency>
-      <groupId>org.apache.flume</groupId>
-      <artifactId>flume-hdfs-sink</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.flume.flume-ng-sinks</groupId>
-      <artifactId>flume-irc-sink</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.flume.flume-ng-channels</groupId>
-      <artifactId>flume-jdbc-channel</artifactId>
-    </dependency>-->
-
     <dependency>
       <groupId>org.apache.flume.flume-ng-channels</groupId>
       <artifactId>flume-file-channel</artifactId>
@@ -120,7 +104,6 @@
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>jsr305</artifactId>
-      <version>${jsr305.version}</version>
       <scope>provided</scope>
     </dependency>
 
