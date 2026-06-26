@@ -16,12 +16,12 @@
  */
 package org.apache.flume.sink;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.apache.flume.Sink;
 import org.apache.flume.SinkProcessor;
+import org.apache.flume.conf.internal.SuppressFBWarnings;
 import org.apache.flume.lifecycle.LifecycleState;
 
 /**

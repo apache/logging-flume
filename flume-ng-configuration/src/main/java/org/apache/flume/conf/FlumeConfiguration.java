@@ -61,6 +61,7 @@ import org.apache.flume.conf.channel.ChannelConfiguration;
 import org.apache.flume.conf.channel.ChannelType;
 import org.apache.flume.conf.configfilter.ConfigFilterConfiguration;
 import org.apache.flume.conf.configfilter.ConfigFilterType;
+import org.apache.flume.conf.internal.SuppressFBWarnings;
 import org.apache.flume.conf.sink.SinkConfiguration;
 import org.apache.flume.conf.sink.SinkGroupConfiguration;
 import org.apache.flume.conf.sink.SinkType;
@@ -69,7 +70,6 @@ import org.apache.flume.conf.source.SourceType;
 import org.apache.flume.configfilter.ConfigFilter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.internal.annotation.SuppressFBWarnings;
 
 /**
  * <p>

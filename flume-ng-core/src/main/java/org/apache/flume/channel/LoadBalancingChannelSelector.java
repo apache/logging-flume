@@ -18,7 +18,6 @@ package org.apache.flume.channel;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -26,6 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
+import org.apache.flume.conf.internal.SuppressFBWarnings;
 
 /**
  * Load balancing channel selector. This selector allows for load balancing
