@@ -93,12 +93,20 @@ public class RoutableProxyChannelSelector extends LoadBalancingChannelSelector {
 
     @Override
     public List<Channel> getRequiredChannels(Event event) {
-        return getSelector(event).getRequiredChannels(event);
+        ChannelSelector selector = getSelector(event);
+        if (selector != null) {
+            return selector.getRequiredChannels(event);
+        }
+        return new ArrayList<>();
     }
 
     @Override
     public List<Channel> getOptionalChannels(Event event) {
-        return getSelector(event).getOptionalChannels(event);
+        ChannelSelector selector = getSelector(event);
+        if (selector != null) {
+            return selector.getOptionalChannels(event);
+        }
+        return new ArrayList<>();
     }
 
     private ChannelSelector getSelector(Event event) {
