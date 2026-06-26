@@ -24,7 +24,9 @@ import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.FlumeException;
+import org.apache.flume.conf.internal.SuppressFBWarnings;
 
+@SuppressFBWarnings("UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR")
 public class MultiplexingChannelSelector extends AbstractChannelSelector {
 
     public static final String CONFIG_MULTIPLEX_HEADER_NAME = "header";

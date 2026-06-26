@@ -47,6 +47,11 @@ public enum ChannelType implements ComponentWithClassName {
     JDBC("org.apache.flume.channel.jdbc.JdbcChannel"),
 
     /**
+     * Kafka channel.
+     */
+    KAFKA("org.apache.flume.channel.kafka.KafkaChannel"),
+
+    /**
      * Spillable Memory channel
      *
      * @see SpillableMemoryChannel

@@ -26,9 +26,11 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import org.apache.flume.FlumeException;
+import org.apache.flume.conf.internal.SuppressFBWarnings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+@SuppressFBWarnings("UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR")
 public class LifecycleSupervisor implements LifecycleAware {
 
     private static final Logger logger = LogManager.getLogger();

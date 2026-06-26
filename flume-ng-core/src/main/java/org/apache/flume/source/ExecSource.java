@@ -39,6 +39,7 @@ import org.apache.flume.SystemClock;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
+import org.apache.flume.conf.internal.SuppressFBWarnings;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.logging.log4j.LogManager;
@@ -141,6 +142,7 @@ import org.apache.logging.log4j.Logger;
  * TODO
  * </p>
  */
+@SuppressFBWarnings("UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR")
 public class ExecSource extends AbstractSource implements EventDrivenSource, Configurable, BatchSizeSupported {
 
     private static final Logger logger = LogManager.getLogger();

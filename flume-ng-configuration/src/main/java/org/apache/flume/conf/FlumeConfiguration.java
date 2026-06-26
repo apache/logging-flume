@@ -61,6 +61,7 @@ import org.apache.flume.conf.channel.ChannelConfiguration;
 import org.apache.flume.conf.channel.ChannelType;
 import org.apache.flume.conf.configfilter.ConfigFilterConfiguration;
 import org.apache.flume.conf.configfilter.ConfigFilterType;
+import org.apache.flume.conf.internal.SuppressFBWarnings;
 import org.apache.flume.conf.sink.SinkConfiguration;
 import org.apache.flume.conf.sink.SinkGroupConfiguration;
 import org.apache.flume.conf.sink.SinkType;
@@ -83,6 +84,7 @@ import org.apache.logging.log4j.Logger;
  * @see org.apache.flume.node.ConfigurationProvider
  *
  */
+@SuppressFBWarnings(value = {"EI_EXPOSE_REP"})
 public class FlumeConfiguration {
 
     private static final Logger logger = LogManager.getLogger();

@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
+import org.apache.flume.conf.internal.SuppressFBWarnings;
 
 /**
  * Load balancing channel selector. This selector allows for load balancing
@@ -39,6 +40,7 @@ import org.apache.flume.Event;
  * defaults to <tt>ROUND_ROBIN</tt> type, but can be overridden via
  * configuration.</p>
  */
+@SuppressFBWarnings("UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR")
 public class LoadBalancingChannelSelector extends AbstractChannelSelector {
     private final List<Channel> emptyList = Collections.emptyList();
     private ChannelPicker picker;

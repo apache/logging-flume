@@ -33,6 +33,7 @@
 
   <modules>
     <module>flume-bom</module>
+    <module>flume-third-party</module>
     <module>flume-parent</module>
     <module>flume-ng-core</module>
     <module>flume-ng-configuration</module>

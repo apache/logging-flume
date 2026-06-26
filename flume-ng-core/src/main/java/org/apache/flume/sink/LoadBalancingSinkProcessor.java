@@ -25,6 +25,7 @@ import org.apache.flume.FlumeException;
 import org.apache.flume.Sink;
 import org.apache.flume.Sink.Status;
 import org.apache.flume.conf.Configurable;
+import org.apache.flume.conf.internal.SuppressFBWarnings;
 import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.util.OrderSelector;
 import org.apache.flume.util.RandomOrderSelector;
@@ -75,6 +76,7 @@ import org.apache.logging.log4j.Logger;
  * @see FailoverSinkProcessor
  * @see LoadBalancingSinkProcessor.SinkSelector
  */
+@SuppressFBWarnings("UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR")
 public class LoadBalancingSinkProcessor extends AbstractSinkProcessor {
     public static final String CONFIG_SELECTOR = "selector";
     public static final String CONFIG_SELECTOR_PREFIX = CONFIG_SELECTOR + ".";

@@ -20,11 +20,13 @@ import com.google.common.base.Preconditions;
 import java.util.List;
 import org.apache.flume.Sink;
 import org.apache.flume.SinkProcessor;
+import org.apache.flume.conf.internal.SuppressFBWarnings;
 import org.apache.flume.lifecycle.LifecycleState;
 
 /**
  * A Sink Processor that only accesses a single Sink.
  */
+@SuppressFBWarnings("UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR")
 public abstract class AbstractSingleSinkProcessor implements SinkProcessor {
     protected Sink sink;
     private LifecycleState lifecycleState;
