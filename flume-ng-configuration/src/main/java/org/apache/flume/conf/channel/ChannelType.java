@@ -64,7 +64,6 @@ public enum ChannelType implements ComponentWithClassName {
         this.channelClassName = channelClassName;
     }
 
-
     @Deprecated
     public String getChannelClassName() {
         return channelClassName;
