@@ -64,14 +64,6 @@ public enum ChannelType implements ComponentWithClassName {
         this.channelClassName = channelClassName;
     }
 
-    private static ChannelType getChannelTypeByName(String type) {
-        for (ChannelType channelType : ChannelType.values()) {
-            if (channelType.channelClassName.equals(type)) {
-                return channelType;
-            }
-        }
-        return null;
-    }
 
     @Deprecated
     public String getChannelClassName() {
