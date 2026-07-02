@@ -228,11 +228,6 @@
     <stagingDirectory>${project.basedir}/target/docs</stagingDirectory>
 
     <bundle-plugin.version>2.3.7</bundle-plugin.version>
-    <curator.version>5.9.0</curator.version>
-    <fest-reflect.version>1.4.1</fest-reflect.version>
-    <hadoop.version>3.5.0</hadoop.version>
-    <junit.version>4.13.2</junit.version>
-    <mockito.version>5.18.0</mockito.version>
     <mvn-antrun-plugin.version>1.8</mvn-antrun-plugin.version>
     <!-- Do not upgrade the assumbly plugin version until MASSEMBLY-941 is fixed -->
     <mvn-assembly-plugin.version>3.2.0</mvn-assembly-plugin.version>
@@ -252,11 +247,9 @@
     <external.protobuf.version>4.35.0</external.protobuf.version>
     <protobuf.plugin.version>0.6.1</protobuf.plugin.version>
     <rat.version>0.12</rat.version>
-    <wiremock.version>1.53</wiremock.version>
     <os.maven.version>1.7.1</os.maven.version>
     <redirectTestOutput>true</redirectTestOutput>
     <spotless-maven-plugin.version>3.4.0</spotless-maven-plugin.version>
-    <system-rules.version>1.19.0</system-rules.version>
     <palantir-java-format.version>2.90.0</palantir-java-format.version>
   </properties>
 
@@ -268,63 +261,6 @@
         <version>${flume-project.version}</version>
         <type>pom</type>
         <scope>import</scope>
-      </dependency>
-
-      <dependency>
-        <groupId>junit</groupId>
-        <artifactId>junit</artifactId>
-        <version>${junit.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.mockito</groupId>
-        <artifactId>mockito-core</artifactId>
-        <version>${mockito.version}</version>
-        <scope>test</scope>
-      </dependency>
-
-      <dependency>
-        <groupId>org.easytesting</groupId>
-        <artifactId>fest-reflect</artifactId>
-        <version>${fest-reflect.version}</version>
-        <scope>test</scope>
-      </dependency>
-
-      <dependency>
-        <groupId>com.github.stefanbirkner</groupId>
-        <artifactId>system-rules</artifactId>
-        <version>${system-rules.version}</version>
-        <scope>test</scope>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.hadoop</groupId>
-        <artifactId>hadoop-minikdc</artifactId>
-        <version>${hadoop.version}</version>
-        <scope>test</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>ch.qos.reload4j</groupId>
-            <artifactId>reload4j</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-reload4j</artifactId>
-          </exclusion>
-          <exclusion>
-            <!-- exclude this from hadoop minikdc as the minikdc depends on
-            the apacheds-jdbm1 bundle, which is not available in maven central-->
-            <groupId>org.apache.directory.jdbm</groupId>
-            <artifactId>apacheds-jdbm1</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <!-- add this to satisfy the dependency requirement of apacheds-jdbm1 in minikdc-->
-        <groupId>org.apache.directory.jdbm</groupId>
-        <artifactId>apacheds-jdbm1</artifactId>
-        <version>2.0.0-M2</version>
-        <scope>test</scope>
       </dependency>
 
       <!-- internal module dependencies -->
@@ -347,66 +283,6 @@
         <artifactId>flume-ng-sdk</artifactId>
         <version>${flume-project.version}</version>
         <classifier>tests</classifier>
-        <scope>test</scope>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.curator</groupId>
-        <artifactId>curator-test</artifactId>
-        <version>${curator.version}</version>
-        <scope>test</scope>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.hadoop</groupId>
-        <artifactId>hadoop-minicluster</artifactId>
-        <version>${hadoop.version}</version>
-        <scope>test</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>tomcat</groupId>
-            <artifactId>jasper-compiler</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>tomcat</groupId>
-            <artifactId>jasper-runtime</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>ch.qos.reload4j</groupId>
-            <artifactId>reload4j</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-reload4j</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.hadoop</groupId>
-        <artifactId>hadoop-mapreduce-client-core</artifactId>
-        <version>${hadoop.version}</version>
-        <scope>test</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>ch.qos.reload4j</groupId>
-            <artifactId>reload4j</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-reload4j</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.mock-server</groupId>
-        <artifactId>mockserver-netty</artifactId>
-        <version>3.10.8</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.mock-server</groupId>
-        <artifactId>mockserver-client-java</artifactId>
-        <version>3.10.8</version>
         <scope>test</scope>
       </dependency>
     </dependencies>
