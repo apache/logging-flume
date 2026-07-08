@@ -24,3 +24,6 @@ nb-configuration.xml
 .flattened-pom.xml
 # Maven extensions
 .mvn/extensions.xml
+
+# Node dependencies
+/node_modules/
