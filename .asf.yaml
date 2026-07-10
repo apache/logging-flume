@@ -48,10 +48,12 @@ github:
 
   # Enforce squashing while merging PRs.
   # Otherwise, the git log gets polluted severely.
+  #
+  # Exceptionally use `rebase` if individual commits are relevant.
   enabled_merge_buttons:
     squash: true
     merge: false
-    rebase: false
+    rebase: true
 
   features:
     issues: true
