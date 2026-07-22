@@ -22,16 +22,22 @@
   <parent>
     <groupId>org.apache.flume</groupId>
     <artifactId>flume-project</artifactId>
-    <version>2.0.0-SNAPSHOT</version>
+    <version>${revision}</version>
   </parent>
-  <groupId>org.apache.flume</groupId>
+
   <artifactId>flume-dependencies</artifactId>
   <packaging>pom</packaging>
 
-  <name>Apache Flume Artifacts</name>
+  <name>Apache Flume BOM</name>
+  <description>Bill of materials (BOM) of Apache Flume.
+  It provides a coherent set of versions for all Apache Flume artifacts in the official distribution.</description>
 
   <properties>
-    <!-- <flume-hadoop.version>2.0.0-SNAPSHOT</flume-hadoop.version>-->
+    <!-- Re-enable publishing: `flume-project` disables it, but this BOM must be installed and deployed. -->
+    <maven.install.skip>false</maven.install.skip>
+    <maven.deploy.skip>false</maven.deploy.skip>
+
+    <flume-hadoop.version>2.0.0-SNAPSHOT</flume-hadoop.version>
     <flume-http.version>2.0.0-SNAPSHOT</flume-http.version>
     <flume-irc.version>2.0.0-SNAPSHOT</flume-irc.version>
     <flume-jdbc.version>2.0.0-SNAPSHOT</flume-jdbc.version>
@@ -234,43 +240,5 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-
-  <build>
-    <plugins>
-
-      <!-- Enable BOM flattening -->
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>flatten-maven-plugin</artifactId>
-        <version>1.7.3</version>
-        <executions>
-          <execution>
-            <id>flatten-bom</id>
-            <goals>
-              <goal>flatten</goal>
-            </goals>
-            <phase>process-resources</phase>
-            <inherited>false</inherited>
-            <configuration>
-              <updatePomFile>true</updatePomFile>
-              <flattenMode>bom</flattenMode>
-              <pomElements>
-                <dependencyManagement>resolve</dependencyManagement>
-                <properties>flatten</properties>
-              </pomElements>
-            </configuration>
-          </execution>
-          <!-- ensure proper cleanup -->
-          <execution>
-            <id>flatten.clean</id>
-            <goals>
-              <goal>clean</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-
-    </plugins>
-  </build>
 
 </project>
