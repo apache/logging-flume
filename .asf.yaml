@@ -1,0 +1,13 @@
+staging:
+  profile: ~
+  whoami: trunk-site-stg-out
+  subdir: content/flume/2.x
+
+# INFRA cannot handle change sets bigger than a certain size: https://the-asf.slack.com/archives/CBX4TSBQ8/p1709724983391709
+# This file will be used to push a small commit to help the INFRA to recover.
+#
+# Random values to cause a change:
+#
+# - Seed: 1299
+# - Commit ID: 7597b4f15e54da7d9b562b7cd3a00fd5636d100a
+# - Timestamp: 2026-07-22T12:04:32Z
