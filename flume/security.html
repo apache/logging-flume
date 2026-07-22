@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Apache Flume Security Vulnerabilities :: Apache Flume</title>
+    <link rel="canonical" href="https://logging.apache.org/flume/2.x/flume/security.html">
+    <meta name="generator" content="Antora 3.1.15">
+    <link rel="stylesheet" href="../_/css/site.css">
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://logging.apache.org/flume/2.x">Apache Flume</a>
+      <button class="navbar-burger" aria-controls="topbar-nav" aria-expanded="false" aria-label="Toggle main menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="#">Home</a>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Products</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Product A</a>
+            <a class="navbar-item" href="#">Product B</a>
+            <a class="navbar-item" href="#">Product C</a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Services</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Service A</a>
+            <a class="navbar-item" href="#">Service B</a>
+            <a class="navbar-item" href="#">Service C</a>
+          </div>
+        </div>
+        <div class="navbar-item">
+          <span class="control">
+            <a class="button is-primary" href="#">Download</a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="flume" data-version="">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <button class="nav-menu-toggle" aria-label="Toggle expand/collapse all" style="display: none"></button>
+    <h3 class="title"><a href="index.html">Apache Flume</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="index.html">Home</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="getinvolved.html">Get Involved</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="download.html">Download</a>
+  </li>
+  <li class="nav-item is-current-page" data-depth="1">
+    <a class="nav-link" href="security.html">Security</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="documentation.html">Documentation</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="FlumeUserGuide.html">Flume User Guide</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="FlumeDeveloperGuide.html">Flume Developer Guide</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="releases/index.html">Releases</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="releases/1.11.0.html">1.11.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="releases/1.10.1.html">1.10.1</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="releases/1.10.0.html">1.10.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="releases/1.9.0.html">1.9.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="releases/1.8.0.html">1.8.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="releases/1.7.0.html">1.7.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="releases/1.6.0.html">1.6.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="releases/1.5.2.html">1.5.2</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="releases/1.5.0.1.html">1.5.0.1</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="releases/1.5.0.html">1.5.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="releases/1.4.0.html">1.4.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="releases/1.3.1.html">1.3.1</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="releases/1.3.0.html">1.3.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="releases/1.2.0.html">1.2.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="releases/1.1.0.html">1.1.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="releases/1.0.0.html">1.0.0</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="flume-spring-boot/index.html">Flume Spring Boot</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="flume-spring-boot/download.html">Download</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="flume-spring-boot/releases/index.html">Releases</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="flume-spring-boot/releases/2.0.0.html">2.0.0</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="flume-spring-boot/source.html">Source</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="team.html">Team</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="mailinglists.html">Mailing Lists</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="source.html">Source Repository</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="subprojects.html">Subprojects</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="testing.html">Testing</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="license.html">License</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">Apache Flume</span>
+    <span class="version"></span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <div class="title"><a href="index.html">Apache Flume</a></div>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="index.html">Apache Flume</a></li>
+    <li><a href="security.html">Security</a></li>
+  </ul>
+</nav>
+<div class="edit-this-page"><a href="file:///home/piotr/workspace/logging/flume/flume-1.x/target/generated-site/antora/modules/ROOT/pages/security.adoc">Edit this Page</a></div>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">Apache Flume Security Vulnerabilities</h1>
+<div class="paragraph">
+<p>This page lists all the security vulnerabilities fixed in released versions of Apache Flume. Each vulnerability is given a security impact rating by the Apache Flume security team. Note that this rating may vary from platform to platform. We also list the versions of Apache Flume the flaw is known to affect, and where a flaw has not been verified list the version with a question mark.</p>
+</div>
+<div class="paragraph">
+<p>Binary patches are never provided. If you need to apply a source code patch, use the building instructions for the Apache Flume version that you are using.</p>
+</div>
+<div class="paragraph">
+<p>If you need help on building or configuring Flume or other help on following the instructions to mitigate the known vulnerabilities listed here, please subscribe to, and send your questions to the public Flume Users mailing list.</p>
+</div>
+<div class="paragraph">
+<p>If you have encountered an unlisted security vulnerability or other unexpected behaviour that has security impact, or if the descriptions here are incomplete, please report them privately to the <a href="mailto:private@flume.apche.org">Flume SecurityTeam</a>. Thank you!</p>
+</div>
+<div class="paragraph">
+<p><strong>Fixed in Flume 1.11.0</strong></p>
+</div>
+<div class="paragraph">
+<p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-42468">CVE-2022-42468</a>: Apache Flume Improper Input Validation (JNDI Injection) in JMSSource.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 54%;">
+<col style="width: 46%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top"><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-42468">CVE-2022-42468</a></th>
+<th class="tableblock halign-left valign-top">Deserialization of Untrusted Data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Severity</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Moderate</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Base CVSS SCore</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">6.6 (AV:N/AC:H/PR:H/UI:N/S:U/C:H/I:H/A:H)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Versions Affected</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Flume 1.4.0 through 1.10.1</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>Description</strong></p>
+</div>
+<div class="paragraph">
+<p>Apache Flume versions 1.4.0 through 1.10.1 are vulnerable to a remote code execution (RCE) attack when a configuration uses a JMS Source with an unsafe providerURL. This issue is fixed by limiting JNDI to allow only the use of the java protocol or no protocol.</p>
+</div>
+<div class="paragraph">
+<p><strong>Mitigation</strong></p>
+</div>
+<div class="paragraph">
+<p>Do not use JMSSource or upgrade to Apache Flume 1.11.0</p>
+</div>
+<div class="paragraph">
+<p><strong>Release Details</strong></p>
+</div>
+<div class="paragraph">
+<p>In release 1.11.0, if a protocol is specified in the providerUrl parameter only the java protocol will be allowed. If no protocol is specified it will also be allowed.</p>
+</div>
+<div class="paragraph">
+<p><strong>Credit</strong></p>
+</div>
+<div class="paragraph">
+<p>This issue was found by nbxiglk.</p>
+</div>
+<div class="paragraph">
+<p><strong>Fixed in Flume 1.10.1</strong></p>
+</div>
+<div class="paragraph">
+<p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-34916">CVE-2022-34916</a>: Apache Flume vulnerable to a JNDI RCE in JMSMessageConsumer.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 54%;">
+<col style="width: 46%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top"><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-34916">CVE-2022-34916</a></th>
+<th class="tableblock halign-left valign-top">Deserialization of Untrusted Data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Severity</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Moderate</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Base CVSS SCore</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">6.6 (AV:N/AC:H/PR:H/UI:N/S:U/C:H/I:H/A:H)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Versions Affected</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Flume 1.4.0 through 1.10.0</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>Description</strong></p>
+</div>
+<div class="paragraph">
+<p>Flume&#8217;s JMSMessageConsumer class can be configured with a destination name. A JNDI lookup is performed on this name without performing an validation. This could result in untrusted data being deserialized.</p>
+</div>
+<div class="paragraph">
+<p><strong>Mitigation</strong></p>
+</div>
+<div class="paragraph">
+<p>Upgrade to Flume 1.10.1.</p>
+</div>
+<div class="paragraph">
+<p>In releases 1.4.0 through 1.10.0 the JMSSource should not be used as it uses JMSMessageConsumer.</p>
+</div>
+<div class="paragraph">
+<p><strong>Release Details</strong></p>
+</div>
+<div class="paragraph">
+<p>In release 1.10.1, if a protocol is specified in the destination name parameter only the java protocol will be allowed. If no protocol is specified it will also be allowed.</p>
+</div>
+<div class="paragraph">
+<p><strong>Credit</strong></p>
+</div>
+<div class="paragraph">
+<p>This issue was found by Frentzen Amaral.</p>
+</div>
+<div class="paragraph">
+<p><strong>Fixed in Flume 1.10.0</strong></p>
+</div>
+<div class="paragraph">
+<p><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-25167">CVE-2022-25167</a>: Apache Flume vulnerable to a JNDI RCE in JMSSource.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<colgroup>
+<col style="width: 54%;">
+<col style="width: 46%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top"><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-25167">CVE-2022-25167</a></th>
+<th class="tableblock halign-left valign-top">Deserialization of Untrusted Data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Severity</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Moderate</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Base CVSS SCore</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">6.6 (AV:N/AC:H/PR:H/UI:N/S:U/C:H/I:H/A:H)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Versions Affected</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Flume 1.4.0 through 1.9.0</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>Description</strong></p>
+</div>
+<div class="paragraph">
+<p>Flume&#8217;s JMSSource class can be configured with a connection factory name. A JNDI lookup is performed on this name without performing an validation. This could result in untrusted data being deserialized.</p>
+</div>
+<div class="paragraph">
+<p><strong>Mitigation</strong></p>
+</div>
+<div class="paragraph">
+<p>Upgrade to Flume 1.10.0.</p>
+</div>
+<div class="paragraph">
+<p>In releases 1.4.0 through 1.9.0 the JMSSource should not be used.</p>
+</div>
+<div class="paragraph">
+<p><strong>Release Details</strong></p>
+</div>
+<div class="paragraph">
+<p>In release 1.10.0, if a protocol is specified in the connection factory parameter only the java protocol will be allowed. If no protocol is specified it will also be allowed.</p>
+</div>
+<div class="paragraph">
+<p><strong>Credit</strong></p>
+</div>
+<div class="paragraph">
+<p>This issue was found by the Flume development team.</p>
+</div>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <p>This page was built using the Antora default UI.</p>
+  <p>The source code for this UI is licensed under the terms of the MPL-2.0 license.</p>
+</footer>
+<script id="site-script" src="../_/js/site.js" data-ui-root-path="../_"></script>
+<script async src="../_/js/vendor/highlight.js"></script>
+  </body>
+</html>

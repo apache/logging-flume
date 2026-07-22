@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Version 1.7.0 :: Apache Flume</title>
+    <link rel="canonical" href="https://logging.apache.org/flume/2.x/flume/releases/1.7.0.html">
+    <meta name="generator" content="Antora 3.1.15">
+    <link rel="stylesheet" href="../../_/css/site.css">
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://logging.apache.org/flume/2.x">Apache Flume</a>
+      <button class="navbar-burger" aria-controls="topbar-nav" aria-expanded="false" aria-label="Toggle main menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="#">Home</a>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Products</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Product A</a>
+            <a class="navbar-item" href="#">Product B</a>
+            <a class="navbar-item" href="#">Product C</a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Services</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Service A</a>
+            <a class="navbar-item" href="#">Service B</a>
+            <a class="navbar-item" href="#">Service C</a>
+          </div>
+        </div>
+        <div class="navbar-item">
+          <span class="control">
+            <a class="button is-primary" href="#">Download</a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="flume" data-version="">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <button class="nav-menu-toggle" aria-label="Toggle expand/collapse all" style="display: none"></button>
+    <h3 class="title"><a href="../index.html">Apache Flume</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../index.html">Home</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getinvolved.html">Get Involved</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../download.html">Download</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../security.html">Security</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../documentation.html">Documentation</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../FlumeUserGuide.html">Flume User Guide</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../FlumeDeveloperGuide.html">Flume Developer Guide</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="index.html">Releases</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.11.0.html">1.11.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.10.1.html">1.10.1</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.10.0.html">1.10.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.9.0.html">1.9.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.8.0.html">1.8.0</a>
+  </li>
+  <li class="nav-item is-current-page" data-depth="2">
+    <a class="nav-link" href="1.7.0.html">1.7.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.6.0.html">1.6.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.5.2.html">1.5.2</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.5.0.1.html">1.5.0.1</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.5.0.html">1.5.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.4.0.html">1.4.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.3.1.html">1.3.1</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.3.0.html">1.3.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.2.0.html">1.2.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.1.0.html">1.1.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.0.0.html">1.0.0</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../flume-spring-boot/index.html">Flume Spring Boot</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../flume-spring-boot/download.html">Download</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../flume-spring-boot/releases/index.html">Releases</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../flume-spring-boot/releases/2.0.0.html">2.0.0</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../flume-spring-boot/source.html">Source</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../team.html">Team</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../mailinglists.html">Mailing Lists</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../source.html">Source Repository</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../subprojects.html">Subprojects</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../testing.html">Testing</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../license.html">License</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">Apache Flume</span>
+    <span class="version"></span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <div class="title"><a href="../index.html">Apache Flume</a></div>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">Apache Flume</a></li>
+    <li><a href="index.html">Releases</a></li>
+    <li><a href="1.7.0.html">1.7.0</a></li>
+  </ul>
+</nav>
+<div class="edit-this-page"><a href="file:///home/piotr/workspace/logging/flume/flume-1.x/target/generated-site/antora/modules/ROOT/pages/releases/1.7.0.adoc">Edit this Page</a></div>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">Version 1.7.0</h1>
+<div class="paragraph">
+<p><strong>Status of this release</strong></p>
+</div>
+<div class="paragraph">
+<p>Apache Flume 1.7.0 is the tenth release of Flume as an Apache top-level project
+(TLP). Apache Flume 1.7.0 is production-ready software.</p>
+</div>
+<div class="paragraph">
+<p><strong>Release Documentation</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="content/1.7.0/FlumeUserGuide.html">Flume 1.7.0 User Guide</a> (also in <a href="content/1.7.0/FlumeUserGuide.pdf">pdf</a>)</p>
+</li>
+<li>
+<p><a href="content/1.7.0/FlumeDeveloperGuide.html">Flume 1.7.0 Developer Guide</a> (also in <a href="content/1.7.0/FlumeDeveloperGuide.pdf">pdf</a>)</p>
+</li>
+<li>
+<p><a href="content/1.7.0/apidocs/index.html">Flume 1.7.0 API Documentation</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>Changes</strong></p>
+</div>
+<div class="paragraph">
+<p>Release Notes - Flume - Version v1.7.0</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">** New Feature</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2498<span class="FLUME-2498">]</span> - Implement Taildir Source</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">** Improvement</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-1899<span class="FLUME-1899">]</span> - Make SpoolDir work with Sub-Directories</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2526<span class="FLUME-2526">]</span> - Build flume by jdk 7 in default</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2628<span class="FLUME-2628">]</span> - Add an optional parameter to specify the expected input text encoding for the netcat sourcef the netcat source</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2704<span class="FLUME-2704">]</span> - Configurable poll delay for spooling directory source</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2718<span class="FLUME-2718">]</span> - HTTP Source to support generic Stream Handler</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2729<span class="FLUME-2729">]</span> - Allow pollableSource backoff times to be configurable</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2755<span class="FLUME-2755">]</span> - Kafka Source reading multiple topics</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2781<span class="FLUME-2781">]</span> - A Kafka Channel defined as parseAsFlumeEvent=false cannot be correctly used by a Flume source</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2799<span class="FLUME-2799">]</span> - Kafka Source - Message Offset and Partition add to headers</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2801<span class="FLUME-2801">]</span> - Performance improvement on TailDir source</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2810<span class="FLUME-2810">]</span> - Add static Schema URL to AvroEventSerializer configuration</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2820<span class="FLUME-2820">]</span> - Support New Kafka APIs</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2852<span class="FLUME-2852">]</span> - Kafka Source/Sink should optionally read/write Flume records</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2868<span class="FLUME-2868">]</span> - Kafka Channel partition topic by key</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2872<span class="FLUME-2872">]</span> - Kafka Sink should be able to select which header as the key</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2875<span class="FLUME-2875">]</span> - Allow RollingFileSink to specify a file prefix and a file extension.</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2909<span class="FLUME-2909">]</span> - Bump Rat version</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2910<span class="FLUME-2910">]</span> - AsyncHBaseSink - Failure callbacks should log the exception that caused them</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2911<span class="FLUME-2911">]</span> - Add includePattern option in SpoolDirectorySource configuration</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2918<span class="FLUME-2918">]</span> - TaildirSource is underperforming with huge parent directories</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2937<span class="FLUME-2937">]</span> - Integrate checkstyle for non-test classes</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2941<span class="FLUME-2941">]</span> - Integrate checkstyle for test classes</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2954<span class="FLUME-2954">]</span> - make raw data appearing in log messages explicit</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2955<span class="FLUME-2955">]</span> - Add file path to the header in TaildirSource</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2959<span class="FLUME-2959">]</span> - Fix issues with flume-checkstyle module</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2982<span class="FLUME-2982">]</span> - Add localhost escape sequence to HDFS sink</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2999<span class="FLUME-2999">]</span> - Kafka channel and sink should enable statically assigned partition per event via header</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2821<span class="FLUME-2821">]</span> - Flume-Kafka Source with new Consumer</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2822<span class="FLUME-2822">]</span> - Flume-Kafka-Sink with new Producer</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2823<span class="FLUME-2823">]</span> - Flume-Kafka-Channel with new APIs</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">** Bug</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-1668<span class="FLUME-1668">]</span> - Hdfs Sink File Rollover</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2132<span class="FLUME-2132">]</span> - Exception while syncing from Flume to HDFS</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2143<span class="FLUME-2143">]</span> - Flume build occasionally fails with OutOfMemoryError on Windows.</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2215<span class="FLUME-2215">]</span> - ResettableFileInputStream can&#8217;t support ucs-4 character</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2318<span class="FLUME-2318">]</span> - SpoolingDirectory is unable to handle empty files</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2448<span class="FLUME-2448">]</span> - Building flume from trunk failing with dependency error</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2484<span class="FLUME-2484">]</span> - NullPointerException in Kafka Sink test</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2485<span class="FLUME-2485">]</span> - Thrift Source tests fail on Oracle JDK 8</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2514<span class="FLUME-2514">]</span> - Some TestFileChannelRestart tests are extremely slow</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2567<span class="FLUME-2567">]</span> - Remove unneeded repository declarations in pom.xml</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2573<span class="FLUME-2573">]</span> - flume-ng --conf parameter is not used when starting a flume agent</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2593<span class="FLUME-2593">]</span> - ResettableFileInputStream returns negate values from read() method</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2619<span class="FLUME-2619">]</span> - Spooldir source does not log channel exceptions</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2632<span class="FLUME-2632">]</span> - High CPU on KafkaSink</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2652<span class="FLUME-2652">]</span> - Documented transaction handling semantics incorrect</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2660<span class="FLUME-2660">]</span> - Add documentation for EventValidator</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2672<span class="FLUME-2672">]</span> - NPE in KafkaSourceCounter</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2712<span class="FLUME-2712">]</span> - Optional channel errors slows down the Source to Main channel event rate</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2725<span class="FLUME-2725">]</span> - HDFS Sink does not use configured timezone for rounding</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2732<span class="FLUME-2732">]</span> - Make maximum tolerated failures before shutting down and recreating client in AsyncHbaseSink configurable</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2734<span class="FLUME-2734">]</span> - Kafka Channel timeout property is overridden by default value</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2738<span class="FLUME-2738">]</span> - Async HBase sink FD leak on client shutdown</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2746<span class="FLUME-2746">]</span> - How to include this Flume Patch in Flume 1.5.2 ?</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2749<span class="FLUME-2749">]</span> - Kerberos configuration error when using short names in multiple HDFS Sinks</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2751<span class="FLUME-2751">]</span> - Upgrade Derby version to 10.11.1.1</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2753<span class="FLUME-2753">]</span> - Error when specifying empty replace string in Search and Replace Interceptor</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2754<span class="FLUME-2754">]</span> - Hive Sink skipping first transaction in each Batch of Hive Transactions</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2761<span class="FLUME-2761">]</span> - Move Hive sink out of preview mode</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2763<span class="FLUME-2763">]</span> - flume_env script should handle jvm parameters like -javaagent -agentpath -agentlib</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2773<span class="FLUME-2773">]</span> - TailDirSource throws FileNotFound Exception if ~/.flume directory is not created already</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2797<span class="FLUME-2797">]</span> - SyslogTcpSource uses Deprecated Class &#43; Deprecate SyslogTcpSource</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2798<span class="FLUME-2798">]</span> - Malformed Syslog messages can lead to OutOfMemoryException</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2804<span class="FLUME-2804">]</span> - Hive sink - abort remaining transactions on shutdown</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2806<span class="FLUME-2806">]</span> - flume-ng.ps1 Error running script to start an agent on Windows</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2835<span class="FLUME-2835">]</span> - Hive Sink tests need to create table with transactional property set</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2841<span class="FLUME-2841">]</span> - Upgrade commons-collections to 3.2.2</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2844<span class="FLUME-2844">]</span> - ChannelCounter of SpillableMemoryChannel doesn&#8217;t register actually.</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2881<span class="FLUME-2881">]</span> - Windows Launch Script fails in plugins dir code</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2886<span class="FLUME-2886">]</span> - Optional Channels can cause OOMs</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2889<span class="FLUME-2889">]</span> - Fixes to DateTime computations</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2891<span class="FLUME-2891">]</span> - Revert FLUME-2712 and FLUME-2886</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2897<span class="FLUME-2897">]</span> - AsyncHBase sink NPE when Channel.getTransaction() fails</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2901<span class="FLUME-2901">]</span> - Document Kerberos setup for Kafka channel</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2908<span class="FLUME-2908">]</span> - NetcatSource - SocketChannel not closed when session is broken</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2913<span class="FLUME-2913">]</span> - Flume classpath too long</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2915<span class="FLUME-2915">]</span> - The kafka channel using new APIs will be stuck when the sink is avro sink</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2920<span class="FLUME-2920">]</span> - Kafka Channel Should Not Commit Offsets When Stopping</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2922<span class="FLUME-2922">]</span> - HDFSSequenceFile Should Sync Writer</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2923<span class="FLUME-2923">]</span> - Bump AsyncHBase version</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2936<span class="FLUME-2936">]</span> - KafkaSource tests arbitrarily fail</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2939<span class="FLUME-2939">]</span> - Upgrade recursive SpoolDir to use Java7 features</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2948<span class="FLUME-2948">]</span> - Docs: Fixed parameters on Replicating Channel Selector documentation example</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2949<span class="FLUME-2949">]</span> - Flume fails to build on Windows</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2950<span class="FLUME-2950">]</span> - ReliableSpoolingFileEventReader.rollCurrentFile is broken</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2952<span class="FLUME-2952">]</span> - SyslogAgent possible NPE on stop()</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2972<span class="FLUME-2972">]</span> - Handle offset migration in the new Kafka Channel</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2974<span class="FLUME-2974">]</span> - Some tests are broken in TestReliableSpoolingFileEventReader and TestSpoolingFileLineReader</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2983<span class="FLUME-2983">]</span> - Handle offset migration in the new Kafka Source</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">** Documentation</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2575<span class="FLUME-2575">]</span> - FLUME-2548 brings SSLv2Hello back for Avro Sink, but UG says it is one of the protocols to exclude</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2713<span class="FLUME-2713">]</span> - Document Fault Tolerant Config parameters in FlumeUserGuide</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2737<span class="FLUME-2737">]</span> - Documentation for Pollable Source config parameters introduced in FLUME-2729</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2783<span class="FLUME-2783">]</span> - Update Website Team page with new Committer&#8217;s</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2890<span class="FLUME-2890">]</span> - Typo in Twitter source warning</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2934<span class="FLUME-2934">]</span> - Document new cachePatternMatching option for TaildirSource</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2963<span class="FLUME-2963">]</span> - FlumeUserGuide - error in Kafka Source properties table</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2971<span class="FLUME-2971">]</span> - Document secure Kafka Sink/Source/Channel setup</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2975<span class="FLUME-2975">]</span> - Minor mistake in NetCat Source example in documentation</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2998<span class="FLUME-2998">]</span> - Add missing configuration parameter to SequenceSource docs</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">** Task</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2935<span class="FLUME-2935">]</span> - Bump java target version to 1.7</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">** Test</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3003<span class="FLUME-3003">]</span> - testSourceCounter in TestSyslogUdpSource is flaky</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <p>This page was built using the Antora default UI.</p>
+  <p>The source code for this UI is licensed under the terms of the MPL-2.0 license.</p>
+</footer>
+<script id="site-script" src="../../_/js/site.js" data-ui-root-path="../../_"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+  </body>
+</html>

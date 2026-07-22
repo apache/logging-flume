@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Version 1.0.0 - Incubating :: Apache Flume</title>
+    <link rel="canonical" href="https://logging.apache.org/flume/2.x/flume/releases/1.0.0.html">
+    <meta name="generator" content="Antora 3.1.15">
+    <link rel="stylesheet" href="../../_/css/site.css">
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://logging.apache.org/flume/2.x">Apache Flume</a>
+      <button class="navbar-burger" aria-controls="topbar-nav" aria-expanded="false" aria-label="Toggle main menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="#">Home</a>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Products</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Product A</a>
+            <a class="navbar-item" href="#">Product B</a>
+            <a class="navbar-item" href="#">Product C</a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Services</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Service A</a>
+            <a class="navbar-item" href="#">Service B</a>
+            <a class="navbar-item" href="#">Service C</a>
+          </div>
+        </div>
+        <div class="navbar-item">
+          <span class="control">
+            <a class="button is-primary" href="#">Download</a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="flume" data-version="">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <button class="nav-menu-toggle" aria-label="Toggle expand/collapse all" style="display: none"></button>
+    <h3 class="title"><a href="../index.html">Apache Flume</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../index.html">Home</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getinvolved.html">Get Involved</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../download.html">Download</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../security.html">Security</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../documentation.html">Documentation</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../FlumeUserGuide.html">Flume User Guide</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../FlumeDeveloperGuide.html">Flume Developer Guide</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="index.html">Releases</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.11.0.html">1.11.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.10.1.html">1.10.1</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.10.0.html">1.10.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.9.0.html">1.9.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.8.0.html">1.8.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.7.0.html">1.7.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.6.0.html">1.6.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.5.2.html">1.5.2</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.5.0.1.html">1.5.0.1</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.5.0.html">1.5.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.4.0.html">1.4.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.3.1.html">1.3.1</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.3.0.html">1.3.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.2.0.html">1.2.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.1.0.html">1.1.0</a>
+  </li>
+  <li class="nav-item is-current-page" data-depth="2">
+    <a class="nav-link" href="1.0.0.html">1.0.0</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../flume-spring-boot/index.html">Flume Spring Boot</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../flume-spring-boot/download.html">Download</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../flume-spring-boot/releases/index.html">Releases</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../flume-spring-boot/releases/2.0.0.html">2.0.0</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../flume-spring-boot/source.html">Source</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../team.html">Team</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../mailinglists.html">Mailing Lists</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../source.html">Source Repository</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../subprojects.html">Subprojects</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../testing.html">Testing</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../license.html">License</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">Apache Flume</span>
+    <span class="version"></span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <div class="title"><a href="../index.html">Apache Flume</a></div>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">Apache Flume</a></li>
+    <li><a href="index.html">Releases</a></li>
+    <li><a href="1.0.0.html">1.0.0</a></li>
+  </ul>
+</nav>
+<div class="edit-this-page"><a href="file:///home/piotr/workspace/logging/flume/flume-1.x/target/generated-site/antora/modules/ROOT/pages/releases/1.0.0.adoc">Edit this Page</a></div>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">Version 1.0.0 - Incubating</h1>
+<div class="paragraph">
+<p><strong>Status of this release</strong></p>
+</div>
+<div class="paragraph">
+<p>This release is the first release of Apache Flume within the Apache
+Incubator, and is labelled and should be considered as a beta version.</p>
+</div>
+<div class="paragraph">
+<p><strong>Release Documentation</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="content/1.0.0-incubating/apidocs/index.html">API Documentation</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>Changes</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p></p>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Bug</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>[FLUME-830] - flume uber jar is missing files from flume-file-channel project</p>
+</li>
+<li>
+<p>[FLUME-831] - flume-jdbc-channel project has unnecessary direct dependency on log4j API</p>
+</li>
+<li>
+<p>[FLUME-833] - Audit Direct Library Deps for Flume NG</p>
+</li>
+<li>
+<p>[FLUME-835] - Issues during clean build of Flume NG</p>
+</li>
+<li>
+<p>[FLUME-850] - Upgrade the version of Hadoop we use for HDFS sink</p>
+</li>
+<li>
+<p>[FLUME-858] - HDFSWriterFactory is using operation == for string comparison</p>
+</li>
+<li>
+<p>[FLUME-863] - Use of unknown sink type leads to NullPointerException</p>
+</li>
+<li>
+<p>[FLUME-868] - RAT checks fail on builds.apache.org due to local maven repo</p>
+</li>
+<li>
+<p>[FLUME-869] - JDBC channel tests leave derby.log in module directory</p>
+</li>
+<li>
+<p>[FLUME-870] - LoggerSink contains two calls to Transaction#commit()</p>
+</li>
+<li>
+<p>[FLUME-880] - HDFSFormatterFactory is using == operator for String objects</p>
+</li>
+<li>
+<p>[FLUME-887] - Add maven assembly to build a source only artifact</p>
+</li>
+<li>
+<p>[FLUME-891] - flume-ng script doesn&#8217;t build the classpath properly</p>
+</li>
+<li>
+<p>[FLUME-894] - Add log4j as part of the build</p>
+</li>
+<li>
+<p>[FLUME-898] - Create DISCLAIMER file for Flume project</p>
+</li>
+<li>
+<p>[FLUME-900] - RELEASENOTES file needs to be ignored by RAT</p>
+</li>
+<li>
+<p>[FLUME-902] - Remove thrift references in NG build</p>
+</li>
+<li>
+<p>[FLUME-903] - Update project metadata in main pom</p>
+</li>
+<li>
+<p>[FLUME-904] - Update plugin and dependency repos referenced in the main pom</p>
+</li>
+<li>
+<p>[FLUME-905] - ExecSource silently fails after first transaction with channel</p>
+</li>
+<li>
+<p>[FLUME-906] - Maven Avro plugin missing an entry in plugin dep management</p>
+</li>
+<li>
+<p>[FLUME-907] - Maven assembly missing CHANGELOG and other misc files</p>
+</li>
+<li>
+<p>[FLUME-908] - Clean out old bin and conf contents</p>
+</li>
+<li>
+<p>[FLUME-909] - org.apache.flume.node.TestAbstractLogicalNodeManager is failing on some machines</p>
+</li>
+<li>
+<p>[FLUME-910] - Typo in maven avro plugin groupId in plugin dep management</p>
+</li>
+<li>
+<p>[FLUME-911] - README should reference Apache Flume rather than just Flume</p>
+</li>
+<li>
+<p>[FLUME-912] - DEVNOTES contains outdated info</p>
+</li>
+<li>
+<p>[FLUME-913] - slf4j-log4j binding is excluded from the dist assembly due to test scope</p>
+</li>
+<li>
+<p>[FLUME-915] - Incorrect license information in various files</p>
+</li>
+<li>
+<p>[FLUME-916] - DISCLAIMER file has an incorrect URL</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</li>
+<li>
+<p></p>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Improvement</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>[FLUME-846] - Bump Avro version to 1.6.x</p>
+</li>
+<li>
+<p>[FLUME-867] - Pollable source and sink runners should reduce poll interval after several BACKOFFs</p>
+</li>
+<li>
+<p>[FLUME-871] - HDFS sink needs to handle blocked/hung append operation</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</li>
+<li>
+<p></p>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Question</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>[FLUME-856] - Move data across hosts</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</li>
+<li>
+<p></p>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Task</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>[FLUME-876] - Update README, NOTICE, LICENSE, and DEVNOTES files</p>
+</li>
+<li>
+<p>[FLUME-878] - Write release-ready Maven assembly descriptor</p>
+</li>
+<li>
+<p>[FLUME-879] - Document Flume&#8217;s ASF release process</p>
+</li>
+<li>
+<p>[FLUME-885] - Set version number of project to 1.0.0-SNAPSHOT for NG branch</p>
+</li>
+<li>
+<p>[FLUME-899] - Add Release notes</p>
+</li>
+<li>
+<p>[FLUME-901] - Make Flume NG build and pass tests against Hadoop 0.23 branch</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Release Notes - Flume - Version NG alpha 2 - 20111107</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p></p>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Bug</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>[FLUME-773] - ExecSource doesn&#8217;t rollback transactions on errors</p>
+</li>
+<li>
+<p>[FLUME-805] - HDFS sink should mangle the names of incomplete files till they are closed</p>
+</li>
+<li>
+<p>[FLUME-815] - Test json config file has missing bind property</p>
+</li>
+<li>
+<p>[FLUME-816] - TestJdbcChannelProvider throws OOME based on RNG values</p>
+</li>
+<li>
+<p>[FLUME-817] - JdbcChannel can not be created by DefaultChannelFactory</p>
+</li>
+<li>
+<p>[FLUME-818] - PropertiesFileConfigurationProvider doesn&#8217;t properly log exceptions</p>
+</li>
+<li>
+<p>[FLUME-822] - JDBC channel lock acquisition failure during take()</p>
+</li>
+<li>
+<p>[FLUME-823] - The properties configuration provider should fail if the configuration file is not found</p>
+</li>
+<li>
+<p>[FLUME-825] - Need to remove dependency on hadoop core from flume-ng-core project</p>
+</li>
+<li>
+<p>[FLUME-827] - Avro client conn failure results in 60-second wait before terminating</p>
+</li>
+<li>
+<p>[FLUME-848] - Typo is TestHDFSEventSink path</p>
+</li>
+<li>
+<p>[FLUME-861] - AvroSource is failing on ClosedChannelException</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</li>
+<li>
+<p></p>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Improvement</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>[FLUME-819] - JDBC channel plugin is not registered with Flume node</p>
+</li>
+<li>
+<p>[FLUME-820] - JDBC channel should support capacity specification.</p>
+</li>
+<li>
+<p>[FLUME-821] - Derby schema handler should create the necessary indexes for fast lookups.</p>
+</li>
+<li>
+<p>[FLUME-826] - Update libs</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</li>
+<li>
+<p></p>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">New Feature</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>[FLUME-775] - Support text output</p>
+</li>
+<li>
+<p>[FLUME-814] - Add support for multiple channels to sources</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</li>
+<li>
+<p></p>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Task</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>[FLUME-812] - Enable Apache RAT checks during Maven build</p>
+</li>
+<li>
+<p>[FLUME-866] - Remove old plugins and log4j appender</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Release Notes - Flume - Version NG alpha 1 - 20111021</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p></p>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Sub-task</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>[FLUME-737] - Port Flume OG sources and sinks to NG interfaces</p>
+</li>
+<li>
+<p>[FLUME-739] - Create NG node configuration components</p>
+</li>
+<li>
+<p>[FLUME-747] - Create NG command line launchers and daemon infrastructure</p>
+</li>
+<li>
+<p>[FLUME-760] - Implement JDBC based channel implementation</p>
+</li>
+<li>
+<p>[FLUME-761] - Implement HDFS Flume NG sink</p>
+</li>
+<li>
+<p>[FLUME-777] - Support text output for HDFS sink</p>
+</li>
+<li>
+<p>[FLUME-795] - Replace the non-transactional memory channel with new transactional memory channel</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</li>
+<li>
+<p></p>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Bug</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>[FLUME-769] - FLUME-728 - TestJsonFileConfigurationProvider fails due to timing issue</p>
+</li>
+<li>
+<p>[FLUME-784] - MemoryChannel should poll with timeout on take() rather than block indefinitely</p>
+</li>
+<li>
+<p>[FLUME-788] - Add more test cases to Flume-NG HDFS test</p>
+</li>
+<li>
+<p>[FLUME-803] - support re-entrant transaction for memory channel</p>
+</li>
+<li>
+<p>[FLUME-806] - Fix cast exception in MemoryChannel due to config type changes</p>
+</li>
+<li>
+<p>[FLUME-807] - Fix tests broken by FLUME-802 changes</p>
+</li>
+<li>
+<p>[FLUME-809] - Fix channel syntax javadoc bug in PropertiesFileConfigurationProvider</p>
+</li>
+<li>
+<p>[FLUME-811] - Remove logging of avro client that causes errors with proxy object methods</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</li>
+<li>
+<p></p>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Epic</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>[FLUME-728] - Flume NG refactoring</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</li>
+<li>
+<p></p>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Improvement</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>[FLUME-772] - MemoryChannel should push events back into channel on rollback</p>
+</li>
+<li>
+<p>[FLUME-774] - Move HDFS sink into a separate module</p>
+</li>
+<li>
+<p>[FLUME-781] - Add error checking to AvroCLICilent</p>
+</li>
+<li>
+<p>[FLUME-782] - Instrument AvroSource with counters</p>
+</li>
+<li>
+<p>[FLUME-783] - Add a batch event RPC call to AvroSource</p>
+</li>
+<li>
+<p>[FLUME-804] - Support help and node name arguments from the command line</p>
+</li>
+<li>
+<p>[FLUME-810] - Add help command line options to AvroCLIClient</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</li>
+<li>
+<p></p>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">New Feature</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>[FLUME-771] - Implement NG Avro source</p>
+</li>
+<li>
+<p>[FLUME-778] - Implement NG Avro sink</p>
+</li>
+<li>
+<p>[FLUME-779] - Create an Avro CLI for sending data to the Avro source</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</li>
+<li>
+<p></p>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Task</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>[FLUME-780] - Reduce default log levels for chatty libraries</p>
+</li>
+<li>
+<p>[FLUME-785] - Write javadoc for builtin channels</p>
+</li>
+<li>
+<p>[FLUME-786] - Write javadoc for builtin sources</p>
+</li>
+<li>
+<p>[FLUME-787] - Write javadoc for builtin sinks</p>
+</li>
+<li>
+<p>[FLUME-801] - Write NG getting started guide</p>
+</li>
+<li>
+<p>[FLUME-802] - Complete PropertyFileConfigurationProvider implementation</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</li>
+</ul>
+</div>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <p>This page was built using the Antora default UI.</p>
+  <p>The source code for this UI is licensed under the terms of the MPL-2.0 license.</p>
+</footer>
+<script id="site-script" src="../../_/js/site.js" data-ui-root-path="../../_"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+  </body>
+</html>

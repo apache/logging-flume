@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Version 1.10.0 :: Apache Flume</title>
+    <link rel="canonical" href="https://logging.apache.org/flume/2.x/flume/releases/1.10.0.html">
+    <meta name="generator" content="Antora 3.1.15">
+    <link rel="stylesheet" href="../../_/css/site.css">
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a class="navbar-item" href="https://logging.apache.org/flume/2.x">Apache Flume</a>
+      <button class="navbar-burger" aria-controls="topbar-nav" aria-expanded="false" aria-label="Toggle main menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+    <div id="topbar-nav" class="navbar-menu">
+      <div class="navbar-end">
+        <a class="navbar-item" href="#">Home</a>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Products</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Product A</a>
+            <a class="navbar-item" href="#">Product B</a>
+            <a class="navbar-item" href="#">Product C</a>
+          </div>
+        </div>
+        <div class="navbar-item has-dropdown is-hoverable">
+          <a class="navbar-link" href="#">Services</a>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="#">Service A</a>
+            <a class="navbar-item" href="#">Service B</a>
+            <a class="navbar-item" href="#">Service C</a>
+          </div>
+        </div>
+        <div class="navbar-item">
+          <span class="control">
+            <a class="button is-primary" href="#">Download</a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body">
+<div class="nav-container" data-component="flume" data-version="">
+  <aside class="nav">
+    <div class="panels">
+<div class="nav-panel-menu is-active" data-panel="menu">
+  <nav class="nav-menu">
+    <button class="nav-menu-toggle" aria-label="Toggle expand/collapse all" style="display: none"></button>
+    <h3 class="title"><a href="../index.html">Apache Flume</a></h3>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../index.html">Home</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../getinvolved.html">Get Involved</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../download.html">Download</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../security.html">Security</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../documentation.html">Documentation</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../FlumeUserGuide.html">Flume User Guide</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../FlumeDeveloperGuide.html">Flume Developer Guide</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="index.html">Releases</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.11.0.html">1.11.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.10.1.html">1.10.1</a>
+  </li>
+  <li class="nav-item is-current-page" data-depth="2">
+    <a class="nav-link" href="1.10.0.html">1.10.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.9.0.html">1.9.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.8.0.html">1.8.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.7.0.html">1.7.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.6.0.html">1.6.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.5.2.html">1.5.2</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.5.0.1.html">1.5.0.1</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.5.0.html">1.5.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.4.0.html">1.4.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.3.1.html">1.3.1</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.3.0.html">1.3.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.2.0.html">1.2.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.1.0.html">1.1.0</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="1.0.0.html">1.0.0</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../flume-spring-boot/index.html">Flume Spring Boot</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../flume-spring-boot/download.html">Download</a>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <button class="nav-item-toggle"></button>
+    <a class="nav-link" href="../flume-spring-boot/releases/index.html">Releases</a>
+<ul class="nav-list">
+  <li class="nav-item" data-depth="3">
+    <a class="nav-link" href="../flume-spring-boot/releases/2.0.0.html">2.0.0</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="2">
+    <a class="nav-link" href="../flume-spring-boot/source.html">Source</a>
+  </li>
+</ul>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../team.html">Team</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../mailinglists.html">Mailing Lists</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../source.html">Source Repository</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../subprojects.html">Subprojects</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../testing.html">Testing</a>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <a class="nav-link" href="../license.html">License</a>
+  </li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</div>
+<div class="nav-panel-explore" data-panel="explore">
+  <div class="context">
+    <span class="title">Apache Flume</span>
+    <span class="version"></span>
+  </div>
+  <ul class="components">
+    <li class="component is-current">
+      <div class="title"><a href="../index.html">Apache Flume</a></div>
+    </li>
+  </ul>
+</div>
+    </div>
+  </aside>
+</div>
+<main class="article">
+<div class="toolbar" role="navigation">
+<button class="nav-toggle"></button>
+  <a href="../index.html" class="home-link"></a>
+<nav class="breadcrumbs" aria-label="breadcrumbs">
+  <ul>
+    <li><a href="../index.html">Apache Flume</a></li>
+    <li><a href="index.html">Releases</a></li>
+    <li><a href="1.10.0.html">1.10.0</a></li>
+  </ul>
+</nav>
+<div class="edit-this-page"><a href="file:///home/piotr/workspace/logging/flume/flume-1.x/target/generated-site/antora/modules/ROOT/pages/releases/1.10.0.adoc">Edit this Page</a></div>
+</div>
+  <div class="content">
+<aside class="toc sidebar" data-title="Contents" data-levels="2">
+  <div class="toc-menu"></div>
+</aside>
+<article class="doc">
+<h1 class="page">Version 1.10.0</h1>
+<div class="paragraph">
+<p><strong>Status of this release</strong></p>
+</div>
+<div class="paragraph">
+<p>Apache Flume 1.10.0 is the twelfth release of Flume as an Apache top-level project
+(TLP). Apache Flume 1.10.0 is production-ready software.</p>
+</div>
+<div class="paragraph">
+<p><strong>Release Documentation</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="content/1.10.0/FlumeUserGuide.html">Flume 1.10.0 User Guide</a> (also in <a href="content/1.10.0/FlumeUserGuide.pdf">pdf</a>)</p>
+</li>
+<li>
+<p><a href="content/1.10.0/FlumeDeveloperGuide.html">Flume 1.10.0 Developer Guide</a> (also in <a href="content/1.10.0/FlumeDeveloperGuide.pdf">pdf</a>)</p>
+</li>
+<li>
+<p><a href="content/1.10.0/apidocs/index.html">Flume 1.10.0 API Documentation</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>Changes</strong></p>
+</div>
+<div class="paragraph">
+<p>Release Notes - Flume - Version v1.10.0</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">** Bug</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3151<span class="FLUME-3151">]</span> - Upgrade Hadoop to 2.10.1</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3311<span class="FLUME-3311">]</span> - Update Wrong Use In HDFS Sink</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3316<span class="FLUME-3316">]</span> - Syslog Rfc3164Date test fails when the test date falls on a leap day</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3328<span class="FLUME-3328">]</span> - Fix Deprecated Properties table of HDFS Sink</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3356<span class="FLUME-3356">]</span> - Probable security issue in Flume</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3360<span class="FLUME-3360">]</span> - Maven assemble failed on macOS</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3395<span class="FLUME-3395">]</span> - Fix for CVE-2021-44228</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3407<span class="FLUME-3407">]</span> - workaround for jackson-mapper-asl-1.9.13.jar @ flume-ng</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3409<span class="FLUME-3409">]</span> - upgrade httpclient due to cve</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3416<span class="FLUME-3416">]</span> - Improve input validation</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3421<span class="FLUME-3421">]</span> - Default log4j settings do not log to console after FLUME-2050</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3426<span class="FLUME-3426">]</span> - Unresolved Security Issues</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">** New Feature</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3412<span class="FLUME-3412">]</span> - Add LoadBalancingChannelSelector</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">** Improvement</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-199<span class="FLUME-199">]</span> - Unit tests should hunt for available ports if defaults are in use</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-2050<span class="FLUME-2050">]</span> - Upgrade to log4j2 (when GA)</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3045<span class="FLUME-3045">]</span> - Document GitHub Pull Requests in How to Contribute Guide</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3335<span class="FLUME-3335">]</span> - Support configuration and reconfiguration via HTTP(S)</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3338<span class="FLUME-3338">]</span> - Doc Flume Recoverability with Kafka</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3363<span class="FLUME-3363">]</span> - CVE-2019-20445</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3368<span class="FLUME-3368">]</span> - Update Jackson to 2.9.10</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3389<span class="FLUME-3389">]</span> - Build and test Apache Flume on ARM64 CPU architecture</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3397<span class="FLUME-3397">]</span> - Upgrade Log4 to 2.17.1 and SLF4J to 1.7.32</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3398<span class="FLUME-3398">]</span> - Upgrade Kafka to a supported version.</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3399<span class="FLUME-3399">]</span> - Update Jackson to 2.13.1</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3403<span class="FLUME-3403">]</span> - The parquet-avro version used by flume is 1.4.1, which is vulnerable.</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3405<span class="FLUME-3405">]</span> - Reopened - The parquet-avro version used by flume is 1.4.1, which is vulnerable.</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3413<span class="FLUME-3413">]</span> - Add "initialization" phase to components.</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">** Wish</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3400<span class="FLUME-3400">]</span> - Upgrade commons-io to 2.11.0</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">** Task</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3401<span class="FLUME-3401">]</span> - Remove Kite Dataset Sink</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3402<span class="FLUME-3402">]</span> - remove org.codehaus.jackson dependencies</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3404<span class="FLUME-3404">]</span> - Update Commons CLI to 1.5.0, Commons Codec to 1.15, Commons Compress to 1.21 and Commons Lang to 2.6</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3410<span class="FLUME-3410">]</span> - upgrade hbase version</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3411<span class="FLUME-3411">]</span> - upgrade hive sink to 1.2.2</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3417<span class="FLUME-3417">]</span> - Remove Elasticsearch sink that requires Elasticsearch 0.90.1</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3419<span class="FLUME-3419">]</span> - Review project LICENSE and NOTICE</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3424<span class="FLUME-3424">]</span> - Upgrade Twitter4j to version 4.0.7&#43;</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">** Dependency upgrade</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3339<span class="FLUME-3339">]</span> - Remove Xerces and Xalan dependencies</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3385<span class="FLUME-3385">]</span> - flume-ng-sdk uses Avro-IPC version with vulnerable version of Jetty</p>
+</li>
+<li>
+<p>[https://issues.apache.org/jira/browse/FLUME-3386<span class="FLUME-3386">]</span> - flume-ng-sdk uses vulnerable version of netty</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</article>
+  </div>
+</main>
+</div>
+<footer class="footer">
+  <p>This page was built using the Antora default UI.</p>
+  <p>The source code for this UI is licensed under the terms of the MPL-2.0 license.</p>
+</footer>
+<script id="site-script" src="../../_/js/site.js" data-ui-root-path="../../_"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+  </body>
+</html>
