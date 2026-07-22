@@ -25,5 +25,7 @@ nb-configuration.xml
 # Maven extensions
 .mvn/extensions.xml
 
-# Node dependencies
+# Node.js and dependencies
 /node_modules/
+/node/
+

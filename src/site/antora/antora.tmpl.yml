@@ -15,30 +15,9 @@
 # limitations under the License.
 #
 
-site:
-  title: Apache Flume
-  url: "https://logging.apache.org/flume/2.x"
-  start_page: "flume::index.adoc"
-
-content:
-  sources:
-    - url: .
-      branches: HEAD
-      start_paths:
-        # Generated during the `pre-site` phase from `src/site/antora`, see the `antora` profile of `logging-parent`
-        - target/generated-site/antora
-      edit_url:
-
-asciidoc:
-  attributes:
-    tabs-sync-option: true
-  extensions:
-    - "@asciidoctor/tabs"
-
-ui:
-  bundle:
-    url: "https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/HEAD/raw/build/ui-bundle.zip?job=bundle-stable"
-    snapshot: true
-
-output:
-  dir: ./target/site
+name: flume
+title: Apache Flume
+version: ~
+start_page: index.adoc
+nav:
+  - modules/ROOT/nav.adoc
