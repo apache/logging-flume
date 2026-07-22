@@ -19,7 +19,7 @@
 * xref:getinvolved.adoc[Get Involved]
 * xref:download.adoc[Download]
 * xref:security.adoc[Security]
-* xref:documentation.adoc[Documentation]
+* Documentation
 ** xref:FlumeUserGuide.adoc[Flume User Guide]
 ** xref:FlumeDeveloperGuide.adoc[Flume Developer Guide]
 * xref:releases/index.adoc[Releases]
