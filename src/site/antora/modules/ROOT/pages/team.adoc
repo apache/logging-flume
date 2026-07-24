@@ -17,59 +17,122 @@
 
 = Team
 
-____
-A successful project requires many people to play many different roles. Some members write code or documentation,
-while others are valuable as testers, submitting patches and suggestions.
+A successful project requires many people to play many different roles.
+Some write code or documentation, while others test releases, report problems, or contribute patches and ideas.
+All contributions are greatly appreciated, and you can xref:getinvolved.adoc[get involved] today.
 
-The team is comprised of Members, Committers and Contributors. Members are responsible for making project management
-decisions, voting on releases as well as acting as Committers. Committers have direct access to the source code and
-actively evolve the codebase. Contributors improve the project through submission of patches and suggestions
-to the Members. The number of Contributors to the project is unbounded. Get involved today. All contributions
-to the project are greatly appreciated.
+Apache Flume has been maintained by the
+https://logging.apache.org/[Apache Logging Services] project
+since March 2024, when the Apache Flume Project Management Committee (PMC) was dissolved and Logging Services adopted the project.
+The current maintainers are listed on the
+https://logging.apache.org/team-list.html[Apache Logging Services team] page.
 
-The following individuals are recognized as currently active PMC Members or Project Committers.
-____
+== Contributors
 
-[width="100%",cols="30%,25%,20%,25%",options="header",]
-|===
-|Name |Email |Id |Role
-|Ashish Paliwal |apaliwal at apache.org |apaliwal |Committer
-|Balázs Donát Bessenyei |bessbd at apache.org |bessbd |PMC Chair
-|Mike Percy |mpercy at apache.org |mpercy |PMC Member
-|Ralph Goers |rgoers at apache.org |rgoers |PMC Member
-|Sean Busbey |busbey at apache.org |busbey |Committer
-|Tristan Stevens |tristan at apache.org |tristan |PMC Member
-|===
+A hand-curated list of contributors is never complete, and someone always ends up omitted unintentionally.
+For this reason we do *not* maintain an official list of contributors:
+the Git history is the authoritative record, and only the exceptions are listed below.
 
-The following individuals are recognized as former PMC Members or Project Committers
+To see the full list of contributors, run the following command on a clone of the
+https://github.com/apache/logging-flume[source repository]:
 
-[width="100%",cols="29%,26%,15%,15%,15%",options="header",]
-|===
-|Name |Email |Id |Role |Status
-|Aaron Kimball |kimballa at apache.org |kimballa |PMC Member |Last active 2011
-|Ahmed Radwan |ahmed at apache.org |ahmed |PMC Member |Last active 2019
-|Andrew Bayer |abayer at apache.org |abayer |PMC Member |Last active 2015
-|Arvind Prabhakar |arvind at apache.org |arvind |PMC Member |Requested to be inactive in 2023
-|Brock Noland |brock at apache.org |brock |PMC Member |Last active 2019
-|Bruce Mitchener |brucem at apache.org |brucem |PMC Member |Last active - project creation
-|Denes Arvay |denes at apache.org |denes |PMC Member |Last active 2020
-|Derek Deeter |ddeeter at apache.org |ddeeter |PMC Member |Last active - project creation
-|Eric Sammer |esammer at apache.org |esammer |PMC Member |Last active 2017
-|Hari Shreedharan |hshreedharan at apache.org |hshreedharan |PMC Member |Emeritus 2022
-|Henry Robinson |henry at apache.org |henry |PMC Member |Last active - project creation
-|Jaroslav Cecho |jarcec at apache.org |jarcec |PMC Member |Last active 2020
-|Johny Rufus |johnyrufus at apache.org |johnyrufus |Committer |Last active 2017
-|Jonathan Hsieh |jmhsieh at apache.org |jmhsieh |PMC Member |Last active 2020
-|Juhani Connolly |juhanic at apache.org |juhanic |PMC Member |Last active 2020
-|Mingjie Lai |mlai at apache.org |mlai |PMC Member |Last active 2012
-|Mubarak Seyed |mubarak at apache.org |mubarak |Committer |Last active 2017
-|Nick Verbeck |nerdynick at apache.org |nerdynick |PMC Member |Last active 2011
-|Patrick Hunt |phunt at apache.org |phunt |PMC Member |Last active 2012
-|Patrick Wendell |pwendell at apache.org |pwendell |Committer |Last active 2015
-|Prasad Mujumdar |prasadm at apache.org |prasadm |PMC Member |Last active 2015
-|Roshan Naik |roshannaik at apache.org |roshannaik |PMC Member |Last active 2017
-|Attila Simon |sati at apache.org |sati |Committer |Last active 2017
-|Ferenc Szabo |szaboferee at apache.org |szaboferee |Committer |Last active 2019
-|Wolfgang Hoschek |whoschek at apache.org |whoschek |Committer |Last active 2016
-|Will McQueen |will at apache.org |will |PMC Member |Last active 2017
-|===
+[source,bash]
+----
+git shortlog --summary --numbered
+----
+
+or browse
+https://github.com/apache/logging-flume/graphs/contributors[the list computed by GitHub].
+
+As usual, praise should go to these people, while blame should go to the
+https://logging.apache.org/team-list.html[current maintainers].
+
+The individuals mentioned below are the exceptions:
+those who climbed higher on the
+https://community.apache.org/contributor-ladder.html[ASF contributor ladder]
+and those whose contributions are not recorded in the Git history.
+
+=== Apache Flume PMC (2012-2024)
+
+Apache Flume became a top-level Apache project in June 2012 and was governed by its own PMC until March 2024.
+
+[NOTE]
+====
+Names marked with an asterisk (*) will not appear in the contributor lists generated from the Git history.
+====
+
+When Apache Logging Services adopted the project, the following PMC members joined the Logging Services team
+and are listed on its
+https://logging.apache.org/team-list.html[team page]:
+
+* Bessenyei Balázs Donát (`bessbd`), the last chair of the Apache Flume PMC
+* Juhani Connolly (`juhanic`)
+* Mike Percy (`mpercy`)
+* Ralph Goers (`rgoers`)
+* Tristan Stevens (`tristan`)
+
+The remaining PMC members retired together with the Apache Flume PMC:
+
+* Aaron Kimball (`kimballa`) *
+* Ahmed Radwan (`ahmed`) *
+* Andrew Bayer (`abayer`)
+* Arvind Prabhakar (`arvind`)
+* Brock Noland (`brock`)
+* Bruce Mitchener (`brucem`) *
+* Denes Arvay (`denes`)
+* Derek Deeter (`ddeeter`) *
+* Eric Sammer (`esammer`)
+* Ferenc Szabo (`szaboferee`)
+* Hari Shreedharan (`hshreedharan`)
+* Henry Robinson (`henry`) *
+* Jaroslav "Jarcec" Cecho (`jarcec`)
+* Jonathan Hsieh (`jmhsieh`)
+* Mingjie Lai (`mlai`)
+* Nick Verbeck (`nerdynick`) *
+* Patrick Hunt (`phunt`) *
+* Prasad Mujumdar (`prasadm`)
+* Roshan Naik (`roshannaik`)
+* Will McQueen (`will`)
+
+The same applies to the following committers:
+
+* Ashish Paliwal (`apaliwal`)
+* Attila Simon (`sati`)
+* Jeff Holoman (`jholoman`)
+* Johny Rufus (`johnyrufus`)
+* Mubarak Seyed (`mubarak`)
+* Patrick Wendell (`pwendell`) *
+* Sean Busbey (`busbey`)
+* Wolfgang Hoschek (`whoschek`) *
+
+=== Contributors of the pre-Apache and Incubator era
+
+Flume was created at Cloudera in 2009 and entered the Apache Incubator in June 2011.
+
+[NOTE]
+====
+Due to the process used to migrate the project history from SVN to Git,
+the contributions of that era are credited in `From:` lines of the commit messages instead of the Git authorship metadata.
+The contributors below therefore do not appear in the contributor lists generated from the Git history.
+====
+
+Besides the committers listed above, the following individuals contributed patches during that era:
+
+* Abhinay Mehta
+* Alejandro Abdelnur
+* Alex Baranau
+* Anurag Phadke
+* Cameron Gandevia
+* Chetan Sarva
+* Dani Rayan
+* David Arthur
+* David Zuelke
+* Dmitriy Ryaboy
+* Harsh J
+* Jacob Rideout
+* Mark Chadwick
+* Satish (`seerpini`)
+* Todd Lipcon
+* Tom White
+* Vibhor Bhatt
+* `newalex`

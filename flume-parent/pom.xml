@@ -260,11 +260,11 @@
 
       <!-- Transitive dependencies pinned to satisfy `requireUpperBoundDeps`,
            so that resolution does not depend on declaration order.
-           
+
            If the check fails here, try:
            1. Removing the pin first,
            2. Otherwise, bump to the highest version required by our direct dependencies.
-           
+
            Dependabot must *not* upgrade these dependencies.
         -->
       <dependency>
