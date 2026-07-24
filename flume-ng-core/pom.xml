@@ -190,7 +190,6 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
-            <version>${mvn-antrun-plugin.version}</version>
             <executions>
               <execution>
                 <id>generate-version</id>
@@ -213,7 +212,6 @@
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>build-helper-maven-plugin</artifactId>
-            <version>${mvn-build-helper-plugin}</version>
             <executions>
               <execution>
                 <id>add-source</id>
@@ -246,7 +244,6 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
-            <version>${mvn-antrun-plugin.version}</version>
             <executions>
               <execution>
                 <id>generate-version</id>
@@ -269,7 +266,6 @@
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>build-helper-maven-plugin</artifactId>
-            <version>${mvn-build-helper-plugin}</version>
             <executions>
               <execution>
                 <id>add-source</id>

@@ -15,200 +15,67 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" child.project.url.inherit.append.path="false" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.apache</groupId>
-    <artifactId>apache</artifactId>
-    <version>23</version>
+    <groupId>org.apache.logging</groupId>
+    <artifactId>logging-parent</artifactId>
+    <version>12.1.1</version>
     <relativePath />
   </parent>
+
   <groupId>org.apache.flume</groupId>
   <artifactId>flume-parent</artifactId>
   <version>2.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <name>Apache Flume</name>
+  <name>Apache Flume Parent</name>
+  <description>Parent POM of all Apache Flume modules.
+  It imports the Flume BOMs and provides the common test dependencies and build configuration, also for the satellite repositories.</description>
+  <url>https://logging.apache.org/flume/2.x/index.html</url>
 
   <inceptionYear>2009</inceptionYear>
 
-  <organization>
-    <name>Apache Software Foundation</name>
-    <url>http://www.apache.org</url>
-  </organization>
-
-  <licenses>
-    <license>
-      <name>The Apache Software License, Version 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-    </license>
-  </licenses>
-
-  <developers>
-    <developer>
-      <id>abayer</id>
-      <name>Andrew Bayer</name>
-      <email>abayer@apache.org</email>
-      <organization>Cloudera</organization>
-    </developer>
-    <developer>
-      <id>ahmed</id>
-      <name>Ahmed Radwan</name>
-      <email>ahmed@apache.org</email>
-      <organization>Cloudera</organization>
-    </developer>
-    <developer>
-      <id>arvind</id>
-      <name>Arvind Prabhakar</name>
-      <email>arvind@apache.org</email>
-      <organization>Cloudera</organization>
-    </developer>
-    <developer>
-      <id>brock</id>
-      <name>Brock Noland</name>
-      <email>brock@apache.org</email>
-      <organization>Cloudera</organization>
-    </developer>
-    <developer>
-      <id>brucem</id>
-      <name>Bruce Mitchener</name>
-      <email>brucem@apache.org</email>
-      <organization>-</organization>
-    </developer>
-    <developer>
-      <id>ddeeter</id>
-      <name>Derek Deeter</name>
-      <email>ddeeter@apache.org</email>
-      <organization>Intuit</organization>
-    </developer>
-    <developer>
-      <id>esammer</id>
-      <name>Eric Sammer</name>
-      <email>esammer@apache.org</email>
-      <organization>Cloudera</organization>
-    </developer>
-    <developer>
-      <id>henry</id>
-      <name>Henry Robinson</name>
-      <email>henry@apache.org</email>
-      <organization>Cloudera</organization>
-    </developer>
-    <developer>
-      <id>hshreedharan</id>
-      <name>Hari Shreedharan</name>
-      <email>hshreedharan@apache.org</email>
-      <organization>Cloudera</organization>
-    </developer>
-    <developer>
-      <id>jarcec</id>
-      <name>Jaroslav Cecho</name>
-      <email>jarcec@apache.org</email>
-      <organization>Cloudera</organization>
-    </developer>
-    <developer>
-      <id>jmhsieh</id>
-      <name>Jonathan Hsieh</name>
-      <email>jmhsieh@apache.org</email>
-      <organization>Cloudera</organization>
-    </developer>
-    <developer>
-      <id>juhanic</id>
-      <name>Juhani Connolly</name>
-      <email>juhanic@apache.org</email>
-      <organization>CyberAgent</organization>
-    </developer>
-    <developer>
-      <id>kimballa</id>
-      <name>Aaron Kimball</name>
-      <email>kimballa@apache.org</email>
-      <organization>Odiago</organization>
-    </developer>
-    <developer>
-      <id>mlai</id>
-      <name>Mingjie Lai</name>
-      <email>mlai@apache.org</email>
-      <organization>Trend Micro</organization>
-    </developer>
-    <developer>
-      <id>mpercy</id>
-      <name>Mike Percy</name>
-      <email>mpercy@apache.org</email>
-      <organization>Cloudera</organization>
-    </developer>
-    <developer>
-      <id>nerdynick</id>
-      <name>Nick Verbeck</name>
-      <email>nerdynick@apache.org</email>
-      <organization>-</organization>
-    </developer>
-    <developer>
-      <id>phunt</id>
-      <name>Patrick Hunt</name>
-      <email>phunt@apache.org</email>
-      <organization>Cloudera</organization>
-    </developer>
-    <developer>
-      <id>prasadm</id>
-      <name>Prasad Mujumdar</name>
-      <email>prasadm@apache.org</email>
-      <organization>Cloudera</organization>
-    </developer>
-    <developer>
-      <id>rgoers</id>
-      <name>Ralph Goers</name>
-      <email>rgoers@apache.org</email>
-      <organization>Intuit</organization>
-    </developer>
-    <developer>
-      <id>will</id>
-      <name>Will McQueen</name>
-      <email>will@apache.org</email>
-      <organization>Cloudera</organization>
-    </developer>
-    <developer>
-      <id>roshannaik</id>
-      <name>Roshan</name>
-      <email>roshannaik@apache.org</email>
-      <organization>Hortonworks</organization>
-    </developer>
-  </developers>
-
+  <!-- Override the Log4j-specific mailing lists inherited from `logging-parent`. -->
   <mailingLists>
     <mailingList>
-      <name>Flume User List</name>
-      <subscribe>user-subscribe@flume.apache.org</subscribe>
-      <unsubscribe>user-unsubscribe@flume.apache.org</unsubscribe>
-      <post>user@flume.apache.org</post>
-      <archive>http://mail-archives.apache.org/mod_mbox/flume-user/</archive>
+      <name>flume-users</name>
+      <subscribe>flume-users-subscribe@logging.apache.org</subscribe>
+      <unsubscribe>flume-users-unsubscribe@logging.apache.org</unsubscribe>
+      <post>flume-users@logging.apache.org</post>
+      <archive>https://lists.apache.org/list.html?flume-users@logging.apache.org</archive>
     </mailingList>
     <mailingList>
-      <name>Flume Developer List</name>
-      <subscribe>dev@logging.apache.org</subscribe>
+      <name>dev</name>
+      <subscribe>dev-subscribe@logging.apache.org</subscribe>
       <unsubscribe>dev-unsubscribe@logging.apache.org</unsubscribe>
-      <post>dev@flume.apache.org</post>
-      <archive>http://mail-archives.apache.org/mod_mbox/flume-dev/</archive>
+      <post>dev@logging.apache.org</post>
+      <archive>https://lists.apache.org/list.html?dev@logging.apache.org</archive>
     </mailingList>
   </mailingLists>
 
-  <scm>
-    <connection>scm:git:http://git-wip-us.apache.org/repos/asf/flume.git</connection>
-    <developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/flume.git</developerConnection>
-    <url>https://git-wip-us.apache.org/repos/asf?p=flume.git;a=tree;h=refs/heads/trunk;hb=trunk</url>
+  <scm child.scm.connection.inherit.append.path="false" child.scm.developerConnection.inherit.append.path="false" child.scm.url.inherit.append.path="false">
+    <connection>scm:git:https://gitbox.apache.org/repos/asf/logging-flume.git</connection>
+    <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/logging-flume.git</developerConnection>
+    <tag>rel/${project.version}</tag>
+    <url>https://gitbox.apache.org/repos/asf/logging-flume.git</url>
   </scm>
 
   <issueManagement>
-    <system>JIRA</system>
-    <url>https://issues.apache.org/jira/browse/FLUME</url>
+    <system>GitHub Issues</system>
+    <url>https://github.com/apache/logging-flume/issues</url>
   </issueManagement>
 
   <ciManagement>
-    <system>jenkins</system>
-    <url>https://builds.apache.org/job/flume-trunk</url>
+    <system>GitHub Actions</system>
+    <url>https://github.com/apache/logging-flume/actions</url>
   </ciManagement>
 
   <properties>
+
+    <!-- Version of the artifacts released from the main `logging-flume` repository -->
     <flume-project.version>2.0.0-SNAPSHOT</flume-project.version>
     <!-- The website is generated by Antora from `flume-project`: skip the per-module `maven-site-plugin` sites. -->
     <maven.site.skip>true</maven.site.skip>
@@ -217,49 +84,28 @@
     <!-- Set default encoding to UTF-8 to remove maven complaints -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <!-- Java compiler configuration -->
-    <releaseJavaVersion>17</releaseJavaVersion>
-
-    <!-- Signing User for release -->
-    <GPGSigningUserName>rgoers@apache.org</GPGSigningUserName>
+    <!-- Flume generates Java 17 bytecode. Disable all compiler switches except `release` -->
+    <maven.compiler.source />
+    <maven.compiler.target />
+    <maven.compiler.release>17</maven.compiler.release>
 
     <!-- defaults for flaky test and focused test exclusions -->
     <test.exclude.pattern>$</test.exclude.pattern>
     <!-- junk pattern -->
     <test.include.pattern>**/Test*.java</test.include.pattern>
-    <stagingDirectory>${project.basedir}/target/docs</stagingDirectory>
+    <redirectTestOutput>true</redirectTestOutput>
 
-    <bundle-plugin.version>2.3.7</bundle-plugin.version>
     <curator.version>5.9.0</curator.version>
     <fest-reflect.version>1.4.1</fest-reflect.version>
     <hadoop.version>3.5.0</hadoop.version>
     <junit.version>4.13.2</junit.version>
     <mockito.version>5.18.0</mockito.version>
-    <mvn-antrun-plugin.version>1.8</mvn-antrun-plugin.version>
-    <!-- Do not upgrade the assumbly plugin version until MASSEMBLY-941 is fixed -->
-    <mvn-assembly-plugin.version>3.2.0</mvn-assembly-plugin.version>
-    <mvn-build-helper-plugin>3.0.0</mvn-build-helper-plugin>
     <mvn-checksum-plugin.version>1.7</mvn-checksum-plugin.version>
-    <mvn-clean-plugin.version>3.1.0</mvn-clean-plugin.version>
-    <mvn-compiler-plugin.version>3.8.1</mvn-compiler-plugin.version>
-    <mvn-deploy-plugin.version>2.8.2</mvn-deploy-plugin.version>
-    <mvn-gpg-plugin.version>1.6</mvn-gpg-plugin.version>
-    <mvn-jar-plugin.version>3.2.2</mvn-jar-plugin.version>
-    <mvn-javadoc-plugin.version>3.2.0</mvn-javadoc-plugin.version>
     <mvn-pmd-plugin.version>3.15.0</mvn-pmd-plugin.version>
-    <mvn-site-plugin.version>3.9.0</mvn-site-plugin.version>
-    <spotbugs.version>4.9.3</spotbugs.version>
-    <mvn-spotbugs-plugin.version>${spotbugs.version}.0</mvn-spotbugs-plugin.version>
-    <mvn-surefire-plugin.version>3.5.5</mvn-surefire-plugin.version>
     <external.protobuf.version>4.35.0</external.protobuf.version>
     <protobuf.plugin.version>0.6.1</protobuf.plugin.version>
-    <rat.version>0.12</rat.version>
-    <wiremock.version>1.53</wiremock.version>
     <os.maven.version>1.7.1</os.maven.version>
-    <redirectTestOutput>true</redirectTestOutput>
-    <spotless-maven-plugin.version>3.4.0</spotless-maven-plugin.version>
     <system-rules.version>1.19.0</system-rules.version>
-    <palantir-java-format.version>2.90.0</palantir-java-format.version>
   </properties>
 
   <dependencyManagement>
@@ -411,6 +257,21 @@
         <version>3.10.8</version>
         <scope>test</scope>
       </dependency>
+
+      <!-- Transitive dependencies pinned to satisfy `requireUpperBoundDeps`,
+           so that resolution does not depend on declaration order.
+           
+           If the check fails here, try:
+           1. Removing the pin first,
+           2. Otherwise, bump to the highest version required by our direct dependencies.
+           
+           Dependabot must *not* upgrade these dependencies.
+        -->
+      <dependency>
+        <groupId>com.google.errorprone</groupId>
+        <artifactId>error_prone_annotations</artifactId>
+        <version>2.48.0</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -418,75 +279,19 @@
 
     <pluginManagement>
       <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-antrun-plugin</artifactId>
-          <version>${mvn-antrun-plugin.version}</version>
-        </plugin>
 
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-gpg-plugin</artifactId>
-          <version>${mvn-gpg-plugin.version}</version>
-          <configuration>
-            <excludes>
-              <exclude>**/*.sha512</exclude>
-            </excludes>
-            <keyname>${GPGSigningUserName}</keyname>
-          </configuration>
-        </plugin>
-
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>${mvn-compiler-plugin.version}</version>
-          <configuration>
-            <release>${releaseJavaVersion}</release>
-          </configuration>
-        </plugin>
-
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-jar-plugin</artifactId>
-          <version>${mvn-jar-plugin.version}</version>
-          <executions>
-            <execution>
-              <id>default-jar</id>
-              <goals>
-                <goal>jar</goal>
-              </goals>
-              <configuration>
-                <archive>
-                  <manifestEntries>
-                    <Specification-Title>${project.name}</Specification-Title>
-                    <Specification-Version>${flume-project.version}</Specification-Version>
-                    <Specification-Vendor>${project.organization.name}</Specification-Vendor>
-                    <Implementation-Title>${project.name}</Implementation-Title>
-                    <Implementation-Version>${flume-project.version}</Implementation-Version>
-                    <Implementation-Vendor>${project.organization.name}</Implementation-Vendor>
-                    <Implementation-Vendor-Id>org.apache</Implementation-Vendor-Id>
-                    <X-Compile-Source-JDK>${maven.compiler.source}</X-Compile-Source-JDK>
-                    <X-Compile-Target-JDK>${maven.compiler.target}</X-Compile-Target-JDK>
-                    <Automatic-Module-Name>${module.name}</Automatic-Module-Name>
-                  </manifestEntries>
-                </archive>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
         <plugin>
           <groupId>org.xolstice.maven.plugins</groupId>
           <artifactId>protobuf-maven-plugin</artifactId>
           <version>${protobuf.plugin.version}</version>
         </plugin>
+
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>${mvn-surefire-plugin.version}</version>
           <configuration>
             <reuseForks>false</reuseForks>
             <forkCount>1</forkCount>
-            <!--<rerunFailingTestsCount>10</rerunFailingTestsCount>-->
             <forkedProcessTimeoutInSeconds>900</forkedProcessTimeoutInSeconds>
             <redirectTestOutputToFile>${redirectTestOutput}</redirectTestOutputToFile>
             <argLine>-Djava.net.preferIPv4Stack=true</argLine>
@@ -501,120 +306,11 @@
         </plugin>
 
         <plugin>
-          <groupId>org.apache.rat</groupId>
-          <artifactId>apache-rat-plugin</artifactId>
-          <version>${rat.version}</version>
-          <configuration>
-            <excludes>
-              <exclude>**/.idea/</exclude>
-              <exclude>**/*.iml</exclude>
-              <exclude>src/main/resources/META-INF/services/**/*</exclude>
-              <exclude>**/nb-configuration.xml</exclude>
-              <exclude>.git/</exclude>
-              <exclude>patchprocess/</exclude>
-              <exclude>.gitignore</exclude>
-              <exclude>**/*.yml</exclude>
-              <exclude>**/*.yaml</exclude>
-              <exclude>**/*.json</exclude>
-              <!-- ASF jenkins box puts the Maven repo in our root directory. -->
-              <exclude>.repository/</exclude>
-              <exclude>**/*.diff</exclude>
-              <exclude>**/*.patch</exclude>
-              <exclude>**/*.avsc</exclude>
-              <exclude>**/*.avro</exclude>
-              <exclude>**/docs/**</exclude>
-              <exclude>**/test/resources/**</exclude>
-              <exclude>**/.settings/*</exclude>
-              <exclude>**/.classpath</exclude>
-              <exclude>**/.project</exclude>
-              <exclude>**/target/**</exclude>
-              <exclude>**/derby.log</exclude>
-              <exclude>**/metastore_db/</exclude>
-              <exclude>.mvn/**</exclude>
-              <exclude>**/exclude-pmd.properties</exclude>
-            </excludes>
-            <consoleOutput>true</consoleOutput>
-          </configuration>
-          <executions>
-            <execution>
-              <id>verify.rat</id>
-              <goals>
-                <goal>check</goal>
-              </goals>
-              <phase>verify</phase>
-            </execution>
-          </executions>
-        </plugin>
-
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-javadoc-plugin</artifactId>
-          <version>${mvn-javadoc-plugin.version}</version>
-          <configuration>
-            <outputDirectory>${project.build.directory}/site/apidocs</outputDirectory>
-            <!-- switch on dependency-driven aggregation -->
-            <includeDependencySources>true</includeDependencySources>
-
-            <dependencySourceIncludes>
-              <!-- include ONLY flume multi-module dependencies -->
-              <dependencySourceInclude>org.apache.flume:*</dependencySourceInclude>
-            </dependencySourceIncludes>
-            <additionalparam>-Xdoclint:none</additionalparam>
-          </configuration>
-        </plugin>
-
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-assembly-plugin</artifactId>
-          <version>${mvn-assembly-plugin.version}</version>
-        </plugin>
-
-        <plugin>
-          <artifactId>maven-clean-plugin</artifactId>
-          <version>${mvn-clean-plugin.version}</version>
-          <configuration>
-            <filesets>
-              <fileset>
-                <directory>docs</directory>
-                <includes>
-                  <include>**</include>
-                </includes>
-              </fileset>
-            </filesets>
-          </configuration>
-        </plugin>
-
-        <plugin>
-          <groupId>com.github.spotbugs</groupId>
-          <artifactId>spotbugs-maven-plugin</artifactId>
-          <version>${mvn-spotbugs-plugin.version}</version>
-          <configuration>
-            <effort>Max</effort>
-            <threshold>Low</threshold>
-          </configuration>
-          <executions>
-            <execution>
-              <id>verify.spotbugs</id>
-              <goals>
-                <goal>check</goal>
-              </goals>
-              <phase>verify</phase>
-            </execution>
-          </executions>
-        </plugin>
-
-        <plugin>
-          <groupId>com.diffplug.spotless</groupId>
-          <artifactId>spotless-maven-plugin</artifactId>
-          <version>${spotless-maven-plugin.version}</version>
-        </plugin>
-
-        <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-pmd-plugin</artifactId>
           <version>${mvn-pmd-plugin.version}</version>
           <configuration>
-            <targetJdk>${releaseJavaVersion}</targetJdk>
+            <targetJdk>${maven.compiler.release}</targetJdk>
             <excludeRoots>
               <excludeRoot>${project.build.directory}/generated-sources</excludeRoot>
             </excludeRoots>
@@ -637,193 +333,21 @@
         </plugin>
       </plugins>
     </pluginManagement>
+
     <plugins>
 
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>com.github.spotbugs</groupId>
-        <artifactId>spotbugs-maven-plugin</artifactId>
-      </plugin>
-
-      <!-- Configuration here must match the one in `.editorconfig`! -->
+      <!-- Append the Flume-specific exclusions to the Spotless configuration of `logging-parent`. -->
       <plugin>
         <groupId>com.diffplug.spotless</groupId>
         <artifactId>spotless-maven-plugin</artifactId>
         <configuration>
           <java>
             <excludes>
-              <!-- Third-party vendored sources: ASF policy forbids adding the ASF header to them.
-                   They keep their original header and are formatted by a dedicated execution
-                   (see the `guava` execution in `flume-ng-core`). -->
+              <!-- Third-party vendored sources: ASF policy forbids adding the ASF header to them. -->
               <exclude>**/source/shaded/guava/**</exclude>
             </excludes>
-            <licenseHeader>
-              <!-- https://www.apache.org/legal/src-headers.html#headers -->
-              <content>/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to you under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */</content>
-            </licenseHeader>
-            <palantirJavaFormat>
-              <version>${palantir-java-format.version}</version>
-            </palantirJavaFormat>
           </java>
-          <pom>
-            <licenseHeader>
-              <!-- https://www.apache.org/legal/src-headers.html#headers -->
-              <content>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
-&lt;!--
-  ~ Licensed to the Apache Software Foundation (ASF) under one or more
-  ~ contributor license agreements.  See the NOTICE file distributed with
-  ~ this work for additional information regarding copyright ownership.
-  ~ The ASF licenses this file to you under the Apache License, Version 2.0
-  ~ (the "License"); you may not use this file except in compliance with
-  ~ the License.  You may obtain a copy of the License at
-  ~
-  ~      http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and
-  ~ limitations under the License.
-  --&gt;</content>
-              <delimiter>&lt;project</delimiter>
-            </licenseHeader>
-            <sortPom>
-              <expandEmptyElements>false</expandEmptyElements>
-              <!-- Maven Release plugin uses this style -->
-              <spaceBeforeCloseEmptyElement>true</spaceBeforeCloseEmptyElement>
-            </sortPom>
-          </pom>
-          <formats>
-            <format>
-              <includes>
-                <include>src/**/*.xml</include>
-              </includes>
-              <excludes>
-                <!-- The license header in changelog entry files causing Git to match irrelevant files.
-                     This is eventually causing merge conflicts.
-                     Hence, we avoid enforcing license headers there. -->
-                <exclude>src/changelog/**/*.xml</exclude>
-              </excludes>
-              <licenseHeader>
-                <!-- https://www.apache.org/legal/src-headers.html#headers -->
-                <content>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
-&lt;!--
-  ~ Licensed to the Apache Software Foundation (ASF) under one or more
-  ~ contributor license agreements.  See the NOTICE file distributed with
-  ~ this work for additional information regarding copyright ownership.
-  ~ The ASF licenses this file to you under the Apache License, Version 2.0
-  ~ (the "License"); you may not use this file except in compliance with
-  ~ the License.  You may obtain a copy of the License at
-  ~
-  ~      http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and
-  ~ limitations under the License.
-  --&gt;</content>
-                <delimiter>&lt;(!DOCTYPE|\w)</delimiter>
-              </licenseHeader>
-              <endWithNewline />
-              <trimTrailingWhitespace />
-            </format>
-            <format>
-              <includes>
-                <include>src/**/*.properties</include>
-              </includes>
-              <licenseHeader>
-                <!-- https://www.apache.org/legal/src-headers.html#headers -->
-                <content>#
-# Licensed to the Apache Software Foundation (ASF) under one or more
-# contributor license agreements.  See the NOTICE file distributed with
-# this work for additional information regarding copyright ownership.
-# The ASF licenses this file to you under the Apache License, Version 2.0
-# (the "License"); you may not use this file except in compliance with
-# the License.  You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#</content>
-                <delimiter>(##|[^#])</delimiter>
-              </licenseHeader>
-              <endWithNewline />
-            </format>
-          </formats>
-          <yaml>
-            <includes>
-              <include>.asf.yaml</include>
-              <include>.github/**/*.yaml</include>
-              <include>.github/**/*.yml</include>
-              <include>src/**/*.yaml</include>
-              <include>src/**/*.yml</include>
-            </includes>
-            <licenseHeader>
-              <!-- https://www.apache.org/legal/src-headers.html#headers -->
-              <content>#
-# Licensed to the Apache Software Foundation (ASF) under one or more
-# contributor license agreements.  See the NOTICE file distributed with
-# this work for additional information regarding copyright ownership.
-# The ASF licenses this file to you under the Apache License, Version 2.0
-# (the "License"); you may not use this file except in compliance with
-# the License.  You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#</content>
-              <delimiter>(##|[^#])</delimiter>
-            </licenseHeader>
-            <endWithNewline />
-            <trimTrailingWhitespace />
-          </yaml>
-          <lineEndings>UNIX</lineEndings>
         </configuration>
-        <dependencies>
-          <!-- `com.palantir.javaformat:palantir-java-format` is a fake dependency to receive updates from `dependabot`, `maven-versions-plugin`, etc.
-               This dependency is not needed to be defined here, it is implied by `<palantirJavaFormat>` element above. -->
-          <dependency>
-            <groupId>com.palantir.javaformat</groupId>
-            <artifactId>palantir-java-format</artifactId>
-            <version>${palantir-java-format.version}</version>
-          </dependency>
-        </dependencies>
-        <executions>
-          <execution>
-            <id>default-spotless</id>
-            <goals>
-              <goal>check</goal>
-            </goals>
-            <phase>verify</phase>
-          </execution>
-        </executions>
       </plugin>
 
       <plugin>
@@ -876,6 +400,7 @@
         </executions>
       </plugin>
     </plugins>
+
     <extensions>
       <extension>
         <groupId>kr.motd.maven</groupId>
@@ -886,104 +411,7 @@
 
   </build>
 
-  <reporting>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-project-info-reports-plugin</artifactId>
-        <reportSets>
-          <reportSet>
-            <reports>
-              <report>ci-management</report>
-              <report>distribution-management</report>
-              <report>team</report>
-              <report>mailing-lists</report>
-              <report>issue-management</report>
-              <report>licenses</report>
-              <report>scm</report>
-            </reports>
-          </reportSet>
-        </reportSets>
-      </plugin>
-      <plugin>
-        <groupId>com.github.spotbugs</groupId>
-        <artifactId>spotbugs-maven-plugin</artifactId>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-pmd-plugin</artifactId>
-      </plugin>
-
-    </plugins>
-  </reporting>
-
   <profiles>
-
-    <profile>
-      <id>not-windows</id>
-      <activation>
-        <os>
-          <family>!Windows</family>
-        </os>
-      </activation>
-    </profile>
-
-    <profile>
-      <id>windows</id>
-      <activation>
-        <os>
-          <family>Windows</family>
-        </os>
-      </activation>
-    </profile>
-
-    <profile>
-      <id>sign</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-gpg-plugin</artifactId>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>sign</goal>
-                </goals>
-                <phase>verify</phase>
-                <configuration>
-                  <keyname>${GPGSigningUserName}</keyname>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-
-    <profile>
-      <id>site</id>
-
-      <build>
-        <plugins>
-          <plugin>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <configuration>
-              <additionalparam>-Xdoclint:none</additionalparam>
-            </configuration>
-            <executions>
-              <execution>
-                <id>javadoc-jar</id>
-                <goals>
-                  <goal>aggregate-jar</goal>
-                </goals>
-                <phase>package</phase>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-
-    </profile>
 
     <profile>
       <id>skipChecks</id>
@@ -991,9 +419,8 @@
         <spotbugs.skip>true</spotbugs.skip>
         <pmd.skip>true</pmd.skip>
         <rat.skip>true</rat.skip>
+        <spotless.check.skip>true</spotless.check.skip>
       </properties>
-
     </profile>
   </profiles>
-
 </project>
