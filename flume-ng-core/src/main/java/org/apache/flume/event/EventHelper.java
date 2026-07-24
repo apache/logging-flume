@@ -61,7 +61,7 @@ public class EventHelper {
             }
             String result = buffer.toString();
             if (result.endsWith(EOL) && buffer.length() > EOL.length()) {
-                buffer.delete(buffer.length() - EOL.length(), buffer.length()).toString();
+                buffer.delete(buffer.length() - EOL.length(), buffer.length());
             }
         }
         return "{ headers:" + event.getHeaders() + " body:" + buffer + " }";

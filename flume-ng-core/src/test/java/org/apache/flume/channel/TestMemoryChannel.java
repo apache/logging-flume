@@ -34,6 +34,7 @@ import org.apache.flume.event.SimpleEvent;
 import org.apache.flume.exception.ChannelException;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class TestMemoryChannel {
@@ -298,6 +299,8 @@ public class TestMemoryChannel {
         Assert.assertEquals(8, channel.getBytesRemainingValue());
     }
 
+    @Test
+    @Ignore
     public void testByteCapacityBufferEmptyingAfterTakeCommit() {
         Context context = new Context();
         Map<String, String> parms = new HashMap<String, String>();

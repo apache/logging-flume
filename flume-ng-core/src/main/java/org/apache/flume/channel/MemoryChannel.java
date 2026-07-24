@@ -110,6 +110,9 @@ public class MemoryChannel extends BasicChannelSemantics implements TransactionC
             return event;
         }
 
+        // `queueLock` must not be held on blocking operations,
+        // and an approximate channel size is sufficient for the counter.
+        @SuppressWarnings("GuardedBy")
         @Override
         protected void doCommit() throws InterruptedException {
             int remainingChange = takeList.size() - putList.size();
@@ -158,6 +161,9 @@ public class MemoryChannel extends BasicChannelSemantics implements TransactionC
             channelCounter.setChannelSize(queue.size());
         }
 
+        // `queueLock` must not be held on blocking operations
+        // and an approximate channel size is sufficient for the counter.
+        @SuppressWarnings("GuardedBy")
         @Override
         protected void doRollback() {
             int takes = takeList.size();
@@ -218,6 +224,8 @@ public class MemoryChannel extends BasicChannelSemantics implements TransactionC
      * <li>byteCapacityBufferPercentage = type int that defines the percent of buffer between byteCapacity and the estimated event size.
      * <li>keep-alive = type int that defines the number of second to wait for a queue permit
      */
+    // the unguarded null check on `queue` only detects whether the channel was already configured
+    @SuppressWarnings("GuardedBy")
     @Override
     public void configure(Context context) {
         Integer capacity = null;
@@ -347,6 +355,8 @@ public class MemoryChannel extends BasicChannelSemantics implements TransactionC
         }
     }
 
+    // an approximate channel size is sufficient for the counter
+    @SuppressWarnings("GuardedBy")
     @Override
     public synchronized void start() {
         channelCounter.start();
@@ -355,6 +365,8 @@ public class MemoryChannel extends BasicChannelSemantics implements TransactionC
         super.start();
     }
 
+    // an approximate channel size is sufficient for the counter
+    @SuppressWarnings("GuardedBy")
     @Override
     public synchronized void stop() {
         channelCounter.setChannelSize(queue.size());

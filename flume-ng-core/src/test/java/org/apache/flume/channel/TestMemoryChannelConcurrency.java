@@ -224,6 +224,7 @@ public class TestMemoryChannelConcurrency {
         final CountDownLatch startGate = new CountDownLatch(1);
         final CountDownLatch endGate = new CountDownLatch(threadCount);
 
+        final Object takeMapLock = new Object();
         // start a sink and source for each
         for (int i = 0; i < threadCount / 2; i++) {
             Thread t = new Thread() {
@@ -268,7 +269,6 @@ public class TestMemoryChannelConcurrency {
             };
             // start source
             t.start();
-            final Integer takeMapLock = 0;
             t = new Thread() {
                 @Override
                 public void run() {
