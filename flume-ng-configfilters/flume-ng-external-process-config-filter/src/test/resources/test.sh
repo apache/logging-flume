@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
 
 if [ $1 = "my_password_key" ]; then
     echo "filtered";

@@ -113,4 +113,29 @@
     <maven.deploy.skip>true</maven.deploy.skip>
   </properties>
 
+  <profiles>
+
+    <!-- Read additional RAT exclusions from the `.rat-excludes` file at the root of the repository, if present.
+         The code modules inherit the same profile from `flume-parent`, but this aggregator does not. -->
+    <profile>
+      <id>rat-excludes-file</id>
+      <activation>
+        <file>
+          <exists>${maven.multiModuleProjectDirectory}/.rat-excludes</exists>
+        </file>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.rat</groupId>
+            <artifactId>apache-rat-plugin</artifactId>
+            <configuration>
+              <excludesFile>${maven.multiModuleProjectDirectory}/.rat-excludes</excludesFile>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
 </project>

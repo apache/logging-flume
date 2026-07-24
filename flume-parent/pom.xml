@@ -413,6 +413,28 @@
 
   <profiles>
 
+    <!-- Read additional RAT exclusions from a `.rat-excludes` file at the root of the repository, if present.
+         Guarded by a profile, since the plugin fails if `excludesFile` points to a missing file. -->
+    <profile>
+      <id>rat-excludes-file</id>
+      <activation>
+        <file>
+          <exists>${maven.multiModuleProjectDirectory}/.rat-excludes</exists>
+        </file>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.rat</groupId>
+            <artifactId>apache-rat-plugin</artifactId>
+            <configuration>
+              <excludesFile>${maven.multiModuleProjectDirectory}/.rat-excludes</excludesFile>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
     <profile>
       <id>skipChecks</id>
       <properties>
