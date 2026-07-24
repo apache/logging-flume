@@ -300,7 +300,7 @@ public class TestMemoryChannel {
     }
 
     @Test
-    @Ignore
+    @Ignore("TODO: document why this test is disabled and re-enable it.")
     public void testByteCapacityBufferEmptyingAfterTakeCommit() {
         Context context = new Context();
         Map<String, String> parms = new HashMap<String, String>();
