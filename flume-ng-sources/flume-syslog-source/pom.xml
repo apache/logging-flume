@@ -30,6 +30,8 @@
   <name>Flume Syslog Source</name>
 
   <properties>
+    <!-- This artifact was never released before -->
+    <bnd.baseline.fail.on.missing>false</bnd.baseline.fail.on.missing>
     <!-- TODO fix spotbugs violations -->
     <spotbugs.maxAllowedViolations>8</spotbugs.maxAllowedViolations>
     <module.name>org.apache.flume.source.syslog</module.name>
