@@ -16,7 +16,7 @@
  */
 package org.apache.flume.source;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.spy;
 
 import java.util.HashMap;
 import org.apache.flume.Context;

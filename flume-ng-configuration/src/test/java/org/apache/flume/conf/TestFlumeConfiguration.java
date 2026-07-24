@@ -17,7 +17,12 @@
 package org.apache.flume.conf;
 
 import static org.apache.flume.conf.FlumeConfigurationError.ErrorOrWarning.ERROR;
-import static org.apache.flume.conf.FlumeConfigurationErrorType.*;
+import static org.apache.flume.conf.FlumeConfigurationErrorType.AGENT_CONFIGURATION_INVALID;
+import static org.apache.flume.conf.FlumeConfigurationErrorType.AGENT_NAME_MISSING;
+import static org.apache.flume.conf.FlumeConfigurationErrorType.CONFIG_ERROR;
+import static org.apache.flume.conf.FlumeConfigurationErrorType.INVALID_PROPERTY;
+import static org.apache.flume.conf.FlumeConfigurationErrorType.PROPERTY_NAME_NULL;
+import static org.apache.flume.conf.FlumeConfigurationErrorType.PROPERTY_VALUE_NULL;
 import static org.junit.Assert.assertEquals;
 
 import java.util.HashMap;

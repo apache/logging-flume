@@ -16,7 +16,7 @@
  */
 package org.apache.flume.source.syslog;
 
-import static io.netty.buffer.Unpooled.*;
+import static io.netty.buffer.Unpooled.buffer;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 

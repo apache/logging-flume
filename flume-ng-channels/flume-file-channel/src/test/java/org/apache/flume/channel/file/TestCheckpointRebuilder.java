@@ -16,7 +16,10 @@
  */
 package org.apache.flume.channel.file;
 
-import static org.apache.flume.channel.file.TestUtils.*;
+import static org.apache.flume.channel.file.TestUtils.compareInputAndOut;
+import static org.apache.flume.channel.file.TestUtils.consumeChannel;
+import static org.apache.flume.channel.file.TestUtils.fillChannel;
+import static org.apache.flume.channel.file.TestUtils.getAllLogs;
 
 import com.google.common.collect.Maps;
 import java.io.File;

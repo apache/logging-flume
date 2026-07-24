@@ -16,7 +16,10 @@
  */
 package org.apache.flume.interceptor;
 
-import static org.apache.flume.interceptor.TimestampInterceptor.Constants.*;
+import static org.apache.flume.interceptor.TimestampInterceptor.Constants.CONFIG_HEADER_NAME;
+import static org.apache.flume.interceptor.TimestampInterceptor.Constants.CONFIG_PRESERVE;
+import static org.apache.flume.interceptor.TimestampInterceptor.Constants.DEFAULT_HEADER_NAME;
+import static org.apache.flume.interceptor.TimestampInterceptor.Constants.DEFAULT_PRESERVE;
 
 import java.util.List;
 import java.util.Map;

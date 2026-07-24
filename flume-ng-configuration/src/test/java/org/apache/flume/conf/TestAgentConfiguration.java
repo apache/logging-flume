@@ -17,7 +17,11 @@
 package org.apache.flume.conf;
 
 import static org.apache.flume.conf.FlumeConfigurationError.ErrorOrWarning.ERROR;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.HashMap;

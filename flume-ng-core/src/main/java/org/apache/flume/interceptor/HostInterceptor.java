@@ -16,7 +16,12 @@
  */
 package org.apache.flume.interceptor;
 
-import static org.apache.flume.interceptor.HostInterceptor.Constants.*;
+import static org.apache.flume.interceptor.HostInterceptor.Constants.HOST;
+import static org.apache.flume.interceptor.HostInterceptor.Constants.HOST_HEADER;
+import static org.apache.flume.interceptor.HostInterceptor.Constants.PRESERVE;
+import static org.apache.flume.interceptor.HostInterceptor.Constants.PRESERVE_DFLT;
+import static org.apache.flume.interceptor.HostInterceptor.Constants.USE_IP;
+import static org.apache.flume.interceptor.HostInterceptor.Constants.USE_IP_DFLT;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;

@@ -16,7 +16,8 @@
  */
 package org.apache.flume.source;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 
 import org.apache.flume.Context;
 import org.apache.flume.FlumeException;
