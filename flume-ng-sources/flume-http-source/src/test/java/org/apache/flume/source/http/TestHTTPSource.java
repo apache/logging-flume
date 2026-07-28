@@ -385,8 +385,8 @@ public class TestHTTPSource {
                         .size()
                 == 0);
 
-        int newPort = findFreePort();
-        Context configuredSourceContext = getDefaultNonSecureContext(newPort);
+        final int firstPort = findFreePort();
+        Context configuredSourceContext = getDefaultNonSecureContext(firstPort);
         configuredSourceContext.put("HttpConfiguration.sendServerVersion", "false");
         configuredSourceContext.put("HttpConfiguration.sendXPoweredBy", "true");
         configuredSourceContext.put("ServerConnector.acceptQueueSize", "22");
@@ -398,7 +398,7 @@ public class TestHTTPSource {
         newChannel.start();
         newSource.start();
 
-        HttpPost newPostRequest = new HttpPost("http://0.0.0.0:" + newPort);
+        HttpPost newPostRequest = new HttpPost("http://0.0.0.0:" + firstPort);
 
         resp = httpClient.execute(newPostRequest);
         Assert.assertTrue(resp.getHeaders("X-Powered-By").length > 0);
@@ -414,8 +414,8 @@ public class TestHTTPSource {
         newChannel.stop();
 
         // Configure SslContextFactory with junk protocols (expect failure)
-        newPort = findFreePort();
-        configuredSourceContext = getDefaultSecureContext(newPort);
+        final int secondPort = findFreePort();
+        configuredSourceContext = getDefaultSecureContext(secondPort);
         configuredSourceContext.put("SslContextFactory.IncludeProtocols", "abc def");
 
         newSource = new HTTPSource();
@@ -426,14 +426,8 @@ public class TestHTTPSource {
         newChannel.start();
         newSource.start();
 
-        newPostRequest = new HttpPost("http://0.0.0.0:" + newPort);
-        try {
-            doTestHttps(null, newPort, httpsChannel);
-            // We are testing that this fails because we've deliberately configured the wrong protocols
-            Assert.assertTrue(false);
-        } catch (AssertionError ex) {
-            // no-op
-        }
+        newPostRequest = new HttpPost("http://0.0.0.0:" + secondPort);
+        Assert.assertThrows(AssertionError.class, () -> doTestHttps(null, secondPort, httpsChannel));
         newSource.stop();
         newChannel.stop();
     }

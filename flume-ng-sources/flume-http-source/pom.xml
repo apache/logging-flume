@@ -30,6 +30,8 @@
   <name>Flume HTTP Source</name>
 
   <properties>
+    <!-- This artifact was never released before -->
+    <bnd.baseline.fail.on.missing>false</bnd.baseline.fail.on.missing>
     <!-- TODO fix spotbugs/pmd violations -->
     <spotbugs.maxAllowedViolations>10</spotbugs.maxAllowedViolations>
     <pmd.maxAllowedViolations>2</pmd.maxAllowedViolations>

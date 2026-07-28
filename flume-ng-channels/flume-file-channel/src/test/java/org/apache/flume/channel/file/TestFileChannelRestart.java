@@ -25,7 +25,7 @@ import static org.apache.flume.channel.file.TestUtils.putEvents;
 import static org.apache.flume.channel.file.TestUtils.putWithoutCommit;
 import static org.apache.flume.channel.file.TestUtils.takeEvents;
 import static org.apache.flume.channel.file.TestUtils.takeWithoutCommit;
-import static org.fest.reflect.core.Reflection.*;
+import static org.fest.reflect.core.Reflection.field;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;

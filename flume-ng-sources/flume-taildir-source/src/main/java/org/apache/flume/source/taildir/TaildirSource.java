@@ -16,7 +16,29 @@
  */
 package org.apache.flume.source.taildir;
 
-import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.*;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.BATCH_SIZE;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.BYTE_OFFSET_HEADER;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.CACHE_PATTERN_MATCHING;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.DEFAULT_BATCH_SIZE;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.DEFAULT_BYTE_OFFSET_HEADER;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.DEFAULT_CACHE_PATTERN_MATCHING;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.DEFAULT_FILENAME_HEADER_KEY;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.DEFAULT_FILE_HEADER;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.DEFAULT_IDLE_TIMEOUT;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.DEFAULT_MAX_BATCH_COUNT;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.DEFAULT_POSITION_FILE;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.DEFAULT_SKIP_TO_END;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.DEFAULT_WRITE_POS_INTERVAL;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.FILENAME_HEADER;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.FILENAME_HEADER_KEY;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.FILE_GROUPS;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.FILE_GROUPS_PREFIX;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.HEADERS_PREFIX;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.IDLE_TIMEOUT;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.MAX_BATCH_COUNT;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.POSITION_FILE;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.SKIP_TO_END;
+import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.WRITE_POS_INTERVAL;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;

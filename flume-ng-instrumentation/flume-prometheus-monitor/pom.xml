@@ -30,6 +30,8 @@
   <name>Flume Prometheus Monitor</name>
 
   <properties>
+    <!-- This artifact was never released before -->
+    <bnd.baseline.fail.on.missing>false</bnd.baseline.fail.on.missing>
     <!-- TODO fix spotbugs/pmd violations -->
     <spotbugs.maxAllowedViolations>6</spotbugs.maxAllowedViolations>
     <pmd.maxAllowedViolations>1</pmd.maxAllowedViolations>

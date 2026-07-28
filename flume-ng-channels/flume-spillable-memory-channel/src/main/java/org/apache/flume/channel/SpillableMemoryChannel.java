@@ -535,6 +535,9 @@ public class SpillableMemoryChannel extends FileChannel {
             channelCounter.addToEventPutSuccessCount(putList.size());
         }
 
+        // `queueLock` must not be held on blocking operations,
+        // and an approximate channel size is enough for the counter.
+        @SuppressWarnings("GuardedBy")
         @Override
         protected void doRollback() {
             logger.debug("Rollback() of " + (takeCalled ? " Take Tx" : (putCalled ? " Put Tx" : "Empty Tx")));
@@ -729,6 +732,8 @@ public class SpillableMemoryChannel extends FileChannel {
         super.configure(context);
     }
 
+    // the unguarded read of `memQueue` only detects whether the queue needs resizing
+    @SuppressWarnings("GuardedBy")
     private void resizePrimaryQueue(int newMemoryCapacity) throws InterruptedException {
         if (memQueue != null && memoryCapacity == newMemoryCapacity) {
             return;
@@ -765,6 +770,8 @@ public class SpillableMemoryChannel extends FileChannel {
         }
     }
 
+    // an approximate channel size is enough for the counter
+    @SuppressWarnings("GuardedBy")
     @Override
     public synchronized void start() {
         super.start();
@@ -779,6 +786,8 @@ public class SpillableMemoryChannel extends FileChannel {
         channelCounter.setChannelSize(totalCount);
     }
 
+    // an approximate channel size is enough for the counter
+    @SuppressWarnings("GuardedBy")
     @Override
     public synchronized void stop() {
         if (getLifecycleState() == LifecycleState.STOP) {
