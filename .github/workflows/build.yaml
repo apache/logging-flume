@@ -1,0 +1,90 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to you under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+name: build
+
+on:
+  push:
+    branches:
+      - "trunk"
+      - "release/*"
+  pull_request:
+
+# Disable all permissions by defaults:
+# Permissions are enabled on a per-job basis.
+permissions: { }
+
+concurrency:
+  # One group per PR, or per ref for branch pushes.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  # Cancel in-progress runs for PRs only, so release branch builds always complete.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+
+  build:
+    uses: apache/logging-parent/.github/workflows/build-reusable.yaml@gha/v0
+    with:
+      java-version: 17
+      site-enabled: true
+      reproducibility-check-enabled: false
+
+  deploy-snapshot:
+    needs: build
+    if: github.repository == 'apache/logging-flume' && github.ref_name == 'trunk'
+    uses: apache/logging-parent/.github/workflows/deploy-snapshot-reusable.yaml@gha/v0
+    # Secrets for deployments
+    secrets:
+      NEXUS_USERNAME: ${{ secrets.LOGGING_STAGE_DEPLOYER_USER }}
+      NEXUS_PASSWORD: ${{ secrets.LOGGING_STAGE_DEPLOYER_PW }}
+    with:
+      java-version: 17
+
+  deploy-release:
+    needs: build
+    if: github.repository == 'apache/logging-flume' && startsWith(github.ref_name, 'release/')
+    uses: apache/logging-parent/.github/workflows/deploy-release-reusable.yaml@gha/v0
+    # Secrets for deployments
+    secrets:
+      GPG_SECRET_KEY: ${{ secrets.LOGGING_GPG_SECRET_KEY }}
+      NEXUS_USERNAME: ${{ secrets.LOGGING_STAGE_DEPLOYER_USER }}
+      NEXUS_PASSWORD: ${{ secrets.LOGGING_STAGE_DEPLOYER_PW }}
+      SVN_USERNAME: ${{ secrets.LOGGING_SVN_DEV_USERNAME }}
+      SVN_PASSWORD: ${{ secrets.LOGGING_SVN_DEV_PASSWORD }}
+    # Write permissions to allow the Maven `revision` property update, changelog release, etc.
+    permissions:
+      contents: write
+    with:
+      java-version: 17
+      project-id: flume
+
+  verify-reproducibility-snapshot:
+    needs: deploy-snapshot
+    uses: apache/logging-parent/.github/workflows/verify-reproducibility-reusable.yaml@gha/v0
+    with:
+      java-version: 17
+      # Compare against the repository `deploy-snapshot` uploaded as a run artifact, so that
+      # the check does not depend on the snapshot having propagated to the Nexus group repository.
+      reference-artifact-name: ${{ needs.deploy-snapshot.outputs.repository-artifact-name }}
+
+  verify-reproducibility-release:
+    needs: deploy-release
+    uses: apache/logging-parent/.github/workflows/verify-reproducibility-reusable.yaml@gha/v0
+    with:
+      java-version: 17
+      # `deploy-release` publishes no run artifact, so the staging repository is the reference.
+      nexus-url: ${{ needs.deploy-release.outputs.nexus-url }}
