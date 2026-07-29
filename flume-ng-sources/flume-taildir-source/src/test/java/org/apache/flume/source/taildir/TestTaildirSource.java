@@ -39,6 +39,7 @@ import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -58,7 +59,9 @@ import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleState;
 import org.apache.flume.util.Whitebox;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -67,6 +70,13 @@ public class TestTaildirSource {
     static MemoryChannel channel;
     private File tmpDir;
     private String posFilePath;
+
+    @BeforeClass
+    public static void requireUnixFileAttributeView() {
+        // TaildirSource tracks files by inode via the `unix:ino` file attribute
+        Assume.assumeTrue("The default file system does not provide a `unix` file attribute view",
+                FileSystems.getDefault().supportedFileAttributeViews().contains("unix"));
+    }
 
     @Before
     public void setUp() {
