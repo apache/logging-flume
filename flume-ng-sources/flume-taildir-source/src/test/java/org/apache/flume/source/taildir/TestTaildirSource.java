@@ -74,7 +74,8 @@ public class TestTaildirSource {
     @BeforeClass
     public static void requireUnixFileAttributeView() {
         // TaildirSource tracks files by inode via the `unix:ino` file attribute
-        Assume.assumeTrue("The default file system does not provide a `unix` file attribute view",
+        Assume.assumeTrue(
+                "The default file system does not provide a `unix` file attribute view",
                 FileSystems.getDefault().supportedFileAttributeViews().contains("unix"));
     }
 
