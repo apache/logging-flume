@@ -1680,7 +1680,10 @@ This deserializer reads a Binary Large Object (BLOB) per event, typically one BL
 
 [NOTE]
 ====
-*This source is provided as a preview feature. It does not work on Windows.*
+*This source is provided as a preview feature.*
+
+This source tracks files by their inode number and therefore requires a file system that provides the `unix` file attribute view.
+In particular, it does not work on Windows.
 ====
 
 Watch the specified files, and tail them in nearly real-time once detected new lines appended to the each files.
