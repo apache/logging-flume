@@ -116,10 +116,15 @@ class EventQueueBackingStoreFactory {
         logger.info("Attempting upgrade of " + checkpointFile + " for " + name);
         EventQueueBackingStoreFileV2 backingStoreV2 =
                 new EventQueueBackingStoreFileV2(checkpointFile, capacity, name, counter);
-        String backupName = checkpointFile.getName() + "-backup-" + System.currentTimeMillis();
-        Files.copy(checkpointFile, new File(checkpointFile.getParentFile(), backupName));
-        File metaDataFile = Serialization.getMetaDataFile(checkpointFile);
-        EventQueueBackingStoreFileV3.upgrade(backingStoreV2, checkpointFile, metaDataFile);
+        try {
+            String backupName = checkpointFile.getName() + "-backup-" + System.currentTimeMillis();
+            Files.copy(checkpointFile, new File(checkpointFile.getParentFile(), backupName));
+            File metaDataFile = Serialization.getMetaDataFile(checkpointFile);
+            EventQueueBackingStoreFileV3.upgrade(backingStoreV2, checkpointFile, metaDataFile);
+        } finally {
+            // Release the V2 mapping before the V3 store maps the same file.
+            backingStoreV2.close();
+        }
         return new EventQueueBackingStoreFileV3(
                 checkpointFile, capacity, name, counter, backupCheckpointDir, shouldBackup, compressBackup);
     }

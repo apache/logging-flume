@@ -32,7 +32,7 @@ import org.apache.logging.log4j.Logger;
 
 final class EventQueueBackingStoreFileV3 extends EventQueueBackingStoreFile {
     private static final Logger logger = LogManager.getLogger();
-    private final File metaDataFile;
+    private File metaDataFile;
 
     EventQueueBackingStoreFileV3(File checkpointFile, int capacity, String name, FileChannelCounter counter)
             throws IOException, BadCheckpointException {
@@ -49,6 +49,18 @@ final class EventQueueBackingStoreFileV3 extends EventQueueBackingStoreFile {
             boolean compressBackup)
             throws IOException, BadCheckpointException {
         super(capacity, name, counter, checkpointFile, checkpointBackupDir, backupCheckpoint, compressBackup);
+        try {
+            constructorBody(checkpointFile, capacity, name, checkpointBackupDir);
+        } catch (IOException | RuntimeException e) {
+            // Release the checkpoint mapping opened by the superclass, otherwise the
+            // recovery path cannot delete the checkpoint file on Windows.
+            close();
+            throw e;
+        }
+    }
+
+    private void constructorBody(File checkpointFile, int capacity, String name, File checkpointBackupDir)
+            throws IOException, BadCheckpointException {
         Preconditions.checkArgument(capacity > 0, "capacity must be greater than 0 " + capacity);
         metaDataFile = Serialization.getMetaDataFile(checkpointFile);
         logger.info("Starting up with " + checkpointFile + " and " + metaDataFile);

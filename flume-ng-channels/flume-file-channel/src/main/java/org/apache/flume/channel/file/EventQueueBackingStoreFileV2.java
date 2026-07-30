@@ -34,19 +34,24 @@ final class EventQueueBackingStoreFileV2 extends EventQueueBackingStoreFile {
     EventQueueBackingStoreFileV2(File checkpointFile, int capacity, String name, FileChannelCounter counter)
             throws IOException, BadCheckpointException {
         super(capacity, name, counter, checkpointFile);
-        Preconditions.checkArgument(capacity > 0, "capacity must be greater than 0 " + capacity);
+        try {
+            Preconditions.checkArgument(capacity > 0, "capacity must be greater than 0 " + capacity);
 
-        setLogWriteOrderID(elementsBuffer.get(INDEX_WRITE_ORDER_ID));
-        setSize((int) elementsBuffer.get(INDEX_SIZE));
-        setHead((int) elementsBuffer.get(INDEX_HEAD));
+            setLogWriteOrderID(elementsBuffer.get(INDEX_WRITE_ORDER_ID));
+            setSize((int) elementsBuffer.get(INDEX_SIZE));
+            setHead((int) elementsBuffer.get(INDEX_HEAD));
 
-        int indexMaxLog = INDEX_ACTIVE_LOG + MAX_ACTIVE_LOGS;
-        for (int i = INDEX_ACTIVE_LOG; i < indexMaxLog; i++) {
-            long nextFileCode = elementsBuffer.get(i);
-            if (nextFileCode != EMPTY) {
-                Pair<Integer, Integer> idAndCount = deocodeActiveLogCounter(nextFileCode);
-                logFileIDReferenceCounts.put(idAndCount.getLeft(), new AtomicInteger(idAndCount.getRight()));
+            int indexMaxLog = INDEX_ACTIVE_LOG + MAX_ACTIVE_LOGS;
+            for (int i = INDEX_ACTIVE_LOG; i < indexMaxLog; i++) {
+                long nextFileCode = elementsBuffer.get(i);
+                if (nextFileCode != EMPTY) {
+                    Pair<Integer, Integer> idAndCount = deocodeActiveLogCounter(nextFileCode);
+                    logFileIDReferenceCounts.put(idAndCount.getLeft(), new AtomicInteger(idAndCount.getRight()));
+                }
             }
+        } catch (RuntimeException e) {
+            close();
+            throw e;
         }
     }
 
