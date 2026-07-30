@@ -47,7 +47,7 @@ Flume 1.11.0 contains a fix for https://cve.mitre.org/cgi-bin/cvename.cgi?name=C
 See the xref:security.adoc[Flume Security] page for more details.
 
 The full change log and documentation are available on the
-xref:releases/1.11.0.adoc[Flume 1.11.0 release page].
+xref:release-notes.adoc#release-notes-1-11-0[Flume 1.11.0 release notes].
 
 This release can be downloaded from the Flume xref:download.adoc[Download] page.
 
@@ -69,7 +69,7 @@ This version of Flume adds the automatic module name to the manifest of the vari
 jars allowing them to be usable in applications using the Java Platform Module System.
 
 The full change log and documentation are available on the
-xref:releases/1.10.1.adoc[Flume 1.10.1 release page].
+xref:release-notes.adoc#release-notes-1-10-1[Flume 1.10.1 release notes].
 
 This release can be downloaded from the Flume xref:download.adoc[Download] page.
 
@@ -98,7 +98,7 @@ Cloud Config Server, and support for composite configurations.
 Flume has been updated to use Log4j 2.x instead of Log4j 1.x.
 
 The full change log and documentation are available on the
-xref:releases/1.10.0.adoc[Flume 1.10.0 release page].
+xref:release-notes.adoc#release-notes-1-10-0[Flume 1.10.0 release notes].
 
 This release can be downloaded from the Flume xref:download.adoc[Download] page.
 
@@ -153,7 +153,7 @@ ____
 ____
 
 The full change log and documentation are available on the
-xref:releases/1.9.0.adoc[Flume 1.9.0 release page].
+xref:release-notes.adoc#release-notes-1-9-0[Flume 1.9.0 release notes].
 
 This release can be downloaded from the Flume xref:download.adoc[Download] page.
 
@@ -219,7 +219,7 @@ improvements to Flume during the 1.8.0 development cycle:
 * loleek
 
 The full change log and documentation are available on the
-xref:releases/1.8.0.adoc[Flume 1.8.0 release page].
+xref:release-notes.adoc#release-notes-1-8-0[Flume 1.8.0 release notes].
 
 This release can be downloaded from the Flume xref:download.adoc[Download] page.
 
@@ -299,7 +299,7 @@ improvements to Flume during the 1.7.0 development cycle:
 * Tristan Stevens
 
 The full change log and documentation are available on the
-xref:releases/1.7.0.adoc[Flume 1.7.0 release page].
+xref:release-notes.adoc#release-notes-1-7-0[Flume 1.7.0 release notes].
 
 This release can be downloaded from the Flume xref:download.adoc[Download] page.
 
@@ -331,7 +331,7 @@ ____
 ____
 
 The full change log and documentation are available on the
-xref:releases/1.6.0.adoc[Flume 1.6.0 release page].
+xref:release-notes.adoc#release-notes-1-6-0[Flume 1.6.0 release notes].
 
 This release can be downloaded from the Flume xref:download.adoc[Download] page.
 
@@ -357,7 +357,7 @@ on all components in Flume that support SSL/TLS. All users are encouraged to
 update to this release as soon as possible.
 
 The full change log and documentation are available on the
-xref:releases/1.5.2.adoc[Flume 1.5.2 release page].
+xref:release-notes.adoc#release-notes-1-5-2[Flume 1.5.2 release notes].
 
 This release can be downloaded from the Flume xref:download.adoc[Download] page.
 
@@ -386,7 +386,7 @@ Apache BigTop 0.8.0 release will ship Flume binaries built
 against HBase 0.98.x.
 
 The full change log and documentation are available on the
-xref:releases/1.5.0.1.adoc[Flume 1.5.0.1 release page].
+xref:release-notes.adoc#release-notes-1-5-0-1[Flume 1.5.0.1 release notes].
 
 This release can be downloaded from the Flume xref:download.adoc[Download] page.
 
@@ -415,7 +415,7 @@ Several months of active development went into this release: 123 patches were co
 * Much faster replay in the File Channel.
 
 The full change log and documentation are available on the
-xref:releases/1.5.0.adoc[Flume 1.5.0 release page].
+xref:release-notes.adoc#release-notes-1-5-0[Flume 1.5.0 release notes].
 
 This release can be downloaded from the Flume xref:download.adoc[Download] page.
 
@@ -498,7 +498,7 @@ improvements to Flume during the 1.4.0 development cycle:
 * Wolfgang Hoschek
 
 The full change log and documentation are available on the
-xref:releases/1.4.0.adoc[Flume 1.4.0 release page].
+xref:release-notes.adoc#release-notes-1-4-0[Flume 1.4.0 release notes].
 
 This release can be downloaded from the Flume xref:download.adoc[Download] page.
 
@@ -524,7 +524,7 @@ This release can be downloaded from the Flume download page at:
 https://flume.apache.org/download.html
 
 The change log and documentation are available on the 1.3.1 release page:
-https://flume.apache.org/releases/1.3.1.html
+xref:release-notes.adoc#release-notes-1-3-1[Flume 1.3.1 release notes]
 
 Your help and feedback is more than welcome!
 
@@ -554,7 +554,7 @@ This release can be downloaded from the Flume download page at:
 https://flume.apache.org/download.html
 
 The change log and documentation are available on the 1.3.0 release page:
-https://flume.apache.org/releases/1.3.0.html
+xref:release-notes.adoc#release-notes-1-3-0[Flume 1.3.0 release notes]
 
 Your help and feedback is more than welcome!
 
@@ -583,7 +583,7 @@ This release can be downloaded from the Flume download page at:
 https://flume.apache.org/download.html
 
 The change log and documentation are available on the 1.2.0 release page:
-https://flume.apache.org/releases/1.2.0.html
+xref:release-notes.adoc#release-notes-1-2-0[Flume 1.2.0 release notes]
 
 Your help and feedback is more than welcome!
 
