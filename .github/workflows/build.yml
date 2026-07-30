@@ -43,7 +43,7 @@ jobs:
       # Don't cancel the remaining OS builds when one fails
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest ]
+        os: [ ubuntu-latest, windows-latest ]
         java-distribution: [ temurin ]
         #
         # There is no protobuf 2.x version for `aarch64`.
