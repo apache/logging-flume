@@ -95,6 +95,7 @@
     <test.include.pattern>**/Test*.java</test.include.pattern>
     <redirectTestOutput>true</redirectTestOutput>
 
+    <awaitility.version>4.3.0</awaitility.version>
     <curator.version>5.9.0</curator.version>
     <fest-reflect.version>1.4.1</fest-reflect.version>
     <hadoop.version>3.5.0</hadoop.version>
@@ -116,6 +117,13 @@
         <version>${flume-project.version}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.awaitility</groupId>
+        <artifactId>awaitility</artifactId>
+        <version>${awaitility.version}</version>
+        <scope>test</scope>
       </dependency>
 
       <dependency>
