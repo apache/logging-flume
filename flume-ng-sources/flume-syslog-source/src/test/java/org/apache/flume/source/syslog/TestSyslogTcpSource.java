@@ -276,10 +276,10 @@ public class TestSyslogTcpSource {
             OutputStream outputStream = socket.getOutputStream();
             outputStream.write(bodyWithTandH.getBytes());
             outputStream.flush();
-            // Close the socket only after the server has committed the event to the channel
-            // (the counter is incremented after the commit). The client never reads the TLS 1.3
-            // session tickets sent by the server, so an earlier close() aborts the connection
-            // with a TCP RST, which on Windows can discard the data before the server reads it.
+            // Close the socket only after the server has committed the event to the channel.
+            // The client never reads the TLS 1.3 session tickets sent by the server,
+            // so an earlier close() aborts the connection with a TCP RST,
+            // which on Windows can discard the data before the server reads it.
             await().until(() -> source.getSourceCounter().getEventAcceptedCount() >= 1);
         }
         Transaction transaction = channel.getTransaction();
