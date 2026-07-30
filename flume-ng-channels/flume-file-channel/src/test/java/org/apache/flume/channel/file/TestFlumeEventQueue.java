@@ -54,6 +54,15 @@ public class TestFlumeEventQueue {
         File queueSetDir;
 
         EventQueueBackingStoreSupplier() {
+            reset();
+        }
+
+        /**
+         * The supplier instances are shared by all test methods of a parameter, so use a
+         * fresh directory for each test: a file leaked by one test (e.g. still open on
+         * Windows) must not break the cleanup of the following tests.
+         */
+        void reset() {
             baseDir = Files.createTempDir();
             checkpoint = new File(baseDir, "checkpoint");
             inflightTakes = new File(baseDir, "inflightputs");
@@ -117,11 +126,16 @@ public class TestFlumeEventQueue {
 
     @Before
     public void setup() throws Exception {
+        backingStoreSupplier.reset();
         backingStore = backingStoreSupplier.get();
     }
 
     @After
     public void cleanup() throws IOException {
+        if (queue != null) {
+            queue.close();
+            queue = null;
+        }
         if (backingStore != null) {
             backingStore.close();
         }
