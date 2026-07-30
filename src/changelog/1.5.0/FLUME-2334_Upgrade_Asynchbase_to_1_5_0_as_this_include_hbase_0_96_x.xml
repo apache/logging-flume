@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entry xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="https://logging.apache.org/xml/ns"
+       xsi:schemaLocation="https://logging.apache.org/xml/ns https://logging.apache.org/xml/ns/log4j-changelog-0.xsd"
+       type="fixed">
+  <issue id="FLUME-2334" link="https://issues.apache.org/jira/browse/FLUME-2334"/>
+  <description format="asciidoc">Upgrade Asynchbase to 1.5.0 as this include hbase 0.96.x support</description>
+</entry>

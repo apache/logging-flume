@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entry xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="https://logging.apache.org/xml/ns"
+       xsi:schemaLocation="https://logging.apache.org/xml/ns https://logging.apache.org/xml/ns/log4j-changelog-0.xsd"
+       type="fixed">
+  <issue id="FLUME-2176" link="https://issues.apache.org/jira/browse/FLUME-2176"/>
+  <description format="asciidoc">SpoolDir Source, get 'File has changed' exception but actually there is no change on the file</description>
+</entry>

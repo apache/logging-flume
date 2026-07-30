@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entry xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="https://logging.apache.org/xml/ns"
+       xsi:schemaLocation="https://logging.apache.org/xml/ns https://logging.apache.org/xml/ns/log4j-changelog-0.xsd"
+       type="fixed">
+  <issue id="FLUME-2157" link="https://issues.apache.org/jira/browse/FLUME-2157"/>
+  <description format="asciidoc">Spool directory source does not shut down correctly when Flume is reconfigured</description>
+</entry>
