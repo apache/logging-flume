@@ -317,6 +317,8 @@ public class TestFileChannelRestart extends TestFileChannelBase {
         FileOutputStream os = new FileOutputStream(Serialization.getMetaDataFile(checkpoint));
         meta.toBuilder().setVersion(2).build().writeDelimitedTo(os);
         os.flush();
+        // Close the stream, or the recovery below cannot delete the file on Windows
+        os.close();
         channel = createFileChannel(overrides);
         channel.start();
         Assert.assertTrue(channel.isOpen());
@@ -356,6 +358,8 @@ public class TestFileChannelRestart extends TestFileChannelBase {
         FileOutputStream os = new FileOutputStream(Serialization.getMetaDataFile(checkpoint));
         meta.toBuilder().setWriteOrderID(12).build().writeDelimitedTo(os);
         os.flush();
+        // Close the stream, or the recovery below cannot delete the file on Windows
+        os.close();
         channel = createFileChannel(overrides);
         channel.start();
         Assert.assertTrue(channel.isOpen());

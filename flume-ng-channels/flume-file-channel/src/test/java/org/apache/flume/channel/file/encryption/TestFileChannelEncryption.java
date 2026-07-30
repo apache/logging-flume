@@ -314,9 +314,11 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
             channel = createFileChannel(overrides);
             Assert.fail();
         } catch (RuntimeException ex) {
+            // The path separator and the reason text are platform-dependent
             Assert.assertTrue(
                     "Exception message is incorrect: " + ex.getMessage(),
-                    ex.getMessage().startsWith("java.io.FileNotFoundException: /path/does/not/exist "));
+                    ex.getMessage()
+                            .startsWith("java.io.FileNotFoundException: " + new File("/path/does/not/exist") + " "));
         }
     }
 
@@ -334,9 +336,11 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
             channel = createFileChannel(overrides);
             Assert.fail();
         } catch (RuntimeException ex) {
+            // The path separator and the reason text are platform-dependent
             Assert.assertTrue(
                     "Exception message is incorrect: " + ex.getMessage(),
-                    ex.getMessage().startsWith("java.io.FileNotFoundException: /path/does/not/exist "));
+                    ex.getMessage()
+                            .startsWith("java.io.FileNotFoundException: " + new File("/path/does/not/exist") + " "));
         }
     }
 
