@@ -16,7 +16,9 @@
  */
 package org.apache.flume.source.syslog;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -269,17 +271,20 @@ public class TestSyslogTcpSource {
                 },
                 null);
         SocketFactory socketFactory = sslContext.getSocketFactory();
-        Socket socket = socketFactory.createSocket();
-        socket.connect(address);
-        OutputStream outputStream = socket.getOutputStream();
-        outputStream.write(bodyWithTandH.getBytes());
-        socket.close();
-        // Thread.sleep(100);
+        try (Socket socket = socketFactory.createSocket()) {
+            socket.connect(address);
+            OutputStream outputStream = socket.getOutputStream();
+            outputStream.write(bodyWithTandH.getBytes());
+            outputStream.flush();
+        }
+        // The counter is incremented after the event is committed to the channel
+        await().until(() -> source.getSourceCounter().getEventAcceptedCount() >= 1);
         Transaction transaction = channel.getTransaction();
         transaction.begin();
 
         Event event = channel.take();
-        assertEquals(new String(event.getBody()), data1);
+        assertNotNull("The source accepted an event, but the channel did not deliver one.", event);
+        assertEquals(data1, new String(event.getBody()));
         transaction.commit();
         transaction.close();
     }
