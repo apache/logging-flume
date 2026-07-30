@@ -485,6 +485,23 @@ public class Log {
                  */
                 doReplay(queue, dataFiles, encryptionKeyProvider, shouldFastReplay);
             } catch (BadCheckpointException ex) {
+                // Close the discarded queue and backing store first: their open handles and
+                // buffers would prevent the deletion of the checkpoint files on Windows.
+                if (queue != null) {
+                    try {
+                        queue.close();
+                    } catch (Exception closeEx) {
+                        logger.warn("Error closing the queue built from a bad checkpoint", closeEx);
+                    }
+                    queue = null;
+                } else if (backingStore != null) {
+                    try {
+                        backingStore.close();
+                    } catch (Exception closeEx) {
+                        logger.warn("Error closing the backing store of a bad checkpoint", closeEx);
+                    }
+                }
+                backingStore = null;
                 backupRestored = false;
                 if (useDualCheckpoints) {
                     logger.warn(
@@ -839,7 +856,7 @@ public class Log {
         try {
             open = false;
             try {
-                if (checkpointOnClose) {
+                if (checkpointOnClose && queue != null) {
                     writeCheckpoint(true); // do this before acquiring exclusive lock
                 }
             } catch (Exception err) {
@@ -865,7 +882,9 @@ public class Log {
                     }
                 }
             }
-            queue.close();
+            if (queue != null) {
+                queue.close();
+            }
             try {
                 unlock(checkpointDir);
             } catch (IOException ex) {
