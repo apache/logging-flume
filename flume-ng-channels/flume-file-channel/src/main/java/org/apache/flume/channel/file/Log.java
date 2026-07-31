@@ -485,8 +485,10 @@ public class Log {
                  */
                 doReplay(queue, dataFiles, encryptionKeyProvider, shouldFastReplay);
             } catch (BadCheckpointException ex) {
-                // Close the discarded queue and backing store first: their open handles and
-                // buffers would prevent the deletion of the checkpoint files on Windows.
+                // Close the discarded queue and backing store and drop every reference to
+                // them: the checkpoint mapping is only released when the garbage collector
+                // reclaims the buffer, and until then the checkpoint file cannot be
+                // deleted on Windows. The deletion below relies on this.
                 if (queue != null) {
                     try {
                         queue.close();
@@ -501,6 +503,7 @@ public class Log {
                         ex.addSuppressed(closeEx);
                     }
                 }
+                backingStore = null;
                 backupRestored = false;
                 if (useDualCheckpoints) {
                     logger.warn(

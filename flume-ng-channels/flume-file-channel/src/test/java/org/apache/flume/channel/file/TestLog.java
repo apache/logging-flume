@@ -419,7 +419,7 @@ public class TestLog {
         log.commitPut(transactionID);
         log.close();
         if (useFastReplay) {
-            FileUtils.deleteQuietly(checkpointDir);
+            TestUtils.awaitDeleteDirectory(checkpointDir);
             Assert.assertTrue(checkpointDir.mkdir());
         }
         List<File> logFiles = Lists.newArrayList();

@@ -121,8 +121,9 @@ final class EventQueueBackingStoreFileV3 extends EventQueueBackingStoreFile {
                 }
             }
         } catch (IOException | RuntimeException e) {
-            // Release the checkpoint mapping opened by the superclass, otherwise the
-            // recovery path cannot delete the checkpoint file on Windows.
+            // Close the store opened by the superclass: this drops the buffer
+            // references, so the garbage collector can release the mapping before the
+            // recovery path deletes the checkpoint file.
             close();
             throw e;
         }
@@ -166,14 +167,14 @@ final class EventQueueBackingStoreFileV3 extends EventQueueBackingStoreFile {
         }
     }
 
-    static void upgrade(EventQueueBackingStoreFileV2 backingStoreV2, File checkpointFile, File metaDataFile)
+    static void upgrade(
+            File checkpointFile,
+            File metaDataFile,
+            int head,
+            int size,
+            long writeOrderID,
+            Map<Integer, AtomicInteger> referenceCounts)
             throws IOException {
-
-        int head = backingStoreV2.getHead();
-        int size = backingStoreV2.getSize();
-        long writeOrderID = backingStoreV2.getLogWriteOrderID();
-        Map<Integer, AtomicInteger> referenceCounts = backingStoreV2.logFileIDReferenceCounts;
-
         ProtosFactory.Checkpoint.Builder checkpointBuilder = ProtosFactory.Checkpoint.newBuilder();
         checkpointBuilder.setVersion(Serialization.VERSION_3);
         checkpointBuilder.setQueueHead(head);

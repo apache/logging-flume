@@ -56,7 +56,7 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
     protected LongBuffer elementsBuffer;
     protected final Map<Integer, Long> overwriteMap = new HashMap<Integer, Long>();
     protected final Map<Integer, AtomicInteger> logFileIDReferenceCounts = Maps.newHashMap();
-    protected final MappedByteBuffer mappedBuffer;
+    private MappedByteBuffer mappedBuffer;
     protected final RandomAccessFile checkpointFileHandle;
     private final FileChannelCounter fileChannelCounter;
     protected final File checkpointFile;
@@ -65,7 +65,6 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
     protected final boolean compressBackup;
     private final File backupDir;
     private final ExecutorService checkpointBackUpExecutor;
-    private volatile boolean closed;
 
     protected EventQueueBackingStoreFile(
             int capacity, String name, FileChannelCounter fileChannelCounter, File checkpointFile)
@@ -88,10 +87,11 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
         this.shouldBackup = backupCheckpoint;
         this.compressBackup = compressBackup;
         this.backupDir = checkpointBackupDir;
-        // On failure release the file handle and the mapping before rethrowing:
-        // a leaked mapping keeps the checkpoint file locked on Windows.
+        // On failure close the file handle and drop every reference to the mapping before rethrowing:
+        // the mapping itself is only released when the buffer is garbage collected,
+        // and a reachable buffer keeps the checkpoint file undeletable on Windows.
         RandomAccessFile checkpointFileHandle = new RandomAccessFile(checkpointFile, "rw");
-        MappedByteBuffer mappedBuffer = null;
+        MappedByteBuffer mappedBuffer;
         try {
             long totalBytes = (capacity + HEADER_SIZE) * Serialization.SIZE_OF_LONG;
             if (checkpointFileHandle.length() == 0) {
@@ -125,7 +125,6 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
             }
         } catch (IOException | RuntimeException e) {
             elementsBuffer = null;
-            MappedFiles.unmap(mappedBuffer);
             try {
                 checkpointFileHandle.close();
             } catch (IOException closeEx) {
@@ -145,6 +144,7 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
     }
 
     protected long getCheckpointLogWriteOrderID() {
+        checkNotClosed();
         return elementsBuffer.get(INDEX_WRITE_ORDER_ID);
     }
 
@@ -242,12 +242,14 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
     }
 
     /**
-     * Accessing the buffer after {@link #close()} unmapped it would crash the JVM.
-     * Any method that dereferences {@code elementsBuffer} (or otherwise touches the mapping)
-     * should call {@link #checkNotClosed()} first.
+     * {@link #close()} drops the buffer references, so a null {@code mappedBuffer}
+     * marks the store as closed. A later access would throw a NullPointerException,
+     * and any write would be silently lost anyway. Any method that dereferences
+     * {@code elementsBuffer} or {@code mappedBuffer} should call
+     * {@link #checkNotClosed()} first.
      */
     private void checkNotClosed() {
-        if (closed) {
+        if (mappedBuffer == null) {
             throw new IllegalStateException("Backing store " + checkpointFile + " is closed");
         }
     }
@@ -340,13 +342,13 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
 
     @Override
     void close() {
-        if (closed) {
+        if (mappedBuffer == null) {
             return;
         }
-        closed = true;
         mappedBuffer.force();
-        // The buffer must not be touched after this point, see the guards in the accessors.
-        MappedFiles.unmap(mappedBuffer);
+        // Drop the buffer references so the mapping can be garbage collected even while this store is still reachable:
+        // the file cannot be deleted on Windows until the mapping is gone.
+        mappedBuffer = null;
         elementsBuffer = null;
         try {
             checkpointFileHandle.close();

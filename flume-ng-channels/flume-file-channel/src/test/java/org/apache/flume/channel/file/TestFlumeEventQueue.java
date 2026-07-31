@@ -145,8 +145,10 @@ public class TestFlumeEventQueue {
     @Test
     public void testCapacity() throws Exception {
         backingStore.close();
+        // Drop the reference so the GC can release the mapping and the file can be deleted.
+        backingStore = null;
         File checkpoint = backingStoreSupplier.getCheckpoint();
-        Assert.assertTrue(checkpoint.delete());
+        TestUtils.awaitDelete(checkpoint);
         backingStore = new EventQueueBackingStoreFileV2(checkpoint, 1, "test", new FileChannelCounter("test"));
         queue = new FlumeEventQueue(
                 backingStore,
@@ -160,8 +162,10 @@ public class TestFlumeEventQueue {
     @Test(expected = IllegalArgumentException.class)
     public void testInvalidCapacityZero() throws Exception {
         backingStore.close();
+        // Drop the reference so the GC can release the mapping and the file can be deleted.
+        backingStore = null;
         File checkpoint = backingStoreSupplier.getCheckpoint();
-        Assert.assertTrue(checkpoint.delete());
+        TestUtils.awaitDelete(checkpoint);
         backingStore = new EventQueueBackingStoreFileV2(checkpoint, 0, "test", new FileChannelCounter("test"));
         queue = new FlumeEventQueue(
                 backingStore,
@@ -173,8 +177,10 @@ public class TestFlumeEventQueue {
     @Test(expected = IllegalArgumentException.class)
     public void testInvalidCapacityNegative() throws Exception {
         backingStore.close();
+        // Drop the reference so the GC can release the mapping and the file can be deleted.
+        backingStore = null;
         File checkpoint = backingStoreSupplier.getCheckpoint();
-        Assert.assertTrue(checkpoint.delete());
+        TestUtils.awaitDelete(checkpoint);
         backingStore = new EventQueueBackingStoreFileV2(checkpoint, -1, "test", new FileChannelCounter("test"));
         queue = new FlumeEventQueue(
                 backingStore,

@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.zip.GZIPInputStream;
+import org.apache.commons.io.FileUtils;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Event;
@@ -51,6 +52,42 @@ import org.apache.flume.exception.ChannelException;
 import org.junit.Assert;
 
 public class TestUtils {
+
+    private static final int DELETE_ATTEMPTS = 50;
+    private static final long DELETE_RETRY_DELAY_MILLIS = 100;
+
+    /**
+     * Deletes a file that a discarded backing store may still map, retrying with
+     * garbage collection cycles in between until the mapping is released. On
+     * Windows a mapped file cannot be deleted, and the mapping is only released
+     * when the buffer is collected. The caller must drop every reference to the
+     * store (and to anything that references it, e.g. a stopped channel) first,
+     * otherwise the mapping stays reachable and this method fails the test.
+     */
+    public static void awaitDelete(File file) throws InterruptedException {
+        for (int attempt = 0; attempt < DELETE_ATTEMPTS; attempt++) {
+            if (!file.exists() || file.delete()) {
+                return;
+            }
+            System.gc();
+            Thread.sleep(DELETE_RETRY_DELAY_MILLIS);
+        }
+        Assert.fail("Could not delete " + file + ", a mapping is probably still reachable");
+    }
+
+    /**
+     * Recursively deletes a directory, retrying like {@link #awaitDelete(File)}.
+     */
+    public static void awaitDeleteDirectory(File dir) throws InterruptedException {
+        for (int attempt = 0; attempt < DELETE_ATTEMPTS; attempt++) {
+            if (FileUtils.deleteQuietly(dir) && !dir.exists()) {
+                return;
+            }
+            System.gc();
+            Thread.sleep(DELETE_RETRY_DELAY_MILLIS);
+        }
+        Assert.fail("Could not delete " + dir + ", a mapping is probably still reachable");
+    }
 
     public static FlumeEvent newPersistableEvent() {
         Map<String, String> headers = Maps.newHashMap();

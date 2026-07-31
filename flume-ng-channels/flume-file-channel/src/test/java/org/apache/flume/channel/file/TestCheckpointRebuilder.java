@@ -53,12 +53,14 @@ public class TestCheckpointRebuilder extends TestFileChannelBase {
         Assert.assertTrue(channel.isOpen());
         Set<String> in = fillChannel(channel, "checkpointBulder");
         channel.stop();
+        // Drop the channel reference so the GC can release the checkpoint mapping.
+        channel = null;
         File checkpointFile = new File(checkpointDir, "checkpoint");
         File metaDataFile = Serialization.getMetaDataFile(checkpointFile);
         File inflightTakesFile = new File(checkpointDir, "inflighttakes");
         File inflightPutsFile = new File(checkpointDir, "inflightputs");
         File queueSetDir = new File(checkpointDir, "queueset");
-        Assert.assertTrue(checkpointFile.delete());
+        TestUtils.awaitDelete(checkpointFile);
         Assert.assertTrue(metaDataFile.delete());
         Assert.assertTrue(inflightTakesFile.delete());
         Assert.assertTrue(inflightPutsFile.delete());
