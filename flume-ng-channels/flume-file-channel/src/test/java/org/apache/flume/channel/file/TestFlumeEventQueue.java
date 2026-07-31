@@ -414,6 +414,8 @@ public class TestFlumeEventQueue {
         queue.addWithoutCommit(new FlumeEventPointer(2, 2), txnID2);
         queue.checkpoint(true);
         TimeUnit.SECONDS.sleep(3L);
+        // Close the MapDB, so that the new queue can delete the queueset directory on Windows.
+        queue.replayComplete();
         queue = new FlumeEventQueue(
                 backingStore,
                 backingStoreSupplier.getInflightTakes(),
@@ -442,6 +444,8 @@ public class TestFlumeEventQueue {
         queue.removeHead(txnID2);
         queue.checkpoint(true);
         TimeUnit.SECONDS.sleep(3L);
+        // Close the MapDB, so that the new queue can delete the queueset directory on Windows.
+        queue.replayComplete();
         queue = new FlumeEventQueue(
                 backingStore,
                 backingStoreSupplier.getInflightTakes(),
@@ -472,6 +476,8 @@ public class TestFlumeEventQueue {
             inflight = new RandomAccessFile(backingStoreSupplier.getInflightPuts(), "rw");
             inflight.seek(0);
             inflight.writeInt(new Random().nextInt());
+            // Close the MapDB, so that the new queue can delete the queueset directory on Windows.
+            queue.replayComplete();
             queue = new FlumeEventQueue(
                     backingStore,
                     backingStoreSupplier.getInflightTakes(),
@@ -505,6 +511,8 @@ public class TestFlumeEventQueue {
             inflight = new RandomAccessFile(backingStoreSupplier.getInflightTakes(), "rw");
             inflight.seek(0);
             inflight.writeInt(new Random().nextInt());
+            // Close the MapDB, so that the new queue can delete the queueset directory on Windows.
+            queue.replayComplete();
             queue = new FlumeEventQueue(
                     backingStore,
                     backingStoreSupplier.getInflightTakes(),
