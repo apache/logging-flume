@@ -314,7 +314,7 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
             channel = createFileChannel(overrides);
             Assert.fail();
         } catch (RuntimeException ex) {
-            // The path separator and the reason text are platform-dependent
+            // The path separator and the reason text are platform-dependent.
             Assert.assertTrue(
                     "Exception message is incorrect: " + ex.getMessage(),
                     ex.getMessage()
@@ -336,7 +336,7 @@ public class TestFileChannelEncryption extends TestFileChannelBase {
             channel = createFileChannel(overrides);
             Assert.fail();
         } catch (RuntimeException ex) {
-            // The path separator and the reason text are platform-dependent
+            // The path separator and the reason text are platform-dependent.
             Assert.assertTrue(
                     "Exception message is incorrect: " + ex.getMessage(),
                     ex.getMessage()

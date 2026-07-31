@@ -87,8 +87,8 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
         this.shouldBackup = backupCheckpoint;
         this.compressBackup = compressBackup;
         this.backupDir = checkpointBackupDir;
-        // On failure close the file handle and drop every reference to the mapping before rethrowing:
-        // the mapping itself is only released when the buffer is garbage collected,
+        // On failure, close the file handle and drop all references to the mapping before rethrowing:
+        // the mapping is only released when the buffer is garbage collected,
         // and a reachable buffer keeps the checkpoint file undeletable on Windows.
         RandomAccessFile checkpointFileHandle = new RandomAccessFile(checkpointFile, "rw");
         MappedByteBuffer mappedBuffer;
@@ -242,11 +242,11 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
     }
 
     /**
-     * {@link #close()} drops the buffer references, so a null {@code mappedBuffer}
-     * marks the store as closed. A later access would throw a NullPointerException,
-     * and any write would be silently lost anyway. Any method that dereferences
-     * {@code elementsBuffer} or {@code mappedBuffer} should call
-     * {@link #checkNotClosed()} first.
+     * Throws {@link IllegalStateException} if this store is closed.
+     *
+     * <p>A null {@code mappedBuffer} marks the store as closed.
+     * Methods that dereference {@code elementsBuffer} or {@code mappedBuffer} should call this method first,
+     * to fail fast instead of throwing a NullPointerException.
      */
     private void checkNotClosed() {
         if (mappedBuffer == null) {
@@ -346,7 +346,7 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
             return;
         }
         mappedBuffer.force();
-        // Drop the buffer references so the mapping can be garbage collected even while this store is still reachable:
+        // Drop the buffer references, so the mapping can be garbage collected while the store is still reachable:
         // the file cannot be deleted on Windows until the mapping is gone.
         mappedBuffer = null;
         elementsBuffer = null;

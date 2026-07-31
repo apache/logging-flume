@@ -94,9 +94,10 @@ final class FlumeEventQueue {
                 throw new IllegalStateException("Could not create QueueSet Dir " + queueSetDBDir);
             }
             File dbFile = new File(queueSetDBDir, "db");
-            // Don't enable memory-mapped files: MapDB 0.9.x cannot unmap its buffers on
-            // Java 17, so `deleteFilesAfterClose()` would silently fail on Windows and
-            // the next construction over the same directory could not delete the files.
+            // Don't enable memory-mapped files:
+            // MapDB 0.9.x cannot unmap its buffers on Java 17,
+            // so `deleteFilesAfterClose()` would silently fail on Windows
+            // and the next construction over the same directory could not delete the files.
             db = DBMaker.newFileDB(dbFile)
                     .closeOnJvmShutdown()
                     .transactionDisable()

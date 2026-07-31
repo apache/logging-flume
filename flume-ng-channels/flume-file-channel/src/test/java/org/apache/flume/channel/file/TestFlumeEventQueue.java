@@ -58,9 +58,11 @@ public class TestFlumeEventQueue {
         }
 
         /**
-         * The supplier instances are shared by all test methods of a parameter, so use a
-         * fresh directory for each test: a file leaked by one test (e.g. still open on
-         * Windows) must not break the cleanup of the following tests.
+         * Creates a fresh directory for each test.
+         *
+         * <p>The supplier instances are shared by all test methods of a parameter.
+         * A file leaked by one test, e.g. still open on Windows,
+         * must not break the cleanup of the following tests.
          */
         void reset() {
             baseDir = Files.createTempDir();

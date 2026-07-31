@@ -56,8 +56,8 @@ public class TestCheckpoint {
         FlumeEventPointer ptrIn = new FlumeEventPointer(10, 20);
         FlumeEventQueue queueIn = new FlumeEventQueue(backingStore, inflightTakes, inflightPuts, queueSet);
         queueIn.addHead(ptrIn);
-        // The three queues share one backing store and one queue set directory, so each
-        // queue must release the queue set database before the next queue is created.
+        // The three queues share one backing store and one queue set directory,
+        // so each queue must release the queue set database before the next queue is created.
         queueIn.replayComplete();
         FlumeEventQueue queueOut = new FlumeEventQueue(backingStore, inflightTakes, inflightPuts, queueSet);
         Assert.assertEquals(0, queueOut.getLogWriteOrderID());

@@ -48,9 +48,11 @@ public class TestFileChannelErrorMetrics extends TestFileChannelBase {
     }
 
     /**
-     * Some tests inject I/O errors by deleting the channel's files while the channel is
-     * using them. Windows does not allow deleting files that are in use, so the deletion
-     * fails in the test instead of causing the intended errors in the channel.
+     * Skips tests that delete in-use files on Windows.
+     *
+     * <p>These tests inject I/O errors by deleting the channel's files while the channel is using them.
+     * Windows does not allow deleting files that are in use,
+     * so the deletion fails in the test instead of causing the intended errors in the channel.
      */
     private static void requireOpenFileDeletion() {
         Assume.assumeFalse(

@@ -371,8 +371,8 @@ public class FileChannel extends BasicChannelSemantics implements TransactionCap
 
     void close() {
         setOpen(false);
-        // Close the log even when the channel never opened: a failed start() leaves
-        // a partially built log whose open files must still be released.
+        // Close the log even when the channel never opened:
+        // a failed start() leaves a partially built log whose open files must still be released.
         if (log != null) {
             try {
                 log.close();

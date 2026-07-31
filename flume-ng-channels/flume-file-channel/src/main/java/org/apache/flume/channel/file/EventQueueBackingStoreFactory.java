@@ -128,9 +128,9 @@ class EventQueueBackingStoreFactory {
             writeOrderID = backingStoreV2.getLogWriteOrderID();
             referenceCounts = backingStoreV2.logFileIDReferenceCounts;
         } finally {
-            // Close the V2 store before the file is copied and rewritten. The stale
-            // mapping lingers until garbage collected, which is harmless: reading,
-            // writing and re-mapping a mapped file are all allowed, even on Windows.
+            // Close the V2 store before the file is copied and rewritten.
+            // The stale mapping lingers until garbage collected, which is harmless:
+            // even on Windows a mapped file can be read, written and mapped again.
             backingStoreV2.close();
         }
         String backupName = checkpointFile.getName() + "-backup-" + System.currentTimeMillis();

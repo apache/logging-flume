@@ -57,11 +57,13 @@ public class TestUtils {
     private static final long DELETE_RETRY_DELAY_MILLIS = 100;
 
     /**
-     * Deletes a file that a discarded backing store may still map, retrying with
-     * garbage collection cycles in between until the mapping is released. On
-     * Windows a mapped file cannot be deleted, and the mapping is only released
-     * when the buffer is collected. The caller must drop every reference to the
-     * store (and to anything that references it, e.g. a stopped channel) first,
+     * Deletes a file that a discarded backing store may still map.
+     *
+     * <p>On Windows a mapped file cannot be deleted,
+     * and the mapping is only released when the buffer is garbage collected,
+     * so this method retries with garbage collection cycles in between.
+     * The caller must first drop all references to the store and to anything that references it,
+     * such as a stopped channel,
      * otherwise the mapping stays reachable and this method fails the test.
      */
     public static void awaitDelete(File file) throws InterruptedException {

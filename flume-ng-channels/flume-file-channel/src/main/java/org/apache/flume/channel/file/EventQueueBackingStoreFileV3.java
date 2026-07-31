@@ -121,9 +121,9 @@ final class EventQueueBackingStoreFileV3 extends EventQueueBackingStoreFile {
                 }
             }
         } catch (IOException | RuntimeException e) {
-            // Close the store opened by the superclass: this drops the buffer
-            // references, so the garbage collector can release the mapping before the
-            // recovery path deletes the checkpoint file.
+            // Close the store opened by the superclass:
+            // dropping the buffer references lets the garbage collector release the mapping
+            // before the recovery path deletes the checkpoint file.
             close();
             throw e;
         }

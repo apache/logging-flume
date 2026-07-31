@@ -123,11 +123,10 @@ public class Serialization {
     /**
      * Deletes a file, retrying with garbage collection cycles in between.
      *
-     * <p>On Windows the checkpoint file cannot be deleted while a MappedByteBuffer
-     * of a discarded backing store still maps it. Nothing unmaps the buffer
-     * explicitly; it is released when the garbage collector runs its cleaner, so
-     * ask for a collection and retry a bounded number of times. The first attempt
-     * is free, so healthy platforms and unmapped files pay nothing.
+     * <p>On Windows the checkpoint file cannot be deleted while a discarded backing store still maps it.
+     * Nothing unmaps the buffer explicitly,
+     * so ask for a collection and retry a bounded number of times.
+     * The first attempt is free, so healthy platforms and unmapped files pay nothing.
      */
     @SuppressFBWarnings(value = "DM_GC")
     private static boolean deleteWithRetries(File file) {
