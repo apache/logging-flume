@@ -242,8 +242,9 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
     }
 
     /**
-     * Accessing the buffer after {@link #close()} unmapped it would crash the JVM,
-     * so every buffer access checks this first.
+     * Accessing the buffer after {@link #close()} unmapped it would crash the JVM.
+     * Any method that dereferences {@code elementsBuffer} (or otherwise touches the mapping)
+     * should call {@link #checkNotClosed()} first.
      */
     private void checkNotClosed() {
         if (closed) {
