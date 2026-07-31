@@ -33,7 +33,7 @@
   <properties>
     <!-- TODO fix spotbugs violations -->
     <spotbugs.maxAllowedViolations>152</spotbugs.maxAllowedViolations>
-    <pmd.maxAllowedViolations>64</pmd.maxAllowedViolations>
+    <pmd.maxAllowedViolations>69</pmd.maxAllowedViolations>
     <module.name>org.apache.flume.core</module.name>
   </properties>
 

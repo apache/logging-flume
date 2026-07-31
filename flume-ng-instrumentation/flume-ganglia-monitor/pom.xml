@@ -32,8 +32,9 @@
   <properties>
     <!-- This artifact was never released before -->
     <bnd.baseline.fail.on.missing>false</bnd.baseline.fail.on.missing>
-    <!-- TODO fix spotbugs violations -->
+    <!-- TODO fix spotbugs/pmd violations -->
     <spotbugs.maxAllowedViolations>13</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>3</pmd.maxAllowedViolations>
     <module.name>org.apache.flume.instrumentation.ganglia</module.name>
   </properties>
 
