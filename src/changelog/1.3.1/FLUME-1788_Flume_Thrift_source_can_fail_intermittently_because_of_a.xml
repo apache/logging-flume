@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entry xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="https://logging.apache.org/xml/ns"
+       xsi:schemaLocation="https://logging.apache.org/xml/ns https://logging.apache.org/xml/ns/log4j-changelog-0.xsd"
+       type="fixed">
+  <issue id="FLUME-1788" link="https://issues.apache.org/jira/browse/FLUME-1788"/>
+  <description format="asciidoc">Flume Thrift source can fail intermittently because of a race condition in Thrift server implementation on some Linux systems</description>
+</entry>

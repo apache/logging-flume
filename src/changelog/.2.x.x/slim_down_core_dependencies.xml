@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entry xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="https://logging.apache.org/xml/ns"
+       xsi:schemaLocation="https://logging.apache.org/xml/ns https://logging.apache.org/xml/ns/log4j-changelog-0.xsd"
+       type="changed">
+  <issue id="446" link="https://github.com/apache/logging-flume/pull/446"/>
+  <issue id="448" link="https://github.com/apache/logging-flume/pull/448"/>
+  <description format="asciidoc">
+    Remove Jetty, Mina and Netty from the dependencies of `flume-ng-core`.
+    The syslog and Netcat UDP sources now live in the dedicated `flume-syslog-source` and `flume-netcat-source` modules.
+  </description>
+</entry>

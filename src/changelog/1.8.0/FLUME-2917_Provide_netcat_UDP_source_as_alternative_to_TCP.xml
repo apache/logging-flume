@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entry xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="https://logging.apache.org/xml/ns"
+       xsi:schemaLocation="https://logging.apache.org/xml/ns https://logging.apache.org/xml/ns/log4j-changelog-0.xsd"
+       type="added">
+  <issue id="FLUME-2917" link="https://issues.apache.org/jira/browse/FLUME-2917"/>
+  <description format="asciidoc">Provide netcat UDP source as alternative to TCP</description>
+</entry>
