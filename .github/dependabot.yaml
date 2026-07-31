@@ -1,0 +1,77 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to you under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+#
+# ██     ██  █████  ██████  ███    ██ ██ ███    ██  ██████  ██
+# ██     ██ ██   ██ ██   ██ ████   ██ ██ ████   ██ ██       ██
+# ██  █  ██ ███████ ██████  ██ ██  ██ ██ ██ ██  ██ ██   ███ ██
+# ██ ███ ██ ██   ██ ██   ██ ██  ██ ██ ██ ██  ██ ██ ██    ██
+#  ███ ███  ██   ██ ██   ██ ██   ████ ██ ██   ████  ██████  ██
+#
+# `dependabot.yaml` must be stored in the `.github` directory of the default branch[1].
+#
+#  1. Make all your changes to this file!
+#     Don't create another `dependabot.yaml` – it will simply be discarded.
+#
+#  2. Always associate your entries to a branch!
+#     For instance, use `target-branch` in `updates` entries
+#
+# [1] https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+#
+
+version: 2
+
+# Fix the Maven Central to the ASF repository to work around: https://github.com/dependabot/dependabot-core/issues/8329
+registries:
+  maven-central:
+    type: maven-repository
+    url: https://repo.maven.apache.org/maven2
+
+updates:
+
+  - package-ecosystem: maven
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    cooldown:
+      default-days: 7
+    groups:
+      # Groups all non-major updates in a single PR.
+      # No group matches major updates, so each one gets a separate PR.
+      maven-minor-updates:
+        update-types: [ "minor", "patch" ]
+    target-branch: "trunk"
+    registries:
+      - maven-central
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    groups:
+      github-actions-updates:
+        patterns: [ "*" ]
+    target-branch: "trunk"
+
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    groups:
+      npm-updates:
+        patterns: [ "*" ]
+    target-branch: "trunk"
