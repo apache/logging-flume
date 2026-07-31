@@ -31,17 +31,28 @@ import com.google.common.collect.Table;
 import com.google.common.io.Files;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.apache.flume.Event;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class TestTaildirEventReader {
     private File tmpDir;
     private String posFilePath;
+
+    @BeforeClass
+    public static void requireUnixFileAttributeView() {
+        // ReliableTaildirEventReader tracks files by inode via the `unix:ino` file attribute
+        Assume.assumeTrue(
+                "The default file system does not provide a `unix` file attribute view",
+                FileSystems.getDefault().supportedFileAttributeViews().contains("unix"));
+    }
 
     public static String bodyAsString(Event event) {
         return new String(event.getBody());

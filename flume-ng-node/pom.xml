@@ -186,8 +186,11 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
+          <!-- `java.lang` is opened for the `EnvironmentVariables` rule,
+               which needs `ProcessEnvironment.theCaseInsensitiveEnvironment` on Windows. -->
           <argLine>-Djava.net.preferIPv4Stack=true
-                        --add-opens java.base/java.util=ALL-UNNAMED</argLine>
+                        --add-opens java.base/java.util=ALL-UNNAMED
+                        --add-opens java.base/java.lang=ALL-UNNAMED</argLine>
         </configuration>
       </plugin>
 

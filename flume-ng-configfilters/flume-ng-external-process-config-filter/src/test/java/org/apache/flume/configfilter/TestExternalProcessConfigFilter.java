@@ -21,6 +21,7 @@ import static org.junit.Assert.assertNull;
 
 import java.io.File;
 import java.util.HashMap;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -34,6 +35,10 @@ public class TestExternalProcessConfigFilter {
 
     @Before
     public void setUp() {
+        // The external commands are shell scripts, which Windows cannot execute.
+        Assume.assumeFalse(
+                "Windows cannot execute the test shell scripts",
+                System.getProperty("os.name").startsWith("Windows"));
         configFilter = new ExternalProcessConfigFilter();
     }
 

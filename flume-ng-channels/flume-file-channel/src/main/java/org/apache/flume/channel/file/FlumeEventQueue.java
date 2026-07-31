@@ -84,31 +84,63 @@ final class FlumeEventQueue {
             logger.error("Could not read checkpoint.", e);
             throw e;
         }
-        if (queueSetDBDir.isDirectory()) {
-            FileUtils.deleteDirectory(queueSetDBDir);
-        } else if (queueSetDBDir.isFile() && !queueSetDBDir.delete()) {
-            throw new IOException("QueueSetDir " + queueSetDBDir + " is a file and" + " could not be deleted");
+        try {
+            if (queueSetDBDir.isDirectory()) {
+                FileUtils.deleteDirectory(queueSetDBDir);
+            } else if (queueSetDBDir.isFile() && !queueSetDBDir.delete()) {
+                throw new IOException("QueueSetDir " + queueSetDBDir + " is a file and" + " could not be deleted");
+            }
+            if (!queueSetDBDir.mkdirs()) {
+                throw new IllegalStateException("Could not create QueueSet Dir " + queueSetDBDir);
+            }
+            File dbFile = new File(queueSetDBDir, "db");
+            // Don't enable memory-mapped files:
+            // MapDB 0.9.x cannot unmap its buffers on Java 17,
+            // so `deleteFilesAfterClose()` would silently fail on Windows
+            // and the next construction over the same directory could not delete the files.
+            db = DBMaker.newFileDB(dbFile)
+                    .closeOnJvmShutdown()
+                    .transactionDisable()
+                    .syncOnCommitDisable()
+                    .deleteFilesAfterClose()
+                    .cacheDisable()
+                    .make();
+            queueSet = db.createHashSet("QueueSet " + " - " + backingStore.getName())
+                    .make();
+            long start = System.currentTimeMillis();
+            for (int i = 0; i < backingStore.getSize(); i++) {
+                queueSet.add(get(i));
+            }
+            logger.info("QueueSet population inserting " + backingStore.getSize() + " took "
+                    + (System.currentTimeMillis() - start));
+        } catch (Exception e) {
+            closeQuietly();
+            throw e;
         }
-        if (!queueSetDBDir.mkdirs()) {
-            throw new IllegalStateException("Could not create QueueSet Dir " + queueSetDBDir);
+    }
+
+    /** Releases the resources this constructor opened, without closing the backing store. */
+    private void closeQuietly() {
+        try {
+            if (db != null) {
+                db.close();
+            }
+        } catch (Exception ex) {
+            logger.warn("Error closing db", ex);
+        } finally {
+            db = null;
+            queueSet = null;
         }
-        File dbFile = new File(queueSetDBDir, "db");
-        db = DBMaker.newFileDB(dbFile)
-                .closeOnJvmShutdown()
-                .transactionDisable()
-                .syncOnCommitDisable()
-                .deleteFilesAfterClose()
-                .cacheDisable()
-                .mmapFileEnableIfSupported()
-                .make();
-        queueSet =
-                db.createHashSet("QueueSet " + " - " + backingStore.getName()).make();
-        long start = System.currentTimeMillis();
-        for (int i = 0; i < backingStore.getSize(); i++) {
-            queueSet.add(get(i));
+        try {
+            inflightPuts.close();
+        } catch (IOException ex) {
+            logger.warn("Error closing inflight puts", ex);
         }
-        logger.info("QueueSet population inserting " + backingStore.getSize() + " took "
-                + (System.currentTimeMillis() - start));
+        try {
+            inflightTakes.close();
+        } catch (IOException ex) {
+            logger.warn("Error closing inflight takes", ex);
+        }
     }
 
     SetMultimap<Long, Long> deserializeInflightPuts() throws IOException, BadCheckpointException {
@@ -378,19 +410,11 @@ final class FlumeEventQueue {
 
     synchronized void close() throws IOException {
         try {
-            if (db != null) {
-                db.close();
-            }
-        } catch (Exception ex) {
-            logger.warn("Error closing db", ex);
-        }
-        try {
             backingStore.close();
-            inflightPuts.close();
-            inflightTakes.close();
         } catch (IOException e) {
             logger.warn("Error closing backing store", e);
         }
+        closeQuietly();
     }
 
     /**

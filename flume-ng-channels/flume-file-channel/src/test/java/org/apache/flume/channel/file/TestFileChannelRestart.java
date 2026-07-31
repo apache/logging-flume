@@ -126,8 +126,10 @@ public class TestFileChannelRestart extends TestFileChannelBase {
         }
         channel.stop();
         if (deleteCheckpoint) {
+            // Drop the channel reference so the GC can release the checkpoint mapping.
+            channel = null;
             File checkpoint = new File(checkpointDir, "checkpoint");
-            Assert.assertTrue(checkpoint.delete());
+            TestUtils.awaitDelete(checkpoint);
             File checkpointMetaData = Serialization.getMetaDataFile(checkpoint);
             Assert.assertTrue(checkpointMetaData.delete());
         }
@@ -161,8 +163,10 @@ public class TestFileChannelRestart extends TestFileChannelBase {
             Thread.sleep(2000);
         }
         channel.stop();
+        // Drop the channel reference so the GC can release the checkpoint mapping.
+        channel = null;
         File checkpoint = new File(checkpointDir, "checkpoint");
-        Assert.assertTrue(checkpoint.delete());
+        TestUtils.awaitDelete(checkpoint);
         File checkpointMetaData = Serialization.getMetaDataFile(checkpoint);
         Assert.assertTrue(checkpointMetaData.exists());
         channel = createFileChannel(overrides);
@@ -235,10 +239,12 @@ public class TestFileChannelRestart extends TestFileChannelBase {
             Thread.sleep(2000);
         }
         channel.stop();
+        // Drop the channel reference so the GC can release the checkpoint mapping.
+        channel = null;
         File checkpoint = new File(checkpointDir, "checkpoint");
         File checkpointMetaData = Serialization.getMetaDataFile(checkpoint);
         Assert.assertTrue(checkpointMetaData.delete());
-        Assert.assertTrue(checkpoint.delete());
+        TestUtils.awaitDelete(checkpoint);
         channel = createFileChannel(overrides);
         channel.start();
         Assert.assertTrue(channel.isOpen());
@@ -317,6 +323,8 @@ public class TestFileChannelRestart extends TestFileChannelBase {
         FileOutputStream os = new FileOutputStream(Serialization.getMetaDataFile(checkpoint));
         meta.toBuilder().setVersion(2).build().writeDelimitedTo(os);
         os.flush();
+        // Close the stream, or the recovery below cannot delete the file on Windows.
+        os.close();
         channel = createFileChannel(overrides);
         channel.start();
         Assert.assertTrue(channel.isOpen());
@@ -356,6 +364,8 @@ public class TestFileChannelRestart extends TestFileChannelBase {
         FileOutputStream os = new FileOutputStream(Serialization.getMetaDataFile(checkpoint));
         meta.toBuilder().setWriteOrderID(12).build().writeDelimitedTo(os);
         os.flush();
+        // Close the stream, or the recovery below cannot delete the file on Windows.
+        os.close();
         channel = createFileChannel(overrides);
         channel.start();
         Assert.assertTrue(channel.isOpen());
@@ -869,8 +879,10 @@ public class TestFileChannelRestart extends TestFileChannelBase {
         Assert.assertEquals(compressedBackupCheckpoint.exists(), originalCheckpointCompressed);
         Assert.assertEquals(uncompressedBackupCheckpoint.exists(), !originalCheckpointCompressed);
         channel.stop();
+        // Drop the channel reference so the GC can release the checkpoint mapping.
+        channel = null;
         File checkpoint = new File(checkpointDir, "checkpoint");
-        Assert.assertTrue(checkpoint.delete());
+        TestUtils.awaitDelete(checkpoint);
         File checkpointMetaData = Serialization.getMetaDataFile(checkpoint);
         Assert.assertTrue(checkpointMetaData.delete());
         overrides.put(

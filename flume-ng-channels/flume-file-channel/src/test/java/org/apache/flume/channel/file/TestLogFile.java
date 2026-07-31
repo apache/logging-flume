@@ -85,6 +85,8 @@ public class TestLogFile {
 
     @Test
     public void testWriterFailsWithDirectory() throws IOException {
+        // Close the writer opened by setup(), so that the file can be deleted on Windows.
+        logFileWriter.close();
         FileUtils.deleteQuietly(dataFile);
         Assert.assertFalse(dataFile.exists());
         Assert.assertTrue(dataFile.mkdirs());
@@ -245,6 +247,8 @@ public class TestLogFile {
 
     @Test
     public void testWriteDelimitedTo() throws IOException {
+        // Close the writer opened by setup(), so that the file can be deleted on Windows.
+        logFileWriter.close();
         if (dataFile.isFile()) {
             Assert.assertTrue(dataFile.delete());
         }

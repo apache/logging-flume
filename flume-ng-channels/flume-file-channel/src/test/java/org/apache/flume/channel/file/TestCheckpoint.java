@@ -19,6 +19,7 @@ package org.apache.flume.channel.file;
 import java.io.File;
 import java.io.IOException;
 import junit.framework.Assert;
+import org.apache.commons.io.FileUtils;
 import org.apache.flume.channel.file.instrumentation.FileChannelCounter;
 import org.junit.After;
 import org.junit.Before;
@@ -43,6 +44,9 @@ public class TestCheckpoint {
     @After
     public void cleanup() {
         file.delete();
+        inflightPuts.delete();
+        inflightTakes.delete();
+        FileUtils.deleteQuietly(queueSet);
     }
 
     @Test
@@ -52,12 +56,17 @@ public class TestCheckpoint {
         FlumeEventPointer ptrIn = new FlumeEventPointer(10, 20);
         FlumeEventQueue queueIn = new FlumeEventQueue(backingStore, inflightTakes, inflightPuts, queueSet);
         queueIn.addHead(ptrIn);
+        // The three queues share one backing store and one queue set directory,
+        // so each queue must release the queue set database before the next queue is created.
+        queueIn.replayComplete();
         FlumeEventQueue queueOut = new FlumeEventQueue(backingStore, inflightTakes, inflightPuts, queueSet);
         Assert.assertEquals(0, queueOut.getLogWriteOrderID());
+        queueOut.replayComplete();
         queueIn.checkpoint(false);
         FlumeEventQueue queueOut2 = new FlumeEventQueue(backingStore, inflightTakes, inflightPuts, queueSet);
         FlumeEventPointer ptrOut = queueOut2.removeHead(0L);
         Assert.assertEquals(ptrIn, ptrOut);
         Assert.assertTrue(queueOut2.getLogWriteOrderID() > 0);
+        queueOut2.close();
     }
 }

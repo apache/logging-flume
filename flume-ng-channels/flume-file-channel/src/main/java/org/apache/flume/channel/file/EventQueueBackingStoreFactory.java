@@ -20,6 +20,8 @@ import com.google.common.io.Files;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.flume.channel.file.instrumentation.FileChannelCounter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -116,10 +118,26 @@ class EventQueueBackingStoreFactory {
         logger.info("Attempting upgrade of " + checkpointFile + " for " + name);
         EventQueueBackingStoreFileV2 backingStoreV2 =
                 new EventQueueBackingStoreFileV2(checkpointFile, capacity, name, counter);
+        int queueHead;
+        int queueSize;
+        long writeOrderID;
+        Map<Integer, AtomicInteger> referenceCounts;
+        try {
+            queueHead = backingStoreV2.getHead();
+            queueSize = backingStoreV2.getSize();
+            writeOrderID = backingStoreV2.getLogWriteOrderID();
+            referenceCounts = backingStoreV2.logFileIDReferenceCounts;
+        } finally {
+            // Close the V2 store before the file is copied and rewritten.
+            // The stale mapping lingers until garbage collected, which is harmless:
+            // even on Windows a mapped file can be read, written and mapped again.
+            backingStoreV2.close();
+        }
         String backupName = checkpointFile.getName() + "-backup-" + System.currentTimeMillis();
         Files.copy(checkpointFile, new File(checkpointFile.getParentFile(), backupName));
         File metaDataFile = Serialization.getMetaDataFile(checkpointFile);
-        EventQueueBackingStoreFileV3.upgrade(backingStoreV2, checkpointFile, metaDataFile);
+        EventQueueBackingStoreFileV3.upgrade(
+                checkpointFile, metaDataFile, queueHead, queueSize, writeOrderID, referenceCounts);
         return new EventQueueBackingStoreFileV3(
                 checkpointFile, capacity, name, counter, backupCheckpointDir, shouldBackup, compressBackup);
     }

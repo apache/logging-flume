@@ -30,8 +30,8 @@
 
   <properties>
     <!-- TODO fix spotbugs violations -->
-    <spotbugs.maxAllowedViolations>284</spotbugs.maxAllowedViolations>
-    <pmd.maxAllowedViolations>544</pmd.maxAllowedViolations>
+    <spotbugs.maxAllowedViolations>162</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>19</pmd.maxAllowedViolations>
     <module.name>org.apache.flume.channel.file</module.name>
   </properties>
 
