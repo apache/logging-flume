@@ -224,8 +224,12 @@ public class TestLog {
         log.replay();
         File filler = new File(checkpointDir, "filler");
         byte[] buffer = new byte[64 * 1024];
+        // Fill well below the limit:
+        // other processes on a shared CI runner free temp space all the time,
+        // and a thin margin lets the usable space bounce back above the limit before the put checks it.
+        long margin = 2L * 1024L * 1024L;
         FileOutputStream out = new FileOutputStream(filler);
-        while (checkpointDir.getUsableSpace() > minimumRequiredSpace) {
+        while (checkpointDir.getUsableSpace() > minimumRequiredSpace - margin) {
             out.write(buffer);
         }
         out.close();
@@ -419,7 +423,7 @@ public class TestLog {
         log.commitPut(transactionID);
         log.close();
         if (useFastReplay) {
-            FileUtils.deleteQuietly(checkpointDir);
+            TestUtils.awaitDeleteDirectory(checkpointDir);
             Assert.assertTrue(checkpointDir.mkdir());
         }
         List<File> logFiles = Lists.newArrayList();

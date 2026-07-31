@@ -26,10 +26,12 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import org.apache.commons.io.FileUtils;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
+import org.apache.flume.conf.internal.SuppressFBWarnings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.xerial.snappy.SnappyInputStream;
@@ -52,6 +54,10 @@ public class Serialization {
 
     // 64 K buffer to copy and compress files.
     private static final int FILE_BUFFER_SIZE = 64 * 1024;
+
+    // Retries for deleting files that a garbage-collectable mapping still pins.
+    private static final int DELETE_ATTEMPTS = 10;
+    private static final long DELETE_RETRY_DELAY_MILLIS = 100;
 
     private static final Logger logger = LogManager.getLogger();
 
@@ -102,7 +108,7 @@ public class Serialization {
                 logger.info("Skipping " + file.getName() + " because it is in excludes " + "set");
                 continue;
             }
-            if (!FileUtils.deleteQuietly(file)) {
+            if (!deleteWithRetries(file)) {
                 logger.info(builder.toString());
                 logger.error("Error while attempting to delete: " + file.getAbsolutePath());
                 return false;
@@ -112,6 +118,34 @@ public class Serialization {
         builder.append(".");
         logger.info(builder.toString());
         return true;
+    }
+
+    /**
+     * Deletes a file, retrying with garbage collection cycles in between.
+     *
+     * <p>On Windows the checkpoint file cannot be deleted while a discarded backing store still maps it.
+     * Nothing unmaps the buffer explicitly,
+     * so ask for a collection and retry a bounded number of times.
+     * The first attempt is free, so healthy platforms and unmapped files pay nothing.
+     */
+    @SuppressFBWarnings(value = "DM_GC")
+    private static boolean deleteWithRetries(File file) {
+        if (FileUtils.deleteQuietly(file)) {
+            return true;
+        }
+        for (int attempt = 0; attempt < DELETE_ATTEMPTS; attempt++) {
+            System.gc();
+            try {
+                TimeUnit.MILLISECONDS.sleep(DELETE_RETRY_DELAY_MILLIS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return false;
+            }
+            if (FileUtils.deleteQuietly(file)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

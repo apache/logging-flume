@@ -54,6 +54,17 @@ public class TestFlumeEventQueue {
         File queueSetDir;
 
         EventQueueBackingStoreSupplier() {
+            reset();
+        }
+
+        /**
+         * Creates a fresh directory for each test.
+         *
+         * <p>The supplier instances are shared by all test methods of a parameter.
+         * A file leaked by one test, e.g. still open on Windows,
+         * must not break the cleanup of the following tests.
+         */
+        void reset() {
             baseDir = Files.createTempDir();
             checkpoint = new File(baseDir, "checkpoint");
             inflightTakes = new File(baseDir, "inflightputs");
@@ -117,11 +128,16 @@ public class TestFlumeEventQueue {
 
     @Before
     public void setup() throws Exception {
+        backingStoreSupplier.reset();
         backingStore = backingStoreSupplier.get();
     }
 
     @After
     public void cleanup() throws IOException {
+        if (queue != null) {
+            queue.close();
+            queue = null;
+        }
         if (backingStore != null) {
             backingStore.close();
         }
@@ -131,8 +147,10 @@ public class TestFlumeEventQueue {
     @Test
     public void testCapacity() throws Exception {
         backingStore.close();
+        // Drop the reference so the GC can release the mapping and the file can be deleted.
+        backingStore = null;
         File checkpoint = backingStoreSupplier.getCheckpoint();
-        Assert.assertTrue(checkpoint.delete());
+        TestUtils.awaitDelete(checkpoint);
         backingStore = new EventQueueBackingStoreFileV2(checkpoint, 1, "test", new FileChannelCounter("test"));
         queue = new FlumeEventQueue(
                 backingStore,
@@ -146,8 +164,10 @@ public class TestFlumeEventQueue {
     @Test(expected = IllegalArgumentException.class)
     public void testInvalidCapacityZero() throws Exception {
         backingStore.close();
+        // Drop the reference so the GC can release the mapping and the file can be deleted.
+        backingStore = null;
         File checkpoint = backingStoreSupplier.getCheckpoint();
-        Assert.assertTrue(checkpoint.delete());
+        TestUtils.awaitDelete(checkpoint);
         backingStore = new EventQueueBackingStoreFileV2(checkpoint, 0, "test", new FileChannelCounter("test"));
         queue = new FlumeEventQueue(
                 backingStore,
@@ -159,8 +179,10 @@ public class TestFlumeEventQueue {
     @Test(expected = IllegalArgumentException.class)
     public void testInvalidCapacityNegative() throws Exception {
         backingStore.close();
+        // Drop the reference so the GC can release the mapping and the file can be deleted.
+        backingStore = null;
         File checkpoint = backingStoreSupplier.getCheckpoint();
-        Assert.assertTrue(checkpoint.delete());
+        TestUtils.awaitDelete(checkpoint);
         backingStore = new EventQueueBackingStoreFileV2(checkpoint, -1, "test", new FileChannelCounter("test"));
         queue = new FlumeEventQueue(
                 backingStore,
@@ -400,6 +422,8 @@ public class TestFlumeEventQueue {
         queue.addWithoutCommit(new FlumeEventPointer(2, 2), txnID2);
         queue.checkpoint(true);
         TimeUnit.SECONDS.sleep(3L);
+        // Close the MapDB, so that the new queue can delete the queueset directory on Windows.
+        queue.replayComplete();
         queue = new FlumeEventQueue(
                 backingStore,
                 backingStoreSupplier.getInflightTakes(),
@@ -428,6 +452,8 @@ public class TestFlumeEventQueue {
         queue.removeHead(txnID2);
         queue.checkpoint(true);
         TimeUnit.SECONDS.sleep(3L);
+        // Close the MapDB, so that the new queue can delete the queueset directory on Windows.
+        queue.replayComplete();
         queue = new FlumeEventQueue(
                 backingStore,
                 backingStoreSupplier.getInflightTakes(),
@@ -458,6 +484,8 @@ public class TestFlumeEventQueue {
             inflight = new RandomAccessFile(backingStoreSupplier.getInflightPuts(), "rw");
             inflight.seek(0);
             inflight.writeInt(new Random().nextInt());
+            // Close the MapDB, so that the new queue can delete the queueset directory on Windows.
+            queue.replayComplete();
             queue = new FlumeEventQueue(
                     backingStore,
                     backingStoreSupplier.getInflightTakes(),
@@ -491,6 +519,8 @@ public class TestFlumeEventQueue {
             inflight = new RandomAccessFile(backingStoreSupplier.getInflightTakes(), "rw");
             inflight.seek(0);
             inflight.writeInt(new Random().nextInt());
+            // Close the MapDB, so that the new queue can delete the queueset directory on Windows.
+            queue.replayComplete();
             queue = new FlumeEventQueue(
                     backingStore,
                     backingStoreSupplier.getInflightTakes(),

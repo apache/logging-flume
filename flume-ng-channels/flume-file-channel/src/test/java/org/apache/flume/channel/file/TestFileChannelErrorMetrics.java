@@ -33,6 +33,7 @@ import org.apache.flume.Transaction;
 import org.apache.flume.channel.file.instrumentation.FileChannelCounter;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.exception.ChannelException;
+import org.junit.Assume;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -47,11 +48,25 @@ public class TestFileChannelErrorMetrics extends TestFileChannelBase {
     }
 
     /**
+     * Skips tests that delete in-use files on Windows.
+     *
+     * <p>These tests inject I/O errors by deleting the channel's files while the channel is using them.
+     * Windows does not allow deleting files that are in use,
+     * so the deletion fails in the test instead of causing the intended errors in the channel.
+     */
+    private static void requireOpenFileDeletion() {
+        Assume.assumeFalse(
+                "Windows cannot delete files that are in use",
+                System.getProperty("os.name").startsWith("Windows"));
+    }
+
+    /**
      * This tests multiple successful and failed put and take operations
      * and checks the values of the channel's counters.
      */
     @Test
     public void testEventTakePutErrorCount() throws Exception {
+        requireOpenFileDeletion();
         final long usableSpaceRefreshInterval = 1;
         FileChannel channel = Mockito.spy(createFileChannel());
         Mockito.when(channel.createLogBuilder()).then(new Answer<Log.Builder>() {
@@ -161,6 +176,7 @@ public class TestFileChannelErrorMetrics extends TestFileChannelBase {
 
     @Test
     public void testCheckpointWriteErrorCount() throws Exception {
+        requireOpenFileDeletion();
         int checkpointInterval = 1500;
         final FileChannel channel = createFileChannel(Collections.singletonMap(
                 FileChannelConfiguration.CHECKPOINT_INTERVAL, String.valueOf(checkpointInterval)));
@@ -262,6 +278,7 @@ public class TestFileChannelErrorMetrics extends TestFileChannelBase {
 
     @Test
     public void testCheckpointBackupWriteErrorShouldIncreaseCounter2() throws Exception {
+        requireOpenFileDeletion();
         int checkpointInterval = 1500;
         Map config = new HashMap();
         config.put(FileChannelConfiguration.CHECKPOINT_INTERVAL, String.valueOf(checkpointInterval));

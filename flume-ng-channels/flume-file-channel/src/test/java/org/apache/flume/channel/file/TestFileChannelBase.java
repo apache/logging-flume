@@ -70,7 +70,8 @@ public class TestFileChannelBase {
 
     @After
     public void teardown() {
-        if (channel != null && channel.isOpen()) {
+        // Stop the channel even when it failed to start: it still holds open files.
+        if (channel != null) {
             channel.stop();
         }
         FileUtils.deleteQuietly(baseDir);

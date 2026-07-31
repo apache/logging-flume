@@ -272,16 +272,20 @@ public class TestEventQueueBackingStoreFactory {
     private void verify(EventQueueBackingStore backingStore, long expectedVersion, List<Long> expectedPointers)
             throws Exception {
         FlumeEventQueue queue = new FlumeEventQueue(backingStore, inflightTakes, inflightPuts, queueSetDir);
-        List<Long> actualPointers = Lists.newArrayList();
-        FlumeEventPointer ptr;
-        while ((ptr = queue.removeHead(0L)) != null) {
-            actualPointers.add(ptr.toLong());
+        try {
+            List<Long> actualPointers = Lists.newArrayList();
+            FlumeEventPointer ptr;
+            while ((ptr = queue.removeHead(0L)) != null) {
+                actualPointers.add(ptr.toLong());
+            }
+            Assert.assertEquals(expectedPointers, actualPointers);
+            Assert.assertEquals(10, backingStore.getCapacity());
+            DataInputStream in = new DataInputStream(new FileInputStream(checkpoint));
+            long actualVersion = in.readLong();
+            Assert.assertEquals(expectedVersion, actualVersion);
+            in.close();
+        } finally {
+            queue.close();
         }
-        Assert.assertEquals(expectedPointers, actualPointers);
-        Assert.assertEquals(10, backingStore.getCapacity());
-        DataInputStream in = new DataInputStream(new FileInputStream(checkpoint));
-        long actualVersion = in.readLong();
-        Assert.assertEquals(expectedVersion, actualVersion);
-        in.close();
     }
 }

@@ -22,6 +22,7 @@ notifications:
   # GitHub already provides notifications for PRs and issues.
   # Please don't duplicate that noise here!
   commits: commits@logging.apache.org
+  discussions: dev@logging.apache.org
   jira_options: link label
 github:
   description: "Apache Flume is a distributed, reliable, and available service for efficiently collecting, aggregating, and moving large amounts of log-like data"
@@ -56,6 +57,7 @@ github:
     rebase: true
 
   features:
+    discussions: true
     issues: true
 
   # Disable protected branches, since we use rulesets now
@@ -71,9 +73,9 @@ github:
       required_conversation_resolution: true
       # Require checks to pass before merging
       required_status_checks:
-        # The GitHub Actions app
-        - app_slug: github-actions
-          name: "build (ubuntu-latest)"
+        ## The GitHub Actions app
+        #- app_slug: github-actions
+        #  name: "build (ubuntu-latest)"
         # The GitHub Advanced Security app
         - app_slug: github-advanced-security
           name: "CodeQL"

@@ -317,7 +317,7 @@ public class FileChannel extends BasicChannelSemantics implements TransactionCap
     public synchronized void stop() {
         logger.info("Stopping {}...", this);
         startupError = null;
-        int size = getDepth();
+        int size = open ? getDepth() : 0;
         close();
         if (!open) {
             channelCounter.setChannelSize(size);
@@ -370,8 +370,10 @@ public class FileChannel extends BasicChannelSemantics implements TransactionCap
     }
 
     void close() {
-        if (open) {
-            setOpen(false);
+        setOpen(false);
+        // Close the log even when the channel never opened:
+        // a failed start() leaves a partially built log whose open files must still be released.
+        if (log != null) {
             try {
                 log.close();
             } catch (Exception e) {
