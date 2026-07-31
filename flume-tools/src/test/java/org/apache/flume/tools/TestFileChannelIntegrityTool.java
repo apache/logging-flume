@@ -85,14 +85,32 @@ public class TestFileChannelIntegrityTool {
 
     @After
     public void tearDown() throws Exception {
-        FileUtils.deleteDirectory(checkpointDir);
-        FileUtils.deleteDirectory(dataDir);
+        deleteDirectoryWithRetries(checkpointDir);
+        deleteDirectoryWithRetries(dataDir);
     }
 
     @AfterClass
     public static void tearDownClass() throws Exception {
-        FileUtils.deleteDirectory(origCheckpointDir);
-        FileUtils.deleteDirectory(origDataDir);
+        deleteDirectoryWithRetries(origCheckpointDir);
+        deleteDirectoryWithRetries(origDataDir);
+    }
+
+    /**
+     * Deletes a directory, retrying with garbage collection cycles in between.
+     *
+     * <p>On Windows the checkpoint file of a stopped channel cannot be deleted
+     * until the garbage collector releases its mapping.
+     * A failed deletion would leak files into the next test's directories.
+     */
+    private static void deleteDirectoryWithRetries(File dir) throws InterruptedException {
+        for (int attempt = 0; attempt < 50; attempt++) {
+            if (FileUtils.deleteQuietly(dir) && !dir.exists()) {
+                return;
+            }
+            System.gc();
+            Thread.sleep(100);
+        }
+        Assert.fail("Could not delete " + dir + ", a mapping is probably still reachable");
     }
 
     @Test
