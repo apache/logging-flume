@@ -34,7 +34,7 @@
     <spotbugs.maxAllowedViolations>12</spotbugs.maxAllowedViolations>
     <pmd.maxAllowedViolations>7</pmd.maxAllowedViolations>
     <module.name>org.apache.flume.node</module.name>
-    <junit-jupiter.version>5.12.2</junit-jupiter.version>
+    <junit-jupiter.version>6.1.2</junit-jupiter.version>
   </properties>
 
   <dependencies>
