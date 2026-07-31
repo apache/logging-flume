@@ -61,7 +61,7 @@
     <jetty.version>12.1.9</jetty.version>
     <jsr305.version>3.0.2</jsr305.version>
     <log4j.version>2.26.0</log4j.version>
-    <mapdb.version>0.9.9</mapdb.version>
+    <mapdb.version>3.1.0</mapdb.version>
     <mina.version>2.2.8</mina.version>
     <spotbugs.version>4.9.3</spotbugs.version>
     <netty-all.version>4.2.15.Final</netty-all.version>
