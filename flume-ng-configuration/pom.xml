@@ -29,7 +29,7 @@
   <properties>
     <!-- TODO fix spotbugs violations -->
     <spotbugs.maxAllowedViolations>36</spotbugs.maxAllowedViolations>
-    <pmd.maxAllowedViolations>17</pmd.maxAllowedViolations>
+    <pmd.maxAllowedViolations>13</pmd.maxAllowedViolations>
     <module.name>org.apache.flume.conf</module.name>
   </properties>
 

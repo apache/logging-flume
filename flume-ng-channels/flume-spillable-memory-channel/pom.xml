@@ -31,7 +31,7 @@
   <properties>
     <!-- TODO fix spotbugs/pmd violations -->
     <spotbugs.maxAllowedViolations>11</spotbugs.maxAllowedViolations>
-    <pmd.maxAllowedViolations>8</pmd.maxAllowedViolations>
+    <pmd.maxAllowedViolations>4</pmd.maxAllowedViolations>
     <module.name>org.apache.flume.channel.spillable.memory</module.name>
   </properties>
 
