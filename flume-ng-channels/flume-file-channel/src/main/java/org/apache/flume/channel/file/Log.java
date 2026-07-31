@@ -491,17 +491,16 @@ public class Log {
                     try {
                         queue.close();
                     } catch (Exception closeEx) {
-                        logger.warn("Error closing the queue built from a bad checkpoint", closeEx);
+                        ex.addSuppressed(closeEx);
                     }
                     queue = null;
                 } else if (backingStore != null) {
                     try {
                         backingStore.close();
                     } catch (Exception closeEx) {
-                        logger.warn("Error closing the backing store of a bad checkpoint", closeEx);
+                        ex.addSuppressed(closeEx);
                     }
                 }
-                backingStore = null;
                 backupRestored = false;
                 if (useDualCheckpoints) {
                     logger.warn(

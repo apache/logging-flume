@@ -32,7 +32,7 @@ import org.apache.logging.log4j.Logger;
 
 final class EventQueueBackingStoreFileV3 extends EventQueueBackingStoreFile {
     private static final Logger logger = LogManager.getLogger();
-    private File metaDataFile;
+    private final File metaDataFile;
 
     EventQueueBackingStoreFileV3(File checkpointFile, int capacity, String name, FileChannelCounter counter)
             throws IOException, BadCheckpointException {
@@ -50,86 +50,81 @@ final class EventQueueBackingStoreFileV3 extends EventQueueBackingStoreFile {
             throws IOException, BadCheckpointException {
         super(capacity, name, counter, checkpointFile, checkpointBackupDir, backupCheckpoint, compressBackup);
         try {
-            constructorBody(checkpointFile, capacity, name, checkpointBackupDir);
+            Preconditions.checkArgument(capacity > 0, "capacity must be greater than 0 " + capacity);
+            metaDataFile = Serialization.getMetaDataFile(checkpointFile);
+            logger.info("Starting up with " + checkpointFile + " and " + metaDataFile);
+            if (metaDataFile.exists()) {
+                FileInputStream inputStream = new FileInputStream(metaDataFile);
+                try {
+                    logger.info("Reading checkpoint metadata from " + metaDataFile);
+                    ProtosFactory.Checkpoint checkpoint = ProtosFactory.Checkpoint.parseDelimitedFrom(inputStream);
+                    if (checkpoint == null) {
+                        throw new BadCheckpointException(
+                                "The checkpoint metadata file does " + "not exist or has zero length");
+                    }
+                    int version = checkpoint.getVersion();
+                    if (version != getVersion()) {
+                        throw new BadCheckpointException(
+                                "Invalid version: " + version + " " + name + ", expected " + getVersion());
+                    }
+                    long logWriteOrderID = checkpoint.getWriteOrderID();
+                    if (logWriteOrderID != getCheckpointLogWriteOrderID()) {
+                        String msg = "Checkpoint and Meta files have differing " + "logWriteOrderIDs "
+                                + getCheckpointLogWriteOrderID() + ", and "
+                                + logWriteOrderID;
+                        logger.warn(msg);
+                        throw new BadCheckpointException(msg);
+                    }
+                    WriteOrderOracle.setSeed(logWriteOrderID);
+                    setLogWriteOrderID(logWriteOrderID);
+                    setSize(checkpoint.getQueueSize());
+                    setHead(checkpoint.getQueueHead());
+                    for (ProtosFactory.ActiveLog activeLog : checkpoint.getActiveLogsList()) {
+                        Integer logFileID = activeLog.getLogFileID();
+                        Integer count = activeLog.getCount();
+                        logFileIDReferenceCounts.put(logFileID, new AtomicInteger(count));
+                    }
+                } catch (InvalidProtocolBufferException ex) {
+                    throw new BadCheckpointException(
+                            "Checkpoint metadata file is invalid. "
+                                    + "The agent might have been stopped while it was being "
+                                    + "written",
+                            ex);
+                } finally {
+                    try {
+                        inputStream.close();
+                    } catch (IOException e) {
+                        logger.warn("Unable to close " + metaDataFile, e);
+                    }
+                }
+            } else {
+                if (backupExists(checkpointBackupDir) && shouldBackup) {
+                    // If a backup exists, then throw an exception to recover checkpoint
+                    throw new BadCheckpointException(
+                            "The checkpoint metadata file does " + "not exist, but a backup exists");
+                }
+                ProtosFactory.Checkpoint.Builder checkpointBuilder = ProtosFactory.Checkpoint.newBuilder();
+                checkpointBuilder.setVersion(getVersion());
+                checkpointBuilder.setQueueHead(getHead());
+                checkpointBuilder.setQueueSize(getSize());
+                checkpointBuilder.setWriteOrderID(getLogWriteOrderID());
+                FileOutputStream outputStream = new FileOutputStream(metaDataFile);
+                try {
+                    checkpointBuilder.build().writeDelimitedTo(outputStream);
+                    outputStream.getChannel().force(true);
+                } finally {
+                    try {
+                        outputStream.close();
+                    } catch (IOException e) {
+                        logger.warn("Unable to close " + metaDataFile, e);
+                    }
+                }
+            }
         } catch (IOException | RuntimeException e) {
             // Release the checkpoint mapping opened by the superclass, otherwise the
             // recovery path cannot delete the checkpoint file on Windows.
             close();
             throw e;
-        }
-    }
-
-    private void constructorBody(File checkpointFile, int capacity, String name, File checkpointBackupDir)
-            throws IOException, BadCheckpointException {
-        Preconditions.checkArgument(capacity > 0, "capacity must be greater than 0 " + capacity);
-        metaDataFile = Serialization.getMetaDataFile(checkpointFile);
-        logger.info("Starting up with " + checkpointFile + " and " + metaDataFile);
-        if (metaDataFile.exists()) {
-            FileInputStream inputStream = new FileInputStream(metaDataFile);
-            try {
-                logger.info("Reading checkpoint metadata from " + metaDataFile);
-                ProtosFactory.Checkpoint checkpoint = ProtosFactory.Checkpoint.parseDelimitedFrom(inputStream);
-                if (checkpoint == null) {
-                    throw new BadCheckpointException(
-                            "The checkpoint metadata file does " + "not exist or has zero length");
-                }
-                int version = checkpoint.getVersion();
-                if (version != getVersion()) {
-                    throw new BadCheckpointException(
-                            "Invalid version: " + version + " " + name + ", expected " + getVersion());
-                }
-                long logWriteOrderID = checkpoint.getWriteOrderID();
-                if (logWriteOrderID != getCheckpointLogWriteOrderID()) {
-                    String msg = "Checkpoint and Meta files have differing " + "logWriteOrderIDs "
-                            + getCheckpointLogWriteOrderID() + ", and "
-                            + logWriteOrderID;
-                    logger.warn(msg);
-                    throw new BadCheckpointException(msg);
-                }
-                WriteOrderOracle.setSeed(logWriteOrderID);
-                setLogWriteOrderID(logWriteOrderID);
-                setSize(checkpoint.getQueueSize());
-                setHead(checkpoint.getQueueHead());
-                for (ProtosFactory.ActiveLog activeLog : checkpoint.getActiveLogsList()) {
-                    Integer logFileID = activeLog.getLogFileID();
-                    Integer count = activeLog.getCount();
-                    logFileIDReferenceCounts.put(logFileID, new AtomicInteger(count));
-                }
-            } catch (InvalidProtocolBufferException ex) {
-                throw new BadCheckpointException(
-                        "Checkpoint metadata file is invalid. "
-                                + "The agent might have been stopped while it was being "
-                                + "written",
-                        ex);
-            } finally {
-                try {
-                    inputStream.close();
-                } catch (IOException e) {
-                    logger.warn("Unable to close " + metaDataFile, e);
-                }
-            }
-        } else {
-            if (backupExists(checkpointBackupDir) && shouldBackup) {
-                // If a backup exists, then throw an exception to recover checkpoint
-                throw new BadCheckpointException(
-                        "The checkpoint metadata file does " + "not exist, but a backup exists");
-            }
-            ProtosFactory.Checkpoint.Builder checkpointBuilder = ProtosFactory.Checkpoint.newBuilder();
-            checkpointBuilder.setVersion(getVersion());
-            checkpointBuilder.setQueueHead(getHead());
-            checkpointBuilder.setQueueSize(getSize());
-            checkpointBuilder.setWriteOrderID(getLogWriteOrderID());
-            FileOutputStream outputStream = new FileOutputStream(metaDataFile);
-            try {
-                checkpointBuilder.build().writeDelimitedTo(outputStream);
-                outputStream.getChannel().force(true);
-            } finally {
-                try {
-                    outputStream.close();
-                } catch (IOException e) {
-                    logger.warn("Unable to close " + metaDataFile, e);
-                }
-            }
         }
     }
 

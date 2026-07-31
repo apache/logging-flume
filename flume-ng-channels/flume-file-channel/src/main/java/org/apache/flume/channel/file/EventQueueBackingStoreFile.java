@@ -90,17 +90,17 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
         this.backupDir = checkpointBackupDir;
         // On failure release the file handle and the mapping before rethrowing:
         // a leaked mapping keeps the checkpoint file locked on Windows.
-        RandomAccessFile fileHandle = new RandomAccessFile(checkpointFile, "rw");
-        MappedByteBuffer buffer = null;
+        RandomAccessFile checkpointFileHandle = new RandomAccessFile(checkpointFile, "rw");
+        MappedByteBuffer mappedBuffer = null;
         try {
             long totalBytes = (capacity + HEADER_SIZE) * Serialization.SIZE_OF_LONG;
-            if (fileHandle.length() == 0) {
+            if (checkpointFileHandle.length() == 0) {
                 allocate(checkpointFile, totalBytes);
-                fileHandle.seek(INDEX_VERSION * Serialization.SIZE_OF_LONG);
-                fileHandle.writeLong(getVersion());
-                fileHandle.getChannel().force(true);
-                logger.info(
-                        "Preallocated " + checkpointFile + " to " + fileHandle.length() + " for capacity " + capacity);
+                checkpointFileHandle.seek(INDEX_VERSION * Serialization.SIZE_OF_LONG);
+                checkpointFileHandle.writeLong(getVersion());
+                checkpointFileHandle.getChannel().force(true);
+                logger.info("Preallocated " + checkpointFile + " to " + checkpointFileHandle.length() + " for capacity "
+                        + capacity);
             }
             if (checkpointFile.length() != totalBytes) {
                 String msg = "Configured capacity is " + capacity + " but the "
@@ -109,8 +109,8 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
                         + ". See FileChannel documentation on how to change a channels" + " capacity.";
                 throw new BadCheckpointException(msg);
             }
-            buffer = fileHandle.getChannel().map(MapMode.READ_WRITE, 0, checkpointFile.length());
-            elementsBuffer = buffer.asLongBuffer();
+            mappedBuffer = checkpointFileHandle.getChannel().map(MapMode.READ_WRITE, 0, checkpointFile.length());
+            elementsBuffer = mappedBuffer.asLongBuffer();
 
             long version = elementsBuffer.get(INDEX_VERSION);
             if (version != (long) getVersion()) {
@@ -125,16 +125,16 @@ abstract class EventQueueBackingStoreFile extends EventQueueBackingStore {
             }
         } catch (IOException | RuntimeException e) {
             elementsBuffer = null;
-            MappedFiles.unmap(buffer);
+            MappedFiles.unmap(mappedBuffer);
             try {
-                fileHandle.close();
+                checkpointFileHandle.close();
             } catch (IOException closeEx) {
                 e.addSuppressed(closeEx);
             }
             throw e;
         }
-        checkpointFileHandle = fileHandle;
-        mappedBuffer = buffer;
+        this.checkpointFileHandle = checkpointFileHandle;
+        this.mappedBuffer = mappedBuffer;
         if (shouldBackup) {
             checkpointBackUpExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
                     .setNameFormat(getName() + " - CheckpointBackUpThread")
