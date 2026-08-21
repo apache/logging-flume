@@ -16,42 +16,134 @@
  */
 package org.apache.flume.tools;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import java.time.Instant;
+import java.util.Properties;
+import java.util.jar.Attributes;
 import org.junit.Test;
 
 public class TestVersionInfo {
 
-    private static final Logger logger = LogManager.getLogger();
+    private static final String PURL = "pkg:maven/org.apache.flume/flume-ng-core@2.0.0";
+
+    private static final String BUNDLE_SCM = "url=\"https://gitbox.apache.org/repos/asf/logging-flume.git\","
+            + "connection=\"scm:git:https://gitbox.apache.org/repos/asf/logging-flume.git\","
+            + "developer-connection=\"scm:git:https://gitbox.apache.org/repos/asf/logging-flume.git\","
+            + "tag=\"rel/2.0.0\"";
 
     /**
-     *  Make sure that Unknown is expected when no version info
+     * Checks the metadata of the artifact the test runs against.
+     *
+     * <p>BND writes the manifest to the output directory before the tests run, so the values are
+     * available whether Flume is loaded from a JAR or from the compiled classes.
      */
     @Test
-    public void testVersionInfoUnknown() {
-
-        logger.debug("Flume " + VersionInfo.getVersion());
-        logger.debug("Subversion " + VersionInfo.getUrl() + " -r " + VersionInfo.getRevision());
-        logger.debug("Compiled by " + VersionInfo.getUser() + " on " + VersionInfo.getDate());
-        logger.debug("From source with checksum " + VersionInfo.getSrcChecksum());
-        logger.debug("Flume " + VersionInfo.getBuildVersion());
-
-        assertTrue("getVersion returned Unknown", !VersionInfo.getVersion().equals("Unknown"));
-        assertTrue("getUser returned Unknown", !VersionInfo.getUser().equals("Unknown"));
-        assertTrue("getUrl returned Unknown", !VersionInfo.getUrl().equals("Unknown"));
+    public void testMetadataOfOwnArtifact() {
         assertTrue(
-                "getSrcChecksum returned Unknown", !VersionInfo.getSrcChecksum().equals("Unknown"));
-
-        // check getBuildVersion() return format
+                "getVersion returned " + VersionInfo.getVersion(),
+                VersionInfo.getVersion().matches("\\d+\\.\\d+.*"));
         assertTrue(
-                "getBuildVersion returned unexpected format",
-                VersionInfo.getBuildVersion().matches(".+from.+by.+on.+source checksum.+"));
+                "getPurl returned " + VersionInfo.getPurl(),
+                VersionInfo.getPurl().startsWith("pkg:maven/org.apache.flume/flume-ng-core@"));
+        assertTrue(
+                "getUrl returned " + VersionInfo.getUrl(),
+                VersionInfo.getUrl().startsWith("https://")
+                        && VersionInfo.getUrl().contains("logging-flume"));
+        assertTrue(
+                "getBranch returned " + VersionInfo.getBranch(),
+                VersionInfo.getBranch().startsWith("rel/"));
+        // Throws if the timestamp is not ISO-8601.
+        Instant.parse(VersionInfo.getDate());
+        assertTrue(
+                "getBuildVersion returned " + VersionInfo.getBuildVersion(),
+                VersionInfo.getBuildVersion().matches(".+ from .+ built on .+"));
+    }
 
-        // "Unknown" when build without svn or git
-        assertNotNull("getRevision returned null", VersionInfo.getRevision());
-        assertNotNull("getBranch returned null", VersionInfo.getBranch());
+    @Test
+    @SuppressWarnings({"deprecation", "removal"})
+    public void testUnrecordedMetadata() {
+        assertEquals("Unknown", VersionInfo.getRevision());
+        assertEquals("Unknown", VersionInfo.getUser());
+        assertEquals("Unknown", VersionInfo.getSrcChecksum());
+    }
+
+    @Test
+    public void testVersionPrefersTheManifest() {
+        Attributes manifest = new Attributes();
+        manifest.putValue("Implementation-Version", "2.0.0");
+        assertEquals("2.0.0", VersionInfo.version(manifest, pomProperties("1.11.0")));
+    }
+
+    @Test
+    public void testVersionFallsBackToPomProperties() {
+        assertEquals("1.11.0", VersionInfo.version(new Attributes(), pomProperties("1.11.0")));
+    }
+
+    @Test
+    public void testVersionWithoutAnySource() {
+        assertEquals("Unknown", VersionInfo.version(new Attributes(), new Properties()));
+    }
+
+    @Test
+    public void testPurlPrefersTheManifest() {
+        Attributes manifest = new Attributes();
+        manifest.putValue("Purl", PURL);
+        assertEquals(PURL, VersionInfo.purl(manifest, pomProperties("1.11.0")));
+    }
+
+    @Test
+    public void testPurlIsBuiltFromPomProperties() {
+        assertEquals(
+                "pkg:maven/org.apache.flume/flume-ng-core@1.11.0",
+                VersionInfo.purl(new Attributes(), pomProperties("1.11.0")));
+    }
+
+    @Test
+    public void testPurlWithoutAnySource() {
+        assertEquals("Unknown", VersionInfo.purl(new Attributes(), new Properties()));
+    }
+
+    /** A manifest of an artifact Flume was shaded into must not be mistaken for our own. */
+    @Test
+    public void testForeignManifestIsRejected() {
+        Attributes foreign = new Attributes();
+        foreign.putValue("Purl", "pkg:maven/com.example/uber-jar@1.0.0");
+        foreign.putValue("Implementation-Version", "1.0.0");
+        assertFalse(VersionInfo.isOwn(foreign));
+        assertFalse(VersionInfo.isOwn(new Attributes()));
+
+        Attributes own = new Attributes();
+        own.putValue("Purl", PURL);
+        assertTrue(VersionInfo.isOwn(own));
+    }
+
+    @Test
+    public void testScmAttributes() {
+        assertEquals("rel/2.0.0", VersionInfo.scmAttribute(BUNDLE_SCM, "tag"));
+        assertEquals(
+                "https://gitbox.apache.org/repos/asf/logging-flume.git", VersionInfo.scmAttribute(BUNDLE_SCM, "url"));
+        assertEquals(
+                "scm:git:https://gitbox.apache.org/repos/asf/logging-flume.git",
+                VersionInfo.scmAttribute(BUNDLE_SCM, "developer-connection"));
+        assertNull(VersionInfo.scmAttribute(BUNDLE_SCM, "revision"));
+        assertNull(VersionInfo.scmAttribute(null, "tag"));
+    }
+
+    /** OSGi only requires quoting for values with special characters. */
+    @Test
+    public void testScmAttributeWithoutQuotes() {
+        assertEquals("rel/2.0.0", VersionInfo.scmAttribute("url=https://example.org,tag=rel/2.0.0", "tag"));
+    }
+
+    private static Properties pomProperties(String version) {
+        Properties properties = new Properties();
+        properties.setProperty("groupId", "org.apache.flume");
+        properties.setProperty("artifactId", "flume-ng-core");
+        properties.setProperty("version", version);
+        return properties;
     }
 }

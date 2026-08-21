@@ -90,6 +90,20 @@
             <goals>
               <goal>test-jar</goal>
             </goals>
+            <configuration>
+              <!-- BND describes the main classes in a single manifest per module, which `logging-parent`
+                   feeds to every execution. Drop it here: the test JAR is not that bundle, and its
+                   Package URL needs the qualifiers of a classified artifact. -->
+              <archive combine.self="override">
+                <manifest>
+                  <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                  <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                </manifest>
+                <manifestEntries>
+                  <Purl>pkg:maven/${project.groupId}/${project.artifactId}@${project.version}?classifier=tests&amp;type=test-jar</Purl>
+                </manifestEntries>
+              </archive>
+            </configuration>
           </execution>
         </executions>
       </plugin>
