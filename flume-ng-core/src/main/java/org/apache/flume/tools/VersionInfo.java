@@ -25,6 +25,7 @@ import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Provides the build metadata of the Flume artifact this class was loaded from.
@@ -108,12 +109,12 @@ public class VersionInfo {
 
     static String version(Attributes manifest, Properties pomProperties) {
         String version = manifest.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
-        return orUnknown(version != null ? version : pomProperties.getProperty("version"));
+        return orUnknown(StringUtils.isNotBlank(version) ? version : pomProperties.getProperty("version"));
     }
 
     static String purl(Attributes manifest, Properties pomProperties) {
         String purl = manifest.getValue(PURL);
-        if (purl == null) {
+        if (StringUtils.isBlank(purl)) {
             String groupId = pomProperties.getProperty("groupId");
             String artifactId = pomProperties.getProperty("artifactId");
             String version = pomProperties.getProperty("version");
@@ -145,7 +146,7 @@ public class VersionInfo {
     }
 
     private static String orUnknown(String value) {
-        return value != null && !value.isEmpty() ? value : UNKNOWN;
+        return StringUtils.defaultIfBlank(value, UNKNOWN);
     }
 
     /**

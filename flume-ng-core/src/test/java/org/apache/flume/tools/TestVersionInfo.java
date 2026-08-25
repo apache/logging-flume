@@ -88,6 +88,14 @@ public class TestVersionInfo {
         assertEquals("Unknown", VersionInfo.version(new Attributes(), new Properties()));
     }
 
+    /** A present but blank header must not shadow the Maven descriptor. */
+    @Test
+    public void testVersionIgnoresBlankHeader() {
+        Attributes manifest = new Attributes();
+        manifest.putValue("Implementation-Version", " ");
+        assertEquals("1.11.0", VersionInfo.version(manifest, pomProperties("1.11.0")));
+    }
+
     @Test
     public void testPurlPrefersTheManifest() {
         Attributes manifest = new Attributes();
@@ -105,6 +113,16 @@ public class TestVersionInfo {
     @Test
     public void testPurlWithoutAnySource() {
         assertEquals("Unknown", VersionInfo.purl(new Attributes(), new Properties()));
+    }
+
+    /** A present but blank header must not shadow the Maven descriptor. */
+    @Test
+    public void testPurlIgnoresBlankHeader() {
+        Attributes manifest = new Attributes();
+        manifest.putValue("Purl", " ");
+        assertEquals(
+                "pkg:maven/org.apache.flume/flume-ng-core@1.11.0",
+                VersionInfo.purl(manifest, pomProperties("1.11.0")));
     }
 
     /** A manifest of an artifact Flume was shaded into must not be mistaken for our own. */
