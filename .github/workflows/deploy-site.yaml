@@ -45,6 +45,7 @@ jobs:
           profile: ~
           whoami: ${{ github.ref_name }}-site-stg-out
           subdir: content/flume/2.x
+      install-required: true
       target-branch: ${{ github.ref_name }}-site-stg-out
 
   deploy-site-pro:
@@ -59,6 +60,7 @@ jobs:
           profile: ~
           whoami: ${{ github.ref_name }}-out
           subdir: content/flume/2.x
+      install-required: true
       target-branch: ${{ github.ref_name }}-out
 
   export-version:
@@ -85,4 +87,5 @@ jobs:
           profile: ~
           whoami: ${{ github.ref_name }}-site-stg-out
           subdir: content/flume/${{ needs.export-version.outputs.version }}
+      install-required: true
       target-branch: ${{ github.ref_name }}-site-stg-out
