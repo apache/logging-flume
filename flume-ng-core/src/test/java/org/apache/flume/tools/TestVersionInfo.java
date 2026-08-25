@@ -124,8 +124,7 @@ public class TestVersionInfo {
         Attributes manifest = new Attributes();
         manifest.putValue("Purl", " ");
         assertEquals(
-                "pkg:maven/org.apache.flume/flume-ng-core@1.11.0",
-                VersionInfo.purl(manifest, pomProperties("1.11.0")));
+                "pkg:maven/org.apache.flume/flume-ng-core@1.11.0", VersionInfo.purl(manifest, pomProperties("1.11.0")));
     }
 
     /** A manifest of an artifact Flume was shaded into must not be mistaken for our own. */
