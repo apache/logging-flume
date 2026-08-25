@@ -99,12 +99,6 @@
     </dependency>
 
     <dependency>
-      <groupId>org.awaitility</groupId>
-      <artifactId>awaitility</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
       <groupId>org.easytesting</groupId>
       <artifactId>fest-reflect</artifactId>
       <scope>test</scope>
