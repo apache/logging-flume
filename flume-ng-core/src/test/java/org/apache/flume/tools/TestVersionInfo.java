@@ -21,7 +21,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.net.URI;
 import java.time.Instant;
+import java.util.List;
 import java.util.Properties;
 import java.util.jar.Attributes;
 import org.junit.Test;
@@ -49,13 +51,14 @@ public class TestVersionInfo {
         assertTrue(
                 "getPurl returned " + VersionInfo.getPurl(),
                 VersionInfo.getPurl().startsWith("pkg:maven/org.apache.flume/flume-ng-core@"));
+        // Downstream builds override `<scm>`, so only check invariants:
+        // a valid URL, and a tag that does not betray an unset `<scm><tag>`.
         assertTrue(
                 "getUrl returned " + VersionInfo.getUrl(),
-                VersionInfo.getUrl().startsWith("https://")
-                        && VersionInfo.getUrl().contains("logging-flume"));
-        assertTrue(
+                URI.create(VersionInfo.getUrl()).toString().startsWith("https://"));
+        assertFalse(
                 "getBranch returned " + VersionInfo.getBranch(),
-                VersionInfo.getBranch().startsWith("rel/"));
+                List.of("", "Unknown", "HEAD", "master", "main", "trunk").contains(VersionInfo.getBranch()));
         // Throws if the timestamp is not ISO-8601.
         Instant.parse(VersionInfo.getDate());
         assertTrue(
