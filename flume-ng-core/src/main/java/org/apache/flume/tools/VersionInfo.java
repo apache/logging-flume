@@ -191,7 +191,7 @@ public class VersionInfo {
     /**
      * Gets the date Flume was built.
      *
-     * @return the build date in ISO-8601 format
+     * @return the build date in ISO-8601 format, or "Unknown" if unavailable
      */
     public static String getDate() {
         return DATE;
