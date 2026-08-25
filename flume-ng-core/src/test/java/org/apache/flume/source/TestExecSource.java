@@ -16,6 +16,7 @@
  */
 package org.apache.flume.source;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -31,6 +32,7 @@ import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import javax.management.Attribute;
 import javax.management.AttributeList;
@@ -58,9 +60,9 @@ import org.junit.Test;
 public class TestExecSource {
 
     private AbstractSource source;
-    private Channel channel = new MemoryChannel();
-    private Context context = new Context();
-    private ChannelSelector rcs = new ReplicatingChannelSelector();
+    private final Channel channel = new MemoryChannel();
+    private final Context context = new Context();
+    private final ChannelSelector rcs = new ReplicatingChannelSelector();
 
     @Before
     public void setUp() {
@@ -101,7 +103,7 @@ public class TestExecSource {
         // Generates input file with a random data set (10 lines, 200 characters each)
         FileOutputStream outputStream1 = new FileOutputStream(inputFile);
         for (int i = 0; i < 10; i++) {
-            outputStream1.write(RandomStringUtils.randomAlphanumeric(200).getBytes());
+            outputStream1.write(RandomStringUtils.insecure().nextAlphanumeric(200).getBytes());
             outputStream1.write('\n');
         }
         outputStream1.close();
@@ -116,7 +118,7 @@ public class TestExecSource {
         Configurables.configure(source, context);
 
         source.start();
-        Thread.sleep(2000);
+        awaitEventCount(10);
         Transaction transaction = channel.getTransaction();
 
         transaction.begin();
@@ -286,35 +288,40 @@ public class TestExecSource {
     public void testBatchTimeout()
             throws InterruptedException, LifecycleException, EventDeliveryException, IOException {
 
-        String filePath = "/tmp/flume-execsource." + Thread.currentThread().getId();
+        File file = File.createTempFile("flume-execsource", null);
+        FileUtils.forceDeleteOnExit(file);
         String eventBody = "TestMessage";
-        FileOutputStream outputStream = new FileOutputStream(filePath);
+
+        // Write the file up front, so the command output does not depend on
+        // when the process starts reading; both commands below print the last
+        // lines of an existing file and then follow it.
+        FileOutputStream outputStream = new FileOutputStream(file);
+        for (int lineNumber = 0; lineNumber < 3; lineNumber++) {
+            outputStream.write((eventBody).getBytes());
+            outputStream.write(String.valueOf(lineNumber).getBytes());
+            outputStream.write('\n');
+        }
+        outputStream.close();
 
         context.put(ExecSourceConfigurationConstants.CONFIG_BATCH_SIZE, "50000");
         context.put(ExecSourceConfigurationConstants.CONFIG_BATCH_TIME_OUT, "750");
         context.put(
                 "shell",
                 SystemUtils.IS_OS_WINDOWS ? "powershell -ExecutionPolicy Unrestricted -command" : "/bin/bash -c");
+        // The process must outlive the batch timeout, so that only the timed
+        // flush can deliver the events.
         context.put(
                 "command",
                 SystemUtils.IS_OS_WINDOWS
-                        ? "Get-Content " + filePath + " | Select-Object -Last 10"
-                        : ("tail -f " + filePath));
+                        ? "Get-Content -Tail 10 -Wait '" + file.getAbsolutePath() + "'"
+                        : ("tail -f " + file.getAbsolutePath()));
 
         Configurables.configure(source, context);
         source.start();
+        awaitEventCount(3);
 
         Transaction transaction = channel.getTransaction();
         transaction.begin();
-
-        for (int lineNumber = 0; lineNumber < 3; lineNumber++) {
-            outputStream.write((eventBody).getBytes());
-            outputStream.write(String.valueOf(lineNumber).getBytes());
-            outputStream.write('\n');
-            outputStream.flush();
-        }
-        outputStream.close();
-        Thread.sleep(1500);
 
         for (int i = 0; i < 3; i++) {
             Event event = channel.take();
@@ -326,8 +333,18 @@ public class TestExecSource {
         transaction.commit();
         transaction.close();
         source.stop();
-        File file = new File(filePath);
         FileUtils.forceDelete(file);
+    }
+
+    /**
+     * Waits until the source accepted the given number of events.
+     *
+     * <p>A fixed sleep is not enough on slow environments, where starting
+     * the child process alone can take several seconds.
+     */
+    private void awaitEventCount(int expected) {
+        await().atMost(30, TimeUnit.SECONDS)
+                .until(() -> ((ExecSource) source).getSourceCounter().getEventAcceptedCount() >= expected);
     }
 
     private void runTestShellCmdHelper(String shell, String command, String[] expectedOutput)
@@ -336,9 +353,7 @@ public class TestExecSource {
         context.put("command", command);
         Configurables.configure(source, context);
         source.start();
-        // Some commands might take longer to complete, specially on Windows
-        // or on slow environments (e.g. Travis CI).
-        Thread.sleep(2500);
+        awaitEventCount(expectedOutput.length);
         Transaction transaction = channel.getTransaction();
         transaction.begin();
         try {

@@ -16,6 +16,7 @@
  */
 package org.apache.flume.source;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.io.BufferedReader;
@@ -258,6 +259,11 @@ public class ExecSource extends AbstractSource implements EventDrivenSource, Con
     @Override
     public long getBatchSize() {
         return bufferCount;
+    }
+
+    @VisibleForTesting
+    SourceCounter getSourceCounter() {
+        return sourceCounter;
     }
 
     private static class ExecRunnable implements Runnable {
