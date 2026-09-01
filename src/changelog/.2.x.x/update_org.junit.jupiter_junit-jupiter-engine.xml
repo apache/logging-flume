@@ -3,6 +3,6 @@
        xmlns="https://logging.apache.org/xml/ns"
        xsi:schemaLocation="https://logging.apache.org/xml/ns https://logging.apache.org/xml/ns/log4j-changelog-0.xsd"
        type="updated">
-  <issue id="480" link="https://github.com/apache/logging-flume/pull/480"/>
-  <description format="asciidoc">Update `org.junit.jupiter:junit-jupiter-engine` to version `6.1.2`</description>
+  <issue id="492" link="https://github.com/apache/logging-flume/pull/492"/>
+  <description format="asciidoc">Update `org.junit.jupiter:junit-jupiter-engine` to version `6.1.3`</description>
 </entry>
