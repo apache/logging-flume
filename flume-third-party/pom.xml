@@ -38,7 +38,7 @@
     <maven.deploy.skip>false</maven.deploy.skip>
 
     <commons-cli.version>1.11.0</commons-cli.version>
-    <commons-codec.version>1.22.0</commons-codec.version>
+    <commons-codec.version>1.22.1</commons-codec.version>
     <commons-collections.version>3.2.2</commons-collections.version>
     <commons-compress.version>1.28.0</commons-compress.version>
     <commons-io.version>2.22.0</commons-io.version>
@@ -48,24 +48,24 @@
     <curator.version>5.9.0</curator.version>
     <derby.version>10.17.1.0</derby.version>
     <jackson-annotations.version>2.22</jackson-annotations.version>
-    <fasterxml.jackson.version>2.22.1</fasterxml.jackson.version>
-    <fasterxml.jackson.databind.version>2.22.1</fasterxml.jackson.databind.version>
+    <fasterxml.jackson.version>2.22.2</fasterxml.jackson.version>
+    <fasterxml.jackson.databind.version>2.22.2</fasterxml.jackson.databind.version>
     <gson.version>2.14.0</gson.version>
-    <guava.version>33.6.0-jre</guava.version>
+    <guava.version>33.7.1-jre</guava.version>
     <hadoop.version>3.5.0</hadoop.version>
     <httpcore.version>4.4.16</httpcore.version>
-    <bouncycastle.version>1.85</bouncycastle.version>
+    <bouncycastle.version>1.85.2</bouncycastle.version>
     <httpclient.version>4.5.14</httpclient.version>
     <irclib.version>1.10</irclib.version>
     <jakarta-servlet.version>6.1.0</jakarta-servlet.version>
-    <jetty.version>12.1.11</jetty.version>
+    <jetty.version>12.1.12</jetty.version>
     <jsr305.version>3.0.2</jsr305.version>
     <log4j.version>2.26.1</log4j.version>
     <mapdb.version>0.9.9</mapdb.version>
     <mina.version>2.2.9</mina.version>
     <spotbugs.version>4.9.3</spotbugs.version>
-    <netty-all.version>4.2.16.Final</netty-all.version>
-    <external.protobuf.version>4.35.1</external.protobuf.version>
+    <netty-all.version>4.2.17.Final</netty-all.version>
+    <external.protobuf.version>4.36.0</external.protobuf.version>
     <prometheus.version>1.8.0</prometheus.version>
     <slf4j.version>2.0.18</slf4j.version>
     <snappy-java.version>1.1.10.8</snappy-java.version>
