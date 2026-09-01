@@ -70,6 +70,7 @@
     -->
     <module>flume-ng-channels</module>
     <module>flume-ng-sdk</module>
+    <module>flume-ng-sdk-test</module>
     <!-- Temporarily disable integration tests
     <module>flume-ng-tests</module>
     -->

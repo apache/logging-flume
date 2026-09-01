@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume.util;
+package org.apache.flume.sdk.test;
 
 import java.math.BigInteger;
 import java.security.KeyPair;

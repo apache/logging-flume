@@ -57,7 +57,7 @@ import org.apache.flume.conf.Configurables;
 import org.apache.flume.exception.ChannelException;
 import org.apache.flume.lifecycle.LifecycleController;
 import org.apache.flume.lifecycle.LifecycleState;
-import org.apache.flume.util.Whitebox;
+import org.apache.flume.sdk.test.Whitebox;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;

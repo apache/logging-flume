@@ -45,8 +45,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-sdk</artifactId>
-      <classifier>tests</classifier>
+      <artifactId>flume-ng-sdk-test</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

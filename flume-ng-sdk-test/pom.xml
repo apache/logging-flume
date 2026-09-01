@@ -16,44 +16,44 @@
   ~ limitations under the License.
   -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>org.apache.flume</groupId>
-    <artifactId>flume-ng-sources</artifactId>
+    <artifactId>flume-parent</artifactId>
     <version>${revision}</version>
+    <relativePath>../flume-parent/pom.xml</relativePath>
   </parent>
 
-  <groupId>org.apache.flume.flume-ng-sources</groupId>
-  <artifactId>flume-taildir-source</artifactId>
-  <name>Flume Taildir Source</name>
+  <artifactId>flume-ng-sdk-test</artifactId>
+  <name>Flume NG SDK Test</name>
+  <description>Test fixtures shared by the Flume modules.
+  The fixtures live in `main`, so that they are packaged in a regular JAR instead of a test JAR.</description>
 
   <properties>
-    <!-- TODO fix spotbugs/pmd violations -->
-    <spotbugs.maxAllowedViolations>24</spotbugs.maxAllowedViolations>
-    <pmd.maxAllowedViolations>4</pmd.maxAllowedViolations>
-    <module.name>org.apache.flume.source.taildir</module.name>
+    <!-- This artifact was never released before -->
+    <bnd.baseline.fail.on.missing>false</bnd.baseline.fail.on.missing>
+    <!-- `TestKeyStores.certificate()` hands out the `X509Certificate` it was built from, which SpotBugs
+         reports as exposing internal representation. -->
+    <spotbugs.maxAllowedViolations>1</spotbugs.maxAllowedViolations>
+    <module.name>org.apache.flume.sdk.test</module.name>
   </properties>
 
   <dependencies>
+
     <dependency>
-      <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-sdk</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-sdk-test</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-core</artifactId>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>com.google.code.gson</groupId>
-      <artifactId>gson</artifactId>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcpkix-jdk18on</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcprov-jdk18on</artifactId>
     </dependency>
 
     <dependency>
@@ -62,12 +62,5 @@
       <scope>test</scope>
     </dependency>
 
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
-      <scope>test</scope>
-    </dependency>
-
   </dependencies>
-
 </project>

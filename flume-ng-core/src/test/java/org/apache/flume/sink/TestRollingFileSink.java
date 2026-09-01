@@ -32,7 +32,7 @@ import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.SimpleEvent;
 import org.apache.flume.exception.ChannelException;
 import org.apache.flume.instrumentation.SinkCounter;
-import org.apache.flume.util.Whitebox;
+import org.apache.flume.sdk.test.Whitebox;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
