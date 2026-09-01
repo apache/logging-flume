@@ -50,7 +50,7 @@ import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.exception.ChannelException;
-import org.apache.flume.util.TestKeyStores;
+import org.apache.flume.sdk.test.TestKeyStores;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Assert;

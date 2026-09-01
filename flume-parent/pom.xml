@@ -213,9 +213,8 @@
 
       <dependency>
         <groupId>org.apache.flume</groupId>
-        <artifactId>flume-ng-sdk</artifactId>
+        <artifactId>flume-ng-sdk-test</artifactId>
         <version>${flume-project.version}</version>
-        <classifier>tests</classifier>
         <scope>test</scope>
       </dependency>
 

@@ -14,24 +14,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume.util;
+package org.apache.flume.sdk.test;
 
-import org.apache.commons.lang3.reflect.FieldUtils;
+import org.junit.Assert;
+import org.junit.Test;
 
-public class Whitebox {
-    public static <T> T getInternalState(Object target, String fieldName) {
-        try {
-            return (T) FieldUtils.readField(target, fieldName, true);
-        } catch (IllegalAccessException ex) {
-            throw new RuntimeException("Unable to access field " + fieldName, ex);
-        }
+public class TestWhitebox {
+
+    private static final class Target {
+        private String value = "initial";
     }
 
-    public static void setInternalState(Object target, String field, Object value) {
-        try {
-            FieldUtils.writeField(target, field, value, true);
-        } catch (IllegalAccessException ex) {
-            throw new RuntimeException("Unable to access field " + field, ex);
-        }
+    @Test
+    public void testGetInternalState() {
+        Assert.assertEquals("initial", Whitebox.getInternalState(new Target(), "value"));
+    }
+
+    @Test
+    public void testSetInternalState() {
+        Target target = new Target();
+        Whitebox.setInternalState(target, "value", "replaced");
+        Assert.assertEquals("replaced", target.value);
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testUnknownFieldFails() {
+        Whitebox.getInternalState(new Target(), "missing");
     }
 }

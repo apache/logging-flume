@@ -105,6 +105,11 @@
       </dependency>
       <dependency>
         <groupId>org.apache.flume</groupId>
+        <artifactId>flume-ng-sdk-test</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.flume</groupId>
         <artifactId>flume-ng-node</artifactId>
         <version>${project.version}</version>
       </dependency>

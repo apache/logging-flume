@@ -44,19 +44,6 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- Used by the shared X509Certificates test helper (packaged in the test-jar). -->
-    <dependency>
-      <groupId>org.bouncycastle</groupId>
-      <artifactId>bcpkix-jdk18on</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.bouncycastle</groupId>
-      <artifactId>bcprov-jdk18on</artifactId>
-      <scope>test</scope>
-    </dependency>
-
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-api</artifactId>
@@ -82,32 +69,6 @@
 
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <executions>
-          <execution>
-            <goals>
-              <goal>test-jar</goal>
-            </goals>
-            <configuration>
-              <!-- BND describes the main classes in a single manifest per module, which `logging-parent`
-                   feeds to every execution. Drop it here: the test JAR is not that bundle, and its
-                   Package URL needs the qualifiers of a classified artifact. -->
-              <archive combine.self="override">
-                <manifest>
-                  <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                  <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                </manifest>
-                <manifestEntries>
-                  <Purl>pkg:maven/${project.groupId}/${project.artifactId}@${project.version}?classifier=tests&amp;type=test-jar</Purl>
-                </manifestEntries>
-              </archive>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
