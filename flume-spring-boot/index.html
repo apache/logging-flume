@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Downloading Apache Flume Spring Boot :: Apache Flume</title>
-    <link rel="canonical" href="https://logging.apache.org/flume/2.x/flume/flume-spring-boot/download.html">
+    <title>Apache Flume Spring Boot :: Apache Flume</title>
+    <link rel="canonical" href="https://logging.apache.org/flume/2.x/flume-spring-boot/index.html">
     <meta name="generator" content="Antora 3.1.15">
-    <link rel="stylesheet" href="../../_/css/site.css">
+    <link rel="stylesheet" href="../_/css/site.css">
   </head>
   <body class="article">
 <header class="header">
@@ -48,7 +48,7 @@
   </nav>
 </header>
 <div class="body">
-<div class="nav-container" data-component="flume" data-version="">
+<div class="nav-container" data-component="ROOT" data-version="">
   <aside class="nav">
     <div class="panels">
 <div class="nav-panel-menu is-active" data-panel="menu">
@@ -85,11 +85,11 @@
   <li class="nav-item" data-depth="1">
     <a class="nav-link" href="../release-notes.html">Release Notes</a>
   </li>
-  <li class="nav-item" data-depth="1">
+  <li class="nav-item is-current-page" data-depth="1">
     <button class="nav-item-toggle"></button>
     <a class="nav-link" href="index.html">Flume Spring Boot</a>
 <ul class="nav-list">
-  <li class="nav-item is-current-page" data-depth="2">
+  <li class="nav-item" data-depth="2">
     <a class="nav-link" href="download.html">Download</a>
   </li>
   <li class="nav-item" data-depth="2">
@@ -151,7 +151,6 @@
   <ul>
     <li><a href="../index.html">Apache Flume</a></li>
     <li><a href="index.html">Flume Spring Boot</a></li>
-    <li><a href="download.html">Download</a></li>
   </ul>
 </nav>
 </div>
@@ -160,66 +159,15 @@
   <div class="toc-menu"></div>
 </aside>
 <article class="doc">
-<h1 class="page">Downloading Apache Flume Spring Boot</h1>
+<h1 class="page">Apache Flume Spring Boot</h1>
 <div class="paragraph">
-<p>Apache Flume Spring Boot is distributed under the <a href="https://www.apache.org/licenses/LICENSE-2.0.html">Apache License&#44; version 2.0</a></p>
-</div>
-<div class="paragraph">
-<p>The link in the Mirrors column should display a list of available mirrors with a default selection based on your
-inferred location. If you do not see that page, try a different browser. The checksum and signature are links to the
-originals on the main distribution server.</p>
-</div>
-<table class="tableblock frame-all grid-all stretch">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Apache Flume Spring Boot binary (tar.gz)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.apache.org/dyn/closer.lua/flume/flume-spring-boot/apache-flume-spring-boot-2.0.0-bin.tar.gz">apache-flume-spring-boot-2.0.0-bin.tar.gz</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.apache.org/dist/flume/flume-spring-boot/apache-flume-spring-boot-2.0.0-bin.tar.gz.sha512">apache-flume-spring-boot-2.0.0-bin.tar.gz.sha512</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.apache.org/dist/flume/flume-spring-boot/apache-flume-spring-boot-2.0.0-bin.tar.gz.asc">apache-flume-spring-boot-2.0.0-bin.tar.gz.asc</a></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Apache Flume Spring Boot source (tar.gz)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.apache.org/dyn/closer.lua/flume/flume-spring-boot/apache-flume-spring-boot-2.0.0-src.tar.gz">apache-flume-spring-boot-2.0.0-src.tar.gz</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.apache.org/dist/flume/flume-spring-boot/apache-flume-spring-boot-2.0.0-src.tar.gz.sha512">apache-flume-spring-boot-2.0.0-src.tar.gz.sha512</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.apache.org/dist/flume/flume-spring-boot/apache-flume-spring-boot-2.0.0-src.tar.gz.asc">apache-flume-spring-boot-2.0.0-src.tar.gz.asc</a></p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p>It is essential that you verify the integrity of the downloaded files using the PGP or SHA512 signatures. Please read
-<a href="https://httpd.apache.org/dev/verification.html">Verifying Apache HTTP Server Releases</a> for more information on
-why you should verify our releases.</p>
+<p>The Apache Flume Spring Boot module provides the minimal framework required to allow
+Apache Flume to be created and configured as a "normal" Spring Boot applications.</p>
 </div>
 <div class="paragraph">
-<p>The PGP signatures can be verified using PGP or GPG. First download the <a href="https://www.apache.org/dist/flume/KEYS">KEYS</a>
-as well as the asc signature file for the relevant distribution. Make sure you get these files from the
-<a href="https://www.apache.org/dist/flume/flume-spring-boot/">main distribution directory</a> rather than from a mirror.
-Then verify the signatures using:</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>% gpg --import KEYS
-% gpg --verify apache-flume-spring-boot-2.0.0-src.tar.gz.asc</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Apache Flume Spring Boot 2.0.0 is signed by Ralph Goers B3D8E1BA</p>
-</div>
-<div class="paragraph">
-<p>In addition, you can verify the SHA512 checksum on the files. A Unix program called sha or sha512sum is included in
-many Unix distributions. Note that verifying the checksum is unnecessary if the PGP signature has been validated.</p>
-</div>
-<div class="paragraph">
-<p><strong>Previous_Releases</strong></p>
-</div>
-<div class="paragraph">
-<p>All previous releases of Apache Flume can be found in the <a href="https://archive.apache.org/dist/flume/flume-spring-boot">archive repository</a>.</p>
+<p>download
+releases/index
+source</p>
 </div>
 </article>
   </div>
@@ -229,7 +177,7 @@ many Unix distributions. Note that verifying the checksum is unnecessary if the 
   <p>This page was built using the Antora default UI.</p>
   <p>The source code for this UI is licensed under the terms of the MPL-2.0 license.</p>
 </footer>
-<script id="site-script" src="../../_/js/site.js" data-ui-root-path="../../_"></script>
-<script async src="../../_/js/vendor/highlight.js"></script>
+<script id="site-script" src="../_/js/site.js" data-ui-root-path="../_"></script>
+<script async src="../_/js/vendor/highlight.js"></script>
   </body>
 </html>
