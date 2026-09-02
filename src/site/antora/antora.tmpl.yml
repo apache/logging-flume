@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-name: flume
+name: ROOT
 title: Apache Flume
 version: ~
 start_page: index.adoc

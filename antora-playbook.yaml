@@ -18,7 +18,7 @@
 site:
   title: Apache Flume
   url: "https://logging.apache.org/flume/2.x"
-  start_page: "flume::index.adoc"
+  start_page: "ROOT::index.adoc"
 
 content:
   sources:
