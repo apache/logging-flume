@@ -224,10 +224,10 @@ run_flume() {
 ################################
 
 # set default params
-FLUME_CLASSPATH=""
-FLUME_JAVA_LIBRARY_PATH=""
-JAVA_OPTS="-Xmx20m"
-LD_LIBRARY_PATH=""
+FLUME_CLASSPATH=${FLUME_CLASSPATH:-""}
+FLUME_JAVA_LIBRARY_PATH=${FLUME_JAVA_LIBRARY_PATH:-""}
+JAVA_OPTS=${JAVA_OPTS:-"-Xmx20m"}
+LD_LIBRARY_PATH=${LD_LIBRARY_PATH:-""}
 
 opt_conf=""
 opt_classpath=""
