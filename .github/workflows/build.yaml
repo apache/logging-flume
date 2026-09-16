@@ -23,6 +23,9 @@ on:
       - "trunk"
       - "release/*"
   pull_request:
+  # Dependabot PRs are auto-merged with `GITHUB_TOKEN`, so their merge commits trigger no `push` run.
+  # Manual runs let us deploy a snapshot when needed.
+  workflow_dispatch:
 
 # Disable all permissions by defaults:
 # Permissions are enabled on a per-job basis.
