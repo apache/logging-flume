@@ -314,7 +314,15 @@
             <forkCount>1</forkCount>
             <forkedProcessTimeoutInSeconds>900</forkedProcessTimeoutInSeconds>
             <redirectTestOutputToFile>${redirectTestOutput}</redirectTestOutputToFile>
-            <argLine>-Djava.net.preferIPv4Stack=true</argLine>
+            <!-- The `java.base` packages are opened for tests that reflect into JDK internals on Java 16+:
+                 `java.lang` and `java.util` for the `EnvironmentVariables` rule and `AbstractSSLUtilTest`,
+                 `java.lang.reflect` and `java.util` for the HBase test utilities,
+                 `java.net` for the fake DNS installed by the Kudu test utilities. -->
+            <argLine>-Djava.net.preferIPv4Stack=true
+                     --add-opens java.base/java.lang=ALL-UNNAMED
+                     --add-opens java.base/java.lang.reflect=ALL-UNNAMED
+                     --add-opens java.base/java.net=ALL-UNNAMED
+                     --add-opens java.base/java.util=ALL-UNNAMED</argLine>
             <includes>
               <include>${test.include.pattern}</include>
             </includes>
