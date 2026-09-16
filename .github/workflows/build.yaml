@@ -46,6 +46,22 @@ jobs:
       site-enabled: true
       reproducibility-check-enabled: false
 
+  # Collects the results of the `build` matrix into a single check.
+  # This is the only check that needs to be listed as required in `.asf.yaml`.
+  build-result:
+    needs: build
+    # Run even if `build` failed or was canceled, so that the check is always reported.
+    if: always()
+    runs-on: ubuntu-slim
+    steps:
+      - name: Verify build result
+        env:
+          # `success` only if all the jobs of the matrix succeeded.
+          BUILD_RESULT: ${{ needs.build.result }}
+        run: |
+          echo "Build result: $BUILD_RESULT"
+          test "$BUILD_RESULT" = "success"
+
   deploy-snapshot:
     needs: build
     if: github.repository == 'apache/logging-flume' && github.ref_name == 'trunk'

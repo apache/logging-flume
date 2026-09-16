@@ -73,11 +73,7 @@ github:
       required_status_checks:
         # The GitHub Actions app
         - app_slug: github-actions
-          name: "build / build (macos-latest)"
-        - app_slug: github-actions
-          name: "build / build (ubuntu-latest)"
-        - app_slug: github-actions
-          name: "build / build (windows-latest)"
+          name: "build-result"
         # The GitHub Advanced Security app
         - app_slug: github-advanced-security
           name: "CodeQL"
