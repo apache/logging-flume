@@ -22,13 +22,13 @@ notifications:
   # GitHub already provides notifications for PRs and issues.
   # Please don't duplicate that noise here!
   commits: commits@logging.apache.org
+  issues: notifications@logging.apache.org
+  pullrequests: notifications@logging.apache.org
+  pullrequests_bot_dependabot: robots@logging.apache.org
   discussions: dev@logging.apache.org
-  jira_options: link label
 github:
   description: "Apache Flume is a distributed, reliable, and available service for efficiently collecting, aggregating, and moving large amounts of log-like data"
   homepage: https://flume.apache.org/
-  autolink_jira:
-    - FLUME
   labels:
     - apache
     - api
@@ -49,12 +49,10 @@ github:
 
   # Enforce squashing while merging PRs.
   # Otherwise, the git log gets polluted severely.
-  #
-  # Exceptionally use `rebase` if individual commits are relevant.
   enabled_merge_buttons:
     squash: true
     merge: false
-    rebase: true
+    rebase: false
 
   features:
     discussions: true
