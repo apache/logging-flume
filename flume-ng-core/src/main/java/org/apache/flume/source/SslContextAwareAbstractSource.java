@@ -17,6 +17,7 @@
 package org.apache.flume.source;
 
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.security.KeyStore;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -104,9 +105,9 @@ public abstract class SslContextAwareAbstractSource extends AbstractSource {
         if (sslEnabled) {
             Objects.requireNonNull(keystore, KEYSTORE_KEY + " must be specified when SSL is enabled");
             Objects.requireNonNull(keystorePassword, KEYSTORE_PASSWORD_KEY + " must be specified when SSL is enabled");
-            try {
+            try (InputStream in = new FileInputStream(keystore)) {
                 KeyStore ks = KeyStore.getInstance(keystoreType);
-                ks.load(new FileInputStream(keystore), keystorePassword.toCharArray());
+                ks.load(in, keystorePassword.toCharArray());
             } catch (Exception ex) {
                 throw new FlumeException("Source " + getName() + " configured with invalid keystore: " + keystore, ex);
             }
@@ -117,7 +118,9 @@ public abstract class SslContextAwareAbstractSource extends AbstractSource {
         if (sslEnabled) {
             try {
                 KeyStore ks = KeyStore.getInstance(keystoreType);
-                ks.load(new FileInputStream(keystore), keystorePassword.toCharArray());
+                try (InputStream in = new FileInputStream(keystore)) {
+                    ks.load(in, keystorePassword.toCharArray());
+                }
 
                 // can be set with "ssl.KeyManagerFactory.algorithm"
                 String algorithm = KeyManagerFactory.getDefaultAlgorithm();
