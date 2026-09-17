@@ -66,12 +66,3 @@ updates:
       github-actions-updates:
         patterns: [ "*" ]
     target-branch: "trunk"
-
-  - package-ecosystem: npm
-    directory: "/"
-    schedule:
-      interval: "monthly"
-    groups:
-      npm-updates:
-        patterns: [ "*" ]
-    target-branch: "trunk"
