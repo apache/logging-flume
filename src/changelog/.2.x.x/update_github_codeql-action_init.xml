@@ -3,6 +3,6 @@
        xmlns="https://logging.apache.org/xml/ns"
        xsi:schemaLocation="https://logging.apache.org/xml/ns https://logging.apache.org/xml/ns/log4j-changelog-0.xsd"
        type="updated">
-  <issue id="484" link="https://github.com/apache/logging-flume/pull/484"/>
-  <description format="asciidoc">Update `github/codeql-action/init` to version `4.37.3`</description>
+  <issue id="494" link="https://github.com/apache/logging-flume/pull/494"/>
+  <description format="asciidoc">Update `github/codeql-action/init` to version `4.37.9`</description>
 </entry>
