@@ -89,7 +89,7 @@ public enum SourceType implements ComponentWithClassName {
      *
      * @see org.apache.flume.source.http.HTTPSource
      */
-    HTTP("org.apache.flume.source.http.HTTPSource"),
+    HTTP("org.apache.flume.http.source.HTTPSource"),
 
     /**
      * Thrift Source
@@ -103,7 +103,7 @@ public enum SourceType implements ComponentWithClassName {
      *
      * @see org.apache.flume.source.jms.JMSSource
      */
-    JMS("org.apache.flume.source.jms.JMSSource"),
+    JMS("org.apache.flume.jms.source.JMSSource"),
 
     /**
      * Taildir Source
