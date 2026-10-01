@@ -3,6 +3,6 @@
        xmlns="https://logging.apache.org/xml/ns"
        xsi:schemaLocation="https://logging.apache.org/xml/ns https://logging.apache.org/xml/ns/log4j-changelog-0.xsd"
        type="updated">
-  <issue id="479" link="https://github.com/apache/logging-flume/pull/479"/>
-  <description format="asciidoc">Update `io.prometheus:prometheus-metrics-exporter-servlet-jakarta` to version `1.8.0`</description>
+  <issue id="508" link="https://github.com/apache/logging-flume/pull/508"/>
+  <description format="asciidoc">Update `io.prometheus:prometheus-metrics-exporter-servlet-jakarta` to version `1.9.0`</description>
 </entry>
