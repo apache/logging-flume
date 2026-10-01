@@ -113,7 +113,7 @@
     <fest-reflect.version>1.4.1</fest-reflect.version>
     <hadoop.version>3.5.0</hadoop.version>
     <junit.version>4.13.2</junit.version>
-    <mockito.version>5.23.0</mockito.version>
+    <mockito.version>5.24.0</mockito.version>
     <mvn-checksum-plugin.version>1.11</mvn-checksum-plugin.version>
     <mvn-pmd-plugin.version>3.28.0</mvn-pmd-plugin.version>
     <external.protobuf.version>4.35.0</external.protobuf.version>
