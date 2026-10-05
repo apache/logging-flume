@@ -29,7 +29,7 @@ import java.util.Properties;
  */
 public class RpcClientFactory {
 
-    private static final String AVRO_CLASS_NAME = "org.apache.flume.rpc.avro.client.NettyAvroRpcClient";
+    private static final String AVRO_CLASS_NAME = "org.apache.flume.client.avro.NettyAvroRpcClient";
     private static final String THRIFT_CLASS_NAME = "org.apache.flume.client.thrift.ThriftRpcClient";
     private static final String NEW_INSTANCE = "newInstance";
 
