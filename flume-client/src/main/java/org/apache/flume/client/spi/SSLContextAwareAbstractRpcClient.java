@@ -14,13 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume.api;
+package org.apache.flume.client.spi;
 
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
+import org.apache.flume.api.RpcClientConfigurationConstants;
 import org.apache.flume.util.SSLUtil;
 
 public abstract class SSLContextAwareAbstractRpcClient extends AbstractRpcClient {

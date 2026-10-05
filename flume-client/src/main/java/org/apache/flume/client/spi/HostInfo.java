@@ -14,11 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume.api;
+package org.apache.flume.client.spi;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import org.apache.flume.api.RpcClientConfigurationConstants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
