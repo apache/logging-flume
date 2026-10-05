@@ -298,7 +298,7 @@ import java.util.Properties;
 import org.apache.flume.api.RpcClient;
 import org.apache.flume.api.RpcClientConfigurationConstants;
 import org.apache.flume.api.RpcDeliveryException;
-import org.apache.flume.api.SecureRpcClientFactory;
+import org.apache.flume.client.thrift.SecureRpcClientFactory;
 import org.apache.flume.event.Event;
 import org.apache.flume.event.EventBuilder;
 

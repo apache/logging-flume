@@ -96,7 +96,7 @@ public enum SourceType implements ComponentWithClassName {
      *
      * @see org.apache.flume.source.ThriftSource
      */
-    THRIFT("org.apache.flume.rpc.thrift.source.ThriftSource"),
+    THRIFT("org.apache.flume.source.thrift.ThriftSource"),
 
     /**
      * JMS Source
