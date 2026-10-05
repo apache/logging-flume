@@ -22,14 +22,17 @@
     <groupId>org.apache.flume</groupId>
     <artifactId>flume-parent</artifactId>
     <version>${revision}</version>
-    <relativePath>../flume-parent/pom.xml</relativePath>
+    <relativePath>../flume-parent</relativePath>
   </parent>
 
-  <artifactId>flume-ng-sdk</artifactId>
-  <name>Flume NG SDK</name>
+  <artifactId>flume-sdk</artifactId>
+  <name>Flume SDK</name>
   <description>Flume Software Development Kit: Stable public API for integration with Flume 1.x</description>
 
   <properties>
+    <!-- Baseline against the 1.x coordinates. TODO: remove once 2.0.0 is released. -->
+    <flume.baseline.groupId>org.apache.flume</flume.baseline.groupId>
+    <flume.baseline.artifactId>flume-ng-sdk</flume.baseline.artifactId>
     <!-- TODO fix spotbugs/pmd violations -->
     <spotbugs.maxAllowedViolations>69</spotbugs.maxAllowedViolations>
     <pmd.maxAllowedViolations>30</pmd.maxAllowedViolations>

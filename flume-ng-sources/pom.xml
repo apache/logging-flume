@@ -21,13 +21,11 @@
 
   <parent>
     <groupId>org.apache.flume</groupId>
-    <artifactId>flume-parent</artifactId>
+    <artifactId>flume-project</artifactId>
     <version>${revision}</version>
-    <relativePath>../flume-parent/pom.xml</relativePath>
   </parent>
 
-  <groupId>org.apache.flume</groupId>
-  <artifactId>flume-ng-sources</artifactId>
+  <artifactId>flume-sources</artifactId>
   <packaging>pom</packaging>
   <name>Flume Sources</name>
 

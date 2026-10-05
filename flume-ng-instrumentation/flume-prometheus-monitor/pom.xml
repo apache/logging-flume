@@ -21,11 +21,11 @@
 
   <parent>
     <groupId>org.apache.flume</groupId>
-    <artifactId>flume-ng-instrumentation</artifactId>
+    <artifactId>flume-parent</artifactId>
     <version>${revision}</version>
+    <relativePath>../../flume-parent</relativePath>
   </parent>
 
-  <groupId>org.apache.flume.flume-ng-instrumentation</groupId>
   <artifactId>flume-prometheus-monitor</artifactId>
   <name>Flume Prometheus Monitor</name>
 
@@ -41,14 +41,14 @@
   <dependencies>
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-sdk</artifactId>
+      <artifactId>flume-sdk</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-core</artifactId>
+      <artifactId>flume-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume.flume-ng-instrumentation</groupId>
+      <groupId>org.apache.flume</groupId>
       <artifactId>flume-http-monitor</artifactId>
       <version>${project.version}</version>
     </dependency>

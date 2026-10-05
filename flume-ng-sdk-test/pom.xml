@@ -22,11 +22,11 @@
     <groupId>org.apache.flume</groupId>
     <artifactId>flume-parent</artifactId>
     <version>${revision}</version>
-    <relativePath>../flume-parent/pom.xml</relativePath>
+    <relativePath>../flume-parent</relativePath>
   </parent>
 
-  <artifactId>flume-ng-sdk-test</artifactId>
-  <name>Flume NG SDK Test</name>
+  <artifactId>flume-sdk-test</artifactId>
+  <name>Flume SDK Test</name>
   <description>Test fixtures shared by the Flume modules.
   The fixtures live in `main`, so that they are packaged in a regular JAR instead of a test JAR.</description>
 

@@ -22,25 +22,25 @@
     <groupId>org.apache.flume</groupId>
     <artifactId>flume-parent</artifactId>
     <version>${revision}</version>
-    <relativePath>../flume-parent/pom.xml</relativePath>
+    <relativePath>../flume-parent</relativePath>
   </parent>
 
   <artifactId>flume-ng-dist</artifactId>
   <packaging>pom</packaging>
-  <name>Flume NG distribution</name>
+  <name>Flume distribution</name>
 
   <dependencies>
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-configuration</artifactId>
+      <artifactId>flume-configuration</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-sdk</artifactId>
+      <artifactId>flume-sdk</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-core</artifactId>
+      <artifactId>flume-core</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flume</groupId>
@@ -48,14 +48,14 @@
     </dependency>
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-node</artifactId>
+      <artifactId>flume-node</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume.flume-ng-channels</groupId>
+      <groupId>org.apache.flume</groupId>
       <artifactId>flume-file-channel</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume.flume-ng-channels</groupId>
+      <groupId>org.apache.flume</groupId>
       <artifactId>flume-spillable-memory-channel</artifactId>
     </dependency>
     <dependency>
@@ -103,11 +103,11 @@
       <artifactId>flume-hive-sink</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume.flume-ng-sources</groupId>
+      <groupId>org.apache.flume</groupId>
       <artifactId>flume-scribe-source</artifactId>
     </dependency>-->
     <dependency>
-      <groupId>org.apache.flume.flume-ng-sources</groupId>
+      <groupId>org.apache.flume</groupId>
       <artifactId>flume-jms-source</artifactId>
     </dependency>
     <!-- <dependency>
@@ -127,40 +127,40 @@
       <artifactId>flume-legacy-thrift-source</artifactId>
     </dependency>-->
     <dependency>
-      <groupId>org.apache.flume.flume-ng-instrumentation</groupId>
+      <groupId>org.apache.flume</groupId>
       <artifactId>flume-ganglia-monitor</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume.flume-ng-instrumentation</groupId>
+      <groupId>org.apache.flume</groupId>
       <artifactId>flume-http-monitor</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume.flume-ng-instrumentation</groupId>
+      <groupId>org.apache.flume</groupId>
       <artifactId>flume-prometheus-monitor</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume.flume-ng-sources</groupId>
+      <groupId>org.apache.flume</groupId>
       <artifactId>flume-http-source</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume.flume-ng-sources</groupId>
+      <groupId>org.apache.flume</groupId>
       <artifactId>flume-http-source</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume.flume-ng-sources</groupId>
+      <groupId>org.apache.flume</groupId>
       <artifactId>flume-taildir-source</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume.flume-ng-sources</groupId>
+      <groupId>org.apache.flume</groupId>
       <artifactId>flume-syslog-source</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.flume.flume-ng-sources</groupId>
+      <groupId>org.apache.flume</groupId>
       <artifactId>flume-netcat-source</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-environment-variable-config-filter</artifactId>
+      <artifactId>flume-environment-variable-config-filter</artifactId>
     </dependency>
     <!-- <dependency>
       <groupId>org.apache.flume</groupId>
@@ -168,11 +168,11 @@
     </dependency>-->
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-external-process-config-filter</artifactId>
+      <artifactId>flume-external-process-config-filter</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-config-filter-api</artifactId>
+      <artifactId>flume-config-filter-api</artifactId>
     </dependency>
     <!-- <dependency>
       <groupId>org.apache.flume.flume-ng-clients</groupId>
@@ -201,7 +201,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-auth</artifactId>
+      <artifactId>flume-auth</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>

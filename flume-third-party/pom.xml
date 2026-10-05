@@ -25,12 +25,12 @@
     <version>${revision}</version>
   </parent>
 
-  <artifactId>flume-third-party-dependencies</artifactId>
+  <artifactId>flume-third-party-bom</artifactId>
   <packaging>pom</packaging>
 
   <name>Apache Flume Third Party Dependencies</name>
   <description>Bill of materials (BOM) for the third-party dependencies of Apache Flume.
-  It matches the versions of the runtime dependencies used by the corresponding `flume-dependencies` artifacts.</description>
+  It matches the versions of the runtime dependencies used by the artifacts in `flume-core-bom`.</description>
 
   <properties>
     <!-- Re-enable publishing: `flume-project` disables it, but this BOM must be installed and deployed. -->
@@ -270,7 +270,7 @@
       <!-- internal module dependencies -->
       <dependency>
         <groupId>org.apache.flume</groupId>
-        <artifactId>flume-dependencies</artifactId>
+        <artifactId>flume-core-bom</artifactId>
         <version>${project.version}</version>
         <type>pom</type>
         <scope>import</scope>
