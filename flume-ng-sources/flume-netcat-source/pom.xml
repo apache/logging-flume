@@ -21,11 +21,11 @@
 
   <parent>
     <groupId>org.apache.flume</groupId>
-    <artifactId>flume-ng-sources</artifactId>
+    <artifactId>flume-parent</artifactId>
     <version>${revision}</version>
+    <relativePath>../../flume-parent</relativePath>
   </parent>
 
-  <groupId>org.apache.flume.flume-ng-sources</groupId>
   <artifactId>flume-netcat-source</artifactId>
   <name>Flume Netcat Source</name>
 
@@ -40,11 +40,11 @@
   <dependencies>
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-sdk</artifactId>
+      <artifactId>flume-sdk</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-core</artifactId>
+      <artifactId>flume-core</artifactId>
     </dependency>
 
     <dependency>

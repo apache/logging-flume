@@ -23,14 +23,17 @@
     <groupId>org.apache.flume</groupId>
     <artifactId>flume-parent</artifactId>
     <version>${revision}</version>
-    <relativePath>../flume-parent/pom.xml</relativePath>
+    <relativePath>../flume-parent</relativePath>
   </parent>
 
   <groupId>org.apache.flume</groupId>
-  <artifactId>flume-ng-core</artifactId>
-  <name>Flume NG Core</name>
+  <artifactId>flume-core</artifactId>
+  <name>Flume Core</name>
 
   <properties>
+    <!-- Baseline against the 1.x coordinates. TODO: remove once 2.0.0 is released. -->
+    <flume.baseline.groupId>org.apache.flume</flume.baseline.groupId>
+    <flume.baseline.artifactId>flume-ng-core</flume.baseline.artifactId>
     <!-- TODO fix spotbugs violations -->
     <spotbugs.maxAllowedViolations>152</spotbugs.maxAllowedViolations>
     <pmd.maxAllowedViolations>69</pmd.maxAllowedViolations>
@@ -41,23 +44,23 @@
 
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-sdk</artifactId>
+      <artifactId>flume-sdk</artifactId>
     </dependency>
 
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-sdk-test</artifactId>
+      <artifactId>flume-sdk-test</artifactId>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-configuration</artifactId>
+      <artifactId>flume-configuration</artifactId>
     </dependency>
 
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-auth</artifactId>
+      <artifactId>flume-auth</artifactId>
     </dependency>
 
     <dependency>

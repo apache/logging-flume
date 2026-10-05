@@ -21,15 +21,18 @@
 
   <parent>
     <groupId>org.apache.flume</groupId>
-    <artifactId>flume-ng-sources</artifactId>
+    <artifactId>flume-parent</artifactId>
     <version>${revision}</version>
+    <relativePath>../../flume-parent</relativePath>
   </parent>
 
-  <groupId>org.apache.flume.flume-ng-sources</groupId>
   <artifactId>flume-taildir-source</artifactId>
   <name>Flume Taildir Source</name>
 
   <properties>
+    <!-- Baseline against the 1.x coordinates. TODO: remove once 2.0.0 is released. -->
+    <flume.baseline.groupId>org.apache.flume.flume-ng-sources</flume.baseline.groupId>
+    <flume.baseline.artifactId>flume-taildir-source</flume.baseline.artifactId>
     <!-- TODO fix spotbugs/pmd violations -->
     <spotbugs.maxAllowedViolations>24</spotbugs.maxAllowedViolations>
     <pmd.maxAllowedViolations>4</pmd.maxAllowedViolations>
@@ -39,16 +42,16 @@
   <dependencies>
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-sdk</artifactId>
+      <artifactId>flume-sdk</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-sdk-test</artifactId>
+      <artifactId>flume-sdk-test</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-core</artifactId>
+      <artifactId>flume-core</artifactId>
     </dependency>
 
     <dependency>

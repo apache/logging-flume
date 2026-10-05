@@ -21,11 +21,11 @@
 
   <parent>
     <groupId>org.apache.flume</groupId>
-    <artifactId>flume-ng-sources</artifactId>
+    <artifactId>flume-parent</artifactId>
     <version>${revision}</version>
+    <relativePath>../../flume-parent</relativePath>
   </parent>
 
-  <groupId>org.apache.flume.flume-ng-sources</groupId>
   <artifactId>flume-syslog-source</artifactId>
   <name>Flume Syslog Source</name>
 
@@ -41,15 +41,15 @@
   <dependencies>
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-sdk</artifactId>
+      <artifactId>flume-sdk</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-core</artifactId>
+      <artifactId>flume-core</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-sdk-test</artifactId>
+      <artifactId>flume-sdk-test</artifactId>
       <scope>test</scope>
     </dependency>
 

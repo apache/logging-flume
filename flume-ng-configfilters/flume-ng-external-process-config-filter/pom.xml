@@ -19,14 +19,18 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.apache.flume</groupId>
-    <artifactId>flume-ng-configfilters</artifactId>
+    <artifactId>flume-parent</artifactId>
     <version>${revision}</version>
+    <relativePath>../../flume-parent</relativePath>
   </parent>
 
-  <artifactId>flume-ng-external-process-config-filter</artifactId>
-  <name>Flume NG External Process Config Filter</name>
+  <artifactId>flume-external-process-config-filter</artifactId>
+  <name>Flume External Process Config Filter</name>
 
   <properties>
+    <!-- Baseline against the 1.x coordinates. TODO: remove once 2.0.0 is released. -->
+    <flume.baseline.groupId>org.apache.flume</flume.baseline.groupId>
+    <flume.baseline.artifactId>flume-ng-external-process-config-filter</flume.baseline.artifactId>
     <module.name>org.apache.flume.configfilter.external</module.name>
     <spotbugs.maxAllowedViolations>3</spotbugs.maxAllowedViolations>
   </properties>
@@ -38,7 +42,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-config-filter-api</artifactId>
+      <artifactId>flume-config-filter-api</artifactId>
     </dependency>
     <dependency>
       <groupId>junit</groupId>

@@ -30,7 +30,7 @@ import org.junit.Test;
 
 public class TestVersionInfo {
 
-    private static final String PURL = "pkg:maven/org.apache.flume/flume-ng-core@2.0.0";
+    private static final String PURL = "pkg:maven/org.apache.flume/flume-core@2.0.0";
 
     private static final String BUNDLE_SCM = "url=\"https://gitbox.apache.org/repos/asf/logging-flume.git\","
             + "connection=\"scm:git:https://gitbox.apache.org/repos/asf/logging-flume.git\","
@@ -50,7 +50,7 @@ public class TestVersionInfo {
                 VersionInfo.getVersion().matches("\\d+\\.\\d+.*"));
         assertTrue(
                 "getPurl returned " + VersionInfo.getPurl(),
-                VersionInfo.getPurl().startsWith("pkg:maven/org.apache.flume/flume-ng-core@"));
+                VersionInfo.getPurl().startsWith("pkg:maven/org.apache.flume/flume-core@"));
         // Downstream builds override `<scm>`, so only check invariants:
         // a valid URL, and a tag that does not betray an unset `<scm><tag>`.
         assertTrue(
@@ -109,7 +109,7 @@ public class TestVersionInfo {
     @Test
     public void testPurlIsBuiltFromPomProperties() {
         assertEquals(
-                "pkg:maven/org.apache.flume/flume-ng-core@1.11.0",
+                "pkg:maven/org.apache.flume/flume-core@1.11.0",
                 VersionInfo.purl(new Attributes(), pomProperties("1.11.0")));
     }
 
@@ -124,7 +124,7 @@ public class TestVersionInfo {
         Attributes manifest = new Attributes();
         manifest.putValue("Purl", " ");
         assertEquals(
-                "pkg:maven/org.apache.flume/flume-ng-core@1.11.0", VersionInfo.purl(manifest, pomProperties("1.11.0")));
+                "pkg:maven/org.apache.flume/flume-core@1.11.0", VersionInfo.purl(manifest, pomProperties("1.11.0")));
     }
 
     /** A manifest of an artifact Flume was shaded into must not be mistaken for our own. */
@@ -162,7 +162,7 @@ public class TestVersionInfo {
     private static Properties pomProperties(String version) {
         Properties properties = new Properties();
         properties.setProperty("groupId", "org.apache.flume");
-        properties.setProperty("artifactId", "flume-ng-core");
+        properties.setProperty("artifactId", "flume-core");
         properties.setProperty("version", version);
         return properties;
     }

@@ -19,14 +19,13 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.apache.flume</groupId>
-    <artifactId>flume-parent</artifactId>
+    <artifactId>flume-project</artifactId>
     <version>${revision}</version>
-    <relativePath>../flume-parent/pom.xml</relativePath>
   </parent>
 
-  <artifactId>flume-ng-configfilters</artifactId>
+  <artifactId>flume-config-filters</artifactId>
   <packaging>pom</packaging>
-  <name>Flume NG Config Filters</name>
+  <name>Flume Config Filters</name>
 
   <modules>
     <module>flume-ng-environment-variable-config-filter</module>
