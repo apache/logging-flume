@@ -94,6 +94,9 @@
 
       Implementation-Timestamp: ${project.build.outputTimestamp}
       Purl: pkg:maven/${project.groupId}/${project.artifactId}@${project.version}</bnd-extra-config>
+    <!-- Generate `requires static` for the annotation libraries, which are only needed at compile time.
+         Overrides the `bnd-jpms-module-info` of `logging-parent`, hence repeats `$[bnd-module-name];access=0`. -->
+    <bnd-jpms-module-info>$[bnd-module-name];access=0;modules="biz.aQute.bnd.annotation"</bnd-jpms-module-info>
     <!-- Set default encoding to UTF-8 to remove maven complaints -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
@@ -135,6 +138,14 @@
         <version>${flume-project.version}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+
+      <!-- BND annotations, e.g. `@ServiceProvider` to generate `META-INF/services` files -->
+      <dependency>
+        <groupId>biz.aQute.bnd</groupId>
+        <artifactId>biz.aQute.bnd.annotation</artifactId>
+        <version>${bnd-maven-plugin.version}</version>
+        <scope>provided</scope>
       </dependency>
 
       <dependency>

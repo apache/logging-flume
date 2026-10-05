@@ -16,80 +16,49 @@
  */
 package org.apache.flume.api;
 
+import aQute.bnd.annotation.Cardinality;
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceConsumer;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Properties;
+import java.util.ServiceLoader;
+import java.util.TreeMap;
+import org.apache.flume.client.spi.RpcClientProvider;
 
 /**
- * Factory class to construct Flume {@link RPCClient} implementations.
+ * Factory class to construct Flume {@link RpcClient} implementations.
+ *
+ * <p>The {@value RpcClientConfigurationConstants#CONFIG_CLIENT_TYPE} property selects the client:
+ * either the name of a provider registered through {@link java.util.ServiceLoader},
+ * or the fully qualified class name of an unregistered {@link RpcClientProvider}.
  */
+@ServiceConsumer(value = RpcClientProvider.class, resolution = Resolution.OPTIONAL, cardinality = Cardinality.MULTIPLE)
 public class RpcClientFactory {
 
-    private static final String AVRO_CLASS_NAME = "org.apache.flume.client.avro.NettyAvroRpcClient";
-    private static final String THRIFT_CLASS_NAME = "org.apache.flume.client.thrift.ThriftRpcClient";
-    private static final String NEW_INSTANCE = "newInstance";
+    private RpcClientFactory() {}
 
     /**
-     * Returns an instance of {@link RpcClient}, optionally with failover.
-     * To create a failover client, the properties object should have a
-     * property <tt>client.type</tt> which has the value "failover". The client
-     * connects to hosts specified by <tt>hosts</tt> property in given properties.
+     * Returns an instance of {@link RpcClient} configured with the given properties.
      *
-     * @see FailoverRpcClient
-     * <p>
-     * If no <tt>client.type</tt> is specified, a default client that connects to
-     * single host at a given port is created.(<tt>type</tt> can also simply be
-     * <tt>DEFAULT</tt> for the default client).
-     *
-     * @see org.apache.flume.api.NettyAvroClient
+     * <p>If {@value RpcClientConfigurationConstants#CONFIG_CLIENT_TYPE} is not specified,
+     * a client of type {@value RpcClientConfigurationConstants#DEFAULT_CLIENT_TYPE} is created.
      *
      * @param properties The properties to instantiate the client with.
+     * @throws IllegalArgumentException if the client type is unknown or the properties are invalid.
      * @throws IOException if the client fails to connect.
      */
-    @SuppressWarnings("unchecked")
     public static RpcClient getInstance(Properties properties) throws IOException {
-        String type = null;
-        type = properties.getProperty(RpcClientConfigurationConstants.CONFIG_CLIENT_TYPE);
+        String type = properties.getProperty(RpcClientConfigurationConstants.CONFIG_CLIENT_TYPE);
         if (type == null || type.isEmpty()) {
-            type = ClientType.DEFAULT.name();
+            type = RpcClientConfigurationConstants.DEFAULT_CLIENT_TYPE;
         }
-        ClientType clientType = null;
-        try {
-            clientType = ClientType.valueOf(type.toUpperCase(Locale.ENGLISH));
-        } catch (IllegalArgumentException e) {
-            clientType = ClientType.OTHER;
-        }
-        AbstractRpcClient client;
-        if (clientType.isNewInstance()) {
-            return createClient(clientType.clientClassName, properties);
-        }
-        Class<? extends AbstractRpcClient> clazz;
-        try {
-            String clientClassType = type;
-
-            if (!clientType.equals(ClientType.OTHER)) {
-                clientClassType = clientType.getClientClassName();
-            }
-            clazz = (Class<? extends AbstractRpcClient>) Class.forName(clientClassType);
-        } catch (ClassNotFoundException e) {
-            throw new IllegalArgumentException("No such client: " + type, e);
-        }
-
-        try {
-            client = clazz.newInstance();
-        } catch (InstantiationException e) {
-            throw new IllegalArgumentException(
-                    "Cannot instantiate client " + clazz.getCanonicalName() + " Exception follows:", e);
-        } catch (IllegalAccessException e) {
-            throw new IllegalArgumentException(
-                    "Cannot instantiate client " + clazz.getCanonicalName() + "Exception follows:", e);
-        }
-        client.configure(properties);
-        return client;
+        return getProvider(type).create(properties);
     }
 
     /**
@@ -97,13 +66,13 @@ public class RpcClientFactory {
      * to a {@link Properties} file.
      * @param propertiesFile Valid properties file
      * @return RpcClient configured according to the given Properties file.
-     * @throws FileNotFoundException If the file cannot be found
-     * @throws IOException If there is an IO error
+     * @throws IOException If the file cannot be read or the client fails to connect
      */
     public static RpcClient getInstance(File propertiesFile) throws IOException {
-        Reader reader = new FileReader(propertiesFile);
         Properties props = new Properties();
-        props.load(reader);
+        try (Reader reader = new FileReader(propertiesFile)) {
+            props.load(reader);
+        }
         return getInstance(props);
     }
 
@@ -145,130 +114,105 @@ public class RpcClientFactory {
      * @throws IOException if the client fails to connect.
      */
     public static RpcClient getDefaultInstance(String hostname, Integer port, Integer batchSize) throws IOException {
-
-        if (hostname == null) {
-            throw new NullPointerException("hostname must not be null");
-        }
-        if (port == null) {
-            throw new NullPointerException("port must not be null");
-        }
-        if (batchSize == null) {
-            throw new NullPointerException("batchSize must not be null");
-        }
-
-        Properties props = new Properties();
-        props.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS, "h1");
-        props.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS_PREFIX + "h1", hostname + ":" + port.intValue());
-        props.setProperty(RpcClientConfigurationConstants.CONFIG_BATCH_SIZE, batchSize.toString());
-        return createClient(AVRO_CLASS_NAME, props);
+        return getProvider(RpcClientConfigurationConstants.DEFAULT_CLIENT_TYPE)
+                .create(singleHostProperties(hostname, port, batchSize));
     }
 
     /**
-     * Return an {@linkplain RpcClient} that uses Thrift for communicating with
-     * the next hop. The next hop must have a ThriftSource listening on the
-     * specified port.
-     * @param hostname - The hostname of the next hop.
-     * @param port - The port on which the ThriftSource is listening
-     * @param batchSize - batch size of each transaction.
-     * @return an {@linkplain RpcClient} which uses thrift configured with the
-     * given parameters.
+     * Returns an instance of {@link RpcClient} connected to the specified
+     * {@code hostname} and {@code port} using Thrift.
+     * @throws IOException if the client fails to connect.
      */
     public static RpcClient getThriftInstance(String hostname, Integer port, Integer batchSize) throws IOException {
-        if (hostname == null) {
-            throw new NullPointerException("hostname must not be null");
-        }
-        if (port == null) {
-            throw new NullPointerException("port must not be null");
-        }
-        if (batchSize == null) {
-            throw new NullPointerException("batchSize must not be null");
-        }
-
-        Properties props = new Properties();
-        props.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS, "h1");
-        props.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS_PREFIX + "h1", hostname + ":" + port.intValue());
-        props.setProperty(RpcClientConfigurationConstants.CONFIG_BATCH_SIZE, batchSize.toString());
-        return createClient(THRIFT_CLASS_NAME, props);
-    }
-
-    private static RpcClient createClient(String className, Properties props) throws IOException {
-        try {
-            @SuppressWarnings("unchecked")
-            Class<? extends AbstractRpcClient> clazz = (Class<? extends AbstractRpcClient>) Class.forName(className);
-            AbstractRpcClient client =
-                    (AbstractRpcClient) clazz.getMethod(NEW_INSTANCE).invoke(null);
-            client.configure(props);
-            return client;
-        } catch (ClassNotFoundException
-                | NoSuchMethodException
-                | IllegalAccessException
-                | InvocationTargetException e) {
-            throw new IllegalStateException(
-                    "Cannot instantiate client. Implementation " + className + " failed to load.", e);
-        }
+        return getProvider(RpcClientConfigurationConstants.THRIFT_CLIENT_TYPE)
+                .create(singleHostProperties(hostname, port, batchSize));
     }
 
     /**
-     * Return an {@linkplain RpcClient} that uses Thrift for communicating with
-     * the next hop. The next hop must have a ThriftSource listening on the
-     * specified port. This will use the default batch size. See {@linkplain
-     * RpcClientConfigurationConstants}
-     * @param hostname - The hostname of the next hop.
-     * @param port - The port on which the ThriftSource is listening
-     * @return - An {@linkplain RpcClient} which uses thrift configured with the
-     * given parameters.
+     * Returns an instance of {@link RpcClient} connected to the specified
+     * {@code hostname} and {@code port} using Thrift.
+     * @throws IOException if the client fails to connect.
      */
     public static RpcClient getThriftInstance(String hostname, Integer port) throws IOException {
         return getThriftInstance(hostname, port, RpcClientConfigurationConstants.DEFAULT_BATCH_SIZE);
     }
 
     /**
-     * Return an {@linkplain RpcClient} that uses Thrift for communicating with
-     * the next hop.
-     * @param props
-     * @return - An {@linkplain RpcClient} which uses thrift configured with the
-     * given parameters.
+     * Returns an instance of {@link RpcClient} configured with the given properties using Thrift.
+     * @throws IOException if the client fails to connect.
      */
     public static RpcClient getThriftInstance(Properties props) throws IOException {
-        props.setProperty(RpcClientConfigurationConstants.CONFIG_CLIENT_TYPE, ClientType.THRIFT.clientClassName);
+        props.setProperty(
+                RpcClientConfigurationConstants.CONFIG_CLIENT_TYPE, RpcClientConfigurationConstants.THRIFT_CLIENT_TYPE);
         return getInstance(props);
     }
 
-    public static enum ClientType {
-        OTHER(null),
-        DEFAULT(AVRO_CLASS_NAME, true),
-        DEFAULT_FAILOVER(FailoverRpcClient.class.getCanonicalName()),
-        DEFAULT_LOADBALANCE(LoadBalancingRpcClient.class.getCanonicalName()),
-        THRIFT(THRIFT_CLASS_NAME, true);
-
-        private final String clientClassName;
-        private final boolean newInstance;
-
-        private ClientType(String className) {
-            this.clientClassName = className;
-            this.newInstance = false;
+    private static Properties singleHostProperties(String hostname, Integer port, Integer batchSize) {
+        if (hostname == null) {
+            throw new NullPointerException("hostname must not be null");
         }
-
-        private ClientType(String className, boolean newInstance) {
-            this.clientClassName = className;
-            this.newInstance = newInstance;
+        if (port == null) {
+            throw new NullPointerException("port must not be null");
         }
+        if (batchSize == null) {
+            throw new NullPointerException("batchSize must not be null");
+        }
+        Properties props = new Properties();
+        props.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS, "h1");
+        props.setProperty(RpcClientConfigurationConstants.CONFIG_HOSTS_PREFIX + "h1", hostname + ":" + port.intValue());
+        props.setProperty(RpcClientConfigurationConstants.CONFIG_BATCH_SIZE, batchSize.toString());
+        return props;
+    }
 
-        private static ClientType getClientType(String className) {
-            for (ClientType type : ClientType.values()) {
-                if (type.clientClassName.equals(className)) {
-                    return type;
-                }
+    /**
+     * Returns the provider for a client type.
+     *
+     * <p>Registered providers are matched by name, ignoring case;
+     * {@value RpcClientConfigurationConstants#DEFAULT_CLIENT_TYPE} is an alias of
+     * {@value RpcClientConfigurationConstants#AVRO_CLIENT_TYPE}.
+     * Otherwise, the type is the fully qualified class name of a provider.
+     */
+    static RpcClientProvider getProvider(String type) {
+        String name = type.equalsIgnoreCase(RpcClientConfigurationConstants.DEFAULT_CLIENT_TYPE)
+                ? RpcClientConfigurationConstants.AVRO_CLIENT_TYPE
+                : type;
+        Map<String, RpcClientProvider> providers = loadProviders();
+        RpcClientProvider provider = providers.get(name.toLowerCase(Locale.ROOT));
+        if (provider != null) {
+            return provider;
+        }
+        try {
+            Class<?> clazz = Class.forName(type, true, RpcClientFactory.class.getClassLoader());
+            if (!RpcClientProvider.class.isAssignableFrom(clazz)) {
+                throw new IllegalArgumentException(
+                        "Client type " + type + " does not implement " + RpcClientProvider.class.getName());
             }
-            return OTHER;
+            return (RpcClientProvider) clazz.getConstructor().newInstance();
+        } catch (ClassNotFoundException e) {
+            throw new IllegalArgumentException(
+                    "Unknown client type " + type + ": add the artifact that provides it, or use one of "
+                            + providers.keySet(),
+                    e);
+        } catch (InstantiationException
+                | IllegalAccessException
+                | InvocationTargetException
+                | NoSuchMethodException e) {
+            throw new IllegalArgumentException("Cannot instantiate client provider " + type, e);
         }
+    }
 
-        protected String getClientClassName() {
-            return this.clientClassName;
+    private static Map<String, RpcClientProvider> loadProviders() {
+        Map<String, RpcClientProvider> providers = new TreeMap<>();
+        for (RpcClientProvider provider :
+                ServiceLoader.load(RpcClientProvider.class, RpcClientFactory.class.getClassLoader())) {
+            String name = provider.getName().toLowerCase(Locale.ROOT);
+            RpcClientProvider previous = providers.putIfAbsent(name, provider);
+            if (previous != null) {
+                throw new IllegalStateException("Client type " + name + " is provided by both "
+                        + previous.getClass().getName() + " and "
+                        + provider.getClass().getName());
+            }
         }
-
-        protected boolean isNewInstance() {
-            return this.newInstance;
-        }
+        return providers;
     }
 }

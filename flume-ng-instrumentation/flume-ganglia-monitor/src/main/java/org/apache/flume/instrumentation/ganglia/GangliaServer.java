@@ -30,7 +30,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.apache.flume.Context;
 import org.apache.flume.FlumeException;
-import org.apache.flume.api.HostInfo;
+import org.apache.flume.client.spi.HostInfo;
 import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.instrumentation.MonitorService;
 import org.apache.flume.instrumentation.util.JMXPollUtil;
