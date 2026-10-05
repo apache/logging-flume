@@ -14,12 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume.event;
+package org.apache.flume.core;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import org.apache.commons.io.HexDump;
-import org.apache.flume.Event;
+import org.apache.flume.event.Event;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

@@ -19,7 +19,6 @@ package org.apache.flume.api;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import org.apache.flume.FlumeException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -74,14 +73,14 @@ public class HostInfo {
                     String[] hostAndPort = hostAndPortStr.split(":");
                     if (hostAndPort.length != 2) {
                         logger.error("Invalid host address" + hostAndPortStr);
-                        throw new FlumeException("Invalid host address" + hostAndPortStr);
+                        throw new IllegalArgumentException("Invalid host address" + hostAndPortStr);
                     }
                     Integer port = null;
                     try {
                         port = Integer.parseInt(hostAndPort[1]);
                     } catch (NumberFormatException e) {
                         logger.error("Invalid port number" + hostAndPortStr, e);
-                        throw new FlumeException("Invalid port number" + hostAndPortStr);
+                        throw new IllegalArgumentException("Invalid port number" + hostAndPortStr);
                     }
                     HostInfo info = new HostInfo(hostList[i], hostAndPort[0].trim(), port);
                     hosts.add(info);

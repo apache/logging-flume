@@ -17,8 +17,8 @@
 package org.apache.flume.channel;
 
 import java.util.concurrent.Future;
-import org.apache.flume.Event;
 import org.apache.flume.Transaction;
+import org.apache.flume.event.Event;
 import org.junit.Assert;
 import org.junit.Test;
 

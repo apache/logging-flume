@@ -17,9 +17,9 @@
 package org.apache.flume.source;
 
 import org.apache.flume.Context;
-import org.apache.flume.Event;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.conf.Configurable;
+import org.apache.flume.event.Event;
 import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

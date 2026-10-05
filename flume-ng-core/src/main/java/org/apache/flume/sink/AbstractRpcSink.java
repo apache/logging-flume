@@ -20,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
@@ -29,7 +30,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
-import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
 import org.apache.flume.Transaction;
@@ -38,6 +38,7 @@ import org.apache.flume.api.RpcClient;
 import org.apache.flume.api.RpcClientConfigurationConstants;
 import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
+import org.apache.flume.event.Event;
 import org.apache.flume.exception.ChannelException;
 import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.logging.log4j.LogManager;
@@ -190,8 +191,9 @@ public abstract class AbstractRpcSink extends AbstractSink implements Configurab
      * connection needs to be created to the next hop.
      * @param props
      * @return
+     * @throws IOException if the client fails to connect.
      */
-    protected abstract RpcClient initializeRpcClient(Properties props);
+    protected abstract RpcClient initializeRpcClient(Properties props) throws IOException;
 
     /**
      * If this function is called successively without calling
@@ -249,7 +251,7 @@ public abstract class AbstractRpcSink extends AbstractSink implements Configurab
             try {
                 client.close();
                 sinkCounter.incrementConnectionClosedCount();
-            } catch (FlumeException e) {
+            } catch (IOException e) {
                 sinkCounter.incrementConnectionFailedCount();
                 logger.error(
                         "Rpc sink " + getName() + ": Attempt to close Rpc " + "client failed. Exception follows.", e);

@@ -14,14 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume.event;
+package org.apache.flume.serialization;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
-import org.apache.flume.Event;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
+import org.apache.flume.event.Event;
 
 /**
  * A line reader produces a stream of lines for the {@link AvroCLIClient} to

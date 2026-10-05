@@ -32,7 +32,6 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.flume.Context;
-import org.apache.flume.Event;
 import org.apache.flume.FlumeException;
 import org.apache.flume.channel.file.CorruptEventException;
 import org.apache.flume.channel.file.EventUtils;
@@ -42,6 +41,7 @@ import org.apache.flume.channel.file.LogFileV3;
 import org.apache.flume.channel.file.LogRecord;
 import org.apache.flume.channel.file.Serialization;
 import org.apache.flume.channel.file.TransactionEventRecord;
+import org.apache.flume.event.Event;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

@@ -18,8 +18,6 @@ package org.apache.flume.event;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.flume.Event;
-import org.apache.flume.FlumeException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -51,7 +49,7 @@ public class TestEventBuilder {
         Assert.assertEquals("e1 has a one key", "1", e1.getHeaders().get("one"));
     }
 
-    @Test(expected = FlumeException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testJsonEventUnsupportedEncoding() {
         JSONEvent jsonEvent = new JSONEvent();
         jsonEvent.setCharset("dummy");

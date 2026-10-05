@@ -24,8 +24,8 @@ import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
-import org.apache.flume.Event;
 import org.apache.flume.conf.internal.SuppressFBWarnings;
+import org.apache.flume.event.Event;
 
 /**
  * Load balancing channel selector. This selector allows for load balancing

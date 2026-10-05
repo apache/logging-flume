@@ -14,8 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume.event;
+package org.apache.flume.core;
 
+import org.apache.flume.event.SimpleEvent;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -17,14 +17,12 @@
 package org.apache.flume.api;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Locale;
 import java.util.Properties;
-import org.apache.flume.FlumeException;
 
 /**
  * Factory class to construct Flume {@link RPCClient} implementations.
@@ -50,10 +48,10 @@ public class RpcClientFactory {
      * @see org.apache.flume.api.NettyAvroClient
      *
      * @param properties The properties to instantiate the client with.
-     * @throws FlumeException
+     * @throws IOException if the client fails to connect.
      */
     @SuppressWarnings("unchecked")
-    public static RpcClient getInstance(Properties properties) throws FlumeException {
+    public static RpcClient getInstance(Properties properties) throws IOException {
         String type = null;
         type = properties.getProperty(RpcClientConfigurationConstants.CONFIG_CLIENT_TYPE);
         if (type == null || type.isEmpty()) {
@@ -78,16 +76,17 @@ public class RpcClientFactory {
             }
             clazz = (Class<? extends AbstractRpcClient>) Class.forName(clientClassType);
         } catch (ClassNotFoundException e) {
-            throw new FlumeException("No such client!", e);
+            throw new IllegalArgumentException("No such client: " + type, e);
         }
 
         try {
             client = clazz.newInstance();
         } catch (InstantiationException e) {
-            throw new FlumeException(
+            throw new IllegalArgumentException(
                     "Cannot instantiate client " + clazz.getCanonicalName() + " Exception follows:", e);
         } catch (IllegalAccessException e) {
-            throw new FlumeException("Cannot instantiate client " + clazz.getCanonicalName() + "Exception follows:", e);
+            throw new IllegalArgumentException(
+                    "Cannot instantiate client " + clazz.getCanonicalName() + "Exception follows:", e);
         }
         client.configure(properties);
         return client;
@@ -101,7 +100,7 @@ public class RpcClientFactory {
      * @throws FileNotFoundException If the file cannot be found
      * @throws IOException If there is an IO error
      */
-    public static RpcClient getInstance(File propertiesFile) throws FileNotFoundException, IOException {
+    public static RpcClient getInstance(File propertiesFile) throws IOException {
         Reader reader = new FileReader(propertiesFile);
         Properties props = new Properties();
         props.load(reader);
@@ -111,20 +110,20 @@ public class RpcClientFactory {
     /**
      * Deprecated. Use
      * {@link #getDefaultInstance(String, Integer)} instead.
-     * @throws FlumeException
+     * @throws IOException if the client fails to connect.
      * @deprecated
      */
     @Deprecated
-    public static RpcClient getInstance(String hostname, Integer port) throws FlumeException {
+    public static RpcClient getInstance(String hostname, Integer port) throws IOException {
         return getDefaultInstance(hostname, port);
     }
 
     /**
      * Returns an instance of {@link RpcClient} connected to the specified
      * {@code hostname} and {@code port}.
-     * @throws FlumeException
+     * @throws IOException if the client fails to connect.
      */
-    public static RpcClient getDefaultInstance(String hostname, Integer port) throws FlumeException {
+    public static RpcClient getDefaultInstance(String hostname, Integer port) throws IOException {
         return getDefaultInstance(hostname, port, 0);
     }
 
@@ -132,20 +131,20 @@ public class RpcClientFactory {
      * Deprecated. Use
      * {@link #getDefaultInstance(String, Integer, Integer)}
      * instead.
-     * @throws FlumeException
+     * @throws IOException if the client fails to connect.
      * @deprecated
      */
     @Deprecated
-    public static RpcClient getInstance(String hostname, Integer port, Integer batchSize) throws FlumeException {
+    public static RpcClient getInstance(String hostname, Integer port, Integer batchSize) throws IOException {
         return getDefaultInstance(hostname, port, batchSize);
     }
 
     /**
      * Returns an instance of {@link RpcClient} connected to the specified
      * {@code hostname} and {@code port} with the specified {@code batchSize}.
-     * @throws FlumeException
+     * @throws IOException if the client fails to connect.
      */
-    public static RpcClient getDefaultInstance(String hostname, Integer port, Integer batchSize) throws FlumeException {
+    public static RpcClient getDefaultInstance(String hostname, Integer port, Integer batchSize) throws IOException {
 
         if (hostname == null) {
             throw new NullPointerException("hostname must not be null");
@@ -174,7 +173,7 @@ public class RpcClientFactory {
      * @return an {@linkplain RpcClient} which uses thrift configured with the
      * given parameters.
      */
-    public static RpcClient getThriftInstance(String hostname, Integer port, Integer batchSize) {
+    public static RpcClient getThriftInstance(String hostname, Integer port, Integer batchSize) throws IOException {
         if (hostname == null) {
             throw new NullPointerException("hostname must not be null");
         }
@@ -192,7 +191,7 @@ public class RpcClientFactory {
         return createClient(THRIFT_CLASS_NAME, props);
     }
 
-    private static RpcClient createClient(String className, Properties props) throws FlumeException {
+    private static RpcClient createClient(String className, Properties props) throws IOException {
         try {
             @SuppressWarnings("unchecked")
             Class<? extends AbstractRpcClient> clazz = (Class<? extends AbstractRpcClient>) Class.forName(className);
@@ -204,7 +203,8 @@ public class RpcClientFactory {
                 | NoSuchMethodException
                 | IllegalAccessException
                 | InvocationTargetException e) {
-            throw new FlumeException("Cannot instantiate client. Implementation " + className + " failed to load.", e);
+            throw new IllegalStateException(
+                    "Cannot instantiate client. Implementation " + className + " failed to load.", e);
         }
     }
 
@@ -218,7 +218,7 @@ public class RpcClientFactory {
      * @return - An {@linkplain RpcClient} which uses thrift configured with the
      * given parameters.
      */
-    public static RpcClient getThriftInstance(String hostname, Integer port) {
+    public static RpcClient getThriftInstance(String hostname, Integer port) throws IOException {
         return getThriftInstance(hostname, port, RpcClientConfigurationConstants.DEFAULT_BATCH_SIZE);
     }
 
@@ -229,7 +229,7 @@ public class RpcClientFactory {
      * @return - An {@linkplain RpcClient} which uses thrift configured with the
      * given parameters.
      */
-    public static RpcClient getThriftInstance(Properties props) {
+    public static RpcClient getThriftInstance(Properties props) throws IOException {
         props.setProperty(RpcClientConfigurationConstants.CONFIG_CLIENT_TYPE, ClientType.THRIFT.clientClassName);
         return getInstance(props);
     }

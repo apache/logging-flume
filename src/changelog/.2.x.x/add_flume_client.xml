@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entry xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="https://logging.apache.org/xml/ns"
+       xsi:schemaLocation="https://logging.apache.org/xml/ns https://logging.apache.org/xml/ns/log4j-changelog-0.xsd"
+       type="changed">
+  <description format="asciidoc">Move the client API to the new `flume-client` artifact, so client applications no longer depend on the plugin API. `Event` moves to `org.apache.flume.event`, `RpcClient` extends `Closeable` and reports failures with `IOException` and the new `RpcDeliveryException` instead of `EventDeliveryException` and `FlumeException`</description>
+</entry>

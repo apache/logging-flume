@@ -27,7 +27,7 @@ import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.flume.Event;
+import org.apache.flume.event.Event;
 
 /**
  * Persistable wrapper for Event
