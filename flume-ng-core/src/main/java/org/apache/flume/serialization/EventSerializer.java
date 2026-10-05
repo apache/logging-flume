@@ -19,9 +19,9 @@ package org.apache.flume.serialization;
 import java.io.IOException;
 import java.io.OutputStream;
 import org.apache.flume.Context;
-import org.apache.flume.Event;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
+import org.apache.flume.event.Event;
 
 /**
  * <p>

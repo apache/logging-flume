@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 import junit.framework.Assert;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
-import org.apache.flume.Event;
+import org.apache.flume.event.Event;
 import org.apache.flume.event.SimpleEvent;
 import org.junit.Test;
 

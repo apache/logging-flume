@@ -23,7 +23,7 @@ import java.util.Map;
 import junit.framework.Assert;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
-import org.apache.flume.Event;
+import org.apache.flume.event.Event;
 import org.junit.Before;
 import org.junit.Test;
 

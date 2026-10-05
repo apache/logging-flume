@@ -20,7 +20,7 @@ import static org.junit.Assert.assertEquals;
 
 import com.google.common.base.Charsets;
 import org.apache.flume.Context;
-import org.apache.flume.Event;
+import org.apache.flume.event.Event;
 import org.apache.flume.event.EventBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

@@ -27,8 +27,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
-import org.apache.flume.Event;
 import org.apache.flume.conf.Configurables;
+import org.apache.flume.event.Event;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

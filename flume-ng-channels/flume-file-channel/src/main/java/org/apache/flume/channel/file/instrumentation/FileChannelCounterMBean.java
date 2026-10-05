@@ -43,7 +43,7 @@ public interface FileChannelCounterMBean extends ChannelCounterMBean {
     /**
      * A count of the number of IOExceptions encountered while trying to put() onto the channel.
      * @see org.apache.flume.channel.file.FileChannel.FileBackedTransaction
-     * #doPut(org.apache.flume.Event)
+     * #doPut(org.apache.flume.event.Event)
      */
     long getEventPutErrorCount();
 

@@ -64,14 +64,14 @@ public enum SinkType implements ComponentWithClassName {
      *
      * @see AvroSink
      */
-    AVRO("org.apache.flume.rpc.avro.sink.AvroSink"),
+    AVRO("org.apache.flume.sink.avro.AvroSink"),
 
     /**
      * Thrift sink
      *
      * @see ThriftSink
      */
-    THRIFT("org.apache.flume.rpc.thrift.sink.ThriftSink"),
+    THRIFT("org.apache.flume.sink.thrift.ThriftSink"),
 
     /**
      * ElasticSearch sink

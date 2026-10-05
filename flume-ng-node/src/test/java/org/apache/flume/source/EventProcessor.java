@@ -16,7 +16,7 @@
  */
 package org.apache.flume.source;
 
-import org.apache.flume.Event;
+import org.apache.flume.event.Event;
 
 /**
  * Interface indicating processEvent is implemented.

@@ -17,7 +17,7 @@
 package org.apache.flume.channel.file;
 
 import junit.framework.Assert;
-import org.apache.flume.Event;
+import org.apache.flume.event.Event;
 import org.junit.Test;
 
 public class TestEventUtils {

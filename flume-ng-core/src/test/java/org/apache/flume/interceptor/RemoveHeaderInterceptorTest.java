@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.regex.PatternSyntaxException;
 import junit.framework.Assert;
 import org.apache.flume.Context;
-import org.apache.flume.Event;
+import org.apache.flume.event.Event;
 import org.apache.flume.event.EventBuilder;
 import org.junit.Test;
 

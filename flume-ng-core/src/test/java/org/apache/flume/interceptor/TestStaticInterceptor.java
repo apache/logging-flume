@@ -18,7 +18,7 @@ package org.apache.flume.interceptor;
 
 import com.google.common.base.Charsets;
 import org.apache.flume.Context;
-import org.apache.flume.Event;
+import org.apache.flume.event.Event;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.interceptor.StaticInterceptor.Constants;
 import org.junit.Assert;

@@ -20,7 +20,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import java.util.Iterator;
 import java.util.List;
-import org.apache.flume.Event;
+import org.apache.flume.event.Event;
 
 /**
  * Implementation of Interceptor that calls a list of other Interceptors

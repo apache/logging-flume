@@ -23,7 +23,7 @@ import org.apache.flume.annotations.InterfaceStability;
 @InterfaceStability.Unstable
 public enum EventDeserializerType {
     LINE(LineDeserializer.Builder.class),
-    AVRO("org.apache.flume.rpc.avro.serialization.AvroDeserializer$Builder"),
+    AVRO("org.apache.flume.serialization.avro.AvroEventDeserializer$Builder"),
     OTHER();
 
     private final Class<? extends EventDeserializer.Builder> builderClass;

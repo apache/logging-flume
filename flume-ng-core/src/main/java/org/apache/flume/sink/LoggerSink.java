@@ -19,11 +19,11 @@ package org.apache.flume.sink;
 import com.google.common.base.Strings;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
-import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Transaction;
 import org.apache.flume.conf.Configurable;
-import org.apache.flume.event.EventHelper;
+import org.apache.flume.core.EventHelper;
+import org.apache.flume.event.Event;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

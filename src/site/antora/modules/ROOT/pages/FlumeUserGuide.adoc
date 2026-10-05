@@ -3879,7 +3879,7 @@ This should be true if Flume source is writing to the channel and false if other
 writing into the topic that the channel is using.
 Flume source messages to Kafka can be parsed outside of Flume
 by using `org.apache.flume.source.avro.AvroFlumeEvent`
-provided by the `flume-rpc-avro` artifact
+provided by the `flume-avro-client` artifact
 |pollTimeout |500 |The amount of time(in milliseconds) to wait in the "poll()" call of the consumer.
 https://kafka.apache.org/090/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html#poll(long)
 |defaultPartitionId |-- |Specifies a Kafka partition ID (integer) for all events in this channel to be sent to, unless

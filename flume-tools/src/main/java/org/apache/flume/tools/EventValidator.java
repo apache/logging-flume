@@ -16,8 +16,8 @@
  */
 package org.apache.flume.tools;
 
-import org.apache.flume.Event;
 import org.apache.flume.conf.Configurable;
+import org.apache.flume.event.Event;
 
 /**
  * Event Validator interface to be used for validating Events
