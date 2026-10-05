@@ -25,7 +25,6 @@
     <version>${revision}</version>
   </parent>
 
-  <groupId>org.apache.flume</groupId>
   <artifactId>flume-sources</artifactId>
   <packaging>pom</packaging>
   <name>Flume Sources</name>
