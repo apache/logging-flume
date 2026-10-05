@@ -34,8 +34,8 @@
     <!-- New in 2.0.0: there is no previous release to check API compatibility against. -->
     <bnd.baseline.fail.on.missing>false</bnd.baseline.fail.on.missing>
     <!-- TODO fix spotbugs/pmd violations -->
-    <spotbugs.maxAllowedViolations>26</spotbugs.maxAllowedViolations>
-    <pmd.maxAllowedViolations>10</pmd.maxAllowedViolations>
+    <spotbugs.maxAllowedViolations>24</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>5</pmd.maxAllowedViolations>
     <module.name>org.apache.flume.client</module.name>
   </properties>
 
@@ -44,6 +44,11 @@
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>biz.aQute.bnd</groupId>
+      <artifactId>biz.aQute.bnd.annotation</artifactId>
     </dependency>
 
     <dependency>
