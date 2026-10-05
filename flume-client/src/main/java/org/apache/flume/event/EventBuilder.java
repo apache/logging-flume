@@ -19,7 +19,6 @@ package org.apache.flume.event;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.flume.Event;
 
 public class EventBuilder {
 

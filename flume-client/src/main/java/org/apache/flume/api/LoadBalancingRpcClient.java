@@ -16,14 +16,13 @@
  */
 package org.apache.flume.api;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import org.apache.flume.Event;
-import org.apache.flume.EventDeliveryException;
-import org.apache.flume.FlumeException;
+import org.apache.flume.event.Event;
 import org.apache.flume.util.OrderSelector;
 import org.apache.flume.util.RandomOrderSelector;
 import org.apache.flume.util.RoundRobinOrderSelector;
@@ -56,7 +55,7 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
     private volatile boolean isOpen = false;
 
     @Override
-    public void append(Event event) throws EventDeliveryException {
+    public void append(Event event) throws RpcDeliveryException {
         throwIfClosed();
         boolean eventSent = false;
         Iterator<HostInfo> it = selector.createHostIterator();
@@ -75,12 +74,12 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
         }
 
         if (!eventSent) {
-            throw new EventDeliveryException("Unable to send event to any host");
+            throw new RpcDeliveryException("Unable to send event to any host");
         }
     }
 
     @Override
-    public void appendBatch(List<Event> events) throws EventDeliveryException {
+    public void appendBatch(List<Event> events) throws RpcDeliveryException {
         throwIfClosed();
         boolean batchSent = false;
         Iterator<HostInfo> it = selector.createHostIterator();
@@ -99,7 +98,7 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
         }
 
         if (!batchSent) {
-            throw new EventDeliveryException("Unable to send batch to any host");
+            throw new RpcDeliveryException("Unable to send batch to any host");
         }
     }
 
@@ -108,14 +107,14 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
         return isOpen;
     }
 
-    private void throwIfClosed() throws EventDeliveryException {
+    private void throwIfClosed() throws RpcDeliveryException {
         if (!isOpen) {
-            throw new EventDeliveryException("Rpc Client is closed");
+            throw new RpcDeliveryException("Rpc Client is closed");
         }
     }
 
     @Override
-    public void close() throws FlumeException {
+    public void close() {
         isOpen = false;
         synchronized (this) {
             Iterator<String> it = clientMap.keySet().iterator();
@@ -135,13 +134,14 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
     }
 
     @Override
-    protected void configure(Properties properties) throws FlumeException {
+    protected void configure(Properties properties) {
         clientMap = new HashMap<String, RpcClient>();
         configurationProperties = new Properties();
         configurationProperties.putAll(properties);
         hosts = HostInfo.getHostInfoList(properties);
         if (hosts.size() < 2) {
-            throw new FlumeException("At least two hosts are required to use the " + "load balancing RPC client.");
+            throw new IllegalArgumentException(
+                    "At least two hosts are required to use the " + "load balancing RPC client.");
         }
 
         String lbTypeName = properties.getProperty(
@@ -169,7 +169,7 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
 
                 selector = klass.newInstance();
             } catch (Exception ex) {
-                throw new FlumeException("Unable to instantiate host selector: " + lbTypeName, ex);
+                throw new IllegalArgumentException("Unable to instantiate host selector: " + lbTypeName, ex);
             }
         }
 
@@ -178,7 +178,7 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
         isOpen = true;
     }
 
-    private synchronized RpcClient getClient(HostInfo info) throws FlumeException, EventDeliveryException {
+    private synchronized RpcClient getClient(HostInfo info) throws IOException {
         throwIfClosed();
         String name = info.getReferenceName();
         RpcClient client = clientMap.get(name);
@@ -198,7 +198,7 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
         return client;
     }
 
-    private RpcClient createClient(String referenceName) throws FlumeException {
+    private RpcClient createClient(String referenceName) throws IOException {
         Properties props = getClientConfigurationProperties(referenceName);
         return RpcClientFactory.getInstance(props);
     }

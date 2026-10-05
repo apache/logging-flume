@@ -34,12 +34,17 @@
     <flume.baseline.groupId>org.apache.flume</flume.baseline.groupId>
     <flume.baseline.artifactId>flume-ng-sdk</flume.baseline.artifactId>
     <!-- TODO fix spotbugs/pmd violations -->
-    <spotbugs.maxAllowedViolations>69</spotbugs.maxAllowedViolations>
-    <pmd.maxAllowedViolations>30</pmd.maxAllowedViolations>
+    <spotbugs.maxAllowedViolations>5</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>20</pmd.maxAllowedViolations>
     <module.name>org.apache.flume.sdk</module.name>
   </properties>
 
   <dependencies>
+
+    <dependency>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-client</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>junit</groupId>

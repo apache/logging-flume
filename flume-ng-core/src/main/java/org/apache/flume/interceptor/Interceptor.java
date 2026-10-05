@@ -17,10 +17,10 @@
 package org.apache.flume.interceptor;
 
 import java.util.List;
-import org.apache.flume.Event;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.conf.Configurable;
+import org.apache.flume.event.Event;
 
 @InterfaceAudience.Public
 @InterfaceStability.Stable

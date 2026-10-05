@@ -18,8 +18,8 @@ package org.apache.flume.channel;
 
 import com.google.common.base.Preconditions;
 import org.apache.flume.Channel;
-import org.apache.flume.Event;
 import org.apache.flume.Transaction;
+import org.apache.flume.event.Event;
 import org.apache.flume.exception.ChannelException;
 
 /**

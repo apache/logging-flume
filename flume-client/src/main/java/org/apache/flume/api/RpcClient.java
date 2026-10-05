@@ -16,15 +16,13 @@
  */
 package org.apache.flume.api;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.List;
-import org.apache.flume.Event;
-import org.apache.flume.EventDeliveryException;
-import org.apache.flume.FlumeException;
+import org.apache.flume.event.Event;
 
 /**
  * <p>Public client interface for sending data to Flume.</p>
- *
- * <p>This interface is intended not to change incompatibly for Flume 1.x.</p>
  *
  * <p><strong>Note:</strong> It is recommended for applications to construct
  * {@link RpcClient} instances using the {@link RpcClientFactory} class,
@@ -33,7 +31,7 @@ import org.apache.flume.FlumeException;
  *
  * @see org.apache.flume.api.RpcClientFactory
  */
-public interface RpcClient {
+public interface RpcClient extends Closeable {
 
     /**
      * Returns the maximum number of {@link Event events} that may be batched
@@ -48,15 +46,15 @@ public interface RpcClient {
      * </p>
      *
      * <p><strong>Note:</strong> If this method throws an
-     * {@link EventDeliveryException}, there is no way to recover and the
+     * {@link RpcDeliveryException}, there is no way to recover and the
      * application must invoke {@link #close()} on this object to clean up system
      * resources.</p>
      *
      * @param event
      *
-     * @throws EventDeliveryException when an error prevents event delivery.
+     * @throws RpcDeliveryException when an error prevents event delivery.
      */
-    public void append(Event event) throws EventDeliveryException;
+    public void append(Event event) throws RpcDeliveryException;
 
     /**
      * <p>Send a list of {@linkplain Event events} to the associated Flume source.
@@ -71,15 +69,15 @@ public interface RpcClient {
      * increase.</p>
      *
      * <p><strong>Note:</strong> If this method throws an
-     * {@link EventDeliveryException}, there is no way to recover and the
+     * {@link RpcDeliveryException}, there is no way to recover and the
      * application must invoke {@link #close()} on this object to clean up system
      * resources.</p>
      *
      * @param events List of events to send
      *
-     * @throws EventDeliveryException when an error prevents event delivery.
+     * @throws RpcDeliveryException when an error prevents event delivery.
      */
-    public void appendBatch(List<Event> events) throws EventDeliveryException;
+    public void appendBatch(List<Event> events) throws RpcDeliveryException;
 
     /**
      * <p>Returns {@code true} if this object appears to be in a usable state, and
@@ -98,8 +96,11 @@ public interface RpcClient {
      *
      * <p>Multi-threaded applications may want to gracefully stop making
      * RPC calls before calling close(). Otherwise, they risk getting
-     * {@link EventDeliveryException} thrown from their in-flight calls when the
+     * {@link RpcDeliveryException} thrown from their in-flight calls when the
      * underlying connection is disabled.</p>
+     *
+     * @throws IOException if the underlying connection fails to close.
      */
-    public void close() throws FlumeException;
+    @Override
+    public void close() throws IOException;
 }

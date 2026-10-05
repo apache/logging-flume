@@ -35,7 +35,7 @@ import java.nio.file.FileSystems;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.apache.flume.Event;
+import org.apache.flume.event.Event;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;

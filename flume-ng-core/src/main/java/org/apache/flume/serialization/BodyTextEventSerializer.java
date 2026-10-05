@@ -19,7 +19,7 @@ package org.apache.flume.serialization;
 import java.io.IOException;
 import java.io.OutputStream;
 import org.apache.flume.Context;
-import org.apache.flume.Event;
+import org.apache.flume.event.Event;
 
 /**
  * This class simply writes the body of the event to the output stream

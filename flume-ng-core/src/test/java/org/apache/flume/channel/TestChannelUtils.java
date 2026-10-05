@@ -17,7 +17,7 @@
 package org.apache.flume.channel;
 
 import java.util.List;
-import org.apache.flume.Event;
+import org.apache.flume.event.Event;
 import org.apache.flume.exception.ChannelException;
 import org.junit.Assert;
 import org.junit.Test;

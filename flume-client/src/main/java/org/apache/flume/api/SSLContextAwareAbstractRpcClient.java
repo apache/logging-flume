@@ -21,7 +21,6 @@ import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
-import org.apache.flume.FlumeException;
 import org.apache.flume.util.SSLUtil;
 
 public abstract class SSLContextAwareAbstractRpcClient extends AbstractRpcClient {
@@ -35,7 +34,7 @@ public abstract class SSLContextAwareAbstractRpcClient extends AbstractRpcClient
     protected final Set<String> excludeCipherSuites = new LinkedHashSet<>();
     protected final Set<String> includeCipherSuites = new LinkedHashSet<>();
 
-    protected void configureSSL(Properties properties) throws FlumeException {
+    protected void configureSSL(Properties properties) {
         enableSsl = Boolean.parseBoolean(properties.getProperty(RpcClientConfigurationConstants.CONFIG_SSL));
         trustAllCerts =
                 Boolean.parseBoolean(properties.getProperty(RpcClientConfigurationConstants.CONFIG_TRUST_ALL_CERTS));

@@ -26,12 +26,12 @@ import java.util.Set;
 import junit.framework.Assert;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
-import org.apache.flume.Event;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Sink;
 import org.apache.flume.Sink.Status;
 import org.apache.flume.Transaction;
 import org.apache.flume.channel.AbstractChannel;
+import org.apache.flume.event.Event;
 import org.apache.flume.exception.ChannelException;
 import org.junit.Test;
 

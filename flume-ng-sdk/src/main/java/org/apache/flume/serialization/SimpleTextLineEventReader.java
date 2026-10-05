@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume.event;
+package org.apache.flume.serialization;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
@@ -22,9 +22,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.List;
-import org.apache.flume.Event;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
+import org.apache.flume.event.Event;
+import org.apache.flume.event.EventBuilder;
 
 /**
  * A {@link EventReader} implementation which delegates to a

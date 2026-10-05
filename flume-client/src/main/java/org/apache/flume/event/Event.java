@@ -16,24 +16,33 @@
  */
 package org.apache.flume.event;
 
-import java.io.IOException;
-import org.apache.flume.annotations.InterfaceAudience;
-import org.apache.flume.annotations.InterfaceStability;
+import java.util.Map;
 
 /**
- * A reliable event reader.
- * Clients must call commit() after each read operation, otherwise the
- * implementation must reset its internal buffers and return the same events
- * as it did previously.
+ * Basic representation of a data object in Flume.
+ * Provides access to data as it flows through the system.
  */
-@InterfaceAudience.Private
-@InterfaceStability.Evolving
-public interface ReliableEventReader extends EventReader {
+public interface Event {
 
     /**
-     * Indicate to the implementation that the previously-returned events have
-     * been successfully processed and committed.
-     * @throws IOException
+     * Returns a map of name-value pairs describing the data stored in the body.
      */
-    public void commit() throws IOException;
+    Map<String, String> getHeaders();
+
+    /**
+     * Set the event headers
+     * @param headers Map of headers to replace the current headers.
+     */
+    void setHeaders(Map<String, String> headers);
+
+    /**
+     * Returns the raw byte array of the data contained in this event.
+     */
+    byte[] getBody();
+
+    /**
+     * Sets the raw byte array of the data contained in this event.
+     * @param body The data.
+     */
+    void setBody(byte[] body);
 }

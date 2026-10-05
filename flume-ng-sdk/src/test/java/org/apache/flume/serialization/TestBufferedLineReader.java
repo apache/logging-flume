@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume.event;
+package org.apache.flume.serialization;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -26,7 +26,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
-import org.apache.flume.Event;
+import org.apache.flume.event.Event;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

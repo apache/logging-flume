@@ -16,11 +16,10 @@
  */
 package org.apache.flume.api;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
-import org.apache.flume.Event;
-import org.apache.flume.EventDeliveryException;
-import org.apache.flume.FlumeException;
+import org.apache.flume.event.Event;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -37,24 +36,25 @@ public abstract class AbstractRpcClient implements RpcClient {
     }
 
     @Override
-    public abstract void append(Event event) throws EventDeliveryException;
+    public abstract void append(Event event) throws RpcDeliveryException;
 
     @Override
-    public abstract void appendBatch(List<Event> events) throws EventDeliveryException;
+    public abstract void appendBatch(List<Event> events) throws RpcDeliveryException;
 
     @Override
     public abstract boolean isActive();
 
     @Override
-    public abstract void close() throws FlumeException;
+    public abstract void close() throws IOException;
 
     /**
      * Configure the client using the given properties object.
      * @param properties
-     * @throws FlumeException if the client can not be configured using this
-     * method, or if the client was already configured once.
+     * @throws IllegalArgumentException if the properties are invalid.
+     * @throws IllegalStateException if the client was already configured once.
+     * @throws IOException if the client fails to connect.
      */
-    protected abstract void configure(Properties properties) throws FlumeException;
+    protected abstract void configure(Properties properties) throws IOException;
 
     /**
      * This is to parse the batch size config for rpc clients

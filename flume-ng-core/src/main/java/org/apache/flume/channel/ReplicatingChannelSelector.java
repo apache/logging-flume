@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
-import org.apache.flume.Event;
+import org.apache.flume.event.Event;
 
 /**
  * Replicating channel selector. This selector allows the event to be placed
