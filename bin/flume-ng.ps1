@@ -218,7 +218,7 @@ switch ($command)
     $javaProcessArgumentList = "-n $name -f $confFile"  }
 
   'avro-client' {
-    $class='org.apache.flume.client.avro.AvroCLIClient'
+    $class='org.apache.flume.source.spooldir.AvroCLIClient'
     if("$rpcProps" -eq "") {
       if (!$AvroHost) {
         PrintUsage

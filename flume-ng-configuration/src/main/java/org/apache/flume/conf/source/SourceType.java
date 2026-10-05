@@ -54,7 +54,7 @@ public enum SourceType implements ComponentWithClassName {
      *
      * @see org.apache.flume.source.AvroSource
      */
-    AVRO("org.apache.flume.rpc.avro.source.AvroSource"),
+    AVRO("org.apache.flume.source.avro.server.AvroSource"),
 
     /**
      * SyslogTcpSource
@@ -82,7 +82,7 @@ public enum SourceType implements ComponentWithClassName {
      *
      * @see org.apache.flume.source.SpoolDirectorySource
      */
-    SPOOLDIR("org.apache.flume.rpc.avro.source.SpoolDirectorySource"),
+    SPOOLDIR("org.apache.flume.source.spooldir.SpoolDirectorySource"),
 
     /**
      * HTTP Source

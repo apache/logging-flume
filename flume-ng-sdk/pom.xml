@@ -35,7 +35,7 @@
     <flume.baseline.artifactId>flume-ng-sdk</flume.baseline.artifactId>
     <!-- TODO fix spotbugs/pmd violations -->
     <spotbugs.maxAllowedViolations>5</spotbugs.maxAllowedViolations>
-    <pmd.maxAllowedViolations>20</pmd.maxAllowedViolations>
+    <pmd.maxAllowedViolations>19</pmd.maxAllowedViolations>
     <module.name>org.apache.flume.sdk</module.name>
   </properties>
 
