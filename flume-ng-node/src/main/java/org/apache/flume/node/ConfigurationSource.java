@@ -17,6 +17,7 @@
 package org.apache.flume.node;
 
 import java.io.InputStream;
+import java.util.Locale;
 
 /**
  * Interface for retrieving configuration data.
@@ -54,4 +55,22 @@ public interface ConfigurationSource {
      * @return The file extension.
      */
     String getExtension();
+
+    /**
+     * Returns the extension of the last segment of a path. Dots in directory names are ignored.
+     * @param path The path, which may be null.
+     * @return The lower case file extension, or "properties" if the file has no extension.
+     */
+    static String getExtension(String path) {
+        if (path == null) {
+            return PROPERTIES;
+        }
+        String fileName = path.substring(path.lastIndexOf('/') + 1);
+        int index = fileName.lastIndexOf('.');
+        // A leading dot denotes a hidden file, not an extension.
+        if (index <= 0 || index == fileName.length() - 1) {
+            return PROPERTIES;
+        }
+        return fileName.substring(index + 1).toLowerCase(Locale.ROOT);
+    }
 }

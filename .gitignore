@@ -21,7 +21,7 @@ target/
 .surefire-*
 
 # Node.js (used by `frontend-maven-plugin` in `logging-parent`)
-node/
+/node/
 node_modules/
 package-lock.json
 
