@@ -54,11 +54,7 @@ public class ClasspathConfigurationSource implements ConfigurationSource {
 
     @Override
     public String getExtension() {
-        int length = uri.getPath().indexOf(".");
-        if (length <= 1) {
-            return PROPERTIES;
-        }
-        return uri.getPath().substring(length + 1);
+        return ConfigurationSource.getExtension(path);
     }
 
     @Override
