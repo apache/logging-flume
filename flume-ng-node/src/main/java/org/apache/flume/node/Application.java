@@ -106,7 +106,6 @@ public class Application {
             startAllComponents(conf);
         } catch (InterruptedException e) {
             logger.info("Interrupted while trying to handle configuration event");
-            return;
         } finally {
             // If interrupted while trying to lock, we don't own the lock, so must not attempt to unlock
             if (lifecycleLock.isHeldByCurrentThread()) {

@@ -212,13 +212,15 @@ public class TestApplication {
 
     @Test
     public void testFlumeInit() throws Exception {
-        File configFile = new File(baseDir, "flume-conf-init.properties");
-        Files.copy(
-                new File(getClass()
-                        .getClassLoader()
-                        .getResource("flume-conf-init.properties")
-                        .getFile()),
-                configFile);
+        for (String fileName :
+                new String[] {"flume-conf-init.properties", "flume-conf-init.yml", "flume-conf-init.json"}) {
+            runFlumeInit(fileName);
+        }
+    }
+
+    private void runFlumeInit(String fileName) throws Exception {
+        File configFile = new File(baseDir, fileName);
+        Files.copy(new File(getClass().getClassLoader().getResource(fileName).getFile()), configFile);
         ConfigurationSource source = new FileConfigurationSource(configFile.toURI());
         List<ConfigurationSource> sourceList = new ArrayList<>();
         sourceList.add(source);
@@ -227,12 +229,12 @@ public class TestApplication {
         List<LifecycleAware> components = Lists.newArrayList();
         Application application = new Application(components);
         MaterializedConfiguration configuration = configurationProvider.getConfiguration();
-        Assert.assertNotNull("Unable to create configuration", configuration);
+        Assert.assertNotNull("Unable to create configuration from " + fileName, configuration);
         application.handleConfigurationEvent(configuration);
         application.start();
         Map<String, Channel> channels = configuration.getChannels();
         Channel channel = channels.get("processedChannel");
-        Assert.assertNotNull("Channel not found", channel);
+        Assert.assertNotNull("Channel not found using " + fileName, channel);
         Map<String, SourceRunner> sourceRunners = configuration.getSourceRunners();
         Assert.assertNotNull("No source runners", sourceRunners);
         SourceRunner runner = sourceRunners.get("source1");

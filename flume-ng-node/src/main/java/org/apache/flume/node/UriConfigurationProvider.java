@@ -36,6 +36,7 @@ import org.apache.flume.conf.ConfigurationException;
 import org.apache.flume.conf.FlumeConfiguration;
 import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleState;
+import org.apache.flume.node.internal.YamlConfigConverter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -186,6 +187,7 @@ public class UriConfigurationProvider extends AbstractConfigurationProvider impl
     private final EventBus eventBus;
     private final int interval;
     private final CounterGroup counterGroup;
+    private final boolean isYamlSupported;
     private LifecycleState lifecycleState = LifecycleState.IDLE;
     private ScheduledExecutorService executorService;
 
@@ -201,6 +203,14 @@ public class UriConfigurationProvider extends AbstractConfigurationProvider impl
         this.eventBus = eventBus;
         this.interval = pollInterval;
         counterGroup = new CounterGroup();
+        boolean isYaml;
+        try {
+            Class.forName("org.snakeyaml.engine.v2.api.Load");
+            isYaml = true;
+        } catch (Exception exception) {
+            isYaml = false;
+        }
+        isYamlSupported = isYaml;
     }
 
     @Override
@@ -256,6 +266,15 @@ public class UriConfigurationProvider extends AbstractConfigurationProvider impl
                     switch (configurationSource.getExtension()) {
                         case ConfigurationSource.JSON:
                         case ConfigurationSource.YAML:
+                        case ConfigurationSource.YML: {
+                            if (isYamlSupported) {
+                                properties = YamlConfigConverter.convertYamlToProperties(is);
+                            } else {
+                                logger.warn(
+                                        "File extension type {} is unsupported", configurationSource.getExtension());
+                            }
+                            break;
+                        }
                         case ConfigurationSource.XML: {
                             logger.warn("File extension type {} is unsupported", configurationSource.getExtension());
                             break;

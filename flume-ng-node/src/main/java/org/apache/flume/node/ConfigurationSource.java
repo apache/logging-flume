@@ -23,10 +23,11 @@ import java.io.InputStream;
  */
 public interface ConfigurationSource {
 
-    static final String PROPERTIES = "properties";
-    static final String JSON = "json";
-    static final String YAML = "yaml";
-    static final String XML = "xml";
+    String PROPERTIES = "properties";
+    String JSON = "json";
+    String YAML = "yaml";
+    String YML = "yml";
+    String XML = "xml";
 
     /**
      * Returns the InputStream if it hasn't already been processed.

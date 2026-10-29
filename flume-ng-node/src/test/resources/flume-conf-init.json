@@ -1,0 +1,38 @@
+{
+  "host1": {
+    "sources": {
+      "source1": {
+        "type": "org.apache.flume.source.LocalSource",
+        "channels": [
+          "channel1"
+        ],
+        "totalEvents": 5,
+        "backoffSleepIncrement": 50
+      },
+      "processedSource": {
+        "type": "org.apache.flume.source.LocalSource",
+        "channels": [
+          "processedChannel"
+        ]
+      }
+    },
+    "channels": {
+      "channel1": {
+        "type": "memory",
+        "capacity": 10000
+      },
+      "processedChannel": {
+        "type": "memory",
+        "capacity": 10000
+      }
+    },
+    "sinks": {
+      "sink1": {
+        "type": "org.apache.flume.sink.NullInitSink",
+        "batchSize": 1,
+        "targetSource": "processedSource",
+        "channel": "channel1"
+      }
+    }
+  }
+}
