@@ -3,6 +3,6 @@
        xmlns="https://logging.apache.org/xml/ns"
        xsi:schemaLocation="https://logging.apache.org/xml/ns https://logging.apache.org/xml/ns/log4j-changelog-0.xsd"
        type="updated">
-  <issue id="492" link="https://github.com/apache/logging-flume/pull/492"/>
-  <description format="asciidoc">Update `com.google.guava:guava` to version `33.7.1-jre`</description>
+  <issue id="516" link="https://github.com/apache/logging-flume/pull/516"/>
+  <description format="asciidoc">Update `com.google.guava:guava` to version `33.7.2-jre`</description>
 </entry>
