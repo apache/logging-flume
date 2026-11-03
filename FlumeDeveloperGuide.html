@@ -463,11 +463,13 @@ a1.sinks.k1.type = logger</code></pre>
 <div class="paragraph">
 <p>For more flexibility, the default Flume client implementations
 (<code>NettyAvroRpcClient</code> and <code>ThriftRpcClient</code>) can be configured with these
-properties:</p>
+properties.
+The <code>avro</code> client type requires <code>flume-avro-client</code> on the classpath,
+and the <code>thrift</code> client type requires <code>flume-thrift-client</code>.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">client.type = default (for avro) or thrift (for thrift)
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">client.type = avro (or its alias default) or thrift
 
 hosts = h1                           # default client accepts only 1 host
                                      # (additional hosts will be ignored)
