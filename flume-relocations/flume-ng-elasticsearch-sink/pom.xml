@@ -21,9 +21,8 @@
 
   <parent>
     <groupId>org.apache.flume</groupId>
-    <artifactId>flume-parent</artifactId>
+    <artifactId>flume-relocations</artifactId>
     <version>${revision}</version>
-    <relativePath>../../flume-parent</relativePath>
   </parent>
 
   <groupId>org.apache.flume.flume-ng-sinks</groupId>

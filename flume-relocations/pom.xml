@@ -50,8 +50,6 @@
     <module>flume-kafka-source</module>
     <module>flume-scribe-source</module>
     <module>flume-twitter-source</module>
-    <module>flume-avro-source</module>
-    <module>flume-thrift-source</module>
     <module>flume-hdfs-sink</module>
     <module>flume-hive-sink</module>
     <module>flume-ng-hbase2-sink</module>
@@ -63,5 +61,58 @@
     <module>flume-shared-kafka</module>
     <module>flume-shared-kafka-test</module>
   </modules>
+
+  <profiles>
+
+    <!-- Activated by the `.flume-relocation-flatten-activator` file of each relocation module.
+         Unlike this aggregator, the relocation POMs are installed and deployed.
+         They are flattened like BOMs, so the published POMs do not refer to this aggregator,
+         but keep `distributionManagement`, which holds the relocation. -->
+    <profile>
+      <id>relocation</id>
+      <activation>
+        <file>
+          <exists>.flume-relocation-flatten-activator</exists>
+        </file>
+      </activation>
+      <properties>
+        <maven.install.skip>false</maven.install.skip>
+        <maven.deploy.skip>false</maven.deploy.skip>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>flatten-maven-plugin</artifactId>
+            <executions>
+              <!-- Declared first, so that `flatten-relocation` runs after it and its output wins. -->
+              <execution>
+                <id>flatten-revision</id>
+              </execution>
+              <execution>
+                <id>flatten-relocation</id>
+                <goals>
+                  <goal>flatten</goal>
+                </goals>
+                <phase>process-resources</phase>
+                <configuration>
+                  <flattenMode>bom</flattenMode>
+                  <pomElements>
+                    <build>remove</build>
+                    <dependencyManagement>remove</dependencyManagement>
+                    <distributionManagement>keep</distributionManagement>
+                    <profiles>remove</profiles>
+                    <properties>remove</properties>
+                    <repositories>remove</repositories>
+                  </pomElements>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+  </profiles>
 
 </project>
