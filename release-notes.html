@@ -187,6 +187,9 @@
 <div class="ulist">
 <ul>
 <li>
+<p>Move the client API to the new <code>flume-client</code> artifact, so client applications no longer depend on the plugin API. <code>Event</code> moves to <code>org.apache.flume.event</code>, <code>RpcClient</code> extends <code>Closeable</code> and reports failures with <code>IOException</code> and the new <code>RpcDeliveryException</code> instead of <code>EventDeliveryException</code> and <code>FlumeException</code></p>
+</li>
+<li>
 <p>Migrate the logging API from SLF4J to the Log4j API (<a href="https://github.com/apache/logging-flume/pull/459">459</a>)</p>
 </li>
 <li>
