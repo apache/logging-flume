@@ -7614,8 +7614,10 @@ Note that having non-channel consumers with the same ID can lead to data loss.</
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Expecting Avro datums with FlumeEvent schema in the channel.
 This should be true if Flume source is writing to the channel and false if other producers are
-writing into the topic that the channel is using. Flume source messages to Kafka can be parsed outside of Flume by using
-org.apache.flume.source.avro.AvroFlumeEvent provided by the flume-ng-sdk artifact</p></td>
+writing into the topic that the channel is using.
+Flume source messages to Kafka can be parsed outside of Flume
+by using <code>org.apache.flume.source.avro.AvroFlumeEvent</code>
+provided by the <code>flume-rpc-avro</code> artifact</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">pollTimeout</p></td>

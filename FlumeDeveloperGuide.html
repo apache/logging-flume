@@ -488,9 +488,11 @@ request-timeout = 20000              # Must be &gt;=1000 (default: 20000)</code>
 <p>As of Flume 1.6.0, Thrift source and sink supports kerberos based authentication.
 The client needs to use the getThriftInstance method of <code>SecureRpcClientFactory</code>
 to get hold of a <code>SecureThriftRpcClient</code>. <code>SecureThriftRpcClient</code> extends
-<code>ThriftRpcClient</code> which implements the <code>RpcClient</code> interface. The kerberos
-authentication module resides in flume-ng-auth module which is
-required in classpath, when using the <code>SecureRpcClientFactory</code>. Both the client
+<code>ThriftRpcClient</code> which implements the <code>RpcClient</code> interface.
+The kerberos authentication module resides in <code>flume-auth</code> module
+which is required in classpath,
+when using the <code>SecureRpcClientFactory</code>.
+Both the client
 principal and the client keytab should be passed in as parameters through the
 properties and they reflect the credentials of the client to authenticate
 against the kerberos KDC. In addition, the server principal of the destination
