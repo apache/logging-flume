@@ -152,7 +152,7 @@ public class GangliaServer implements MonitorService {
             logger.error("Could not create socket for metrics collection.");
             throw new FlumeException("Could not create socket for metrics collection.", ex);
         } catch (Exception ex2) {
-            logger.warn("Unknown error occured", ex2);
+            logger.warn("Unknown error occurred", ex2);
         }
         for (HostInfo host : hosts) {
             addresses.add(new InetSocketAddress(host.getHostName(), host.getPortNumber()));
