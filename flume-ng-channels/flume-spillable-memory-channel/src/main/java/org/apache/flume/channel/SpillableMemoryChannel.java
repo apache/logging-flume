@@ -74,7 +74,7 @@ public class SpillableMemoryChannel extends FileChannel {
      */
     public static final String OVERFLOW_CAPACITY = "overflowCapacity";
     /**
-     * file channel setting that is overriden by Spillable Channel
+     * file channel setting that is overridden by Spillable Channel
      */
     public static final String KEEP_ALIVE = "keep-alive";
     /**
