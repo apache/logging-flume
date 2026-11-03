@@ -16,7 +16,7 @@
  */
 package org.apache.flume.channel.file;
 
-import org.apache.flume.Event;
+import org.apache.flume.event.Event;
 
 /**
  *

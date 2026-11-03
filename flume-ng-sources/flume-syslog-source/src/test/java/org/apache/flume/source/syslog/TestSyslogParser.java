@@ -26,7 +26,7 @@ import java.time.ZoneOffset;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.apache.flume.Event;
+import org.apache.flume.event.Event;
 import org.junit.Assert;
 import org.junit.Test;
 

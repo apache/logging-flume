@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.util.List;
 import junit.framework.Assert;
 import org.apache.flume.Context;
-import org.apache.flume.Event;
+import org.apache.flume.event.Event;
 import org.junit.Before;
 import org.junit.Test;
 

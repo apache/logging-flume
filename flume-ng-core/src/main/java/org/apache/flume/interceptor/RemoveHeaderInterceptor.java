@@ -26,8 +26,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.flume.Context;
-import org.apache.flume.Event;
 import org.apache.flume.conf.LogPrivacyUtil;
+import org.apache.flume.event.Event;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -98,7 +98,7 @@ public class RemoveHeaderInterceptor implements Interceptor {
     }
 
     /**
-     * @see org.apache.flume.interceptor.Interceptor#intercept(org.apache.flume.Event)
+     * @see org.apache.flume.interceptor.Interceptor#intercept(org.apache.flume.event.Event)
      */
     @Override
     public Event intercept(final Event event) {

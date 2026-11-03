@@ -22,9 +22,9 @@ import java.util.List;
 import java.util.Map;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
-import org.apache.flume.Event;
 import org.apache.flume.FlumeException;
 import org.apache.flume.conf.internal.SuppressFBWarnings;
+import org.apache.flume.event.Event;
 
 @SuppressFBWarnings("UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR")
 public class MultiplexingChannelSelector extends AbstractChannelSelector {

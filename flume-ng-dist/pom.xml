@@ -68,11 +68,27 @@
     </dependency>
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-rpc-avro</artifactId>
+      <artifactId>flume-avro-source</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-rpc-thrift</artifactId>
+      <artifactId>flume-avro-sink</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-avro-serializer</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-spooldir-source</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-thrift-source</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flume</groupId>
+      <artifactId>flume-thrift-sink</artifactId>
     </dependency>
     <!-- <dependency>
       <groupId>org.apache.flume</groupId>

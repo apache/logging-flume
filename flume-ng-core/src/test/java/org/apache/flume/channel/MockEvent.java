@@ -18,7 +18,7 @@ package org.apache.flume.channel;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.flume.Event;
+import org.apache.flume.event.Event;
 
 public class MockEvent implements Event {
 

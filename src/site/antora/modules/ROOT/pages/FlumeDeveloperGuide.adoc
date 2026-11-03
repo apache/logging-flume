@@ -164,15 +164,16 @@ within a user's data-generating application:
 
 [source,java]
 ----
-import org.apache.flume.Event;
-import org.apache.flume.EventDeliveryException;
+import java.io.IOException;
+import java.nio.charset.Charset;
 import org.apache.flume.api.RpcClient;
 import org.apache.flume.api.RpcClientFactory;
+import org.apache.flume.api.RpcDeliveryException;
+import org.apache.flume.event.Event;
 import org.apache.flume.event.EventBuilder;
-import java.nio.charset.Charset;
 
 public class MyApp {
-  public static void main(String[] args) {
+  public static void main(String[] args) throws IOException {
     MyRpcClientFacade client = new MyRpcClientFacade();
     // Initialize client with the remote Flume agent's host and port
     client.init("host.example.org", 41414);
@@ -193,7 +194,7 @@ class MyRpcClientFacade {
   private String hostname;
   private int port;
 
-  public void init(String hostname, int port) {
+  public void init(String hostname, int port) throws IOException {
     // Setup the RPC connection
     this.hostname = hostname;
     this.port = port;
@@ -202,14 +203,14 @@ class MyRpcClientFacade {
     // this.client = RpcClientFactory.getThriftInstance(hostname, port);
   }
 
-  public void sendDataToFlume(String data) {
+  public void sendDataToFlume(String data) throws IOException {
     // Create a Flume Event object that encapsulates the sample data
     Event event = EventBuilder.withBody(data, Charset.forName("UTF-8"));
 
     // Send the event
     try {
       client.append(event);
-    } catch (EventDeliveryException e) {
+    } catch (RpcDeliveryException e) {
       // clean up and recreate the client
       client.close();
       client = null;
@@ -219,7 +220,7 @@ class MyRpcClientFacade {
     }
   }
 
-  public void cleanUp() {
+  public void cleanUp() throws IOException {
     // Close the RPC connection
     client.close();
   }
@@ -291,17 +292,18 @@ within a user's data-generating application:
 
 [source,java]
 ----
-import org.apache.flume.Event;
-import org.apache.flume.EventDeliveryException;
-import org.apache.flume.event.EventBuilder;
-import org.apache.flume.api.SecureRpcClientFactory;
-import org.apache.flume.api.RpcClientConfigurationConstants;
-import org.apache.flume.api.RpcClient;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Properties;
+import org.apache.flume.api.RpcClient;
+import org.apache.flume.api.RpcClientConfigurationConstants;
+import org.apache.flume.api.RpcDeliveryException;
+import org.apache.flume.client.thrift.SecureRpcClientFactory;
+import org.apache.flume.event.Event;
+import org.apache.flume.event.EventBuilder;
 
 public class MyApp {
-  public static void main(String[] args) {
+  public static void main(String[] args) throws IOException {
     MySecureRpcClientFacade client = new MySecureRpcClientFacade();
     // Initialize client with the remote Flume agent's host, port
     Properties props = new Properties();
@@ -331,21 +333,21 @@ class MySecureRpcClientFacade {
   private RpcClient client;
   private Properties properties;
 
-  public void init(Properties properties) {
+  public void init(Properties properties) throws IOException {
     // Setup the RPC connection
     this.properties = properties;
     // Create the ThriftSecureRpcClient instance by using SecureRpcClientFactory
     this.client = SecureRpcClientFactory.getThriftInstance(properties);
   }
 
-  public void sendDataToFlume(String data) {
+  public void sendDataToFlume(String data) throws IOException {
     // Create a Flume Event object that encapsulates the sample data
     Event event = EventBuilder.withBody(data, Charset.forName("UTF-8"));
 
     // Send the event
     try {
       client.append(event);
-    } catch (EventDeliveryException e) {
+    } catch (RpcDeliveryException e) {
       // clean up and recreate the client
       client.close();
       client = null;
@@ -353,7 +355,7 @@ class MySecureRpcClientFacade {
     }
   }
 
-  public void cleanUp() {
+  public void cleanUp() throws IOException {
     // Close the RPC connection
     client.close();
   }

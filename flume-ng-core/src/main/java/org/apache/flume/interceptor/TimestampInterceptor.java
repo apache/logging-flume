@@ -24,7 +24,7 @@ import static org.apache.flume.interceptor.TimestampInterceptor.Constants.DEFAUL
 import java.util.List;
 import java.util.Map;
 import org.apache.flume.Context;
-import org.apache.flume.Event;
+import org.apache.flume.event.Event;
 
 /**
  * Simple Interceptor class that sets the current system timestamp on all events

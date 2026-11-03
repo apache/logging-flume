@@ -28,7 +28,7 @@ import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map;
 import org.apache.flume.Context;
-import org.apache.flume.Event;
+import org.apache.flume.event.Event;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

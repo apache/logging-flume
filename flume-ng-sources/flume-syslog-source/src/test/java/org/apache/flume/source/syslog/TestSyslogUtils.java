@@ -33,7 +33,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
-import org.apache.flume.Event;
+import org.apache.flume.event.Event;
 import org.junit.Assert;
 import org.junit.Test;
 
