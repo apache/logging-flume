@@ -21,17 +21,17 @@
 
   <parent>
     <groupId>org.apache.flume</groupId>
-    <artifactId>flume-parent</artifactId>
+    <artifactId>flume-project</artifactId>
     <version>${revision}</version>
-    <relativePath>../flume-parent/pom.xml</relativePath>
   </parent>
 
-  <artifactId>flume-ng-channels</artifactId>
+  <artifactId>flume-channels</artifactId>
   <packaging>pom</packaging>
-  <name>Flume NG Channels</name>
+  <name>Flume Channels</name>
 
   <modules>
     <module>flume-file-channel</module>
     <module>flume-spillable-memory-channel</module>
   </modules>
+
 </project>

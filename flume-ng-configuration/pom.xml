@@ -21,12 +21,15 @@
     <groupId>org.apache.flume</groupId>
     <artifactId>flume-parent</artifactId>
     <version>${revision}</version>
-    <relativePath>../flume-parent/pom.xml</relativePath>
+    <relativePath>../flume-parent</relativePath>
   </parent>
-  <artifactId>flume-ng-configuration</artifactId>
-  <name>Flume NG Configuration</name>
+  <artifactId>flume-configuration</artifactId>
+  <name>Flume Configuration</name>
 
   <properties>
+    <!-- Baseline against the 1.x coordinates. TODO: remove once 2.0.0 is released. -->
+    <flume.baseline.groupId>org.apache.flume</flume.baseline.groupId>
+    <flume.baseline.artifactId>flume-ng-configuration</flume.baseline.artifactId>
     <!-- TODO fix spotbugs violations -->
     <spotbugs.maxAllowedViolations>36</spotbugs.maxAllowedViolations>
     <pmd.maxAllowedViolations>13</pmd.maxAllowedViolations>
@@ -59,12 +62,12 @@
 
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-sdk</artifactId>
+      <artifactId>flume-sdk</artifactId>
     </dependency>
 
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-config-filter-api</artifactId>
+      <artifactId>flume-config-filter-api</artifactId>
     </dependency>
 
   </dependencies>

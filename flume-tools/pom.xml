@@ -23,13 +23,12 @@
     <groupId>org.apache.flume</groupId>
     <artifactId>flume-parent</artifactId>
     <version>${revision}</version>
-    <relativePath>../flume-parent/pom.xml</relativePath>
+    <relativePath>../flume-parent</relativePath>
   </parent>
 
-  <groupId>org.apache.flume</groupId>
   <artifactId>flume-tools</artifactId>
 
-  <name>Flume NG Tools</name>
+  <name>Flume Tools</name>
 
   <properties>
     <!-- TODO fix spotbugs/pmd violations -->
@@ -47,7 +46,7 @@
     </dependency>
 
     <dependency>
-      <groupId>org.apache.flume.flume-ng-channels</groupId>
+      <groupId>org.apache.flume</groupId>
       <artifactId>flume-file-channel</artifactId>
     </dependency>
 

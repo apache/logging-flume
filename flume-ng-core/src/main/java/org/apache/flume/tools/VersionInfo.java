@@ -39,7 +39,7 @@ public class VersionInfo {
     private static final String UNKNOWN = "Unknown";
 
     private static final String GROUP_ID = "org.apache.flume";
-    private static final String ARTIFACT_ID = "flume-ng-core";
+    private static final String ARTIFACT_ID = "flume-core";
 
     private static final String IMPLEMENTATION_TIMESTAMP = "Implementation-Timestamp";
     private static final String PURL = "Purl";
@@ -161,7 +161,7 @@ public class VersionInfo {
     /**
      * Gets the Package URL of the Flume artifact this class was loaded from.
      *
-     * @return the Package URL, eg. "pkg:maven/org.apache.flume/flume-ng-core@2.0.0"
+     * @return the Package URL, eg. "pkg:maven/org.apache.flume/flume-core@2.0.0"
      */
     public static String getPurl() {
         return PURL_VALUE;

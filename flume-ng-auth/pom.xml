@@ -22,14 +22,17 @@
     <groupId>org.apache.flume</groupId>
     <artifactId>flume-parent</artifactId>
     <version>${revision}</version>
-    <relativePath>../flume-parent/pom.xml</relativePath>
+    <relativePath>../flume-parent</relativePath>
   </parent>
 
-  <artifactId>flume-ng-auth</artifactId>
+  <artifactId>flume-auth</artifactId>
   <name>Flume Auth</name>
   <description>Flume Authentication</description>
 
   <properties>
+    <!-- Baseline against the 1.x coordinates. TODO: remove once 2.0.0 is released. -->
+    <flume.baseline.groupId>org.apache.flume</flume.baseline.groupId>
+    <flume.baseline.artifactId>flume-ng-auth</flume.baseline.artifactId>
     <!-- TODO fix spotbugs/pmd violations -->
     <spotbugs.maxAllowedViolations>6</spotbugs.maxAllowedViolations>
     <pmd.maxAllowedViolations>5</pmd.maxAllowedViolations>
@@ -63,7 +66,7 @@
 
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-sdk</artifactId>
+      <artifactId>flume-sdk</artifactId>
     </dependency>
 
     <dependency>

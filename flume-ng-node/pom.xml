@@ -23,13 +23,16 @@
     <groupId>org.apache.flume</groupId>
     <artifactId>flume-parent</artifactId>
     <version>${revision}</version>
-    <relativePath>../flume-parent/pom.xml</relativePath>
+    <relativePath>../flume-parent</relativePath>
   </parent>
 
-  <artifactId>flume-ng-node</artifactId>
-  <name>Flume NG Node</name>
+  <artifactId>flume-node</artifactId>
+  <name>Flume Node</name>
 
   <properties>
+    <!-- Baseline against the 1.x coordinates. TODO: remove once 2.0.0 is released. -->
+    <flume.baseline.groupId>org.apache.flume</flume.baseline.groupId>
+    <flume.baseline.artifactId>flume-ng-node</flume.baseline.artifactId>
     <!-- TODO fix spotbugs violations -->
     <spotbugs.maxAllowedViolations>12</spotbugs.maxAllowedViolations>
     <pmd.maxAllowedViolations>5</pmd.maxAllowedViolations>
@@ -41,26 +44,26 @@
 
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-sdk</artifactId>
+      <artifactId>flume-sdk</artifactId>
     </dependency>
 
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-configuration</artifactId>
+      <artifactId>flume-configuration</artifactId>
     </dependency>
 
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-ng-core</artifactId>
+      <artifactId>flume-core</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>org.apache.flume.flume-ng-channels</groupId>
+      <groupId>org.apache.flume</groupId>
       <artifactId>flume-file-channel</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>org.apache.flume.flume-ng-channels</groupId>
+      <groupId>org.apache.flume</groupId>
       <artifactId>flume-spillable-memory-channel</artifactId>
     </dependency>
 

@@ -148,7 +148,7 @@ Function GetHiveHome() {
 }
 
 Function GetJavaLibraryPath ($cmd, $flumeLibDir) {
-    $flumeCoreJar = EnumerateJars( $flumeLibDir ) | ? { $_ -match "flume-ng-core.*jar" }
+    $flumeCoreJar = EnumerateJars( $flumeLibDir ) | ? { $_ -match "flume-core.*jar" }
     $output = & "$cmd" -classpath $flumeCoreJar org.apache.flume.tools.GetJavaProperty java.library.path
 
     # look for the line that has the desired property value

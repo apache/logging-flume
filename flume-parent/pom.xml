@@ -108,6 +108,11 @@
     <test.include.pattern>**/Test*.java</test.include.pattern>
     <redirectTestOutput>true</redirectTestOutput>
 
+    <!-- Coordinates of the previous release that `bnd-baseline-maven-plugin` checks API compatibility against.
+         Modules renamed in 2.0.0 point them at their 1.x coordinates. -->
+    <flume.baseline.groupId>${project.groupId}</flume.baseline.groupId>
+    <flume.baseline.artifactId>${project.artifactId}</flume.baseline.artifactId>
+
     <awaitility.version>4.3.0</awaitility.version>
     <curator.version>5.9.0</curator.version>
     <fest-reflect.version>1.4.1</fest-reflect.version>
@@ -126,7 +131,7 @@
     <dependencies>
       <dependency>
         <groupId>org.apache.flume</groupId>
-        <artifactId>flume-third-party-dependencies</artifactId>
+        <artifactId>flume-third-party-bom</artifactId>
         <version>${flume-project.version}</version>
         <type>pom</type>
         <scope>import</scope>
@@ -199,7 +204,7 @@
       <!-- internal module dependencies -->
       <dependency>
         <groupId>org.apache.flume</groupId>
-        <artifactId>flume-dependencies</artifactId>
+        <artifactId>flume-core-bom</artifactId>
         <version>${flume-project.version}</version>
         <type>pom</type>
         <scope>import</scope>
@@ -213,7 +218,7 @@
 
       <dependency>
         <groupId>org.apache.flume</groupId>
-        <artifactId>flume-ng-sdk-test</artifactId>
+        <artifactId>flume-sdk-test</artifactId>
         <version>${flume-project.version}</version>
         <scope>test</scope>
       </dependency>
@@ -363,6 +368,18 @@
     </pluginManagement>
 
     <plugins>
+
+      <!-- Check API compatibility against the previous release, which may use different coordinates. -->
+      <plugin>
+        <groupId>biz.aQute.bnd</groupId>
+        <artifactId>bnd-baseline-maven-plugin</artifactId>
+        <configuration>
+          <base>
+            <groupId>${flume.baseline.groupId}</groupId>
+            <artifactId>${flume.baseline.artifactId}</artifactId>
+          </base>
+        </configuration>
+      </plugin>
 
       <!-- Append the Flume-specific exclusions to the Spotless configuration of `logging-parent`. -->
       <plugin>

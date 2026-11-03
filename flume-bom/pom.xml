@@ -25,229 +25,110 @@
     <version>${revision}</version>
   </parent>
 
-  <artifactId>flume-dependencies</artifactId>
+  <artifactId>flume-core-bom</artifactId>
   <packaging>pom</packaging>
 
-  <name>Apache Flume BOM</name>
-  <description>Bill of materials (BOM) of Apache Flume.
-  It provides a coherent set of versions for all Apache Flume artifacts in the official distribution.</description>
+  <name>Apache Flume Core BOM</name>
+  <description>Bill of materials (BOM) of Apache Flume Core.
+  It provides a coherent set of versions for the artifacts of the main Apache Flume repository.</description>
 
   <properties>
     <!-- Re-enable publishing: `flume-project` disables it, but this BOM must be installed and deployed. -->
     <maven.install.skip>false</maven.install.skip>
     <maven.deploy.skip>false</maven.deploy.skip>
-
-    <flume-hadoop.version>2.0.0-SNAPSHOT</flume-hadoop.version>
-    <flume-http.version>2.0.0-SNAPSHOT</flume-http.version>
-    <flume-irc.version>2.0.0-SNAPSHOT</flume-irc.version>
-    <flume-jdbc.version>2.0.0-SNAPSHOT</flume-jdbc.version>
-    <flume-jms.version>2.0.0-SNAPSHOT</flume-jms.version>
-    <flume-kafka.version>2.0.0-SNAPSHOT</flume-kafka.version>
-    <flume-mongodb.version>2.0.0-SNAPSHOT</flume-mongodb.version>
-    <flume-scribe.version>2.0.0-SNAPSHOT</flume-scribe.version>
-    <flume-spring-boot.version>2.1.0-SNAPSHOT</flume-spring-boot.version>
-    <flume-taildir.version>2.0.0-SNAPSHOT</flume-taildir.version>
-    <flume-tools.version>2.0.0-SNAPSHOT</flume-tools.version>
-    <flume-legacy.version>2.0.0-SNAPSHOT</flume-legacy.version>
-    <flume-rpc.version>2.0.0-SNAPSHOT</flume-rpc.version>
   </properties>
 
   <dependencyManagement>
     <dependencies>
       <dependency>
         <groupId>org.apache.flume</groupId>
-        <artifactId>flume-ng-auth</artifactId>
+        <artifactId>flume-auth</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.flume</groupId>
-        <artifactId>flume-ng-configfilters</artifactId>
+        <artifactId>flume-config-filter-api</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.flume</groupId>
-        <artifactId>flume-ng-configuration</artifactId>
+        <artifactId>flume-configuration</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.flume</groupId>
-        <artifactId>flume-ng-core</artifactId>
+        <artifactId>flume-core</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.flume</groupId>
-        <artifactId>flume-ng-embedded-agent</artifactId>
+        <artifactId>flume-environment-variable-config-filter</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.flume</groupId>
-        <artifactId>flume-ng-config-filter-api</artifactId>
+        <artifactId>flume-external-process-config-filter</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.flume</groupId>
-        <artifactId>flume-ng-environment-variable-config-filter</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume</groupId>
-        <artifactId>flume-ng-external-process-config-filter</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume</groupId>
-        <artifactId>flume-hadoop-credential-store-config-filter</artifactId>
-        <version>${flume-hadoop.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume</groupId>
-        <artifactId>flume-ng-sdk</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume</groupId>
-        <artifactId>flume-ng-sdk-test</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume</groupId>
-        <artifactId>flume-ng-node</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume</groupId>
-        <artifactId>flume-rpc-avro</artifactId>
-        <version>${flume-rpc.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume</groupId>
-        <artifactId>flume-rpc-thrift</artifactId>
-        <version>${flume-rpc.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume</groupId>
-        <artifactId>flume-spring-boot</artifactId>
-        <version>${flume-spring-boot.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume</groupId>
-        <artifactId>flume-jdbc-channel</artifactId>
-        <version>${flume-jdbc.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume.flume-ng-channels</groupId>
         <artifactId>flume-file-channel</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.flume</groupId>
-        <artifactId>flume-kafka-channel</artifactId>
-        <version>${flume-kafka.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume.flume-ng-channels</groupId>
-        <artifactId>flume-recoverable-memory-channel</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume.flume-ng-channels</groupId>
-        <artifactId>flume-spillable-memory-channel</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume</groupId>
-        <artifactId>flume-legacy-thrift-source</artifactId>
-        <version>${flume-legacy.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume</groupId>
-        <artifactId>flume-legacy-avro-source</artifactId>
-        <version>${flume-legacy.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume.flume-ng-sinks</groupId>
-        <artifactId>flume-http-sink</artifactId>
-        <version>${flume-http.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume.flume-ng-sinks</groupId>
-        <artifactId>flume-irc-sink</artifactId>
-        <version>${flume-irc.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume</groupId>
-        <artifactId>flume-kafka-sink</artifactId>
-        <version>${flume-kafka.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume.flume-ng-sources</groupId>
-        <artifactId>flume-jms-source</artifactId>
-        <version>${flume-jms.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume.flume-ng-sinks</groupId>
-        <artifactId>flume-dataset-sink</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume</groupId>
-        <artifactId>flume-kafka-source</artifactId>
-        <version>${flume-kafka.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume</groupId>
-        <artifactId>flume-mongodb-sink</artifactId>
-        <version>${flume-mongodb.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume.flume-ng-sources</groupId>
-        <artifactId>flume-scribe-source</artifactId>
-        <version>${flume-scribe.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume.flume-ng-instrumentation</groupId>
         <artifactId>flume-ganglia-monitor</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.flume.flume-ng-instrumentation</groupId>
+        <groupId>org.apache.flume</groupId>
         <artifactId>flume-http-monitor</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.flume.flume-ng-instrumentation</groupId>
-        <artifactId>flume-prometheus-monitor</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume.flume-ng-sources</groupId>
-        <artifactId>flume-http-source</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume.flume-ng-sources</groupId>
-        <artifactId>flume-taildir-source</artifactId>
-        <version>${flume-taildir.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume.flume-ng-sources</groupId>
-        <artifactId>flume-syslog-source</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume.flume-ng-sources</groupId>
+        <groupId>org.apache.flume</groupId>
         <artifactId>flume-netcat-source</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.flume</groupId>
-        <artifactId>flume-shared-kafka</artifactId>
-        <version>${flume-kafka.version}</version>
+        <artifactId>flume-node</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.flume</groupId>
+        <artifactId>flume-prometheus-monitor</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.flume</groupId>
+        <artifactId>flume-sdk</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.flume</groupId>
+        <artifactId>flume-sdk-test</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.flume</groupId>
+        <artifactId>flume-spillable-memory-channel</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.flume</groupId>
+        <artifactId>flume-syslog-source</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.flume</groupId>
+        <artifactId>flume-taildir-source</artifactId>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-tools</artifactId>
-        <version>${flume-tools.version}</version>
+        <version>${project.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
