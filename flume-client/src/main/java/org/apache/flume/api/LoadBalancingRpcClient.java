@@ -16,12 +16,17 @@
  */
 package org.apache.flume.api;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import org.apache.flume.client.spi.AbstractRpcClient;
+import org.apache.flume.client.spi.HostInfo;
+import org.apache.flume.client.spi.RpcClientProvider;
 import org.apache.flume.event.Event;
 import org.apache.flume.util.OrderSelector;
 import org.apache.flume.util.RandomOrderSelector;
@@ -133,7 +138,6 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
         }
     }
 
-    @Override
     protected void configure(Properties properties) {
         clientMap = new HashMap<String, RpcClient>();
         configurationProperties = new Properties();
@@ -206,7 +210,9 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
     private Properties getClientConfigurationProperties(String referenceName) {
         Properties props = new Properties();
         props.putAll(configurationProperties);
-        props.put(RpcClientConfigurationConstants.CONFIG_CLIENT_TYPE, RpcClientFactory.ClientType.DEFAULT);
+        props.put(
+                RpcClientConfigurationConstants.CONFIG_CLIENT_TYPE,
+                RpcClientConfigurationConstants.DEFAULT_CLIENT_TYPE);
         props.put(RpcClientConfigurationConstants.CONFIG_HOSTS, referenceName);
 
         return props;
@@ -274,6 +280,25 @@ public class LoadBalancingRpcClient extends AbstractRpcClient {
         @Override
         public void informFailure(HostInfo failedHost) {
             selector.informFailure(failedHost);
+        }
+    }
+
+    /**
+     * Provides the {@value RpcClientConfigurationConstants#LOAD_BALANCING_CLIENT_TYPE} client type.
+     */
+    @ServiceProvider(value = RpcClientProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider implements RpcClientProvider {
+
+        @Override
+        public String getName() {
+            return RpcClientConfigurationConstants.LOAD_BALANCING_CLIENT_TYPE;
+        }
+
+        @Override
+        public RpcClient create(Properties properties) {
+            LoadBalancingRpcClient client = new LoadBalancingRpcClient();
+            client.configure(properties);
+            return client;
         }
     }
 }

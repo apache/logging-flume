@@ -254,11 +254,13 @@ a1.sinks.k1.type = logger
 
 For more flexibility, the default Flume client implementations
 (`NettyAvroRpcClient` and `ThriftRpcClient`) can be configured with these
-properties:
+properties.
+The `avro` client type requires `flume-avro-client` on the classpath,
+and the `thrift` client type requires `flume-thrift-client`.
 
 [source,properties]
 ----
-client.type = default (for avro) or thrift (for thrift)
+client.type = avro (or its alias default) or thrift
 
 hosts = h1                           # default client accepts only 1 host
                                      # (additional hosts will be ignored)

@@ -16,10 +16,15 @@
  */
 package org.apache.flume.api;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Properties;
+import org.apache.flume.client.spi.AbstractRpcClient;
+import org.apache.flume.client.spi.HostInfo;
+import org.apache.flume.client.spi.RpcClientProvider;
 import org.apache.flume.event.Event;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -269,15 +274,35 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
     }
 
     private void setDefaultProperties(HostInfo hostInfo, Properties props) {
-        props.put(RpcClientConfigurationConstants.CONFIG_CLIENT_TYPE, RpcClientFactory.ClientType.DEFAULT.name());
+        props.put(
+                RpcClientConfigurationConstants.CONFIG_CLIENT_TYPE,
+                RpcClientConfigurationConstants.DEFAULT_CLIENT_TYPE);
         props.put(RpcClientConfigurationConstants.CONFIG_HOSTS, hostInfo.getReferenceName());
     }
 
-    @Override
     public void configure(Properties properties) {
         configurationProperties = new Properties();
         configurationProperties.putAll(properties);
 
         configureHosts(configurationProperties);
+    }
+
+    /**
+     * Provides the {@value RpcClientConfigurationConstants#FAILOVER_CLIENT_TYPE} client type.
+     */
+    @ServiceProvider(value = RpcClientProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider implements RpcClientProvider {
+
+        @Override
+        public String getName() {
+            return RpcClientConfigurationConstants.FAILOVER_CLIENT_TYPE;
+        }
+
+        @Override
+        public RpcClient create(Properties properties) {
+            FailoverRpcClient client = new FailoverRpcClient();
+            client.configure(properties);
+            return client;
+        }
     }
 }

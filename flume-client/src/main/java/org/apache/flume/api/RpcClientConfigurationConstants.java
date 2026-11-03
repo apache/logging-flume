@@ -83,20 +83,39 @@ public final class RpcClientConfigurationConstants {
     public static final String CONFIG_MAX_ATTEMPTS = "max-attempts";
 
     /**
-     * Configuration key to specify the RpcClient type to be used. The available
-     * values are <tt>DEFAULT</tt> which results in the creation of a regular
-     * <tt>NettyAvroRpcClient</tt> and <tt>DEFAULT_FAILOVER</tt> which results
-     * in the creation of a failover client implementation on top of multiple
-     * <tt>NettyAvroRpcClient</tt>s. The default value of this configuration
-     * is {@value #DEFAULT_CLIENT_TYPE}.
+     * Configuration key to specify the RpcClient type to be used.
      *
+     * <p>The value is the name of a registered {@link org.apache.flume.client.spi.RpcClientProvider},
+     * such as {@value #AVRO_CLIENT_TYPE}, {@value #THRIFT_CLIENT_TYPE}, {@value #FAILOVER_CLIENT_TYPE}
+     * or {@value #LOAD_BALANCING_CLIENT_TYPE}, or the fully qualified class name of a provider.
+     * The default value of this configuration is {@value #DEFAULT_CLIENT_TYPE}.
      */
     public static final String CONFIG_CLIENT_TYPE = "client.type";
 
     /**
-     * The default client type to be created if no explicit type is specified.
+     * The default client type to be created if no explicit type is specified: an alias of {@value #AVRO_CLIENT_TYPE}.
      */
-    public static final String DEFAULT_CLIENT_TYPE = RpcClientFactory.ClientType.DEFAULT.name();
+    public static final String DEFAULT_CLIENT_TYPE = "default";
+
+    /**
+     * Client type of the Avro client, provided by {@code flume-avro-client}.
+     */
+    public static final String AVRO_CLIENT_TYPE = "avro";
+
+    /**
+     * Client type of the Thrift client, provided by {@code flume-thrift-client}.
+     */
+    public static final String THRIFT_CLIENT_TYPE = "thrift";
+
+    /**
+     * Client type of the {@link FailoverRpcClient}.
+     */
+    public static final String FAILOVER_CLIENT_TYPE = "default_failover";
+
+    /**
+     * Client type of the {@link LoadBalancingRpcClient}.
+     */
+    public static final String LOAD_BALANCING_CLIENT_TYPE = "default_loadbalance";
 
     /**
      * The selector type used by the <tt>LoadBalancingRpcClient</tt>. This

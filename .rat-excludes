@@ -1,2 +1,3 @@
 .rat-excludes
 **/src/test/resources/test_command.ps1
+**/resources/META-INF/services/**
