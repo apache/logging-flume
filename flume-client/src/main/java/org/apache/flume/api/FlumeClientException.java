@@ -16,26 +16,25 @@
  */
 package org.apache.flume.api;
 
-import java.io.IOException;
 import java.io.Serial;
 
 /**
- * Signals that an {@link RpcClient} failed to deliver events to a Flume agent.
+ * Signals that a Flume client failed to connect to, or deliver events to, a Flume agent.
  */
-public class RpcDeliveryException extends IOException {
+public class FlumeClientException extends RuntimeException {
 
     @Serial
     private static final long serialVersionUID = -4237375912986132195L;
 
-    public RpcDeliveryException(String message) {
+    public FlumeClientException(String message) {
         super(message);
     }
 
-    public RpcDeliveryException(String message, Throwable cause) {
+    public FlumeClientException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public RpcDeliveryException(Throwable cause) {
+    public FlumeClientException(Throwable cause) {
         super(cause);
     }
 }

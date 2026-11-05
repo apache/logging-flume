@@ -51,9 +51,9 @@ public class RpcClientFactory {
      *
      * @param properties The properties to instantiate the client with.
      * @throws IllegalArgumentException if the client type is unknown or the properties are invalid.
-     * @throws IOException if the client fails to connect.
+     * @throws FlumeClientException if the client fails to connect.
      */
-    public static RpcClient getInstance(Properties properties) throws IOException {
+    public static RpcClient getInstance(Properties properties) throws FlumeClientException {
         String type = properties.getProperty(RpcClientConfigurationConstants.CONFIG_CLIENT_TYPE);
         if (type == null || type.isEmpty()) {
             type = RpcClientConfigurationConstants.DEFAULT_CLIENT_TYPE;
@@ -66,12 +66,14 @@ public class RpcClientFactory {
      * to a {@link Properties} file.
      * @param propertiesFile Valid properties file
      * @return RpcClient configured according to the given Properties file.
-     * @throws IOException If the file cannot be read or the client fails to connect
+     * @throws FlumeClientException If the file cannot be read or the client fails to connect
      */
-    public static RpcClient getInstance(File propertiesFile) throws IOException {
+    public static RpcClient getInstance(File propertiesFile) throws FlumeClientException {
         Properties props = new Properties();
         try (Reader reader = new FileReader(propertiesFile)) {
             props.load(reader);
+        } catch (IOException e) {
+            throw new FlumeClientException("Cannot read client configuration " + propertiesFile, e);
         }
         return getInstance(props);
     }
@@ -79,20 +81,20 @@ public class RpcClientFactory {
     /**
      * Deprecated. Use
      * {@link #getDefaultInstance(String, Integer)} instead.
-     * @throws IOException if the client fails to connect.
+     * @throws FlumeClientException if the client fails to connect.
      * @deprecated
      */
     @Deprecated
-    public static RpcClient getInstance(String hostname, Integer port) throws IOException {
+    public static RpcClient getInstance(String hostname, Integer port) throws FlumeClientException {
         return getDefaultInstance(hostname, port);
     }
 
     /**
      * Returns an instance of {@link RpcClient} connected to the specified
      * {@code hostname} and {@code port}.
-     * @throws IOException if the client fails to connect.
+     * @throws FlumeClientException if the client fails to connect.
      */
-    public static RpcClient getDefaultInstance(String hostname, Integer port) throws IOException {
+    public static RpcClient getDefaultInstance(String hostname, Integer port) throws FlumeClientException {
         return getDefaultInstance(hostname, port, 0);
     }
 
@@ -100,20 +102,21 @@ public class RpcClientFactory {
      * Deprecated. Use
      * {@link #getDefaultInstance(String, Integer, Integer)}
      * instead.
-     * @throws IOException if the client fails to connect.
+     * @throws FlumeClientException if the client fails to connect.
      * @deprecated
      */
     @Deprecated
-    public static RpcClient getInstance(String hostname, Integer port, Integer batchSize) throws IOException {
+    public static RpcClient getInstance(String hostname, Integer port, Integer batchSize) throws FlumeClientException {
         return getDefaultInstance(hostname, port, batchSize);
     }
 
     /**
      * Returns an instance of {@link RpcClient} connected to the specified
      * {@code hostname} and {@code port} with the specified {@code batchSize}.
-     * @throws IOException if the client fails to connect.
+     * @throws FlumeClientException if the client fails to connect.
      */
-    public static RpcClient getDefaultInstance(String hostname, Integer port, Integer batchSize) throws IOException {
+    public static RpcClient getDefaultInstance(String hostname, Integer port, Integer batchSize)
+            throws FlumeClientException {
         return getProvider(RpcClientConfigurationConstants.DEFAULT_CLIENT_TYPE)
                 .create(singleHostProperties(hostname, port, batchSize));
     }
@@ -121,9 +124,10 @@ public class RpcClientFactory {
     /**
      * Returns an instance of {@link RpcClient} connected to the specified
      * {@code hostname} and {@code port} using Thrift.
-     * @throws IOException if the client fails to connect.
+     * @throws FlumeClientException if the client fails to connect.
      */
-    public static RpcClient getThriftInstance(String hostname, Integer port, Integer batchSize) throws IOException {
+    public static RpcClient getThriftInstance(String hostname, Integer port, Integer batchSize)
+            throws FlumeClientException {
         return getProvider(RpcClientConfigurationConstants.THRIFT_CLIENT_TYPE)
                 .create(singleHostProperties(hostname, port, batchSize));
     }
@@ -131,17 +135,17 @@ public class RpcClientFactory {
     /**
      * Returns an instance of {@link RpcClient} connected to the specified
      * {@code hostname} and {@code port} using Thrift.
-     * @throws IOException if the client fails to connect.
+     * @throws FlumeClientException if the client fails to connect.
      */
-    public static RpcClient getThriftInstance(String hostname, Integer port) throws IOException {
+    public static RpcClient getThriftInstance(String hostname, Integer port) throws FlumeClientException {
         return getThriftInstance(hostname, port, RpcClientConfigurationConstants.DEFAULT_BATCH_SIZE);
     }
 
     /**
      * Returns an instance of {@link RpcClient} configured with the given properties using Thrift.
-     * @throws IOException if the client fails to connect.
+     * @throws FlumeClientException if the client fails to connect.
      */
-    public static RpcClient getThriftInstance(Properties props) throws IOException {
+    public static RpcClient getThriftInstance(Properties props) throws FlumeClientException {
         props.setProperty(
                 RpcClientConfigurationConstants.CONFIG_CLIENT_TYPE, RpcClientConfigurationConstants.THRIFT_CLIENT_TYPE);
         return getInstance(props);

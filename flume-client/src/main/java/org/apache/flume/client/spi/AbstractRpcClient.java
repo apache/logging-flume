@@ -19,9 +19,9 @@ package org.apache.flume.client.spi;
 import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
+import org.apache.flume.api.FlumeClientException;
 import org.apache.flume.api.RpcClient;
 import org.apache.flume.api.RpcClientConfigurationConstants;
-import org.apache.flume.api.RpcDeliveryException;
 import org.apache.flume.event.Event;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,10 +39,10 @@ public abstract class AbstractRpcClient implements RpcClient {
     }
 
     @Override
-    public abstract void append(Event event) throws RpcDeliveryException;
+    public abstract void append(Event event) throws FlumeClientException;
 
     @Override
-    public abstract void appendBatch(List<Event> events) throws RpcDeliveryException;
+    public abstract void appendBatch(List<Event> events) throws FlumeClientException;
 
     @Override
     public abstract boolean isActive();
