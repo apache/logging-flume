@@ -214,7 +214,8 @@ class KerberosAuthenticator implements FlumeAuthenticator {
                             ugi.checkTGTAndReloginFromKeytab();
                         } catch (IOException e) {
                             logger.warn(
-                                    "Error occured during checkTGTAndReloginFromKeytab() for user " + ugi.getUserName(),
+                                    "Error occurred during checkTGTAndReloginFromKeytab() for user "
+                                            + ugi.getUserName(),
                                     e);
                         }
                     }

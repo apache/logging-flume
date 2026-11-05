@@ -321,7 +321,7 @@ public class TestMemoryChannelConcurrency {
         }
         startGate.countDown();
         if (!endGate.await(20, TimeUnit.SECONDS)) {
-            Assert.fail("Not all threads ended succesfully");
+            Assert.fail("Not all threads ended successfully");
         }
 
         // verify the counts
