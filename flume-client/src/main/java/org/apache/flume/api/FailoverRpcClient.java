@@ -99,7 +99,7 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
         return maxTries;
     }
 
-    private synchronized RpcClient getClient() throws RpcDeliveryException {
+    private synchronized RpcClient getClient() throws FlumeClientException {
         if (client == null || !this.client.isActive()) {
             client = getNextClient();
             return client;
@@ -114,19 +114,19 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
      *
      * @param event The event to be appended.
      *
-     * @throws RpcDeliveryException
+     * @throws FlumeClientException
      */
     @Override
-    public void append(Event event) throws RpcDeliveryException {
+    public void append(Event event) throws FlumeClientException {
         // Why a local variable rather than just calling getClient()?
-        // If we get an RpcDeliveryException, we need to call close on
+        // If we get a FlumeClientException, we need to call close on
         // that specific client, getClient in this case, will get us
         // the next client - leaving a resource leak.
         RpcClient localClient = null;
         synchronized (this) {
             if (!isActive) {
                 logger.error("Attempting to append to an already closed client.");
-                throw new RpcDeliveryException("Attempting to append to an already closed client.");
+                throw new FlumeClientException("Attempting to append to an already closed client.");
             }
         }
         // Sit in an infinite loop and try to append!
@@ -138,18 +138,18 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
             try {
                 localClient.append(event);
                 return;
-            } catch (RpcDeliveryException e) {
+            } catch (FlumeClientException e) {
                 // Could not send event through this client, try to pick another client.
                 logger.warn("Client failed. Exception follows: ", e);
                 closeQuietly(localClient);
                 localClient = null;
             } catch (RuntimeException e2) {
                 logger.error("Failed to send event: ", e2);
-                throw new RpcDeliveryException("Failed to send event. Exception follows: ", e2);
+                throw new FlumeClientException("Failed to send event. Exception follows: ", e2);
             }
         }
         logger.error("Tried many times, could not send event.");
-        throw new RpcDeliveryException("Failed to send the event!");
+        throw new FlumeClientException("Failed to send the event!");
     }
 
     /**
@@ -158,15 +158,15 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
      *
      * @param events The events to be appended.
      *
-     * @throws RpcDeliveryException
+     * @throws FlumeClientException
      */
     @Override
-    public void appendBatch(List<Event> events) throws RpcDeliveryException {
+    public void appendBatch(List<Event> events) throws FlumeClientException {
         RpcClient localClient = null;
         synchronized (this) {
             if (!isActive) {
                 logger.error("Attempting to append to an already closed client.");
-                throw new RpcDeliveryException("Attempting to append to an already closed client!");
+                throw new FlumeClientException("Attempting to append to an already closed client!");
             }
         }
         int tries = 0;
@@ -177,18 +177,18 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
             try {
                 localClient.appendBatch(events);
                 return;
-            } catch (RpcDeliveryException e) {
+            } catch (FlumeClientException e) {
                 // Could not send event through this client, try to pick another client.
                 logger.warn("Client failed. Exception follows: ", e);
                 closeQuietly(localClient);
                 localClient = null;
             } catch (RuntimeException e1) {
                 logger.error("No clients active: ", e1);
-                throw new RpcDeliveryException("No clients currently active. " + "Exception follows: ", e1);
+                throw new FlumeClientException("No clients currently active. " + "Exception follows: ", e1);
             }
         }
         logger.error("Tried many times, could not send event.");
-        throw new RpcDeliveryException("Failed to send the event!");
+        throw new FlumeClientException("Failed to send the event!");
     }
 
     // Returns false if and only if this client has been closed explicitly.
@@ -229,7 +229,7 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
         }
     }
 
-    private RpcClient getNextClient() throws RpcDeliveryException {
+    private RpcClient getNextClient() throws FlumeClientException {
         lastCheckedhost = (lastCheckedhost == (hosts.size() - 1)) ? -1 : lastCheckedhost;
         RpcClient localClient = null;
         int limit = hosts.size();
@@ -247,7 +247,7 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
                 localClient = RpcClientFactory.getInstance(props);
                 lastCheckedhost = count;
                 return localClient;
-            } catch (IOException e) {
+            } catch (FlumeClientException e) {
                 logger.info("Could not connect to " + hostInfo, e);
                 continue;
             }
@@ -259,7 +259,7 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
                 localClient = RpcClientFactory.getInstance(props);
                 lastCheckedhost = count;
                 return localClient;
-            } catch (IOException e) {
+            } catch (FlumeClientException e) {
                 logger.info("Could not connect to " + hostInfo, e);
                 continue;
             }
@@ -267,7 +267,7 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
         if (localClient == null) {
             lastCheckedhost = -1;
             logger.error("No active client found.");
-            throw new RpcDeliveryException("No active client.");
+            throw new FlumeClientException("No active client.");
         }
         // This return should never be reached!
         return localClient;

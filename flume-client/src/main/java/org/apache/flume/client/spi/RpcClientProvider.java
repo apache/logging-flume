@@ -16,8 +16,8 @@
  */
 package org.apache.flume.client.spi;
 
-import java.io.IOException;
 import java.util.Properties;
+import org.apache.flume.api.FlumeClientException;
 import org.apache.flume.api.RpcClient;
 
 /**
@@ -42,7 +42,7 @@ public interface RpcClientProvider {
      * @param properties the client configuration.
      * @return a new client, ready-to-send events.
      * @throws IllegalArgumentException if the configuration is invalid.
-     * @throws IOException if the client fails to connect.
+     * @throws FlumeClientException if the client fails to connect.
      */
-    RpcClient create(Properties properties) throws IOException;
+    RpcClient create(Properties properties) throws FlumeClientException;
 }

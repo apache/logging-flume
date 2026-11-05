@@ -166,9 +166,9 @@ within a user's data-generating application:
 ----
 import java.io.IOException;
 import java.nio.charset.Charset;
+import org.apache.flume.api.FlumeClientException;
 import org.apache.flume.api.RpcClient;
 import org.apache.flume.api.RpcClientFactory;
-import org.apache.flume.api.RpcDeliveryException;
 import org.apache.flume.event.Event;
 import org.apache.flume.event.EventBuilder;
 
@@ -194,7 +194,7 @@ class MyRpcClientFacade {
   private String hostname;
   private int port;
 
-  public void init(String hostname, int port) throws IOException {
+  public void init(String hostname, int port) {
     // Setup the RPC connection
     this.hostname = hostname;
     this.port = port;
@@ -210,7 +210,7 @@ class MyRpcClientFacade {
     // Send the event
     try {
       client.append(event);
-    } catch (RpcDeliveryException e) {
+    } catch (FlumeClientException e) {
       // clean up and recreate the client
       client.close();
       client = null;
@@ -297,9 +297,9 @@ within a user's data-generating application:
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Properties;
+import org.apache.flume.api.FlumeClientException;
 import org.apache.flume.api.RpcClient;
 import org.apache.flume.api.RpcClientConfigurationConstants;
-import org.apache.flume.api.RpcDeliveryException;
 import org.apache.flume.client.thrift.SecureRpcClientFactory;
 import org.apache.flume.event.Event;
 import org.apache.flume.event.EventBuilder;
@@ -335,7 +335,7 @@ class MySecureRpcClientFacade {
   private RpcClient client;
   private Properties properties;
 
-  public void init(Properties properties) throws IOException {
+  public void init(Properties properties) {
     // Setup the RPC connection
     this.properties = properties;
     // Create the ThriftSecureRpcClient instance by using SecureRpcClientFactory
@@ -349,7 +349,7 @@ class MySecureRpcClientFacade {
     // Send the event
     try {
       client.append(event);
-    } catch (RpcDeliveryException e) {
+    } catch (FlumeClientException e) {
       // clean up and recreate the client
       client.close();
       client = null;
