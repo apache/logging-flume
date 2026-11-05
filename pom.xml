@@ -76,7 +76,7 @@
     <module>flume-ng-tests</module>
     -->
     <module>flume-auth</module>
-    <module>flume-configfilters</module>
+    <module>flume-config-filters</module>
     <!-- `nexus-staging` uploads the snapshots of the whole build when it deploys the last project:
          keep a published module, not an aggregator, last. -->
     <module>flume-tools</module>
