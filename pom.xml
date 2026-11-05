@@ -75,10 +75,11 @@
     <!-- Temporarily disable integration tests
     <module>flume-ng-tests</module>
     -->
-    <module>flume-tools</module>
     <module>flume-auth</module>
-    <module>flume-config-filters</module>
-    <module>flume-relocations</module>
+    <module>flume-configfilters</module>
+    <!-- `nexus-staging` uploads the snapshots of the whole build when it deploys the last project:
+         keep a published module, not an aggregator, last. -->
+    <module>flume-tools</module>
   </modules>
 
   <scm child.scm.connection.inherit.append.path="false" child.scm.developerConnection.inherit.append.path="false" child.scm.url.inherit.append.path="false">
