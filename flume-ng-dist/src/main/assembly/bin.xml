@@ -59,19 +59,19 @@
       <directory>../</directory>
 
       <excludes>
-        <exclude>flume-ng-configuration/**</exclude>
-        <exclude>flume-ng-sdk/**</exclude>
-        <exclude>flume-ng-core/**</exclude>
-        <exclude>flume-ng-node/**</exclude>
+        <exclude>flume-configuration/**</exclude>
+        <exclude>flume-sdk/**</exclude>
+        <exclude>flume-core/**</exclude>
+        <exclude>flume-node/**</exclude>
         <exclude>flume-ng-dist/**</exclude>
-        <exclude>flume-ng-channels/**</exclude>
+        <exclude>flume-channels/**</exclude>
         <exclude>flume-ng-sinks/**</exclude>
-        <exclude>flume-ng-sources/**</exclude>
+        <exclude>flume-sources/**</exclude>
         <exclude>flume-ng-legacy-sources/**</exclude>
         <exclude>flume-ng-clients/**</exclude>
         <exclude>flume-ng-embedded-agent/**</exclude>
         <exclude>flume-tools/**</exclude>
-        <exclude>flume-ng-auth/**</exclude>
+        <exclude>flume-auth/**</exclude>
         <exclude>flume-shared/**</exclude>
         <exclude>**/target/**</exclude>
         <exclude>**/.classpath</exclude>
