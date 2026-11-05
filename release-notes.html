@@ -187,7 +187,7 @@
 <div class="ulist">
 <ul>
 <li>
-<p>Move the client API to the new <code>flume-client</code> artifact, so client applications no longer depend on the plugin API. <code>Event</code> moves to <code>org.apache.flume.event</code>, <code>RpcClient</code> extends <code>Closeable</code> and reports failures with <code>IOException</code> and the new <code>RpcDeliveryException</code> instead of <code>EventDeliveryException</code> and <code>FlumeException</code></p>
+<p>Move the client API to the new <code>flume-client</code> artifact, so client applications no longer depend on the plugin API. <code>Event</code> moves to <code>org.apache.flume.event</code>, <code>RpcClient</code> extends <code>Closeable</code>, and the client API reports failures with the new unchecked <code>FlumeClientException</code> instead of <code>EventDeliveryException</code> and <code>FlumeException</code></p>
 </li>
 <li>
 <p>Discover RPC client implementations through the new <code>RpcClientProvider</code> service provider interface instead of hard-coded class names.</p>
