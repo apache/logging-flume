@@ -46,15 +46,15 @@ public interface RpcClient extends Closeable {
      * </p>
      *
      * <p><strong>Note:</strong> If this method throws an
-     * {@link RpcDeliveryException}, there is no way to recover and the
+     * {@link FlumeClientException}, there is no way to recover and the
      * application must invoke {@link #close()} on this object to clean up system
      * resources.</p>
      *
      * @param event
      *
-     * @throws RpcDeliveryException when an error prevents event delivery.
+     * @throws FlumeClientException when an error prevents event delivery.
      */
-    public void append(Event event) throws RpcDeliveryException;
+    public void append(Event event) throws FlumeClientException;
 
     /**
      * <p>Send a list of {@linkplain Event events} to the associated Flume source.
@@ -69,15 +69,15 @@ public interface RpcClient extends Closeable {
      * increase.</p>
      *
      * <p><strong>Note:</strong> If this method throws an
-     * {@link RpcDeliveryException}, there is no way to recover and the
+     * {@link FlumeClientException}, there is no way to recover and the
      * application must invoke {@link #close()} on this object to clean up system
      * resources.</p>
      *
      * @param events List of events to send
      *
-     * @throws RpcDeliveryException when an error prevents event delivery.
+     * @throws FlumeClientException when an error prevents event delivery.
      */
-    public void appendBatch(List<Event> events) throws RpcDeliveryException;
+    public void appendBatch(List<Event> events) throws FlumeClientException;
 
     /**
      * <p>Returns {@code true} if this object appears to be in a usable state, and
@@ -96,7 +96,7 @@ public interface RpcClient extends Closeable {
      *
      * <p>Multi-threaded applications may want to gracefully stop making
      * RPC calls before calling close(). Otherwise, they risk getting
-     * {@link RpcDeliveryException} thrown from their in-flight calls when the
+     * {@link FlumeClientException} thrown from their in-flight calls when the
      * underlying connection is disabled.</p>
      *
      * @throws IOException if the underlying connection fails to close.
