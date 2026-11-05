@@ -17,10 +17,10 @@ we describe the contents of different directories.
 ----
 ./bin/                  Flume startup scripts
 ./conf/                 Flume configuration file samples
-./flume-ng-core         Flume core module
+./flume-core            Flume core module
 ./flume-ng-dist         Flume distribution package module
-./flume-ng-channels     Flume channels modules (memory, JDBC and File)
-./flume-ng-node         Flume node module
+./flume-channels        Flume channels modules (memory, JDBC and File)
+./flume-node            Flume node module
 ./flume-ng-sinks        Flume sink modules (HDFS)
 ----
 

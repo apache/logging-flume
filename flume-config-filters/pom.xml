@@ -28,9 +28,9 @@
   <name>Flume Config Filters</name>
 
   <modules>
-    <module>flume-ng-environment-variable-config-filter</module>
-    <module>flume-ng-config-filter-api</module>
-    <module>flume-ng-external-process-config-filter</module>
+    <module>flume-environment-variable-config-filter</module>
+    <module>flume-config-filter-api</module>
+    <module>flume-external-process-config-filter</module>
   </modules>
 
 </project>

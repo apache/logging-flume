@@ -57,27 +57,27 @@
   </mailingLists>
 
   <modules>
-    <module>flume-bom</module>
-    <module>flume-third-party</module>
+    <module>flume-core-bom</module>
+    <module>flume-third-party-bom</module>
     <module>flume-parent</module>
-    <module>flume-ng-core</module>
-    <module>flume-ng-configuration</module>
-    <module>flume-ng-sources</module>
-    <module>flume-ng-instrumentation</module>
-    <module>flume-ng-node</module>
+    <module>flume-core</module>
+    <module>flume-configuration</module>
+    <module>flume-sources</module>
+    <module>flume-instrumentation</module>
+    <module>flume-node</module>
     <!-- Disable until all snapshots are published
     <module>flume-ng-dist</module>
     -->
-    <module>flume-ng-channels</module>
+    <module>flume-channels</module>
     <module>flume-client</module>
-    <module>flume-ng-sdk</module>
-    <module>flume-ng-sdk-test</module>
+    <module>flume-sdk</module>
+    <module>flume-sdk-test</module>
     <!-- Temporarily disable integration tests
     <module>flume-ng-tests</module>
     -->
     <module>flume-tools</module>
-    <module>flume-ng-auth</module>
-    <module>flume-ng-configfilters</module>
+    <module>flume-auth</module>
+    <module>flume-config-filters</module>
     <module>flume-relocations</module>
   </modules>
 
