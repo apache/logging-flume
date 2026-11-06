@@ -33,7 +33,7 @@ public class ClasspathConfigurationSourceFactory implements ConfigurationSourceF
     }
 
     public ConfigurationSource createConfigurationSource(
-            URI uri, AuthorizationProvider authorizationProvider, boolean verifyHost) {
-        return new ClasspathConfigurationSource(uri);
+            URI uri, AuthorizationProvider authorizationProvider, boolean verifyHost, boolean isOptional) {
+        return new ClasspathConfigurationSource(uri, isOptional);
     }
 }

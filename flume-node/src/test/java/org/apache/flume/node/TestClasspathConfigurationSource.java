@@ -29,7 +29,7 @@ public class TestClasspathConfigurationSource {
     @Test
     public void testClasspath() throws Exception {
         URI confFile = new URI("classpath:///flume-conf.properties");
-        ConfigurationSource source = new ClasspathConfigurationSource(confFile);
+        ConfigurationSource source = new ClasspathConfigurationSource(confFile, false);
         Assert.assertNotNull("No configuration returned", source);
         Properties props = new Properties();
         props.load(source.getInputStream());
@@ -40,7 +40,7 @@ public class TestClasspathConfigurationSource {
     @Test
     public void testOddClasspath() throws Exception {
         URI confFile = new URI("classpath:/flume-conf.properties");
-        ConfigurationSource source = new ClasspathConfigurationSource(confFile);
+        ConfigurationSource source = new ClasspathConfigurationSource(confFile, false);
         Assert.assertNotNull("No configuration returned", source);
         Properties props = new Properties();
         props.load(source.getInputStream());
@@ -51,7 +51,7 @@ public class TestClasspathConfigurationSource {
     @Test
     public void testImproperClasspath() throws Exception {
         URI confFile = new URI("classpath://flume-conf.properties");
-        ConfigurationSource source = new ClasspathConfigurationSource(confFile);
+        ConfigurationSource source = new ClasspathConfigurationSource(confFile, false);
         Assert.assertNotNull("No configuration returned", source);
         Properties props = new Properties();
         props.load(source.getInputStream());
@@ -62,11 +62,21 @@ public class TestClasspathConfigurationSource {
     @Test
     public void testShorthandClasspath() throws Exception {
         URI confFile = new URI("classpath:flume-conf.properties");
-        ConfigurationSource source = new ClasspathConfigurationSource(confFile);
+        ConfigurationSource source = new ClasspathConfigurationSource(confFile, false);
         Assert.assertNotNull("No configuration returned", source);
         Properties props = new Properties();
         props.load(source.getInputStream());
         String value = props.getProperty("host1.sources");
         Assert.assertNotNull("Missing key", value);
+    }
+
+    @Test
+    public void testOptionalClasspath() throws Exception {
+        URI confFile = new URI("classpath:flume-conf1.properties");
+        ConfigurationSource source = new ClasspathConfigurationSource(confFile, true);
+        Assert.assertNotNull("No configuration returned", source);
+        Properties props = new Properties();
+        props.load(source.getInputStream());
+        Assert.assertEquals(0, props.size());
     }
 }

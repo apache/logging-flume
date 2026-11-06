@@ -54,9 +54,12 @@ public class TestConfigurationSourceExtension {
     @Test
     public void testFileConfigurationSource() throws Exception {
         File dir = tempFolder.newFolder("flume.d");
-        Assert.assertEquals("yml", new FileConfigurationSource(createFile(dir, "flume-conf.yml")).getExtension());
-        Assert.assertEquals("json", new FileConfigurationSource(createFile(dir, "flume.conf.json")).getExtension());
-        Assert.assertEquals("properties", new FileConfigurationSource(createFile(dir, "flume-conf")).getExtension());
+        Assert.assertEquals(
+                "yml", new FileConfigurationSource(createFile(dir, "flume-conf.yml"), false).getExtension());
+        Assert.assertEquals(
+                "json", new FileConfigurationSource(createFile(dir, "flume.conf.json"), false).getExtension());
+        Assert.assertEquals(
+                "properties", new FileConfigurationSource(createFile(dir, "flume-conf"), false).getExtension());
     }
 
     @Test
@@ -68,7 +71,7 @@ public class TestConfigurationSourceExtension {
             "classpath:flume-conf-init.yml"
         };
         for (String uri : uris) {
-            Assert.assertEquals(uri, "yml", new ClasspathConfigurationSource(new URI(uri)).getExtension());
+            Assert.assertEquals(uri, "yml", new ClasspathConfigurationSource(new URI(uri), false).getExtension());
         }
     }
 

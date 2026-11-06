@@ -25,9 +25,12 @@ public class ClasspathConfigurationSource implements ConfigurationSource {
 
     private final String path;
     private final URI uri;
+    private final boolean isOptional;
+    private final boolean exists;
 
-    public ClasspathConfigurationSource(URI uri) {
+    public ClasspathConfigurationSource(URI uri, boolean isOptional) {
         this.uri = uri;
+        this.isOptional = isOptional;
         if (StringUtils.isNotEmpty(uri.getPath())) {
             // classpath:///filename && classpath:/filename
             this.path = uri.getPath().substring(1);
@@ -40,10 +43,19 @@ public class ClasspathConfigurationSource implements ConfigurationSource {
         } else {
             throw new ConfigurationException("Invalid uri: " + uri);
         }
+        this.exists = getClass().getClassLoader().getResource(path) != null;
+    }
+
+    @Override
+    public boolean isOptional() {
+        return isOptional;
     }
 
     @Override
     public InputStream getInputStream() {
+        if (isOptional && !exists) {
+            return InputStream.nullInputStream();
+        }
         return this.getClass().getClassLoader().getResourceAsStream(path);
     }
 

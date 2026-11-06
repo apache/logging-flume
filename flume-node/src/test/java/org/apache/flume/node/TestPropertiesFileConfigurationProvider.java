@@ -46,7 +46,7 @@ public class TestPropertiesFileConfigurationProvider {
 
     @Before
     public void setUp() throws Exception {
-        ConfigurationSource source = new FileConfigurationSource(TESTFILE.toURI());
+        ConfigurationSource source = new FileConfigurationSource(TESTFILE.toURI(), false);
         sources = Lists.newArrayList(source);
         provider = new UriConfigurationProvider("test", sources, null, null, 0);
         provider.start();

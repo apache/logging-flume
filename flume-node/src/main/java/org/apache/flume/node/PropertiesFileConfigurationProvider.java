@@ -162,7 +162,7 @@ import java.io.File;
 public class PropertiesFileConfigurationProvider extends UriConfigurationProvider {
 
     public PropertiesFileConfigurationProvider(String agentName, File file) {
-        super(agentName, Lists.newArrayList(new FileConfigurationSource(file.toURI())), null, null, 0);
+        super(agentName, Lists.newArrayList(new FileConfigurationSource(file.toURI(), false)), null, null, 0);
         super.start();
     }
 }

@@ -51,7 +51,7 @@ public class TestPollingPropertiesFileConfigurationProvider {
         Files.copy(TESTFILE, configFile);
 
         eventBus = new EventBus("test");
-        ConfigurationSource source = new FileConfigurationSource(configFile.toURI());
+        ConfigurationSource source = new FileConfigurationSource(configFile.toURI(), false);
         provider = new UriConfigurationProvider("host1", Lists.newArrayList(source), null, eventBus, 1);
         provider.start();
         LifecycleController.waitForOneOf(provider, LifecycleState.START_OR_ERROR);
