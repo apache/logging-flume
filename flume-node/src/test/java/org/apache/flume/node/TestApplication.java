@@ -221,7 +221,7 @@ public class TestApplication {
     private void runFlumeInit(String fileName) throws Exception {
         File configFile = new File(baseDir, fileName);
         Files.copy(new File(getClass().getClassLoader().getResource(fileName).getFile()), configFile);
-        ConfigurationSource source = new FileConfigurationSource(configFile.toURI());
+        ConfigurationSource source = new FileConfigurationSource(configFile.toURI(), false);
         List<ConfigurationSource> sourceList = new ArrayList<>();
         sourceList.add(source);
         UriConfigurationProvider configurationProvider =

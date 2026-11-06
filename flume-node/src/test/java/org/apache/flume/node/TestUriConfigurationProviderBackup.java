@@ -39,7 +39,7 @@ public class TestUriConfigurationProviderBackup {
     File backupDir;
 
     private static ConfigurationSource classpath(String name) throws Exception {
-        return new ClasspathConfigurationSource(new URI("classpath:///" + name));
+        return new ClasspathConfigurationSource(new URI("classpath:///" + name), false);
     }
 
     private static List<ConfigurationSource> brokenSources() throws Exception {

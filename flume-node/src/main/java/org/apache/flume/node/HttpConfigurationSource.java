@@ -45,17 +45,23 @@ public class HttpConfigurationSource implements ConfigurationSource {
     private final boolean verifyHost;
     private long lastModified = 0;
     private byte[] data = null;
+    private final boolean isOptional;
 
-    public HttpConfigurationSource(URI uri, AuthorizationProvider authorizationProvider, boolean verifyHost) {
+    public HttpConfigurationSource(
+            URI uri, AuthorizationProvider authorizationProvider, boolean verifyHost, boolean isOptional) {
         this.authorizationProvider = authorizationProvider;
         this.uri = uri;
         this.verifyHost = verifyHost;
+        this.isOptional = isOptional;
         counterGroup = new CounterGroup();
         readInputStream();
     }
 
     @Override
     public InputStream getInputStream() {
+        if (isOptional && data == null) {
+            return InputStream.nullInputStream();
+        }
         return new ByteArrayInputStream(data);
     }
 
@@ -86,6 +92,11 @@ public class HttpConfigurationSource implements ConfigurationSource {
         return false;
     }
 
+    @Override
+    public boolean isOptional() {
+        return isOptional;
+    }
+
     private boolean readInputStream() {
         try {
             HttpURLConnection connection =
@@ -114,7 +125,12 @@ public class HttpConfigurationSource implements ConfigurationSource {
                         }
                     }
                     case NOT_FOUND: {
-                        throw new ConfigurationException("Unable to locate " + uri.toString());
+                        if (isOptional) {
+                            logger.info("Unable to locate {}, ignoring.", uri);
+                            return false;
+                        } else {
+                            throw new ConfigurationException("Unable to locate " + uri.toString());
+                        }
                     }
                     case NOT_AUTHORIZED: {
                         throw new ConfigurationException("Authorization failed");

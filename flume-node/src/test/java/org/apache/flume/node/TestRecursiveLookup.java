@@ -35,7 +35,7 @@ public class TestRecursiveLookup {
     @Before
     public void setUp() throws Exception {
         System.setProperty("env", "DEV");
-        List<ConfigurationSource> sourceList = Lists.newArrayList(new FileConfigurationSource(TESTFILE.toURI()));
+        List<ConfigurationSource> sourceList = Lists.newArrayList(new FileConfigurationSource(TESTFILE.toURI(), false));
         provider = new UriConfigurationProvider("a1", sourceList, null, null, 0);
     }
 

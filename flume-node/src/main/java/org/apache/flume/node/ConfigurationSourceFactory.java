@@ -17,6 +17,7 @@
 package org.apache.flume.node;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.ServiceLoader;
 import org.apache.flume.node.net.AuthorizationProvider;
@@ -25,16 +26,23 @@ import org.apache.flume.node.net.AuthorizationProvider;
  * Creates ConfigurationSources.
  */
 public interface ConfigurationSourceFactory {
+    String OPTIONAL = "optional:";
 
     static ConfigurationSource getConfigurationSource(
-            URI uri, AuthorizationProvider authorizationProvider, boolean verifyHost) {
-
+            URI uri, AuthorizationProvider authorizationProvider, boolean verifyHost) throws URISyntaxException {
+        String uriStr = uri.toString();
+        boolean isOptional = false;
+        if (uriStr.startsWith(OPTIONAL)) {
+            isOptional = true;
+            uri = new URI(uriStr.substring(OPTIONAL.length()));
+        }
         String protocol = uri.getScheme();
         final ServiceLoader<ConfigurationSourceFactory> serviceLoader =
                 ServiceLoader.load(ConfigurationSourceFactory.class, ConfigurationSourceFactory.class.getClassLoader());
         for (final ConfigurationSourceFactory configurationSourceFactory : serviceLoader) {
             if (configurationSourceFactory.getSchemes().contains(protocol)) {
-                return configurationSourceFactory.createConfigurationSource(uri, authorizationProvider, verifyHost);
+                return configurationSourceFactory.createConfigurationSource(
+                        uri, authorizationProvider, verifyHost, isOptional);
             }
         }
         return null;
@@ -43,5 +51,5 @@ public interface ConfigurationSourceFactory {
     List<String> getSchemes();
 
     ConfigurationSource createConfigurationSource(
-            URI uri, AuthorizationProvider authorizationProvider, boolean verifyHost);
+            URI uri, AuthorizationProvider authorizationProvider, boolean verifyHost, boolean isOptional);
 }

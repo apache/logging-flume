@@ -40,7 +40,8 @@ public class TestOverrideFile {
     public void setUp() throws Exception {
         System.setProperty("env", "DEV");
         List<ConfigurationSource> sourceList = Lists.newArrayList(
-                new FileConfigurationSource(TESTFILE.toURI()), new FileConfigurationSource(OVERRIDEFILE.toURI()));
+                new FileConfigurationSource(TESTFILE.toURI(), false),
+                new FileConfigurationSource(OVERRIDEFILE.toURI(), false));
         provider = new UriConfigurationProvider("a1", sourceList, null, null, 0);
     }
 

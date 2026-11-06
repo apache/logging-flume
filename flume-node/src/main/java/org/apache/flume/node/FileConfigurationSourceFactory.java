@@ -34,7 +34,7 @@ public class FileConfigurationSourceFactory implements ConfigurationSourceFactor
     }
 
     public ConfigurationSource createConfigurationSource(
-            URI uri, AuthorizationProvider authorizationProvider, boolean verifyHost) {
-        return new FileConfigurationSource(uri);
+            URI uri, AuthorizationProvider authorizationProvider, boolean verifyHost, boolean isOptional) {
+        return new FileConfigurationSource(uri, isOptional);
     }
 }

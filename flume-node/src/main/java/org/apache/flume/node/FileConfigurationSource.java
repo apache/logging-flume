@@ -17,6 +17,7 @@
 package org.apache.flume.node;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -37,14 +38,23 @@ public class FileConfigurationSource implements ConfigurationSource {
     private final CounterGroup counterGroup;
     private byte[] data;
     private long lastChange;
+    private final boolean isOptional;
 
-    public FileConfigurationSource(URI uri) {
+    public FileConfigurationSource(URI uri, boolean isOptional) {
         this.uri = uri;
         this.path = Paths.get(uri);
         counterGroup = new CounterGroup();
+        this.isOptional = isOptional;
         try {
             this.lastChange = path.toFile().lastModified();
             data = Files.readAllBytes(this.path);
+        } catch (FileNotFoundException ex) {
+            if (isOptional) {
+                logger.info("Unable to locate file {}", path);
+            } else {
+                logger.error("Unable to locate file {}", path.toString());
+                throw new ConfigurationException("Unable to locate file " + path);
+            }
         } catch (IOException ioe) {
             logger.error("Unable to read {}: {}", path.toString(), ioe.getMessage());
             throw new ConfigurationException("Unable to read file " + path.toString(), ioe);
@@ -52,7 +62,15 @@ public class FileConfigurationSource implements ConfigurationSource {
     }
 
     @Override
+    public boolean isOptional() {
+        return isOptional;
+    }
+
+    @Override
     public InputStream getInputStream() {
+        if (data == null) {
+            return InputStream.nullInputStream();
+        }
         return new ByteArrayInputStream(data);
     }
 

@@ -27,6 +27,11 @@ import java.io.File;
 public class PollingPropertiesFileConfigurationProvider extends UriConfigurationProvider {
 
     public PollingPropertiesFileConfigurationProvider(String agentName, File file, EventBus eventBus, int interval) {
-        super(agentName, Lists.newArrayList(new FileConfigurationSource(file.toURI())), null, eventBus, interval);
+        super(
+                agentName,
+                Lists.newArrayList(new FileConfigurationSource(file.toURI(), false)),
+                null,
+                eventBus,
+                interval);
     }
 }

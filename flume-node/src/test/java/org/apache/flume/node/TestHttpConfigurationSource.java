@@ -83,14 +83,14 @@ public class TestHttpConfigurationSource {
     public void testBadCrdentials() throws Exception {
         URI confFile = new URI("http://localhost:" + port + "/flume-conf.properties");
         AuthorizationProvider authProvider = new BasicAuthorizationProvider("foo", "bar");
-        ConfigurationSource source = new HttpConfigurationSource(confFile, authProvider, true);
+        ConfigurationSource source = new HttpConfigurationSource(confFile, authProvider, true, false);
     }
 
     @Test
     public void testGet() throws Exception {
         URI confFile = new URI("http://localhost:" + port + "/flume-conf.properties");
         AuthorizationProvider authProvider = new BasicAuthorizationProvider("flume", "flume");
-        ConfigurationSource source = new HttpConfigurationSource(confFile, authProvider, true);
+        ConfigurationSource source = new HttpConfigurationSource(confFile, authProvider, true, false);
         Assert.assertNotNull("No configuration returned", source);
         InputStream is = source.getInputStream();
         Assert.assertNotNull("No data returned", is);
@@ -103,6 +103,20 @@ public class TestHttpConfigurationSource {
         if (file.setLastModified(System.currentTimeMillis())) {
             Assert.assertTrue(source.isModified());
         }
+    }
+
+    @Test
+    public void testOptional() throws Exception {
+        URI confFile = new URI("http://localhost:" + port + "/flume-conf-1.properties");
+        AuthorizationProvider authProvider = new BasicAuthorizationProvider("flume", "flume");
+        ConfigurationSource source = new HttpConfigurationSource(confFile, authProvider, true, true);
+        Assert.assertNotNull("No configuration returned", source);
+        Assert.assertTrue(source.isOptional());
+        InputStream is = source.getInputStream();
+        Assert.assertNotNull("No data returned", is);
+        Properties props = new Properties();
+        props.load(is);
+        Assert.assertEquals(0, props.size());
     }
 
     public static class TestServlet extends DefaultServlet {

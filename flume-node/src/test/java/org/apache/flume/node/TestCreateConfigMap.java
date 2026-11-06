@@ -32,11 +32,11 @@ public class TestCreateConfigMap {
     @Test
     public void testCreateConfigMap() throws Exception {
         URI uri1 = new URI("classpath:///flume-conf-init.json");
-        ConfigurationSource source1 = new ClasspathConfigurationSource(uri1);
+        ConfigurationSource source1 = new ClasspathConfigurationSource(uri1, false);
         URI uri2 = new URI("classpath:///flume-conf-init-override.yml");
-        ConfigurationSource source2 = new ClasspathConfigurationSource(uri2);
-        URI uri3 = new URI("optional:classpath:///flume-conf-init-missing.yml");
-        ConfigurationSource source3 = new OptionalConfigurationSource(uri3, null, false);
+        ConfigurationSource source2 = new ClasspathConfigurationSource(uri2, false);
+        URI uri3 = new URI("classpath:///flume-conf-init-missing.yml");
+        ConfigurationSource source3 = new ClasspathConfigurationSource(uri3, true);
         List<ConfigurationSource> sources = List.of(source1, source2, source3);
         Map<String, String> configMap = UriConfigurationProvider.createConfigMap(sources, true);
         assertNotNull(configMap);
@@ -48,11 +48,11 @@ public class TestCreateConfigMap {
     @Test
     public void testOptionalPresentCreateConfigMap() throws Exception {
         URI uri1 = new URI("classpath:///flume-conf-init.json");
-        ConfigurationSource source1 = new ClasspathConfigurationSource(uri1);
+        ConfigurationSource source1 = new ClasspathConfigurationSource(uri1, false);
         URI uri2 = new URI("classpath:///flume-conf-init-override.yml");
-        ConfigurationSource source2 = new ClasspathConfigurationSource(uri2);
-        URI uri3 = new URI("optional:classpath:///flume-conf-init-extra.yml");
-        ConfigurationSource source3 = new OptionalConfigurationSource(uri3, null, false);
+        ConfigurationSource source2 = new ClasspathConfigurationSource(uri2, false);
+        URI uri3 = new URI("classpath:///flume-conf-init-extra.yml");
+        ConfigurationSource source3 = new ClasspathConfigurationSource(uri3, true);
         List<ConfigurationSource> sources = List.of(source1, source2, source3);
         Map<String, String> configMap = UriConfigurationProvider.createConfigMap(sources, true);
         assertNotNull(configMap);
@@ -64,11 +64,11 @@ public class TestCreateConfigMap {
     @Test
     public void failCreateConfigMap() throws Exception {
         URI uri1 = new URI("classpath:///flume-conf-init.json");
-        ConfigurationSource source1 = new ClasspathConfigurationSource(uri1);
+        ConfigurationSource source1 = new ClasspathConfigurationSource(uri1, false);
         URI uri2 = new URI("classpath:///flume-conf-init-override.yml");
-        ConfigurationSource source2 = new ClasspathConfigurationSource(uri2);
+        ConfigurationSource source2 = new ClasspathConfigurationSource(uri2, false);
         URI uri3 = new URI("classpath:///flume-conf-init-missing.yml");
-        ConfigurationSource source3 = new ClasspathConfigurationSource(uri3);
+        ConfigurationSource source3 = new ClasspathConfigurationSource(uri3, false);
         List<ConfigurationSource> sources = List.of(source1, source2, source3);
         assertThrows(ConfigurationException.class, () -> UriConfigurationProvider.createConfigMap(sources, true));
     }

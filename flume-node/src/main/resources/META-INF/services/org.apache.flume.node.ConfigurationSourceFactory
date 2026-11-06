@@ -15,4 +15,3 @@
 org.apache.flume.node.ClasspathConfigurationSourceFactory
 org.apache.flume.node.FileConfigurationSourceFactory
 org.apache.flume.node.HttpConfigurationSourceFactory
-org.apache.flume.node.OptionalConfigurationSourceFactory

@@ -34,7 +34,7 @@ public class HttpConfigurationSourceFactory implements ConfigurationSourceFactor
     }
 
     public ConfigurationSource createConfigurationSource(
-            URI uri, AuthorizationProvider authorizationProvider, boolean verifyHost) {
-        return new HttpConfigurationSource(uri, authorizationProvider, verifyHost);
+            URI uri, AuthorizationProvider authorizationProvider, boolean verifyHost, boolean isOptional) {
+        return new HttpConfigurationSource(uri, authorizationProvider, verifyHost, isOptional);
     }
 }
