@@ -33,6 +33,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.conf.ConfigurationException;
+import org.apache.flume.conf.ConfigurationNotFoundException;
 import org.apache.flume.conf.FlumeConfiguration;
 import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleState;
@@ -190,6 +191,7 @@ public class UriConfigurationProvider extends AbstractConfigurationProvider impl
     private final boolean isYamlSupported;
     private LifecycleState lifecycleState = LifecycleState.IDLE;
     private ScheduledExecutorService executorService;
+    private volatile boolean configurationLoaded = false;
 
     public UriConfigurationProvider(
             String agentName,
@@ -258,39 +260,19 @@ public class UriConfigurationProvider extends AbstractConfigurationProvider impl
 
     @Override
     public FlumeConfiguration getFlumeConfiguration() {
-        Map<String, String> configMap = null;
-        Properties properties = new Properties();
-        for (ConfigurationSource configurationSource : configurationSources) {
-            try (InputStream is = configurationSource.getInputStream()) {
-                if (is != null) {
-                    switch (configurationSource.getExtension()) {
-                        case ConfigurationSource.JSON:
-                        case ConfigurationSource.YAML:
-                        case ConfigurationSource.YML: {
-                            if (isYamlSupported) {
-                                properties = YamlConfigConverter.convertYamlToProperties(is);
-                            } else {
-                                logger.warn(
-                                        "File extension type {} is unsupported", configurationSource.getExtension());
-                            }
-                            break;
-                        }
-                        case ConfigurationSource.XML: {
-                            logger.warn("File extension type {} is unsupported", configurationSource.getExtension());
-                            break;
-                        }
-                        default: {
-                            properties.load(is);
-                            break;
-                        }
-                    }
-                }
-            } catch (IOException ioe) {
-                logger.warn("Unable to load properties from {}: {}", configurationSource.getUri(), ioe.getMessage());
+        Map<String, String> configMap;
+        ConfigurationException loadFailure = null;
+        try {
+            configMap = createConfigMap(configurationSources, isYamlSupported);
+        } catch (ConfigurationException ex) {
+            if (configurationLoaded) {
+                // A configuration is already running. Let the caller keep it rather than
+                // reloading the backup, which would only restart the same components.
+                throw ex;
             }
-            if (properties.size() > 0) {
-                configMap = MapResolver.resolveProperties(properties);
-            }
+            logger.warn("Unable to load primary configuration: {}", ex.getMessage());
+            configMap = null;
+            loadFailure = ex;
         }
         if (configMap != null) {
             Properties props = new Properties();
@@ -323,11 +305,63 @@ public class UriConfigurationProvider extends AbstractConfigurationProvider impl
             }
         }
         if (configMap != null) {
+            configurationLoaded = true;
             return new FlumeConfiguration(configMap);
+        } else if (loadFailure != null) {
+            throw loadFailure;
         } else {
             logger.error("No configuration could be found");
             return null;
         }
+    }
+
+    static Map<String, String> createConfigMap(
+            List<ConfigurationSource> configurationSources, boolean isYamlSupported) {
+        Properties configProperties = new Properties();
+        for (ConfigurationSource configurationSource : configurationSources) {
+            Properties properties = new Properties();
+            try (InputStream is = configurationSource.getInputStream()) {
+                if (is != null) {
+                    switch (configurationSource.getExtension()) {
+                        case ConfigurationSource.JSON:
+                        case ConfigurationSource.YAML:
+                        case ConfigurationSource.YML: {
+                            if (isYamlSupported) {
+                                properties = YamlConfigConverter.convertYamlToProperties(is);
+                            } else {
+                                logger.warn(
+                                        "File extension type {} is unsupported", configurationSource.getExtension());
+                            }
+                            break;
+                        }
+                        case ConfigurationSource.XML: {
+                            logger.warn("File extension type {} is unsupported", configurationSource.getExtension());
+                            break;
+                        }
+                        default: {
+                            properties.load(is);
+                            break;
+                        }
+                    }
+                } else {
+                    throw new ConfigurationException("No input stream returned for " + configurationSource);
+                }
+            } catch (ConfigurationNotFoundException ex) {
+                if (ex.isOptional()) {
+                    logger.info(ex.getMessage());
+                } else {
+                    throw ex;
+                }
+            } catch (ConfigurationException ce) {
+                throw ce;
+            } catch (Exception ex) {
+                throw new ConfigurationException("Unable to load properties from " + configurationSource.getUri(), ex);
+            }
+            if (!properties.isEmpty()) {
+                configProperties.putAll(properties);
+            }
+        }
+        return (configProperties.isEmpty()) ? null : MapResolver.resolveProperties(configProperties);
     }
 
     private File getBackupFile(File backupDirectory, String agentName) {

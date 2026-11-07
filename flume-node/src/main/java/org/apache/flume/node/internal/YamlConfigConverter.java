@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import org.apache.flume.conf.ConfigurationException;
 import org.snakeyaml.engine.v2.api.Load;
 import org.snakeyaml.engine.v2.api.LoadSettings;
 
@@ -34,17 +35,21 @@ public class YamlConfigConverter {
     public static Properties convertYamlToProperties(InputStream yamlInputStream) {
         Properties properties = new Properties();
 
-        LoadSettings settings = LoadSettings.builder().build();
-        Load load = new Load(settings);
+        try {
+            LoadSettings settings = LoadSettings.builder().build();
+            Load load = new Load(settings);
 
-        // 2. Load the YAML content into basic Java structures
-        Object yamlData = load.loadFromInputStream(yamlInputStream);
+            // 2. Load the YAML content into basic Java structures
+            Object yamlData = load.loadFromInputStream(yamlInputStream);
 
-        // 3. Recursively flatten the data structure
-        if (yamlData instanceof Map) {
-            flattenMap("", (Map<?, ?>) yamlData, properties);
-        } else if (yamlData != null) {
-            throw new IllegalArgumentException("Root YAML element must be a mapping object.");
+            // 3. Recursively flatten the data structure
+            if (yamlData instanceof Map) {
+                flattenMap("", (Map<?, ?>) yamlData, properties);
+            } else if (yamlData != null) {
+                throw new IllegalArgumentException("Root YAML element must be a mapping object.");
+            }
+        } catch (Exception ex) {
+            throw new ConfigurationException("Unable to process the file", ex);
         }
 
         return properties;

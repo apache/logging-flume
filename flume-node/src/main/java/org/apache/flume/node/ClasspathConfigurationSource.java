@@ -20,14 +20,17 @@ import java.io.InputStream;
 import java.net.URI;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flume.conf.ConfigurationException;
+import org.apache.flume.conf.ConfigurationNotFoundException;
 
 public class ClasspathConfigurationSource implements ConfigurationSource {
 
     private final String path;
     private final URI uri;
+    private final boolean isOptional;
 
-    public ClasspathConfigurationSource(URI uri) {
+    public ClasspathConfigurationSource(URI uri, boolean isOptional) {
         this.uri = uri;
+        this.isOptional = isOptional;
         if (StringUtils.isNotEmpty(uri.getPath())) {
             // classpath:///filename && classpath:/filename
             this.path = uri.getPath().substring(1);
@@ -43,8 +46,17 @@ public class ClasspathConfigurationSource implements ConfigurationSource {
     }
 
     @Override
+    public boolean isOptional() {
+        return isOptional;
+    }
+
+    @Override
     public InputStream getInputStream() {
-        return this.getClass().getClassLoader().getResourceAsStream(path);
+        InputStream is = this.getClass().getClassLoader().getResourceAsStream(path);
+        if (is == null) {
+            throw new ConfigurationNotFoundException("Unable to locate " + this.path, isOptional);
+        }
+        return is;
     }
 
     @Override

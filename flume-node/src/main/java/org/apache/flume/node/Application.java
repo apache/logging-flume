@@ -49,6 +49,7 @@ import org.apache.flume.SinkProcessor;
 import org.apache.flume.SinkRunner;
 import org.apache.flume.Source;
 import org.apache.flume.SourceRunner;
+import org.apache.flume.conf.ConfigurationNotFoundException;
 import org.apache.flume.instrumentation.MonitorService;
 import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleState;
@@ -470,10 +471,14 @@ public class Application {
                 }
                 List<ConfigurationSource> configurationSources = new ArrayList<>();
                 for (URI uri : confUri) {
-                    ConfigurationSource configurationSource =
-                            ConfigurationSourceFactory.getConfigurationSource(uri, authorizationProvider, verifyHost);
-                    if (configurationSource != null) {
-                        configurationSources.add(configurationSource);
+                    try {
+                        ConfigurationSource configurationSource = ConfigurationSourceFactory.getConfigurationSource(
+                                uri, authorizationProvider, verifyHost);
+                        if (configurationSource != null) {
+                            configurationSources.add(configurationSource);
+                        }
+                    } catch (ConfigurationNotFoundException ex) {
+                        if (ex.isOptional()) {}
                     }
                 }
                 List<LifecycleAware> components = Lists.newArrayList();

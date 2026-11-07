@@ -57,6 +57,14 @@ public interface ConfigurationSource {
     String getExtension();
 
     /**
+     * Identifies whether the source has been identified as being optional.
+     * @return true if it is ok for the resource to not be present. false otherwise.
+     */
+    default boolean isOptional() {
+        return false;
+    }
+
+    /**
      * Returns the extension of the last segment of a path. Dots in directory names are ignored.
      * @param path The path, which may be null.
      * @return The lower case file extension, or "properties" if the file has no extension.
