@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.conf.ConfigurationException;
+import org.apache.flume.conf.ConfigurationNotFoundException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -45,20 +46,8 @@ public class FileConfigurationSource implements ConfigurationSource {
         this.path = Paths.get(uri);
         counterGroup = new CounterGroup();
         this.isOptional = isOptional;
-        try {
-            this.lastChange = path.toFile().lastModified();
-            data = Files.readAllBytes(this.path);
-        } catch (FileNotFoundException ex) {
-            if (isOptional) {
-                logger.info("Unable to locate file {}", path);
-            } else {
-                logger.error("Unable to locate file {}", path.toString());
-                throw new ConfigurationException("Unable to locate file " + path);
-            }
-        } catch (IOException ioe) {
-            logger.error("Unable to read {}: {}", path.toString(), ioe.getMessage());
-            throw new ConfigurationException("Unable to read file " + path.toString(), ioe);
-        }
+        this.data = null;
+        this.lastChange = 0;
     }
 
     @Override
@@ -68,8 +57,16 @@ public class FileConfigurationSource implements ConfigurationSource {
 
     @Override
     public InputStream getInputStream() {
-        if (data == null) {
-            return InputStream.nullInputStream();
+        if (this.lastChange == 0 && data == null) {
+            try {
+                this.lastChange = path.toFile().lastModified();
+                data = Files.readAllBytes(this.path);
+            } catch (FileNotFoundException ex) {
+                throw new ConfigurationNotFoundException("Unable to locate file " + path, isOptional);
+            } catch (IOException ioe) {
+                logger.error("Unable to read {}: {}", path.toString(), ioe.getMessage());
+                throw new ConfigurationException("Unable to read file " + path.toString(), ioe);
+            }
         }
         return new ByteArrayInputStream(data);
     }

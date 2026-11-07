@@ -18,6 +18,7 @@ package org.apache.flume.node;
 
 import java.net.URI;
 import java.util.Properties;
+import org.apache.flume.conf.ConfigurationNotFoundException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -76,7 +77,13 @@ public class TestClasspathConfigurationSource {
         ConfigurationSource source = new ClasspathConfigurationSource(confFile, true);
         Assert.assertNotNull("No configuration returned", source);
         Properties props = new Properties();
-        props.load(source.getInputStream());
-        Assert.assertEquals(0, props.size());
+        try {
+            props.load(source.getInputStream());
+            Assert.fail("Exception not thrown");
+        } catch (ConfigurationNotFoundException ex) {
+            Assert.assertTrue(ex.isOptional());
+        } catch (Exception ex) {
+            Assert.fail("Incorrect exception thrown: " + ex);
+        }
     }
 }

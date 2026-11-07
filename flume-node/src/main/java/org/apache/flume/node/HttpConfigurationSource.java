@@ -25,6 +25,7 @@ import java.net.URI;
 import org.apache.commons.io.IOUtils;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.conf.ConfigurationException;
+import org.apache.flume.conf.ConfigurationNotFoundException;
 import org.apache.flume.node.net.AuthorizationProvider;
 import org.apache.flume.node.net.UrlConnectionFactory;
 import org.apache.logging.log4j.LogManager;
@@ -54,13 +55,14 @@ public class HttpConfigurationSource implements ConfigurationSource {
         this.verifyHost = verifyHost;
         this.isOptional = isOptional;
         counterGroup = new CounterGroup();
-        readInputStream();
     }
 
     @Override
     public InputStream getInputStream() {
-        if (isOptional && data == null) {
-            return InputStream.nullInputStream();
+        if (lastModified == 0 && data == null) {
+            if (!readInputStream()) {
+                throw new ConfigurationException("Error reading input stream for " + uri);
+            }
         }
         return new ByteArrayInputStream(data);
     }
@@ -125,12 +127,7 @@ public class HttpConfigurationSource implements ConfigurationSource {
                         }
                     }
                     case NOT_FOUND: {
-                        if (isOptional) {
-                            logger.info("Unable to locate {}, ignoring.", uri);
-                            return false;
-                        } else {
-                            throw new ConfigurationException("Unable to locate " + uri.toString());
-                        }
+                        throw new ConfigurationNotFoundException("Unable to locate " + uri.toString(), isOptional);
                     }
                     case NOT_AUTHORIZED: {
                         throw new ConfigurationException("Authorization failed");

@@ -33,6 +33,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.conf.ConfigurationException;
+import org.apache.flume.conf.ConfigurationNotFoundException;
 import org.apache.flume.conf.FlumeConfiguration;
 import org.apache.flume.lifecycle.LifecycleAware;
 import org.apache.flume.lifecycle.LifecycleState;
@@ -344,6 +345,12 @@ public class UriConfigurationProvider extends AbstractConfigurationProvider impl
                     }
                 } else {
                     throw new ConfigurationException("No input stream returned for " + configurationSource);
+                }
+            } catch (ConfigurationNotFoundException ex) {
+                if (ex.isOptional()) {
+                    logger.info(ex.getMessage());
+                } else {
+                    throw ex;
                 }
             } catch (ConfigurationException ce) {
                 throw ce;

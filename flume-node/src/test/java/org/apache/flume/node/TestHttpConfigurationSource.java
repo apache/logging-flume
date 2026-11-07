@@ -28,6 +28,7 @@ import java.util.Base64;
 import java.util.Enumeration;
 import java.util.Properties;
 import org.apache.flume.conf.ConfigurationException;
+import org.apache.flume.conf.ConfigurationNotFoundException;
 import org.apache.flume.node.net.AuthorizationProvider;
 import org.apache.flume.node.net.BasicAuthorizationProvider;
 import org.apache.logging.log4j.LogManager;
@@ -84,6 +85,7 @@ public class TestHttpConfigurationSource {
         URI confFile = new URI("http://localhost:" + port + "/flume-conf.properties");
         AuthorizationProvider authProvider = new BasicAuthorizationProvider("foo", "bar");
         ConfigurationSource source = new HttpConfigurationSource(confFile, authProvider, true, false);
+        InputStream is = source.getInputStream();
     }
 
     @Test
@@ -112,11 +114,12 @@ public class TestHttpConfigurationSource {
         ConfigurationSource source = new HttpConfigurationSource(confFile, authProvider, true, true);
         Assert.assertNotNull("No configuration returned", source);
         Assert.assertTrue(source.isOptional());
-        InputStream is = source.getInputStream();
-        Assert.assertNotNull("No data returned", is);
-        Properties props = new Properties();
-        props.load(is);
-        Assert.assertEquals(0, props.size());
+        try {
+            InputStream is = source.getInputStream();
+            Assert.fail("Should have thrown an exception");
+        } catch (ConfigurationNotFoundException ex) {
+            Assert.assertTrue(ex.isOptional());
+        }
     }
 
     public static class TestServlet extends DefaultServlet {
@@ -155,7 +158,7 @@ public class TestHttpConfigurationSource {
                 response.getOutputStream().flush();
                 response.setStatus(200);
             } else {
-                response.sendError(400, "Unsupported request");
+                response.sendError(404, "Not found");
             }
         }
     }
