@@ -3,5 +3,5 @@
        xmlns="https://logging.apache.org/xml/ns"
        xsi:schemaLocation="https://logging.apache.org/xml/ns https://logging.apache.org/xml/ns/log4j-changelog-0.xsd"
        type="changed">
-  <description format="asciidoc">Move the client API to the new `flume-client` artifact, so client applications no longer depend on the plugin API. `Event` moves to `org.apache.flume.event`, `RpcClient` extends `Closeable`, and the client API reports failures with the new unchecked `FlumeClientException` instead of `EventDeliveryException` and `FlumeException`</description>
+  <description format="asciidoc">Move the client API to the new `flume-client` artifact, so client applications no longer depend on the plugin API. `Event` moves to `org.apache.flume.event`, `RpcClient` extends `AutoCloseable`, and the client API reports failures with the new unchecked `FlumeClientException` instead of `EventDeliveryException` and `FlumeException`</description>
 </entry>

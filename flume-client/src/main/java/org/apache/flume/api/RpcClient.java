@@ -16,8 +16,6 @@
  */
 package org.apache.flume.api;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.util.List;
 import org.apache.flume.event.Event;
 
@@ -31,7 +29,7 @@ import org.apache.flume.event.Event;
  *
  * @see org.apache.flume.api.RpcClientFactory
  */
-public interface RpcClient extends Closeable {
+public interface RpcClient extends AutoCloseable {
 
     /**
      * Returns the maximum number of {@link Event events} that may be batched
@@ -99,8 +97,8 @@ public interface RpcClient extends Closeable {
      * {@link FlumeClientException} thrown from their in-flight calls when the
      * underlying connection is disabled.</p>
      *
-     * @throws IOException if the underlying connection fails to close.
+     * @throws FlumeClientException if the underlying connection fails to close.
      */
     @Override
-    public void close() throws IOException;
+    public void close() throws FlumeClientException;
 }

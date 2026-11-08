@@ -33,6 +33,7 @@ import org.apache.flume.Context;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
 import org.apache.flume.Transaction;
+import org.apache.flume.api.FlumeClientException;
 import org.apache.flume.api.RpcClient;
 import org.apache.flume.api.RpcClientConfigurationConstants;
 import org.apache.flume.client.spi.AbstractRpcClient;
@@ -251,7 +252,7 @@ public abstract class AbstractRpcSink extends AbstractSink implements Configurab
             try {
                 client.close();
                 sinkCounter.incrementConnectionClosedCount();
-            } catch (IOException e) {
+            } catch (FlumeClientException e) {
                 sinkCounter.incrementConnectionFailedCount();
                 logger.error(
                         "Rpc sink " + getName() + ": Attempt to close Rpc " + "client failed. Exception follows.", e);
