@@ -26,17 +26,18 @@
     <relativePath>../flume-parent</relativePath>
   </parent>
 
-  <artifactId>flume-client</artifactId>
-  <name>Flume Client</name>
-  <description>Client API to send events to a Flume agent.</description>
+  <artifactId>flume-sdk</artifactId>
+  <name>Flume SDK</name>
+  <description>Client SDK to send events to a Flume agent.</description>
 
   <properties>
-    <!-- New in 2.0.0: there is no previous release to check API compatibility against. -->
-    <bnd.baseline.fail.on.missing>false</bnd.baseline.fail.on.missing>
+    <!-- Baseline against the 1.x coordinates. TODO: remove once 2.0.0 is released. -->
+    <flume.baseline.groupId>org.apache.flume</flume.baseline.groupId>
+    <flume.baseline.artifactId>flume-ng-sdk</flume.baseline.artifactId>
     <!-- TODO fix spotbugs/pmd violations -->
     <spotbugs.maxAllowedViolations>24</spotbugs.maxAllowedViolations>
     <pmd.maxAllowedViolations>5</pmd.maxAllowedViolations>
-    <module.name>org.apache.flume.client</module.name>
+    <module.name>org.apache.flume.sdk</module.name>
   </properties>
 
   <dependencies>

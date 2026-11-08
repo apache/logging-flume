@@ -47,11 +47,6 @@
       </dependency>
       <dependency>
         <groupId>org.apache.flume</groupId>
-        <artifactId>flume-client</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.flume</groupId>
         <artifactId>flume-config-filter-api</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -98,6 +93,11 @@
       <dependency>
         <groupId>org.apache.flume</groupId>
         <artifactId>flume-prometheus-monitor</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.flume</groupId>
+        <artifactId>flume-sdk</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

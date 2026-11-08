@@ -68,7 +68,7 @@
     <module>flume-ng-dist</module>
     -->
     <module>flume-channels</module>
-    <module>flume-client</module>
+    <module>flume-sdk</module>
     <module>flume-sdk-test</module>
     <!-- Temporarily disable integration tests
     <module>flume-ng-tests</module>
