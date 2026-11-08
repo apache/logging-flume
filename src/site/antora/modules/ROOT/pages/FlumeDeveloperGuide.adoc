@@ -164,7 +164,6 @@ within a user's data-generating application:
 
 [source,java]
 ----
-import java.io.IOException;
 import java.nio.charset.Charset;
 import org.apache.flume.api.FlumeClientException;
 import org.apache.flume.api.RpcClient;
@@ -173,7 +172,7 @@ import org.apache.flume.event.Event;
 import org.apache.flume.event.EventBuilder;
 
 public class MyApp {
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) {
     MyRpcClientFacade client = new MyRpcClientFacade();
     // Initialize client with the remote Flume agent's host and port
     client.init("host.example.org", 41414);
@@ -203,7 +202,7 @@ class MyRpcClientFacade {
     // this.client = RpcClientFactory.getThriftInstance(hostname, port);
   }
 
-  public void sendDataToFlume(String data) throws IOException {
+  public void sendDataToFlume(String data) {
     // Create a Flume Event object that encapsulates the sample data
     Event event = EventBuilder.withBody(data, Charset.forName("UTF-8"));
 
@@ -220,7 +219,7 @@ class MyRpcClientFacade {
     }
   }
 
-  public void cleanUp() throws IOException {
+  public void cleanUp() {
     // Close the RPC connection
     client.close();
   }
@@ -294,7 +293,6 @@ within a user's data-generating application:
 
 [source,java]
 ----
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Properties;
 import org.apache.flume.api.FlumeClientException;
@@ -305,7 +303,7 @@ import org.apache.flume.event.Event;
 import org.apache.flume.event.EventBuilder;
 
 public class MyApp {
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) {
     MySecureRpcClientFacade client = new MySecureRpcClientFacade();
     // Initialize client with the remote Flume agent's host, port
     Properties props = new Properties();
@@ -342,7 +340,7 @@ class MySecureRpcClientFacade {
     this.client = SecureRpcClientFactory.getThriftInstance(properties);
   }
 
-  public void sendDataToFlume(String data) throws IOException {
+  public void sendDataToFlume(String data) {
     // Create a Flume Event object that encapsulates the sample data
     Event event = EventBuilder.withBody(data, Charset.forName("UTF-8"));
 
@@ -357,7 +355,7 @@ class MySecureRpcClientFacade {
     }
   }
 
-  public void cleanUp() throws IOException {
+  public void cleanUp() {
     // Close the RPC connection
     client.close();
   }

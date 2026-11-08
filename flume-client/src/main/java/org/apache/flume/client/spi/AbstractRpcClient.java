@@ -16,7 +16,6 @@
  */
 package org.apache.flume.client.spi;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
 import org.apache.flume.api.FlumeClientException;
@@ -48,7 +47,7 @@ public abstract class AbstractRpcClient implements RpcClient {
     public abstract boolean isActive();
 
     @Override
-    public abstract void close() throws IOException;
+    public abstract void close() throws FlumeClientException;
 
     /**
      * This is to parse the batch size config for rpc clients

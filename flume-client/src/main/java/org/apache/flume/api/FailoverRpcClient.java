@@ -18,7 +18,6 @@ package org.apache.flume.api;
 
 import aQute.bnd.annotation.Resolution;
 import aQute.bnd.annotation.spi.ServiceProvider;
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Properties;
@@ -203,7 +202,7 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
      * Close the connection. This function is safe to call over and over.
      */
     @Override
-    public synchronized void close() throws IOException {
+    public synchronized void close() throws FlumeClientException {
         if (client != null) {
             client.close();
             isActive = false;
@@ -224,7 +223,7 @@ public class FailoverRpcClient extends AbstractRpcClient implements RpcClient {
     private static void closeQuietly(RpcClient client) {
         try {
             client.close();
-        } catch (IOException e) {
+        } catch (FlumeClientException e) {
             logger.warn("Failed to close client.", e);
         }
     }
