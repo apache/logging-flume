@@ -14,13 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume.tools;
+package org.apache.flume.conf;
 
 import java.lang.reflect.Method;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flume.Context;
-import org.apache.flume.conf.ConfigurationException;
 
 /**
  * Utility class to enable runtime configuration of Java objects using provided

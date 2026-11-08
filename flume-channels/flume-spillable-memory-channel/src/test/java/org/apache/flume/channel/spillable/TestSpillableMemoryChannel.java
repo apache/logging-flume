@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume.channel;
+package org.apache.flume.channel.spillable;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.apache.flume.Context;
 import org.apache.flume.Transaction;
+import org.apache.flume.channel.AbstractChannel;
 import org.apache.flume.channel.file.FileChannelConfiguration;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.Event;

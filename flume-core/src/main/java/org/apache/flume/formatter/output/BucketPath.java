@@ -30,7 +30,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.flume.Clock;
 import org.apache.flume.SystemClock;
-import org.apache.flume.tools.TimestampRoundDownUtil;
 
 public class BucketPath {
 

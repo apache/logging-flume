@@ -25,7 +25,7 @@
 
 FLUME_AGENT_CLASS="org.apache.flume.node.Application"
 FLUME_AVRO_CLIENT_CLASS="org.apache.flume.source.spooldir.AvroCLIClient"
-FLUME_VERSION_CLASS="org.apache.flume.tools.VersionInfo"
+FLUME_VERSION_CLASS="org.apache.flume.core.VersionInfo"
 FLUME_TOOLS_CLASS="org.apache.flume.tools.FlumeToolsMain"
 
 CLEAN_FLAG=1
@@ -71,7 +71,7 @@ add_hadoop_paths() {
     # determine hadoop java.library.path and use that for flume
     local HADOOP_CLASSPATH=""
     local HADOOP_JAVA_LIBRARY_PATH=$(HADOOP_CLASSPATH="$FLUME_CLASSPATH" \
-        ${HADOOP_IN_PATH} org.apache.flume.tools.GetJavaProperty \
+        ${HADOOP_IN_PATH} org.apache.flume.core.GetJavaProperty \
         java.library.path)
 
     # look for the line that has the desired property value
@@ -106,7 +106,7 @@ add_HBASE_paths() {
     # determine HBASE java.library.path and use that for flume
     local HBASE_CLASSPATH=""
     local HBASE_JAVA_LIBRARY_PATH=$(HBASE_CLASSPATH="$FLUME_CLASSPATH" \
-        ${HBASE_IN_PATH} org.apache.flume.tools.GetJavaProperty \
+        ${HBASE_IN_PATH} org.apache.flume.core.GetJavaProperty \
         java.library.path)
 
     # look for the line that has the desired property value

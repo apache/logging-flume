@@ -81,8 +81,11 @@ public abstract class BasicTransactionSemantics implements Transaction {
      * The method to which {@link BasicChannelSemantics} delegates calls
      * to <code>put</code>.
      * </p>
+     * <p>
+     * Public, so that channels in other packages can use the transactions of the channels they wrap.
+     * </p>
      */
-    protected void put(Event event) {
+    public void put(Event event) {
         Preconditions.checkState(
                 Thread.currentThread().getId() == initialThreadId,
                 "put() called from different thread than getTransaction()!");
@@ -102,8 +105,11 @@ public abstract class BasicTransactionSemantics implements Transaction {
      * The method to which {@link BasicChannelSemantics} delegates calls
      * to <code>take</code>.
      * </p>
+     * <p>
+     * Public, so that channels in other packages can use the transactions of the channels they wrap.
+     * </p>
      */
-    protected Event take() {
+    public Event take() {
         Preconditions.checkState(
                 Thread.currentThread().getId() == initialThreadId,
                 "take() called from different thread than getTransaction()!");

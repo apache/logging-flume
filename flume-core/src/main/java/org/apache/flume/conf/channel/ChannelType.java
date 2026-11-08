@@ -56,7 +56,7 @@ public enum ChannelType implements ComponentWithClassName {
      *
      * @see SpillableMemoryChannel
      */
-    SPILLABLEMEMORY("org.apache.flume.channel.SpillableMemoryChannel");
+    SPILLABLEMEMORY("org.apache.flume.channel.spillable.SpillableMemoryChannel");
 
     private final String channelClassName;
 

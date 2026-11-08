@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume.channel;
+package org.apache.flume.channel.spillable;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -27,6 +27,7 @@ import org.apache.flume.Transaction;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.annotations.Recyclable;
+import org.apache.flume.channel.BasicTransactionSemantics;
 import org.apache.flume.channel.file.FileChannel;
 import org.apache.flume.event.Event;
 import org.apache.flume.exception.ChannelException;

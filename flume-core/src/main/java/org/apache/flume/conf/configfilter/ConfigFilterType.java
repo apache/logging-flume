@@ -20,9 +20,9 @@ import org.apache.flume.conf.ComponentWithClassName;
 
 public enum ConfigFilterType implements ComponentWithClassName {
     OTHER(null),
-    ENV("org.apache.flume.configfilter.EnvironmentVariableConfigFilter"),
-    HADOOP("org.apache.flume.configfilter.HadoopCredentialStoreConfigFilter"),
-    EXTERNAL("org.apache.flume.configfilter.ExternalProcessConfigFilter");
+    ENV("org.apache.flume.configfilter.env.EnvironmentVariableConfigFilter"),
+    HADOOP("org.apache.flume.configfilter.hadoop.HadoopCredentialStoreConfigFilter"),
+    EXTERNAL("org.apache.flume.configfilter.external.ExternalProcessConfigFilter");
 
     private final String className;
 

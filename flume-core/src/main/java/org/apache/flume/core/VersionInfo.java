@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume.tools;
+package org.apache.flume.core;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,7 +46,7 @@ public class VersionInfo {
     private static final String BUNDLE_SCM = "Bundle-SCM";
 
     private static final String PURL_PREFIX = "pkg:maven/" + GROUP_ID + "/" + ARTIFACT_ID + "@";
-    private static final String CLASS_PATH = "org/apache/flume/tools/VersionInfo.class";
+    private static final String CLASS_PATH = VersionInfo.class.getName().replace('.', '/') + ".class";
     private static final String MANIFEST_PATH = "META-INF/MANIFEST.MF";
     private static final String POM_PROPERTIES_PATH =
             "/META-INF/maven/" + GROUP_ID + "/" + ARTIFACT_ID + "/pom.properties";

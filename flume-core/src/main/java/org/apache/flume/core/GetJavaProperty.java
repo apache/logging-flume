@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume.tools;
+package org.apache.flume.core;
 
 /**
  * A generic way for querying Java properties.

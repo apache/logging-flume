@@ -14,9 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume.configfilter;
+package org.apache.flume.configfilter.env;
 
 import java.util.Map;
+import org.apache.flume.configfilter.AbstractConfigFilter;
 
 public class EnvironmentVariableConfigFilter extends AbstractConfigFilter {
 
