@@ -149,7 +149,7 @@ Function GetHiveHome() {
 
 Function GetJavaLibraryPath ($cmd, $flumeLibDir) {
     $flumeCoreJar = EnumerateJars( $flumeLibDir ) | ? { $_ -match "flume-core.*jar" }
-    $output = & "$cmd" -classpath $flumeCoreJar org.apache.flume.tools.GetJavaProperty java.library.path
+    $output = & "$cmd" -classpath $flumeCoreJar org.apache.flume.core.GetJavaProperty java.library.path
 
     # look for the line that has the desired property value
     if( $output -match "(?m)^java\.library\.path=(.*)$" ) {
@@ -246,7 +246,7 @@ switch ($command)
       $javaProcessArgumentList += " --dirname ""$avroDirName""" } }
 
   'version' {
-    $class='org.apache.flume.tools.VersionInfo'
+    $class='org.apache.flume.core.VersionInfo'
     $javaProcessArgumentList = "" }
 
   default {

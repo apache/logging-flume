@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entry xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="https://logging.apache.org/xml/ns"
+       xsi:schemaLocation="https://logging.apache.org/xml/ns https://logging.apache.org/xml/ns/log4j-changelog-0.xsd"
+       type="changed">
+  <description format="asciidoc">Merge the plugin API of `flume-ng-sdk` and the content of `flume-ng-configuration` into `flume-core`, so that every package belongs to a single artifact. Plugins and agents only depend on `flume-core`, as they depended on `flume-ng-core` in Flume 1.x</description>
+</entry>

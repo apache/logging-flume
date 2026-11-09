@@ -32,7 +32,6 @@
     <flume.baseline.groupId>org.apache.flume</flume.baseline.groupId>
     <flume.baseline.artifactId>flume-ng-external-process-config-filter</flume.baseline.artifactId>
     <module.name>org.apache.flume.configfilter.external</module.name>
-    <spotbugs.maxAllowedViolations>3</spotbugs.maxAllowedViolations>
   </properties>
 
   <dependencies>

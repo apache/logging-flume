@@ -16,6 +16,7 @@
   ~ limitations under the License.
   -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
@@ -27,23 +28,28 @@
 
   <artifactId>flume-sdk</artifactId>
   <name>Flume SDK</name>
-  <description>Flume Software Development Kit: Stable public API for integration with Flume 1.x</description>
+  <description>Client SDK to send events to a Flume agent.</description>
 
   <properties>
     <!-- Baseline against the 1.x coordinates. TODO: remove once 2.0.0 is released. -->
     <flume.baseline.groupId>org.apache.flume</flume.baseline.groupId>
     <flume.baseline.artifactId>flume-ng-sdk</flume.baseline.artifactId>
     <!-- TODO fix spotbugs/pmd violations -->
-    <spotbugs.maxAllowedViolations>5</spotbugs.maxAllowedViolations>
-    <pmd.maxAllowedViolations>19</pmd.maxAllowedViolations>
+    <spotbugs.maxAllowedViolations>24</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>5</pmd.maxAllowedViolations>
     <module.name>org.apache.flume.sdk</module.name>
   </properties>
 
   <dependencies>
 
     <dependency>
-      <groupId>org.apache.flume</groupId>
-      <artifactId>flume-client</artifactId>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>biz.aQute.bnd</groupId>
+      <artifactId>biz.aQute.bnd.annotation</artifactId>
     </dependency>
 
     <dependency>
@@ -54,23 +60,8 @@
 
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-api</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-slf4j2-impl</artifactId>
       <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-lang3</artifactId>
     </dependency>
 
   </dependencies>

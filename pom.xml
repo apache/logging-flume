@@ -61,7 +61,6 @@
     <module>flume-third-party-bom</module>
     <module>flume-parent</module>
     <module>flume-core</module>
-    <module>flume-configuration</module>
     <module>flume-sources</module>
     <module>flume-instrumentation</module>
     <module>flume-node</module>
@@ -69,7 +68,6 @@
     <module>flume-ng-dist</module>
     -->
     <module>flume-channels</module>
-    <module>flume-client</module>
     <module>flume-sdk</module>
     <module>flume-sdk-test</module>
     <!-- Temporarily disable integration tests

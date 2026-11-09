@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entry xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="https://logging.apache.org/xml/ns"
+       xsi:schemaLocation="https://logging.apache.org/xml/ns https://logging.apache.org/xml/ns/log4j-changelog-0.xsd"
+       type="changed">
+  <description format="asciidoc">Move the classes that shared a package with another artifact: `SpillableMemoryChannel` to `org.apache.flume.channel.spillable`, `EnvironmentVariableConfigFilter` to `org.apache.flume.configfilter.env`, `ExternalProcessConfigFilter` to `org.apache.flume.configfilter.external`, `FlumeBeanConfigurator` to `org.apache.flume.conf`, `TimestampRoundDownUtil` to `org.apache.flume.formatter.output`, `VersionInfo` and `GetJavaProperty` to `org.apache.flume.core`, and `DirectMemoryUtils` to `org.apache.flume.channel.file` in `flume-file-channel`. The `spillablememory`, `env`, `external` and `hadoop` aliases point to the new class names</description>
+</entry>

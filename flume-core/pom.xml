@@ -34,8 +34,8 @@
     <flume.baseline.groupId>org.apache.flume</flume.baseline.groupId>
     <flume.baseline.artifactId>flume-ng-core</flume.baseline.artifactId>
     <!-- TODO fix spotbugs violations -->
-    <spotbugs.maxAllowedViolations>152</spotbugs.maxAllowedViolations>
-    <pmd.maxAllowedViolations>69</pmd.maxAllowedViolations>
+    <spotbugs.maxAllowedViolations>102</spotbugs.maxAllowedViolations>
+    <pmd.maxAllowedViolations>94</pmd.maxAllowedViolations>
     <module.name>org.apache.flume.core</module.name>
   </properties>
 
@@ -54,7 +54,7 @@
 
     <dependency>
       <groupId>org.apache.flume</groupId>
-      <artifactId>flume-configuration</artifactId>
+      <artifactId>flume-config-filter-api</artifactId>
     </dependency>
 
     <dependency>
