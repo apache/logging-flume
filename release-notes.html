@@ -187,10 +187,16 @@
 <div class="ulist">
 <ul>
 <li>
-<p>Move the client API to the new <code>flume-client</code> artifact, so client applications no longer depend on the plugin API. <code>Event</code> moves to <code>org.apache.flume.event</code>, <code>RpcClient</code> extends <code>AutoCloseable</code>, and the client API reports failures with the new unchecked <code>FlumeClientException</code> instead of <code>EventDeliveryException</code> and <code>FlumeException</code></p>
+<p>Discover RPC client implementations through the new <code>RpcClientProvider</code> service provider interface instead of hard-coded class names.</p>
 </li>
 <li>
-<p>Discover RPC client implementations through the new <code>RpcClientProvider</code> service provider interface instead of hard-coded class names.</p>
+<p>Restrict <code>flume-sdk</code> to the client API, so client applications no longer depend on the plugin API, which moves to <code>flume-core</code>. <code>Event</code> moves to <code>org.apache.flume.event</code>, <code>RpcClient</code> extends <code>AutoCloseable</code>, and the client API reports failures with the new unchecked <code>FlumeClientException</code> instead of <code>EventDeliveryException</code> and <code>FlumeException</code></p>
+</li>
+<li>
+<p>Move the classes that shared a package with another artifact: <code>SpillableMemoryChannel</code> to <code>org.apache.flume.channel.spillable</code>, <code>EnvironmentVariableConfigFilter</code> to <code>org.apache.flume.configfilter.env</code>, <code>ExternalProcessConfigFilter</code> to <code>org.apache.flume.configfilter.external</code>, <code>FlumeBeanConfigurator</code> to <code>org.apache.flume.conf</code>, <code>TimestampRoundDownUtil</code> to <code>org.apache.flume.formatter.output</code>, <code>VersionInfo</code> and <code>GetJavaProperty</code> to <code>org.apache.flume.core</code>, and <code>DirectMemoryUtils</code> to <code>org.apache.flume.channel.file</code> in <code>flume-file-channel</code>. The <code>spillablememory</code>, <code>env</code>, <code>external</code> and <code>hadoop</code> aliases point to the new class names</p>
+</li>
+<li>
+<p>Merge the plugin API of <code>flume-ng-sdk</code> and the content of <code>flume-ng-configuration</code> into <code>flume-core</code>, so that every package belongs to a single artifact. Plugins and agents only depend on <code>flume-core</code>, as they depended on <code>flume-ng-core</code> in Flume 1.x</p>
 </li>
 <li>
 <p>Migrate the logging API from SLF4J to the Log4j API (<a href="https://github.com/apache/logging-flume/pull/459">459</a>)</p>
