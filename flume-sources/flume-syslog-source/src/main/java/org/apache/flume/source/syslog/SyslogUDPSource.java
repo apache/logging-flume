@@ -16,6 +16,8 @@
  */
 package org.apache.flume.source.syslog;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import com.google.common.annotations.VisibleForTesting;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -32,12 +34,15 @@ import java.util.Map;
 import java.util.Set;
 import org.apache.flume.Context;
 import org.apache.flume.EventDrivenSource;
+import org.apache.flume.Source;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.Event;
 import org.apache.flume.exception.ChannelException;
 import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.source.AbstractSource;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.SourceProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -165,6 +170,17 @@ public class SyslogUDPSource extends AbstractSource implements EventDrivenSource
                 logger.error("Error parsing event from syslog stream, event dropped", ex);
                 sourceCounter.incrementEventReadFail();
             }
+        }
+    }
+
+    /**
+     * Provides the {@code syslogudp} source type.
+     */
+    @ServiceProvider(value = SourceProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<Source> implements SourceProvider {
+
+        public Provider() {
+            super("syslogudp", SyslogUDPSource.class);
         }
     }
 }

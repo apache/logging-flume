@@ -16,6 +16,8 @@
  */
 package org.apache.flume.configfilter.external;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -24,6 +26,8 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Scanner;
 import org.apache.flume.configfilter.AbstractConfigFilter;
+import org.apache.flume.configfilter.ConfigFilter;
+import org.apache.flume.configfilter.ConfigFilterProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -98,6 +102,23 @@ public class ExternalProcessConfigFilter extends AbstractConfigFilter {
             }
 
             return result;
+        }
+    }
+
+    /**
+     * Provides the {@code external} configuration filter type.
+     */
+    @ServiceProvider(value = ConfigFilterProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider implements ConfigFilterProvider {
+
+        @Override
+        public String getName() {
+            return "external";
+        }
+
+        @Override
+        public Class<? extends ConfigFilter> getComponentClass() {
+            return ExternalProcessConfigFilter.class;
         }
     }
 }

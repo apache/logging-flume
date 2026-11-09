@@ -40,6 +40,8 @@ import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstant
 import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.SKIP_TO_END;
 import static org.apache.flume.source.taildir.TaildirSourceConfigurationConstants.WRITE_POS_INTERVAL;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
@@ -66,6 +68,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.flume.Context;
 import org.apache.flume.FlumeException;
 import org.apache.flume.PollableSource;
+import org.apache.flume.Source;
 import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.event.Event;
@@ -73,6 +76,8 @@ import org.apache.flume.exception.ChannelException;
 import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.source.AbstractSource;
 import org.apache.flume.source.PollableSourceConstants;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.SourceProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -387,5 +392,16 @@ public class TaildirSource extends AbstractSource implements PollableSource, Con
             posInfos.add(ImmutableMap.of("inode", inode, "pos", tf.getPos(), "file", tf.getPath()));
         }
         return new Gson().toJson(posInfos);
+    }
+
+    /**
+     * Provides the {@code taildir} source type.
+     */
+    @ServiceProvider(value = SourceProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<Source> implements SourceProvider {
+
+        public Provider() {
+            super("taildir", TaildirSource.class);
+        }
     }
 }

@@ -16,6 +16,8 @@
  */
 package org.apache.flume.source.syslog;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -31,6 +33,7 @@ import java.util.concurrent.ConcurrentMap;
 import javax.net.ssl.SSLParameters;
 import org.apache.flume.Context;
 import org.apache.flume.EventDrivenSource;
+import org.apache.flume.Source;
 import org.apache.flume.channel.ChannelProcessor;
 import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
@@ -39,6 +42,8 @@ import org.apache.flume.event.Event;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.source.SslContextAwareAbstractSource;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.SourceProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.mina.core.buffer.IoBuffer;
@@ -586,6 +591,17 @@ public class MultiportSyslogTCPSource extends SslContextAwareAbstractSource
         @Override
         protected CharsetDecoder initialValue() {
             return charset.newDecoder();
+        }
+    }
+
+    /**
+     * Provides the {@code multiport_syslogtcp} source type.
+     */
+    @ServiceProvider(value = SourceProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<Source> implements SourceProvider {
+
+        public Provider() {
+            super("multiport_syslogtcp", MultiportSyslogTCPSource.class);
         }
     }
 }

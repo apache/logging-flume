@@ -16,6 +16,8 @@
  */
 package org.apache.flume.source.syslog;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import com.google.common.annotations.VisibleForTesting;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
@@ -40,12 +42,15 @@ import java.util.Set;
 import javax.net.ssl.SSLEngine;
 import org.apache.flume.Context;
 import org.apache.flume.EventDrivenSource;
+import org.apache.flume.Source;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.Event;
 import org.apache.flume.exception.ChannelException;
 import org.apache.flume.instrumentation.SourceCounter;
 import org.apache.flume.source.SslContextAwareAbstractSource;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.SourceProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -208,5 +213,16 @@ public class SyslogTcpSource extends SslContextAwareAbstractSource implements Ev
     @VisibleForTesting
     SourceCounter getSourceCounter() {
         return sourceCounter;
+    }
+
+    /**
+     * Provides the {@code syslogtcp} source type.
+     */
+    @ServiceProvider(value = SourceProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<Source> implements SourceProvider {
+
+        public Provider() {
+            super("syslogtcp", SyslogTcpSource.class);
+        }
     }
 }

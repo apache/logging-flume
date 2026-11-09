@@ -16,6 +16,8 @@
  */
 package org.apache.flume.channel.file;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
@@ -44,6 +46,8 @@ import org.apache.flume.conf.TransactionCapacitySupported;
 import org.apache.flume.event.Event;
 import org.apache.flume.exception.ChannelException;
 import org.apache.flume.exception.ChannelFullException;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.ChannelProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -659,6 +663,17 @@ public class FileChannel extends BasicChannelSemantics implements TransactionCap
                 // to the queue and we need to be sure to release the resources
                 queueRemaining.release(puts);
             }
+        }
+    }
+
+    /**
+     * Provides the {@code file} channel type.
+     */
+    @ServiceProvider(value = ChannelProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<Channel> implements ChannelProvider {
+
+        public Provider() {
+            super("file", FileChannel.class);
         }
     }
 }
