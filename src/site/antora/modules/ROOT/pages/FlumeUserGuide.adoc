@@ -5748,7 +5748,22 @@ Currently Flume supports HDFS 0.20.2 and 0.23.
 
 ==== AVRO
 
-TBD
+Flume 2.x uses the same Avro RPC protocol as Flume 1.x,
+but the protocol types moved from the `org.apache.flume.source.avro` namespace to `org.apache.flume.avro`.
+
+* Flume 2.x clients (including the Avro Sink) can send events to Flume 1.x Avro Sources.
+* Flume 1.x clients (including the Avro Sink and the Log4j Appender) can send events to Flume 2.x Avro Sources
+only if they use Avro 1.11.1 or later.
+Flume 1.11.0 ships with Avro 1.11.0, which compares enum names including their namespace
+(see https://issues.apache.org/jira/browse/AVRO-3133[AVRO-3133])
+and rejects the renamed `Status` enum in the server's response with:
++
+----
+org.apache.avro.AvroTypeException: Found org.apache.flume.avro.Status, expecting org.apache.flume.source.avro.Status
+----
++
+The Flume 2.x source has already accepted the event, so a client that retries after this error (such as the Avro Sink) delivers it twice.
+To fix this, replace `avro-1.11.0.jar` on the client's classpath with Avro 1.11.1 or a later 1.11.x release.
 
 ==== Additional version requirements
 
@@ -5772,7 +5787,7 @@ TBD
 |org.apache.flume.Channel |file |org.apache.flume.channel.file.FileChannel
 |org.apache.flume.Channel |-- |org.apache.flume.channel.PseudoTxnMemoryChannel
 |org.apache.flume.Channel |-- |org.example.MyChannel
-|org.apache.flume.Source |avro |org.apache.flume.source.AvroSource
+|org.apache.flume.Source |avro |org.apache.flume.source.avro.AvroSource
 |org.apache.flume.Source |netcat |org.apache.flume.source.NetcatSource
 |org.apache.flume.Source |seq |org.apache.flume.source.SequenceGeneratorSource
 |org.apache.flume.Source |exec |org.apache.flume.source.ExecSource

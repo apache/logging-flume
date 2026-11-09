@@ -52,9 +52,9 @@ public enum SourceType implements ComponentWithClassName {
     /**
      * Avro source.
      *
-     * @see org.apache.flume.source.AvroSource
+     * @see org.apache.flume.source.avro.AvroSource
      */
-    AVRO("org.apache.flume.source.avro.server.AvroSource"),
+    AVRO("org.apache.flume.source.avro.AvroSource"),
 
     /**
      * SyslogTcpSource
