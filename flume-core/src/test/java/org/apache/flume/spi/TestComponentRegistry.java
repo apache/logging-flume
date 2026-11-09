@@ -90,6 +90,18 @@ public class TestComponentRegistry {
     }
 
     @Test
+    public void supportsProvidersThatDoNotExtendComponentProvider() {
+        ComponentRegistry<Runnable> adapted = ComponentRegistry.of(
+                FakeProvider.class,
+                provider -> "adapted-" + provider.getName(),
+                FakeProvider::getComponentClass,
+                Runnable.class,
+                "fake component");
+        assertEquals(FakeComponent.class, adapted.getComponentClass("adapted-one"));
+        assertEquals(UnregisteredComponent.class, adapted.getComponentClass(UnregisteredComponent.class.getName()));
+    }
+
+    @Test
     public void newInstanceCreatesDistinctInstances() {
         Runnable first = registry.newInstance("one");
         Runnable second = registry.newInstance("one");

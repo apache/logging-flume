@@ -23,8 +23,8 @@ import com.google.common.base.Preconditions;
 import org.apache.flume.FlumeException;
 import org.apache.flume.conf.configfilter.ConfigFilterType;
 import org.apache.flume.configfilter.ConfigFilter;
+import org.apache.flume.configfilter.ConfigFilterProvider;
 import org.apache.flume.spi.ComponentRegistry;
-import org.apache.flume.spi.ConfigFilterProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -37,8 +37,10 @@ public class ConfigFilterFactory {
     private static final Logger logger = LogManager.getLogger();
 
     @SuppressWarnings("deprecation")
-    private static final ComponentRegistry<ConfigFilter> REGISTRY = new ComponentRegistry<>(
+    private static final ComponentRegistry<ConfigFilter> REGISTRY = ComponentRegistry.of(
             ConfigFilterProvider.class,
+            ConfigFilterProvider::getName,
+            ConfigFilterProvider::getComponentClass,
             ConfigFilter.class,
             "configfilter",
             type -> ComponentWithClassName.getClassName(ConfigFilterType.class, type));

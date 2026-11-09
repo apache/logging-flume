@@ -3,5 +3,5 @@
        xmlns="https://logging.apache.org/xml/ns"
        xsi:schemaLocation="https://logging.apache.org/xml/ns https://logging.apache.org/xml/ns/log4j-changelog-0.xsd"
        type="added">
-  <description format="asciidoc">Add the `org.apache.flume.spi` service provider interfaces, so that sources, sinks, channels, channel selectors, sink processors, configuration filters, interceptors, event serializers, event deserializers and path managers can register a short `type` alias through `ServiceLoader`.</description>
+  <description format="asciidoc">Add the `org.apache.flume.spi` service provider interfaces, so that sources, sinks, channels, channel selectors, sink processors, interceptors, event serializers, event deserializers and path managers can register a short `type` alias through `ServiceLoader`. Configuration filters use `org.apache.flume.configfilter.ConfigFilterProvider`, so that they do not depend on `flume-core`.</description>
 </entry>

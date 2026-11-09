@@ -41,7 +41,9 @@ public final class ComponentRegistry<T> {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
-    private final Class<? extends ComponentProvider<T>> providerType;
+    private final Class<?> providerType;
+    private final Function<Object, String> nameOf;
+    private final Function<Object, ? extends Class<? extends T>> componentClassOf;
     private final Class<T> componentType;
     private final String kind;
     private final Function<String, String> legacyAliases;
@@ -69,10 +71,71 @@ public final class ComponentRegistry<T> {
             Class<T> componentType,
             String kind,
             Function<String, String> legacyAliases) {
+        this(
+                providerType,
+                provider -> provider.getName(),
+                provider -> provider.getComponentClass(),
+                componentType,
+                kind,
+                legacyAliases);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <P> ComponentRegistry(
+            Class<P> providerType,
+            Function<? super P, String> nameOf,
+            Function<? super P, ? extends Class<? extends T>> componentClassOf,
+            Class<T> componentType,
+            String kind,
+            Function<String, String> legacyAliases) {
         this.providerType = Objects.requireNonNull(providerType, "providerType");
+        // Only applied to instances of `providerType`
+        this.nameOf = (Function<Object, String>) Objects.requireNonNull(nameOf, "nameOf");
+        this.componentClassOf = (Function<Object, ? extends Class<? extends T>>)
+                Objects.requireNonNull(componentClassOf, "componentClassOf");
         this.componentType = Objects.requireNonNull(componentType, "componentType");
         this.kind = Objects.requireNonNull(kind, "kind");
         this.legacyAliases = Objects.requireNonNull(legacyAliases, "legacyAliases");
+    }
+
+    /**
+     * Creates a registry for a provider interface that does not extend {@link ComponentProvider}.
+     *
+     * <p>Used by component kinds whose API module does not depend on {@code flume-core},
+     * such as {@code org.apache.flume.configfilter.ConfigFilterProvider}.
+     *
+     * @param providerType the service interface of this component kind.
+     * @param nameOf returns the name of a provider.
+     * @param componentClassOf returns the component class of a provider.
+     * @param componentType the class all components of this kind extend.
+     * @param kind a human-readable name of the component kind, used in error messages.
+     */
+    public static <P, T> ComponentRegistry<T> of(
+            Class<P> providerType,
+            Function<? super P, String> nameOf,
+            Function<? super P, ? extends Class<? extends T>> componentClassOf,
+            Class<T> componentType,
+            String kind) {
+        return new ComponentRegistry<>(providerType, nameOf, componentClassOf, componentType, kind, type -> null);
+    }
+
+    /**
+     * Creates a registry for a provider interface that does not extend {@link ComponentProvider},
+     * which also accepts the aliases of a legacy type enum.
+     *
+     * @param legacyAliases maps a type to a class name, or {@code null} if the type is not a legacy alias.
+     * @deprecated Legacy aliases will be removed together with the type enums.
+     * @see #of(Class, Function, Function, Class, String)
+     */
+    @Deprecated
+    public static <P, T> ComponentRegistry<T> of(
+            Class<P> providerType,
+            Function<? super P, String> nameOf,
+            Function<? super P, ? extends Class<? extends T>> componentClassOf,
+            Class<T> componentType,
+            String kind,
+            Function<String, String> legacyAliases) {
+        return new ComponentRegistry<>(providerType, nameOf, componentClassOf, componentType, kind, legacyAliases);
     }
 
     /**
@@ -135,13 +198,12 @@ public final class ComponentRegistry<T> {
 
     private Providers<T> loadProviders() {
         Map<String, Class<? extends T>> classes = new TreeMap<>();
-        Map<String, ComponentProvider<T>> owners = new HashMap<>();
+        Map<String, Object> owners = new HashMap<>();
         Map<String, String> conflicts = new HashMap<>();
-        Iterator<? extends ComponentProvider<T>> iterator = ServiceLoader.load(
-                        providerType, ComponentRegistry.class.getClassLoader())
+        Iterator<?> iterator = ServiceLoader.load(providerType, ComponentRegistry.class.getClassLoader())
                 .iterator();
         while (true) {
-            ComponentProvider<T> provider;
+            Object provider;
             String name;
             Class<? extends T> clazz;
             try {
@@ -149,14 +211,14 @@ public final class ComponentRegistry<T> {
                     break;
                 }
                 provider = iterator.next();
-                name = provider.getName().toLowerCase(Locale.ROOT);
-                clazz = provider.getComponentClass();
+                name = nameOf.apply(provider).toLowerCase(Locale.ROOT);
+                clazz = componentClassOf.apply(provider);
             } catch (ServiceConfigurationError | LinkageError e) {
                 // A broken provider must not prevent the other ones from loading
                 LOGGER.warn("Skipping a {} provider that failed to load.", kind, e);
                 continue;
             }
-            ComponentProvider<T> previous = owners.putIfAbsent(name, provider);
+            Object previous = owners.putIfAbsent(name, provider);
             if (previous == null) {
                 classes.put(name, clazz);
             } else {

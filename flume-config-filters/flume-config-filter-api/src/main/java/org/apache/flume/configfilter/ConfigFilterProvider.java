@@ -14,13 +14,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.flume.spi;
-
-import org.apache.flume.configfilter.ConfigFilter;
+package org.apache.flume.configfilter;
 
 /**
- * Provides one configuration filter type, selected by the {@code type} property of the configuration filter configuration.
+ * Provides one configuration filter type, selected by the {@code type} property of the filter configuration.
  *
- * <p>Register implementations in {@code META-INF/services/org.apache.flume.spi.ConfigFilterProvider}.
+ * <p>Providers are discovered with {@link java.util.ServiceLoader}:
+ * register implementations in {@code META-INF/services/org.apache.flume.configfilter.ConfigFilterProvider}.
  */
-public interface ConfigFilterProvider extends ComponentProvider<ConfigFilter> {}
+public interface ConfigFilterProvider {
+
+    /**
+     * Returns the value of the {@code type} configuration property that selects this provider.
+     *
+     * <p>Types are compared case-insensitively.
+     */
+    String getName();
+
+    /**
+     * Returns the filter class, which must have a public no-argument constructor.
+     */
+    Class<? extends ConfigFilter> getComponentClass();
+}
