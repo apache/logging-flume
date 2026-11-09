@@ -124,6 +124,8 @@
     <mockito.version>5.24.0</mockito.version>
     <mvn-checksum-plugin.version>1.11</mvn-checksum-plugin.version>
     <mvn-pmd-plugin.version>3.28.0</mvn-pmd-plugin.version>
+    <osgi.annotation.bundle.version>2.0.0</osgi.annotation.bundle.version>
+    <osgi.annotation.versioning.version>1.1.2</osgi.annotation.versioning.version>
     <external.protobuf.version>4.35.0</external.protobuf.version>
     <protobuf.plugin.version>0.6.1</protobuf.plugin.version>
     <os.maven.version>1.7.1</os.maven.version>
@@ -145,6 +147,20 @@
         <groupId>biz.aQute.bnd</groupId>
         <artifactId>biz.aQute.bnd.annotation</artifactId>
         <version>${bnd-maven-plugin.version}</version>
+        <scope>provided</scope>
+      </dependency>
+
+      <!-- OSGi annotations, e.g. `@Export` and `@Version` to export packages in OSGi and JPMS -->
+      <dependency>
+        <groupId>org.osgi</groupId>
+        <artifactId>org.osgi.annotation.bundle</artifactId>
+        <version>${osgi.annotation.bundle.version}</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.osgi</groupId>
+        <artifactId>org.osgi.annotation.versioning</artifactId>
+        <version>${osgi.annotation.versioning.version}</version>
         <scope>provided</scope>
       </dependency>
 
