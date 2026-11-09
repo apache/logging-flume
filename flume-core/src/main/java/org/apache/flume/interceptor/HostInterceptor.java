@@ -23,12 +23,16 @@ import static org.apache.flume.interceptor.HostInterceptor.Constants.PRESERVE_DF
 import static org.apache.flume.interceptor.HostInterceptor.Constants.USE_IP;
 import static org.apache.flume.interceptor.HostInterceptor.Constants.USE_IP_DFLT;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map;
 import org.apache.flume.Context;
 import org.apache.flume.event.Event;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.InterceptorProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -162,5 +166,17 @@ public class HostInterceptor implements Interceptor {
         public static boolean USE_IP_DFLT = true;
 
         public static String HOST_HEADER = "hostHeader";
+    }
+
+    /**
+     * Provides the {@code host} interceptor type.
+     */
+    @ServiceProvider(value = InterceptorProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<Interceptor.Builder>
+            implements InterceptorProvider {
+
+        public Provider() {
+            super("host", HostInterceptor.Builder.class);
+        }
     }
 }

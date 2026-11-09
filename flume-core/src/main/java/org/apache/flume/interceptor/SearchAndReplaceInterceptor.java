@@ -16,6 +16,8 @@
  */
 package org.apache.flume.interceptor;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import java.nio.charset.Charset;
@@ -25,6 +27,8 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flume.Context;
 import org.apache.flume.event.Event;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.InterceptorProvider;
 
 /**
  * <p>
@@ -113,6 +117,18 @@ public class SearchAndReplaceInterceptor implements Interceptor {
             Preconditions.checkNotNull(searchRegex, "Regular expression search pattern required");
             Preconditions.checkNotNull(replaceString, "Replacement string required");
             return new SearchAndReplaceInterceptor(searchRegex, replaceString, charset);
+        }
+    }
+
+    /**
+     * Provides the {@code search_replace} interceptor type.
+     */
+    @ServiceProvider(value = InterceptorProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<Interceptor.Builder>
+            implements InterceptorProvider {
+
+        public Provider() {
+            super("search_replace", SearchAndReplaceInterceptor.Builder.class);
         }
     }
 }

@@ -16,6 +16,8 @@
  */
 package org.apache.flume.sink;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import com.google.common.base.Preconditions;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
@@ -26,6 +28,8 @@ import org.apache.flume.Transaction;
 import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.event.Event;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.SinkProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -145,5 +149,16 @@ public class NullSink extends AbstractSink implements Configurable, BatchSizeSup
     @Override
     public long getBatchSize() {
         return batchSize;
+    }
+
+    /**
+     * Provides the {@code null} sink type.
+     */
+    @ServiceProvider(value = SinkProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<Sink> implements SinkProvider {
+
+        public Provider() {
+            super("null", NullSink.class);
+        }
     }
 }

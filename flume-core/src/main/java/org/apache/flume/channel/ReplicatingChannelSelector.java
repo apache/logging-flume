@@ -16,12 +16,17 @@
  */
 package org.apache.flume.channel;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.event.Event;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.ChannelSelectorProvider;
 
 /**
  * Replicating channel selector. This selector allows the event to be placed
@@ -68,6 +73,18 @@ public class ReplicatingChannelSelector extends AbstractChannelSelector {
                     optionalChannels.add(optionalChannel);
                 }
             }
+        }
+    }
+
+    /**
+     * Provides the {@code replicating} channel selector type.
+     */
+    @ServiceProvider(value = ChannelSelectorProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<ChannelSelector>
+            implements ChannelSelectorProvider {
+
+        public Provider() {
+            super("replicating", ReplicatingChannelSelector.class);
         }
     }
 }

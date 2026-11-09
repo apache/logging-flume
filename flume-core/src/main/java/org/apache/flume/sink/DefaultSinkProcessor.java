@@ -16,11 +16,16 @@
  */
 package org.apache.flume.sink;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import org.apache.flume.Context;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Sink.Status;
+import org.apache.flume.SinkProcessor;
 import org.apache.flume.conf.ComponentConfiguration;
 import org.apache.flume.conf.ConfigurableComponent;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.SinkProcessorProvider;
 
 /**
  * Default sink processor that only accepts a single sink, passing on process
@@ -39,4 +44,16 @@ public class DefaultSinkProcessor extends AbstractSingleSinkProcessor implements
 
     @Override
     public void configure(ComponentConfiguration conf) {}
+
+    /**
+     * Provides the {@code default} sink processor type.
+     */
+    @ServiceProvider(value = SinkProcessorProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<SinkProcessor>
+            implements SinkProcessorProvider {
+
+        public Provider() {
+            super("default", DefaultSinkProcessor.class);
+        }
+    }
 }

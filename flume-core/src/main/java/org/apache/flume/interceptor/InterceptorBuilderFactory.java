@@ -16,33 +16,32 @@
  */
 package org.apache.flume.interceptor;
 
-import java.util.Locale;
+import aQute.bnd.annotation.Cardinality;
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceConsumer;
 import org.apache.flume.interceptor.Interceptor.Builder;
+import org.apache.flume.spi.ComponentRegistry;
+import org.apache.flume.spi.InterceptorProvider;
 
 /**
- * Factory used to register instances of Interceptors & their builders,
- * as well as to instantiate the builders.
+ * Factory used to instantiate interceptor builders.
  */
+@ServiceConsumer(
+        value = InterceptorProvider.class,
+        resolution = Resolution.OPTIONAL,
+        cardinality = Cardinality.MULTIPLE)
 public class InterceptorBuilderFactory {
 
-    private static Class<? extends Builder> lookup(String name) {
-        try {
-            return InterceptorType.valueOf(name.toUpperCase(Locale.ENGLISH)).getBuilderClass();
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
-    }
+    private static final ComponentRegistry<Builder> REGISTRY =
+            new ComponentRegistry<>(InterceptorProvider.class, Builder.class, "interceptor");
 
     /**
      * Instantiate specified class, either alias or fully-qualified class name.
+     *
+     * @throws org.apache.flume.FlumeException if the type is unknown or the builder cannot be instantiated.
      */
     public static Builder newInstance(String name)
             throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-
-        Class<? extends Builder> clazz = lookup(name);
-        if (clazz == null) {
-            clazz = (Class<? extends Builder>) Class.forName(name);
-        }
-        return clazz.newInstance();
+        return REGISTRY.newInstance(name);
     }
 }

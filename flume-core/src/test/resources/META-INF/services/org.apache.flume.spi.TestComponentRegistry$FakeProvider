@@ -1,0 +1,5 @@
+org.apache.flume.spi.TestComponentRegistry$FakeProviderOne
+# A missing provider is skipped
+org.apache.flume.spi.TestComponentRegistry$MissingProvider
+org.apache.flume.spi.TestComponentRegistry$DuplicateProviderA
+org.apache.flume.spi.TestComponentRegistry$DuplicateProviderB

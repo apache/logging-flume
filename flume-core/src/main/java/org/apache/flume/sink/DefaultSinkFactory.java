@@ -16,52 +16,42 @@
  */
 package org.apache.flume.sink;
 
+import aQute.bnd.annotation.Cardinality;
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceConsumer;
 import com.google.common.base.Preconditions;
-import java.util.Locale;
 import org.apache.flume.FlumeException;
 import org.apache.flume.Sink;
 import org.apache.flume.SinkFactory;
+import org.apache.flume.conf.ComponentWithClassName;
 import org.apache.flume.conf.sink.SinkType;
+import org.apache.flume.spi.ComponentRegistry;
+import org.apache.flume.spi.SinkProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+@ServiceConsumer(value = SinkProvider.class, resolution = Resolution.OPTIONAL, cardinality = Cardinality.MULTIPLE)
 public class DefaultSinkFactory implements SinkFactory {
 
     private static final Logger logger = LogManager.getLogger();
+
+    @SuppressWarnings("deprecation")
+    private static final ComponentRegistry<Sink> REGISTRY = new ComponentRegistry<>(
+            SinkProvider.class, Sink.class, "sink", type -> ComponentWithClassName.getClassName(SinkType.class, type));
 
     @Override
     public Sink create(String name, String type) throws FlumeException {
         Preconditions.checkNotNull(name, "name");
         Preconditions.checkNotNull(type, "type");
-        logger.info("Creating instance of sink: {}, type: {}", name, type);
-        Class<? extends Sink> sinkClass = getClass(type);
-        try {
-            Sink sink = sinkClass.newInstance();
-            sink.setName(name);
-            return sink;
-        } catch (Exception ex) {
-            throw new FlumeException(
-                    "Unable to create sink: " + name + ", type: " + type + ", class: " + sinkClass.getName(), ex);
-        }
+        logger.info("Creating instance of sink {}, type {}", name, type);
+        Sink sink = REGISTRY.newInstance(type);
+        sink.setName(name);
+        return sink;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public Class<? extends Sink> getClass(String type) throws FlumeException {
-        String sinkClassName = type;
-        SinkType sinkType = SinkType.OTHER;
-        try {
-            sinkType = SinkType.valueOf(type.toUpperCase(Locale.ENGLISH));
-        } catch (IllegalArgumentException ex) {
-            logger.debug("Sink type {} is a custom type", type);
-        }
-        if (!sinkType.equals(SinkType.OTHER)) {
-            sinkClassName = sinkType.getSinkClassName();
-        }
-        try {
-            return (Class<? extends Sink>) Class.forName(sinkClassName);
-        } catch (Exception ex) {
-            throw new FlumeException("Unable to load sink type: " + type + ", class: " + sinkClassName, ex);
-        }
+        Preconditions.checkNotNull(type, "type");
+        return REGISTRY.getComponentClass(type);
     }
 }

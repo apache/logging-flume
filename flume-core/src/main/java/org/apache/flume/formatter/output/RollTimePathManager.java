@@ -16,10 +16,14 @@
  */
 package org.apache.flume.formatter.output;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import org.apache.flume.Context;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.PathManagerProvider;
 
 /**
  *
@@ -55,6 +59,18 @@ public class RollTimePathManager extends DefaultPathManager {
         @Override
         public PathManager build(Context context) {
             return new RollTimePathManager(context);
+        }
+    }
+
+    /**
+     * Provides the {@code rolltime} path manager type.
+     */
+    @ServiceProvider(value = PathManagerProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<PathManager.Builder>
+            implements PathManagerProvider {
+
+        public Provider() {
+            super("rolltime", RollTimePathManager.Builder.class);
         }
     }
 }

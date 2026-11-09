@@ -16,6 +16,8 @@
  */
 package org.apache.flume.serialization;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -25,6 +27,8 @@ import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
 import org.apache.flume.event.Event;
 import org.apache.flume.event.EventBuilder;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.EventDeserializerProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -153,6 +157,18 @@ public class LineDeserializer implements EventDeserializer {
         @Override
         public EventDeserializer build(Context context, ResettableInputStream in) {
             return new LineDeserializer(context, in);
+        }
+    }
+
+    /**
+     * Provides the {@code line} event deserializer type.
+     */
+    @ServiceProvider(value = EventDeserializerProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<EventDeserializer.Builder>
+            implements EventDeserializerProvider {
+
+        public Provider() {
+            super("line", LineDeserializer.Builder.class);
         }
     }
 }

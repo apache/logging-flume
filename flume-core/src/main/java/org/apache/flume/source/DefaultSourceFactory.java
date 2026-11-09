@@ -16,52 +16,45 @@
  */
 package org.apache.flume.source;
 
+import aQute.bnd.annotation.Cardinality;
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceConsumer;
 import com.google.common.base.Preconditions;
-import java.util.Locale;
 import org.apache.flume.FlumeException;
 import org.apache.flume.Source;
 import org.apache.flume.SourceFactory;
+import org.apache.flume.conf.ComponentWithClassName;
 import org.apache.flume.conf.source.SourceType;
+import org.apache.flume.spi.ComponentRegistry;
+import org.apache.flume.spi.SourceProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+@ServiceConsumer(value = SourceProvider.class, resolution = Resolution.OPTIONAL, cardinality = Cardinality.MULTIPLE)
 public class DefaultSourceFactory implements SourceFactory {
 
     private static final Logger logger = LogManager.getLogger();
+
+    @SuppressWarnings("deprecation")
+    private static final ComponentRegistry<Source> REGISTRY = new ComponentRegistry<>(
+            SourceProvider.class,
+            Source.class,
+            "source",
+            type -> ComponentWithClassName.getClassName(SourceType.class, type));
 
     @Override
     public Source create(String name, String type) throws FlumeException {
         Preconditions.checkNotNull(name, "name");
         Preconditions.checkNotNull(type, "type");
         logger.info("Creating instance of source {}, type {}", name, type);
-        Class<? extends Source> sourceClass = getClass(type);
-        try {
-            Source source = sourceClass.newInstance();
-            source.setName(name);
-            return source;
-        } catch (Exception ex) {
-            throw new FlumeException(
-                    "Unable to create source: " + name + ", type: " + type + ", class: " + sourceClass.getName(), ex);
-        }
+        Source source = REGISTRY.newInstance(type);
+        source.setName(name);
+        return source;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public Class<? extends Source> getClass(String type) throws FlumeException {
-        String sourceClassName = type;
-        SourceType srcType = SourceType.OTHER;
-        try {
-            srcType = SourceType.valueOf(type.toUpperCase(Locale.ENGLISH));
-        } catch (IllegalArgumentException ex) {
-            logger.debug("Source type {} is a custom type", type);
-        }
-        if (!srcType.equals(SourceType.OTHER)) {
-            sourceClassName = srcType.getSourceClassName();
-        }
-        try {
-            return (Class<? extends Source>) Class.forName(sourceClassName);
-        } catch (Exception ex) {
-            throw new FlumeException("Unable to load source type: " + type + ", class: " + sourceClassName, ex);
-        }
+        Preconditions.checkNotNull(type, "type");
+        return REGISTRY.getComponentClass(type);
     }
 }

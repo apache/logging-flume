@@ -16,12 +16,15 @@
  */
 package org.apache.flume.channel;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.concurrent.GuardedBy;
+import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
@@ -31,6 +34,8 @@ import org.apache.flume.event.Event;
 import org.apache.flume.exception.ChannelException;
 import org.apache.flume.exception.ChannelFullException;
 import org.apache.flume.instrumentation.ChannelCounter;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.ChannelProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -395,5 +400,16 @@ public class MemoryChannel extends BasicChannelSemantics implements TransactionC
 
     public long getTransactionCapacity() {
         return transCapacity;
+    }
+
+    /**
+     * Provides the {@code memory} channel type.
+     */
+    @ServiceProvider(value = ChannelProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<Channel> implements ChannelProvider {
+
+        public Provider() {
+            super("memory", MemoryChannel.class);
+        }
     }
 }

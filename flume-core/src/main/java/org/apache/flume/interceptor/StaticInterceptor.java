@@ -16,10 +16,14 @@
  */
 package org.apache.flume.interceptor;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import java.util.List;
 import java.util.Map;
 import org.apache.flume.Context;
 import org.apache.flume.event.Event;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.InterceptorProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -138,5 +142,17 @@ public class StaticInterceptor implements Interceptor {
 
         public static final String PRESERVE = "preserveExisting";
         public static final boolean PRESERVE_DEFAULT = true;
+    }
+
+    /**
+     * Provides the {@code static} interceptor type.
+     */
+    @ServiceProvider(value = InterceptorProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<Interceptor.Builder>
+            implements InterceptorProvider {
+
+        public Provider() {
+            super("static", StaticInterceptor.Builder.class);
+        }
     }
 }

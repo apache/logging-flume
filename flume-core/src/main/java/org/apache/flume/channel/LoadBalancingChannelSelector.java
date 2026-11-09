@@ -16,6 +16,8 @@
  */
 package org.apache.flume.channel;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import java.util.Collections;
@@ -23,9 +25,12 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.conf.internal.SuppressFBWarnings;
 import org.apache.flume.event.Event;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.ChannelSelectorProvider;
 
 /**
  * Load balancing channel selector. This selector allows for load balancing
@@ -141,6 +146,18 @@ public class LoadBalancingChannelSelector extends AbstractChannelSelector {
             int size = channels.size();
             int pick = random.nextInt(size);
             return channels.get(pick);
+        }
+    }
+
+    /**
+     * Provides the {@code load_balancing} channel selector type.
+     */
+    @ServiceProvider(value = ChannelSelectorProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<ChannelSelector>
+            implements ChannelSelectorProvider {
+
+        public Provider() {
+            super("load_balancing", LoadBalancingChannelSelector.class);
         }
     }
 }

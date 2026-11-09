@@ -16,23 +16,34 @@
  */
 package org.apache.flume.channel;
 
+import aQute.bnd.annotation.Cardinality;
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceConsumer;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import org.apache.flume.Channel;
 import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
-import org.apache.flume.FlumeException;
 import org.apache.flume.conf.BasicConfigurationConstants;
+import org.apache.flume.conf.ComponentWithClassName;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.conf.channel.ChannelSelectorConfiguration;
 import org.apache.flume.conf.channel.ChannelSelectorType;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.apache.flume.spi.ChannelSelectorProvider;
+import org.apache.flume.spi.ComponentRegistry;
 
+@ServiceConsumer(
+        value = ChannelSelectorProvider.class,
+        resolution = Resolution.OPTIONAL,
+        cardinality = Cardinality.MULTIPLE)
 public class ChannelSelectorFactory {
 
-    private static final Logger logger = LogManager.getLogger();
+    @SuppressWarnings("deprecation")
+    private static final ComponentRegistry<ChannelSelector> REGISTRY = new ComponentRegistry<>(
+            ChannelSelectorProvider.class,
+            ChannelSelector.class,
+            "channel selector",
+            type -> ComponentWithClassName.getClassName(ChannelSelectorType.class, type));
 
     public static ChannelSelector create(List<Channel> channels, Map<String, String> config) {
 
@@ -62,31 +73,6 @@ public class ChannelSelectorFactory {
         if (type == null || type.trim().length() == 0) {
             return new ReplicatingChannelSelector();
         }
-
-        String selectorClassName = type;
-        ChannelSelectorType selectorType = ChannelSelectorType.OTHER;
-
-        try {
-            selectorType = ChannelSelectorType.valueOf(type.toUpperCase(Locale.ENGLISH));
-        } catch (IllegalArgumentException ex) {
-            logger.debug("Selector type {} is a custom type", type);
-        }
-
-        if (!selectorType.equals(ChannelSelectorType.OTHER)) {
-            selectorClassName = selectorType.getChannelSelectorClassName();
-        }
-
-        ChannelSelector selector = null;
-
-        try {
-            @SuppressWarnings("unchecked")
-            Class<? extends ChannelSelector> selectorClass =
-                    (Class<? extends ChannelSelector>) Class.forName(selectorClassName);
-            selector = selectorClass.newInstance();
-        } catch (Exception ex) {
-            throw new FlumeException("Unable to load selector type: " + type + ", class: " + selectorClassName, ex);
-        }
-
-        return selector;
+        return REGISTRY.newInstance(type);
     }
 }
