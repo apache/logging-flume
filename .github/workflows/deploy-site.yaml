@@ -67,7 +67,9 @@ jobs:
 
   export-version:
     if: github.repository == 'apache/logging-flume' && startsWith(github.ref_name, 'release/')
-    runs-on: ubuntu-latest
+    # Exact runner labels usually have shorter queues than the `*-latest` aliases.
+    # See: https://github.com/actions/runner-images#available-images
+    runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.export-version.outputs.version }}
     steps:
