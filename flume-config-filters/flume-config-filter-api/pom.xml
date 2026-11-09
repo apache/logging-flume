@@ -34,4 +34,15 @@
     <module.name>org.apache.flume.configfilter.api</module.name>
   </properties>
 
+  <dependencies>
+    <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>org.osgi.annotation.bundle</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>org.osgi.annotation.versioning</artifactId>
+    </dependency>
+  </dependencies>
+
 </project>
