@@ -126,7 +126,7 @@ import java.io.File;
  * host1.sinks = hdfsSink
  *
  * # avroSource configuration
- * host1.sources.avroSource.type = org.apache.flume.source.AvroSource
+ * host1.sources.avroSource.type = org.apache.flume.source.avro.AvroSource
  * host1.sources.avroSource.runner.type = avro
  * host1.sources.avroSource.runner.port = 11001
  * host1.sources.avroSource.channels = jdbcChannel
