@@ -46,6 +46,11 @@
     </dependency>
 
     <dependency>
+      <groupId>biz.aQute.bnd</groupId>
+      <artifactId>biz.aQute.bnd.annotation</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>org.apache.flume</groupId>
       <artifactId>flume-file-channel</artifactId>
     </dependency>

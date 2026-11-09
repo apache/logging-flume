@@ -16,8 +16,12 @@
  */
 package org.apache.flume.configfilter.env;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import java.util.Map;
 import org.apache.flume.configfilter.AbstractConfigFilter;
+import org.apache.flume.configfilter.ConfigFilter;
+import org.apache.flume.configfilter.ConfigFilterProvider;
 
 public class EnvironmentVariableConfigFilter extends AbstractConfigFilter {
 
@@ -29,5 +33,22 @@ public class EnvironmentVariableConfigFilter extends AbstractConfigFilter {
     @Override
     public void initializeWithConfiguration(Map<String, String> configuration) {
         // NO-OP
+    }
+
+    /**
+     * Provides the {@code env} configuration filter type.
+     */
+    @ServiceProvider(value = ConfigFilterProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider implements ConfigFilterProvider {
+
+        @Override
+        public String getName() {
+            return "env";
+        }
+
+        @Override
+        public Class<? extends ConfigFilter> getComponentClass() {
+            return EnvironmentVariableConfigFilter.class;
+        }
     }
 }

@@ -16,6 +16,8 @@
  */
 package org.apache.flume.source.netcat;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import com.google.common.annotations.VisibleForTesting;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
@@ -35,12 +37,15 @@ import java.util.Map;
 import org.apache.flume.Context;
 import org.apache.flume.CounterGroup;
 import org.apache.flume.EventDrivenSource;
+import org.apache.flume.Source;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.Event;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.exception.ChannelException;
 import org.apache.flume.source.AbstractSource;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.SourceProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -155,5 +160,16 @@ public class NetcatUdpSource extends AbstractSource implements EventDrivenSource
             return addr.getPort();
         }
         return 0;
+    }
+
+    /**
+     * Provides the {@code netcatudp} source type.
+     */
+    @ServiceProvider(value = SourceProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<Source> implements SourceProvider {
+
+        public Provider() {
+            super("netcatudp", NetcatUdpSource.class);
+        }
     }
 }

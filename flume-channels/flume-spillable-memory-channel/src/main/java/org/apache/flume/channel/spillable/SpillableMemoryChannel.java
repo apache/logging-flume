@@ -16,12 +16,15 @@
  */
 package org.apache.flume.channel.spillable;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.util.ArrayDeque;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.concurrent.GuardedBy;
+import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.Transaction;
 import org.apache.flume.annotations.InterfaceAudience;
@@ -34,6 +37,8 @@ import org.apache.flume.exception.ChannelException;
 import org.apache.flume.exception.ChannelFullException;
 import org.apache.flume.instrumentation.ChannelCounter;
 import org.apache.flume.lifecycle.LifecycleState;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.ChannelProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -815,5 +820,16 @@ public class SpillableMemoryChannel extends FileChannel {
         }
         // Each event occupies at least 1 slot, so return 1.
         return 1;
+    }
+
+    /**
+     * Provides the {@code spillablememory} channel type.
+     */
+    @ServiceProvider(value = ChannelProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<Channel> implements ChannelProvider {
+
+        public Provider() {
+            super("spillablememory", SpillableMemoryChannel.class);
+        }
     }
 }

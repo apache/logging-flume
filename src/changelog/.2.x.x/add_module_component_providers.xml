@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entry xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="https://logging.apache.org/xml/ns"
+       xsi:schemaLocation="https://logging.apache.org/xml/ns https://logging.apache.org/xml/ns/log4j-changelog-0.xsd"
+       type="changed">
+  <description format="asciidoc">Register the `taildir`, `syslogtcp`, `multiport_syslogtcp`, `syslogudp` and `netcatudp` sources, the `file` and `spillablememory` channels, and the `env` and `external` configuration filters through the `org.apache.flume.spi` service provider interfaces.</description>
+</entry>
