@@ -174,6 +174,9 @@
 <p>Add a Bill of Materials (<code>flume-bom</code>) that manages the versions of all published Flume artifacts (<a href="https://issues.apache.org/jira/browse/FLUME-3456">FLUME-3456</a>)</p>
 </li>
 <li>
+<p>Add the <code>org.apache.flume.spi</code> service provider interfaces, so that sources, sinks, channels, channel selectors, sink processors, interceptors, event serializers, event deserializers and path managers can register a short <code>type</code> alias through <code>ServiceLoader</code>. Configuration filters use <code>org.apache.flume.configfilter.ConfigFilterProvider</code>, so that they do not depend on <code>flume-core</code>.</p>
+</li>
+<li>
 <p>Add <code>PrometheusHTTPMetricsServer</code>, which exposes Flume metrics to Prometheus (<a href="https://github.com/apache/logging-flume/pull/358">358</a>)</p>
 </li>
 <li>
@@ -186,6 +189,9 @@
 <h3 id="release-notes-2-x-x-changed"><a class="anchor" href="#release-notes-2-x-x-changed"></a>Changed</h3>
 <div class="ulist">
 <ul>
+<li>
+<p>Register the <code>taildir</code>, <code>syslogtcp</code>, <code>multiport_syslogtcp</code>, <code>syslogudp</code> and <code>netcatudp</code> sources, the <code>file</code> and <code>spillablememory</code> channels, and the <code>env</code> and <code>external</code> configuration filters through the <code>org.apache.flume.spi</code> service provider interfaces.</p>
+</li>
 <li>
 <p>Discover RPC client implementations through the new <code>RpcClientProvider</code> service provider interface instead of hard-coded class names.</p>
 </li>
