@@ -11319,7 +11319,31 @@ can be leveraged to move the Flume agent to another host.</p>
 <div class="sect3">
 <h4 id="_avro_2"><a class="anchor" href="#_avro_2"></a>AVRO</h4>
 <div class="paragraph">
-<p>TBD</p>
+<p>Flume 2.x uses the same Avro RPC protocol as Flume 1.x,
+but the protocol types moved from the <code>org.apache.flume.source.avro</code> namespace to <code>org.apache.flume.avro</code>.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Flume 2.x clients (including the Avro Sink) can send events to Flume 1.x Avro Sources.</p>
+</li>
+<li>
+<p>Flume 1.x clients (including the Avro Sink and the Log4j Appender) can send events to Flume 2.x Avro Sources
+only if they use Avro 1.11.1 or later.
+Flume 1.11.0 ships with Avro 1.11.0, which compares enum names including their namespace
+(see <a href="https://issues.apache.org/jira/browse/AVRO-3133">AVRO-3133</a>)
+and rejects the renamed <code>Status</code> enum in the server&#8217;s response with:</p>
+<div class="listingblock">
+<div class="content">
+<pre>org.apache.avro.AvroTypeException: Found org.apache.flume.avro.Status, expecting org.apache.flume.source.avro.Status</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The Flume 2.x source has already accepted the event, so a client that retries after this error (such as the Avro Sink) delivers it twice.
+To fix this, replace <code>avro-1.11.0.jar</code> on the client&#8217;s classpath with Avro 1.11.1 or a later 1.11.x release.</p>
+</div>
+</li>
+</ul>
 </div>
 </div>
 <div class="sect3">
@@ -11388,7 +11412,7 @@ can be leveraged to move the Flume agent to another host.</p>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">org.apache.flume.Source</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">avro</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">org.apache.flume.source.AvroSource</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">org.apache.flume.source.avro.AvroSource</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">org.apache.flume.Source</p></td>
