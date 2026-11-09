@@ -21,11 +21,15 @@ import static org.apache.flume.interceptor.RegexFilteringInterceptor.Constants.D
 import static org.apache.flume.interceptor.RegexFilteringInterceptor.Constants.EXCLUDE_EVENTS;
 import static org.apache.flume.interceptor.RegexFilteringInterceptor.Constants.REGEX;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.regex.Pattern;
 import org.apache.flume.Context;
 import org.apache.flume.event.Event;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.InterceptorProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -162,5 +166,17 @@ public class RegexFilteringInterceptor implements Interceptor {
 
         public static final String EXCLUDE_EVENTS = "excludeEvents";
         public static final boolean DEFAULT_EXCLUDE_EVENTS = false;
+    }
+
+    /**
+     * Provides the {@code regex_filter} interceptor type.
+     */
+    @ServiceProvider(value = InterceptorProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<Interceptor.Builder>
+            implements InterceptorProvider {
+
+        public Provider() {
+            super("regex_filter", RegexFilteringInterceptor.Builder.class);
+        }
     }
 }

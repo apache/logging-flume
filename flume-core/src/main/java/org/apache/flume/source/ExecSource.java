@@ -16,6 +16,8 @@
  */
 package org.apache.flume.source;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -43,6 +45,8 @@ import org.apache.flume.conf.internal.SuppressFBWarnings;
 import org.apache.flume.event.Event;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.instrumentation.SourceCounter;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.SourceProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -493,6 +497,17 @@ public class ExecSource extends AbstractSource implements EventDrivenSource, Con
                     logger.error("Failed to close stderr reader for exec source", ex);
                 }
             }
+        }
+    }
+
+    /**
+     * Provides the {@code exec} source type.
+     */
+    @ServiceProvider(value = SourceProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<Source> implements SourceProvider {
+
+        public Provider() {
+            super("exec", ExecSource.class);
         }
     }
 }

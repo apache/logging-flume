@@ -16,24 +16,41 @@
  */
 package org.apache.flume.sink;
 
+import aQute.bnd.annotation.Cardinality;
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceConsumer;
 import com.google.common.base.Preconditions;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 import org.apache.flume.Context;
 import org.apache.flume.FlumeException;
 import org.apache.flume.Sink;
 import org.apache.flume.SinkProcessor;
 import org.apache.flume.conf.ComponentConfiguration;
+import org.apache.flume.conf.ComponentWithClassName;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.conf.sink.SinkProcessorType;
+import org.apache.flume.spi.ComponentRegistry;
+import org.apache.flume.spi.SinkProcessorProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+@ServiceConsumer(
+        value = SinkProcessorProvider.class,
+        resolution = Resolution.OPTIONAL,
+        cardinality = Cardinality.MULTIPLE)
 public class SinkProcessorFactory {
     private static final Logger logger = LogManager.getLogger();
 
     private static final String TYPE = "type";
+
+    private static final String DEFAULT_TYPE = "default";
+
+    @SuppressWarnings("deprecation")
+    private static final ComponentRegistry<SinkProcessor> REGISTRY = new ComponentRegistry<>(
+            SinkProcessorProvider.class,
+            SinkProcessor.class,
+            "sink processor",
+            type -> ComponentWithClassName.getClassName(SinkProcessorType.class, type));
 
     /**
      * <p>
@@ -50,73 +67,33 @@ public class SinkProcessorFactory {
      * @throws FlumeException Runtime exception thrown in the case of an invalid
      * processor configuration
      */
-    @SuppressWarnings("unchecked")
     public static SinkProcessor getProcessor(Context context, List<Sink> sinks) {
         Preconditions.checkNotNull(context);
         Preconditions.checkNotNull(sinks);
         Preconditions.checkArgument(!sinks.isEmpty());
-        Map<String, String> params = context.getParameters();
-        SinkProcessor processor;
-        String typeStr = params.get(TYPE);
-        SinkProcessorType type = SinkProcessorType.OTHER;
-        String processorClassName = typeStr;
-        try {
-            type = SinkProcessorType.valueOf(typeStr.toUpperCase(Locale.ENGLISH));
-        } catch (Exception ex) {
-            logger.warn("Sink Processor type {} is a custom type", typeStr);
+        String typeStr = context.getParameters().get(TYPE);
+        if (typeStr == null) {
+            throw new FlumeException("Sink processor type not specified");
         }
-
-        if (!type.equals(SinkProcessorType.OTHER)) {
-            processorClassName = type.getSinkProcessorClassName();
-        }
-
-        logger.debug("Creating instance of sink processor type {}, class {}", typeStr, processorClassName);
-        Class<? extends SinkProcessor> processorClass = null;
-        try {
-            processorClass = (Class<? extends SinkProcessor>) Class.forName(processorClassName);
-        } catch (Exception ex) {
-            throw new FlumeException(
-                    "Unable to load sink processor type: " + typeStr + ", class: " + type.getSinkProcessorClassName(),
-                    ex);
-        }
-        try {
-            processor = processorClass.newInstance();
-        } catch (Exception e) {
-            throw new FlumeException(
-                    "Unable to create sink processor, type: " + typeStr + ", class: " + processorClassName, e);
-        }
-
+        logger.debug("Creating instance of sink processor type {}", typeStr);
+        SinkProcessor processor = REGISTRY.newInstance(typeStr);
         processor.setSinks(sinks);
         Configurables.configure(processor, context);
         return processor;
     }
 
-    @SuppressWarnings("unchecked")
     public static SinkProcessor getProcessor(ComponentConfiguration conf, List<Sink> sinks) {
         String typeStr = conf.getType();
-        SinkProcessor processor;
-        SinkProcessorType type = SinkProcessorType.DEFAULT;
-        try {
-            type = SinkProcessorType.valueOf(typeStr.toUpperCase(Locale.ENGLISH));
-        } catch (Exception ex) {
-            logger.warn("Sink type {} does not exist, using default", typeStr);
+        String type = DEFAULT_TYPE;
+        if (typeStr != null) {
+            try {
+                REGISTRY.getComponentClass(typeStr);
+                type = typeStr;
+            } catch (FlumeException ex) {
+                logger.warn("Sink processor type {} does not exist, using default", typeStr, ex);
+            }
         }
-
-        Class<? extends SinkProcessor> processorClass = null;
-        try {
-            processorClass = (Class<? extends SinkProcessor>) Class.forName(type.getSinkProcessorClassName());
-        } catch (Exception ex) {
-            throw new FlumeException(
-                    "Unable to load sink processor type: " + typeStr + ", class: " + type.getSinkProcessorClassName(),
-                    ex);
-        }
-        try {
-            processor = processorClass.newInstance();
-        } catch (Exception e) {
-            throw new FlumeException(
-                    "Unable to create processor, type: " + typeStr + ", class: " + type.getSinkProcessorClassName(), e);
-        }
-
+        SinkProcessor processor = REGISTRY.newInstance(type);
         processor.setSinks(sinks);
         Configurables.configure(processor, conf);
         return processor;

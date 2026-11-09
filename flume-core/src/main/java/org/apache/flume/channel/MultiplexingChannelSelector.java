@@ -16,15 +16,20 @@
  */
 package org.apache.flume.channel;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.flume.Channel;
+import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.FlumeException;
 import org.apache.flume.conf.internal.SuppressFBWarnings;
 import org.apache.flume.event.Event;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.ChannelSelectorProvider;
 
 @SuppressFBWarnings("UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR")
 public class MultiplexingChannelSelector extends AbstractChannelSelector {
@@ -124,6 +129,18 @@ public class MultiplexingChannelSelector extends AbstractChannelSelector {
             if (optionalChannels.put(hdr, confChannels) != null) {
                 throw new FlumeException("Selector channel configured twice");
             }
+        }
+    }
+
+    /**
+     * Provides the {@code multiplexing} channel selector type.
+     */
+    @ServiceProvider(value = ChannelSelectorProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<ChannelSelector>
+            implements ChannelSelectorProvider {
+
+        public Provider() {
+            super("multiplexing", MultiplexingChannelSelector.class);
         }
     }
 }

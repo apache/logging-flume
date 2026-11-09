@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entry xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="https://logging.apache.org/xml/ns"
+       xsi:schemaLocation="https://logging.apache.org/xml/ns https://logging.apache.org/xml/ns/log4j-changelog-0.xsd"
+       type="added">
+  <description format="asciidoc">Add the `org.apache.flume.spi` service provider interfaces, so that sources, sinks, channels, channel selectors, sink processors, configuration filters, interceptors, event serializers, event deserializers and path managers can register a short `type` alias through `ServiceLoader`.</description>
+</entry>

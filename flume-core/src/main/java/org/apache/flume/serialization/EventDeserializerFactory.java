@@ -16,66 +16,44 @@
  */
 package org.apache.flume.serialization;
 
+import aQute.bnd.annotation.Cardinality;
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceConsumer;
 import com.google.common.base.Preconditions;
 import java.util.Locale;
 import org.apache.flume.Context;
-import org.apache.flume.FlumeException;
 import org.apache.flume.annotations.InterfaceAudience;
 import org.apache.flume.annotations.InterfaceStability;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.apache.flume.spi.ComponentRegistry;
+import org.apache.flume.spi.EventDeserializerProvider;
 
 @InterfaceAudience.Private
 @InterfaceStability.Stable
+@ServiceConsumer(
+        value = EventDeserializerProvider.class,
+        resolution = Resolution.OPTIONAL,
+        cardinality = Cardinality.MULTIPLE)
 public class EventDeserializerFactory {
 
-    private static final Logger logger = LogManager.getLogger();
+    @SuppressWarnings("deprecation")
+    private static final ComponentRegistry<EventDeserializer.Builder> REGISTRY = new ComponentRegistry<>(
+            EventDeserializerProvider.class,
+            EventDeserializer.Builder.class,
+            "event deserializer",
+            EventDeserializerFactory::getLegacyClassName);
 
     public static EventDeserializer getInstance(String deserializerType, Context context, ResettableInputStream in) {
+        Preconditions.checkNotNull(deserializerType, "deserializer type must not be null");
+        return REGISTRY.newInstance(deserializerType).build(context, in);
+    }
 
-        Preconditions.checkNotNull(deserializerType, "serializer type must not be null");
-
-        // try to find builder class in enum of known output serializers
-        EventDeserializerType type;
+    private static String getLegacyClassName(String type) {
         try {
-            type = EventDeserializerType.valueOf(deserializerType.toUpperCase(Locale.ENGLISH));
+            Class<?> builderClass =
+                    EventDeserializerType.valueOf(type.toUpperCase(Locale.ROOT)).getBuilderClass();
+            return builderClass != null ? builderClass.getName() : null;
         } catch (IllegalArgumentException e) {
-            logger.debug("Not in enum, loading builder class: {}", deserializerType);
-            type = EventDeserializerType.OTHER;
+            return null;
         }
-        Class<? extends EventDeserializer.Builder> builderClass = type.getBuilderClass();
-
-        // handle the case where they have specified their own builder in the config
-        if (builderClass == null) {
-            try {
-                Class c = Class.forName(deserializerType);
-                if (c != null && EventDeserializer.Builder.class.isAssignableFrom(c)) {
-                    builderClass = (Class<? extends EventDeserializer.Builder>) c;
-                } else {
-                    String errMessage = "Unable to instantiate Builder from " + deserializerType
-                            + ": does not appear to implement " + EventDeserializer.Builder.class.getName();
-                    throw new FlumeException(errMessage);
-                }
-            } catch (ClassNotFoundException ex) {
-                logger.error("Class not found: " + deserializerType, ex);
-                throw new FlumeException(ex);
-            }
-        }
-
-        // build the builder
-        EventDeserializer.Builder builder;
-        try {
-            builder = builderClass.newInstance();
-        } catch (InstantiationException ex) {
-            String errMessage = "Cannot instantiate builder: " + deserializerType;
-            logger.error(errMessage, ex);
-            throw new FlumeException(errMessage, ex);
-        } catch (IllegalAccessException ex) {
-            String errMessage = "Cannot instantiate builder: " + deserializerType;
-            logger.error(errMessage, ex);
-            throw new FlumeException(errMessage, ex);
-        }
-
-        return builder.build(context, in);
     }
 }

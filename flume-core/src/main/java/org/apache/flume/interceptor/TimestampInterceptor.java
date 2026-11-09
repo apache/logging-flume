@@ -21,10 +21,14 @@ import static org.apache.flume.interceptor.TimestampInterceptor.Constants.CONFIG
 import static org.apache.flume.interceptor.TimestampInterceptor.Constants.DEFAULT_HEADER_NAME;
 import static org.apache.flume.interceptor.TimestampInterceptor.Constants.DEFAULT_PRESERVE;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import java.util.List;
 import java.util.Map;
 import org.apache.flume.Context;
 import org.apache.flume.event.Event;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.InterceptorProvider;
 
 /**
  * Simple Interceptor class that sets the current system timestamp on all events
@@ -110,5 +114,17 @@ public class TimestampInterceptor implements Interceptor {
         public static final boolean DEFAULT_PRESERVE = false;
         public static final String CONFIG_HEADER_NAME = "headerName";
         public static final String DEFAULT_HEADER_NAME = "timestamp";
+    }
+
+    /**
+     * Provides the {@code timestamp} interceptor type.
+     */
+    @ServiceProvider(value = InterceptorProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<Interceptor.Builder>
+            implements InterceptorProvider {
+
+        public Provider() {
+            super("timestamp", TimestampInterceptor.Builder.class);
+        }
     }
 }

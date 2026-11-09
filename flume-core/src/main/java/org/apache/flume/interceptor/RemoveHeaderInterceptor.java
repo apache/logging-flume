@@ -16,6 +16,8 @@
  */
 package org.apache.flume.interceptor;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -28,6 +30,8 @@ import java.util.regex.Pattern;
 import org.apache.flume.Context;
 import org.apache.flume.conf.LogPrivacyUtil;
 import org.apache.flume.event.Event;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.InterceptorProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -171,6 +175,18 @@ public class RemoveHeaderInterceptor implements Interceptor {
             if (matchRegexStr != null) {
                 matchRegex = Pattern.compile(matchRegexStr);
             }
+        }
+    }
+
+    /**
+     * Provides the {@code remove_header} interceptor type.
+     */
+    @ServiceProvider(value = InterceptorProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<Interceptor.Builder>
+            implements InterceptorProvider {
+
+        public Provider() {
+            super("remove_header", RemoveHeaderInterceptor.Builder.class);
         }
     }
 }

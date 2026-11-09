@@ -16,6 +16,8 @@
  */
 package org.apache.flume.sink;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +30,10 @@ import org.apache.flume.Context;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.Sink;
 import org.apache.flume.Sink.Status;
+import org.apache.flume.SinkProcessor;
 import org.apache.flume.conf.internal.SuppressFBWarnings;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.SinkProcessorProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -214,6 +219,18 @@ public class FailoverSinkProcessor extends AbstractSinkProcessor {
         this.sinks = new HashMap<String, Sink>();
         for (Sink sink : sinks) {
             this.sinks.put(sink.getName(), sink);
+        }
+    }
+
+    /**
+     * Provides the {@code failover} sink processor type.
+     */
+    @ServiceProvider(value = SinkProcessorProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<SinkProcessor>
+            implements SinkProcessorProvider {
+
+        public Provider() {
+            super("failover", FailoverSinkProcessor.class);
         }
     }
 }

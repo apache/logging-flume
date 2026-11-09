@@ -16,6 +16,8 @@
  */
 package org.apache.flume.sink;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import com.google.common.base.Preconditions;
 import java.util.Iterator;
 import java.util.List;
@@ -24,9 +26,12 @@ import org.apache.flume.EventDeliveryException;
 import org.apache.flume.FlumeException;
 import org.apache.flume.Sink;
 import org.apache.flume.Sink.Status;
+import org.apache.flume.SinkProcessor;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.conf.internal.SuppressFBWarnings;
 import org.apache.flume.lifecycle.LifecycleAware;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.SinkProcessorProvider;
 import org.apache.flume.util.OrderSelector;
 import org.apache.flume.util.RandomOrderSelector;
 import org.apache.flume.util.RoundRobinOrderSelector;
@@ -265,6 +270,18 @@ public class LoadBalancingSinkProcessor extends AbstractSinkProcessor {
         @Override
         public void informSinkFailed(Sink failedSink) {
             selector.informFailure(failedSink);
+        }
+    }
+
+    /**
+     * Provides the {@code load_balance} sink processor type.
+     */
+    @ServiceProvider(value = SinkProcessorProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<SinkProcessor>
+            implements SinkProcessorProvider {
+
+        public Provider() {
+            super("load_balance", LoadBalancingSinkProcessor.class);
         }
     }
 }

@@ -16,10 +16,14 @@
  */
 package org.apache.flume.serialization;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import java.io.IOException;
 import java.io.OutputStream;
 import org.apache.flume.Context;
 import org.apache.flume.event.Event;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.EventSerializerProvider;
 
 /**
  * This class simply writes the body of the event to the output stream
@@ -78,6 +82,18 @@ public class BodyTextEventSerializer implements EventSerializer {
         public EventSerializer build(Context context, OutputStream out) {
             BodyTextEventSerializer s = new BodyTextEventSerializer(out, context);
             return s;
+        }
+    }
+
+    /**
+     * Provides the {@code text} event serializer type.
+     */
+    @ServiceProvider(value = EventSerializerProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<EventSerializer.Builder>
+            implements EventSerializerProvider {
+
+        public Provider() {
+            super("text", BodyTextEventSerializer.Builder.class);
         }
     }
 }

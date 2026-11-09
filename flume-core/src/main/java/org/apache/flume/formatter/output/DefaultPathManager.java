@@ -16,9 +16,13 @@
  */
 package org.apache.flume.formatter.output;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import java.io.File;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.flume.Context;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.PathManagerProvider;
 
 public class DefaultPathManager implements PathManager {
 
@@ -99,6 +103,18 @@ public class DefaultPathManager implements PathManager {
         @Override
         public PathManager build(Context context) {
             return new DefaultPathManager(context);
+        }
+    }
+
+    /**
+     * Provides the {@code default} path manager type.
+     */
+    @ServiceProvider(value = PathManagerProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<PathManager.Builder>
+            implements PathManagerProvider {
+
+        public Provider() {
+            super("default", DefaultPathManager.Builder.class);
         }
     }
 }

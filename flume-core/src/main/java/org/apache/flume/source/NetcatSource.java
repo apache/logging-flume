@@ -16,6 +16,8 @@
  */
 package org.apache.flume.source;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import com.google.common.base.Charsets;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.io.IOException;
@@ -43,6 +45,8 @@ import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.Event;
 import org.apache.flume.event.EventBuilder;
 import org.apache.flume.exception.ChannelException;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.SourceProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -456,6 +460,17 @@ public class NetcatSource extends AbstractSource implements Configurable, EventD
             buffer.flip();
 
             return charsRead;
+        }
+    }
+
+    /**
+     * Provides the {@code netcat} source type.
+     */
+    @ServiceProvider(value = SourceProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<Source> implements SourceProvider {
+
+        public Provider() {
+            super("netcat", NetcatSource.class);
         }
     }
 }

@@ -16,6 +16,8 @@
  */
 package org.apache.flume.interceptor;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -27,6 +29,8 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flume.Context;
 import org.apache.flume.event.Event;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.InterceptorProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -223,6 +227,18 @@ public class RegexExtractorInterceptor implements Interceptor {
         public NameAndSerializer(String headerName, RegexExtractorInterceptorSerializer serializer) {
             this.headerName = headerName;
             this.serializer = serializer;
+        }
+    }
+
+    /**
+     * Provides the {@code regex_extractor} interceptor type.
+     */
+    @ServiceProvider(value = InterceptorProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<Interceptor.Builder>
+            implements InterceptorProvider {
+
+        public Provider() {
+            super("regex_extractor", RegexExtractorInterceptor.Builder.class);
         }
     }
 }

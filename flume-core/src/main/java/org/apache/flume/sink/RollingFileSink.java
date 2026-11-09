@@ -16,6 +16,8 @@
  */
 package org.apache.flume.sink;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.io.BufferedOutputStream;
@@ -29,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.flume.Channel;
 import org.apache.flume.Context;
 import org.apache.flume.EventDeliveryException;
+import org.apache.flume.Sink;
 import org.apache.flume.Transaction;
 import org.apache.flume.conf.BatchSizeSupported;
 import org.apache.flume.conf.Configurable;
@@ -38,6 +41,8 @@ import org.apache.flume.formatter.output.PathManagerFactory;
 import org.apache.flume.instrumentation.SinkCounter;
 import org.apache.flume.serialization.EventSerializer;
 import org.apache.flume.serialization.EventSerializerFactory;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.SinkProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -279,5 +284,16 @@ public class RollingFileSink extends AbstractSink implements Configurable, Batch
     @Override
     public long getBatchSize() {
         return batchSize;
+    }
+
+    /**
+     * Provides the {@code file_roll} sink type.
+     */
+    @ServiceProvider(value = SinkProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<Sink> implements SinkProvider {
+
+        public Provider() {
+            super("file_roll", RollingFileSink.class);
+        }
     }
 }

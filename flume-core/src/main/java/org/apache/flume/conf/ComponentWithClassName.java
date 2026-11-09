@@ -16,6 +16,21 @@
  */
 package org.apache.flume.conf;
 
+import java.util.Locale;
+
 public interface ComponentWithClassName {
     String getClassName();
+
+    /**
+     * Returns the class name of the enum constant named by a case-insensitive alias.
+     *
+     * @return the class name, or {@code null} if the alias is unknown or has no class.
+     */
+    static <E extends Enum<E> & ComponentWithClassName> String getClassName(Class<E> enumType, String alias) {
+        try {
+            return Enum.valueOf(enumType, alias.toUpperCase(Locale.ROOT)).getClassName();
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
 }

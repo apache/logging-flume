@@ -16,48 +16,44 @@
  */
 package org.apache.flume.conf;
 
+import aQute.bnd.annotation.Cardinality;
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceConsumer;
 import com.google.common.base.Preconditions;
-import java.util.Locale;
 import org.apache.flume.FlumeException;
 import org.apache.flume.conf.configfilter.ConfigFilterType;
 import org.apache.flume.configfilter.ConfigFilter;
+import org.apache.flume.spi.ComponentRegistry;
+import org.apache.flume.spi.ConfigFilterProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+@ServiceConsumer(
+        value = ConfigFilterProvider.class,
+        resolution = Resolution.OPTIONAL,
+        cardinality = Cardinality.MULTIPLE)
 public class ConfigFilterFactory {
 
     private static final Logger logger = LogManager.getLogger();
+
+    @SuppressWarnings("deprecation")
+    private static final ComponentRegistry<ConfigFilter> REGISTRY = new ComponentRegistry<>(
+            ConfigFilterProvider.class,
+            ConfigFilter.class,
+            "configfilter",
+            type -> ComponentWithClassName.getClassName(ConfigFilterType.class, type));
 
     public static ConfigFilter create(String name, String type) throws FlumeException {
         Preconditions.checkNotNull(name, "name");
         Preconditions.checkNotNull(type, "type");
         logger.info("Creating instance of configfilter {}, type {}", name, type);
-        Class<? extends ConfigFilter> aClass = getClass(type);
-        try {
-            ConfigFilter configFilter = aClass.newInstance();
-            configFilter.setName(name);
-            return configFilter;
-        } catch (Exception ex) {
-            throw new FlumeException(
-                    "Unable to create configfilter: " + name + ", type: " + type + ", class: " + aClass.getName(), ex);
-        }
+        ConfigFilter configFilter = REGISTRY.newInstance(type);
+        configFilter.setName(name);
+        return configFilter;
     }
 
     public static Class<? extends ConfigFilter> getClass(String type) throws FlumeException {
-        String classname = type;
-        ConfigFilterType srcType = ConfigFilterType.OTHER;
-        try {
-            srcType = ConfigFilterType.valueOf(type.toUpperCase(Locale.ENGLISH));
-        } catch (IllegalArgumentException ex) {
-            logger.debug("Configfilter type {} is a custom type", type);
-        }
-        if (srcType != ConfigFilterType.OTHER) {
-            classname = srcType.getClassName();
-        }
-        try {
-            return (Class<? extends ConfigFilter>) Class.forName(classname);
-        } catch (Exception ex) {
-            throw new FlumeException("Unable to load configfilter type: " + type + ", class: " + classname, ex);
-        }
+        Preconditions.checkNotNull(type, "type");
+        return REGISTRY.getComponentClass(type);
     }
 }

@@ -16,6 +16,8 @@
  */
 package org.apache.flume.channel;
 
+import aQute.bnd.annotation.Resolution;
+import aQute.bnd.annotation.spi.ServiceProvider;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -29,6 +31,8 @@ import org.apache.flume.ChannelSelector;
 import org.apache.flume.Context;
 import org.apache.flume.conf.Configurables;
 import org.apache.flume.event.Event;
+import org.apache.flume.spi.AbstractComponentProvider;
+import org.apache.flume.spi.ChannelSelectorProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -123,5 +127,17 @@ public class RoutableProxyChannelSelector extends LoadBalancingChannelSelector {
             throw new IllegalArgumentException(String.format("Missing key %s in %s", keyName, prefix));
         }
         return value;
+    }
+
+    /**
+     * Provides the {@code routable_proxy} channel selector type.
+     */
+    @ServiceProvider(value = ChannelSelectorProvider.class, resolution = Resolution.OPTIONAL)
+    public static final class Provider extends AbstractComponentProvider<ChannelSelector>
+            implements ChannelSelectorProvider {
+
+        public Provider() {
+            super("routable_proxy", RoutableProxyChannelSelector.class);
+        }
     }
 }
