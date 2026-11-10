@@ -215,7 +215,11 @@ run_flume() {
   if [ ${CLEAN_FLAG} -ne 0 ]; then
     set -x
   fi
-  $EXEC $JAVA_HOME/bin/java $JAVA_OPTS $FLUME_JAVA_OPTS "${arr_java_props[@]}" -cp "$FLUME_CLASSPATH" \
+  
+  if [[ $FLUME_JAVA_OPTS =~ Xmx[0-9]+ ]] || [[ $JAVA_OPTS =~ Xmx[0-9]+ ]]; then
+    unset JAVA_HEAP_MAX 
+  fi
+  $EXEC $JAVA_HOME/bin/java $JAVA_HEAP_MAX $JAVA_OPTS $FLUME_JAVA_OPTS "${arr_java_props[@]}" -cp "$FLUME_CLASSPATH" \
       -Djava.library.path=$FLUME_JAVA_LIBRARY_PATH "$FLUME_APPLICATION_CLASS" $*
 }
 
@@ -226,7 +230,8 @@ run_flume() {
 # set default params
 FLUME_CLASSPATH=""
 FLUME_JAVA_LIBRARY_PATH=""
-JAVA_OPTS="-Xmx20m"
+JAVA_OPTS=""
+JAVA_HEAP_MAX="-Xmx20m"
 LD_LIBRARY_PATH=""
 
 opt_conf=""
