@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entry xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="https://logging.apache.org/xml/ns"
+       xsi:schemaLocation="https://logging.apache.org/xml/ns https://logging.apache.org/xml/ns/log4j-changelog-0.xsd"
+       type="changed">
+  <description format="asciidoc">
+    Recognize the `load_balancing` channel selector type during configuration validation and stop looking up the nonexistent `MultiplexingChannelSelectorConfiguration` class for the `multiplexing` selector.
+    The Apache Curator dependencies of `flume-node` are now optional: users loading the agent configuration from ZooKeeper must add `curator-framework` and `curator-recipes` to the classpath.
+  </description>
+</entry>
