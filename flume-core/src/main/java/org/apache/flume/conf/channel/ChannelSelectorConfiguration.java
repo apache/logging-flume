@@ -42,7 +42,8 @@ public class ChannelSelectorConfiguration extends ComponentConfiguration {
     public enum ChannelSelectorConfigurationType {
         OTHER(null),
         REPLICATING(null),
-        MULTIPLEXING("org.apache.flume.conf.channel." + "MultiplexingChannelSelectorConfiguration");
+        MULTIPLEXING(null),
+        LOAD_BALANCING(null);
 
         private String selectorType;
 
