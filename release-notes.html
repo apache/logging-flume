@@ -199,6 +199,9 @@
 <p>Restrict <code>flume-sdk</code> to the client API, so client applications no longer depend on the plugin API, which moves to <code>flume-core</code>. <code>Event</code> moves to <code>org.apache.flume.event</code>, <code>RpcClient</code> extends <code>AutoCloseable</code>, and the client API reports failures with the new unchecked <code>FlumeClientException</code> instead of <code>EventDeliveryException</code> and <code>FlumeException</code></p>
 </li>
 <li>
+<p>Recognize the <code>load_balancing</code> channel selector type during configuration validation and stop looking up the nonexistent <code>MultiplexingChannelSelectorConfiguration</code> class for the <code>multiplexing</code> selector. The Apache Curator dependencies of <code>flume-node</code> are now optional: users loading the agent configuration from ZooKeeper must add <code>curator-framework</code> and <code>curator-recipes</code> to the classpath.</p>
+</li>
+<li>
 <p>Move the classes that shared a package with another artifact: <code>SpillableMemoryChannel</code> to <code>org.apache.flume.channel.spillable</code>, <code>EnvironmentVariableConfigFilter</code> to <code>org.apache.flume.configfilter.env</code>, <code>ExternalProcessConfigFilter</code> to <code>org.apache.flume.configfilter.external</code>, <code>FlumeBeanConfigurator</code> to <code>org.apache.flume.conf</code>, <code>TimestampRoundDownUtil</code> to <code>org.apache.flume.formatter.output</code>, <code>VersionInfo</code> and <code>GetJavaProperty</code> to <code>org.apache.flume.core</code>, and <code>DirectMemoryUtils</code> to <code>org.apache.flume.channel.file</code> in <code>flume-file-channel</code>. The <code>spillablememory</code>, <code>env</code>, <code>external</code> and <code>hadoop</code> aliases point to the new class names</p>
 </li>
 <li>
