@@ -3,6 +3,7 @@
        xmlns="https://logging.apache.org/xml/ns"
        xsi:schemaLocation="https://logging.apache.org/xml/ns https://logging.apache.org/xml/ns/log4j-changelog-0.xsd"
        type="removed">
+  <issue id="534" link="https://github.com/apache/logging-flume/pull/534"/>
   <description format="asciidoc">
     Remove support for loading the agent configuration from ZooKeeper: the `-z`/`--zkConnString` and `-p`/`--zkBasePath` command line options, the static and polling ZooKeeper configuration providers, and the Apache Curator dependencies have been removed.
   </description>
