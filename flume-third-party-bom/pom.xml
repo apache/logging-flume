@@ -45,7 +45,6 @@
     <commons-lang.version>3.21.0</commons-lang.version>
     <commons-logging.version>1.4.0</commons-logging.version>
     <commons-text.version>1.15.0</commons-text.version>
-    <curator.version>5.9.0</curator.version>
     <derby.version>10.17.1.0</derby.version>
     <errorprone.version>2.51.0</errorprone.version>
     <jackson-annotations.version>2.22</jackson-annotations.version>
@@ -316,26 +315,6 @@
         <groupId>org.xerial.snappy</groupId>
         <artifactId>snappy-java</artifactId>
         <version>${snappy-java.version}</version>
-      </dependency>
-
-      <!-- Dependency for Zk provider -->
-      <dependency>
-        <groupId>org.apache.curator</groupId>
-        <artifactId>curator-framework</artifactId>
-        <version>${curator.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.curator</groupId>
-        <artifactId>curator-recipes</artifactId>
-        <version>${curator.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.apache.curator</groupId>
-        <artifactId>curator-test</artifactId>
-        <version>${curator.version}</version>
-        <scope>test</scope>
       </dependency>
 
       <dependency>

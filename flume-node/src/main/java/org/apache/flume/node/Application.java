@@ -345,19 +345,6 @@ public class Application {
             option = new Option(null, "no-reload-conf", false, "do not reload config file if changed");
             options.addOption(option);
 
-            // Options for Zookeeper
-            option = new Option(
-                    "z",
-                    "zkConnString",
-                    true,
-                    "specify the ZooKeeper connection to use (required if -c, -f, and -u are missing)");
-            option.setRequired(false);
-            options.addOption(option);
-
-            option = new Option("p", "zkBasePath", true, "specify the base path in ZooKeeper for agent configs");
-            option.setRequired(false);
-            options.addOption(option);
-
             option = new Option("h", "help", false, "display help text");
             options.addOption(option);
 
@@ -411,25 +398,6 @@ public class Application {
                 List<LifecycleAware> components = Lists.newArrayList();
                 application = new Application(components);
                 application.handleConfigurationEvent(provider.getConfiguration());
-            } else if (isZkConfigured) {
-                // get options
-                String zkConnectionStr = commandLine.getOptionValue('z');
-                String baseZkPath = commandLine.getOptionValue('p');
-
-                if (reload) {
-                    EventBus eventBus = new EventBus(agentName + "-event-bus");
-                    List<LifecycleAware> components = Lists.newArrayList();
-                    PollingZooKeeperConfigurationProvider zookeeperConfigurationProvider =
-                            new PollingZooKeeperConfigurationProvider(agentName, zkConnectionStr, baseZkPath, eventBus);
-                    components.add(zookeeperConfigurationProvider);
-                    application = new Application(components);
-                    eventBus.register(application);
-                } else {
-                    StaticZooKeeperConfigurationProvider zookeeperConfigurationProvider =
-                            new StaticZooKeeperConfigurationProvider(agentName, zkConnectionStr, baseZkPath);
-                    application = new Application();
-                    application.handleConfigurationEvent(zookeeperConfigurationProvider.getConfiguration());
-                }
             } else if (confUri != null) {
                 String confUser = commandLine.getOptionValue("conf-user");
                 String confPassword = commandLine.getOptionValue("conf-password");
